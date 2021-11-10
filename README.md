@@ -2,9 +2,9 @@
 
 The fundraising module is a Cosmos SDK module that that serves fundraising feature, which provides an oppotunity for new projects to onboard the ecosystem. It does not only allow projects to raise funds, but also increase their brand awareness before launching their projects. 
 
-**The fundraising module** is built using Cosmos SDK and Tendermint and created with [Starport](https://github.com/tendermint/starport).
+The fundraising module is built using Cosmos SDK and Tendermint and created with [Starport](https://github.com/tendermint/starport).
 
-⚠ The fundraising module PoC is in active development - see "main" branch for the latest version ⚠
+⚠ **The fundraising module PoC is in active development - see "main" branch for the latest version** ⚠
 
 ## Get started
 
