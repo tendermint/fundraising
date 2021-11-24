@@ -16,7 +16,7 @@ var (
 )
 
 const (
-	//nolint:golint
+	//nolint:golint,unused
 	flagPacketTimeoutTimestamp = "packet-timeout-timestamp"
 )
 
