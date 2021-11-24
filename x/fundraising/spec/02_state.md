@@ -62,7 +62,7 @@ A base auction is the simplest and most common auction type that just stores all
 ```go
 // BaseAuction defines a base auction type. It contains all the necessary fields
 // for basic auction functionality. Any custom auction type should extend this
-// type for additional functionality (e.g. english auction, fixed ratio auction).
+// type for additional functionality (e.g. english auction, fixed price auction).
 type BaseAuction struct {
 	Id                 uint64            // id of the auction
 	Type               AuctionType       // supporting auction types are english and fixed price
@@ -96,7 +96,7 @@ type VestingSchedule struct {
 	Weight sdk.Dec   // vesting weight for the schedule
 }
 
-// VestingQueue defines the vesting queue 
+// VestingQueue defines the vesting queue.
 type VestingQueue struct {
 	AuctionId  uint64    // id of the auction
 	Auctioneer string    // the account that is in charge of the auction
@@ -163,13 +163,13 @@ const (
 ```go
 // Bid defines a standard bid for an auction.
 type Bid struct {
-	Sequence  uint64   // a number to track first come first served based auction type
 	AuctionId uint64   // id of the auction
+	Sequence  uint64   // a number to track first come first served based auction type
 	Bidder    string   // the account that bids for the auction
 	Price     sdk.Dec  // increasing bid price is only possible
 	Coin      sdk.Coin // paying amount of coin that the bidder bids
-	Height    int64    // block height
-	isWinner  bool     // winner gets determined when an auction ends; default value is false
+	Height    uint64   // block height
+	isWinner  bool     // the bid that is determined to be a winner when an auction ends; default value is false
 }
 ```
 

@@ -12,6 +12,7 @@ SIMAPP = ./app
 export GO111MODULE = on
 
 # process build tags
+
 build_tags = netgo
 ifeq ($(LEDGER_ENABLED),true)
   ifeq ($(OS),Windows_NT)
@@ -48,6 +49,7 @@ comma := ,
 build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
 
 # process linker flags
+
 ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=fundraisingd \
 		  -X github.com/cosmos/cosmos-sdk/version.AppName=fundraisingd \
 		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
@@ -83,7 +85,7 @@ build-linux: go.sum
 	LEDGER_ENABLED=false GOOS=linux GOARCH=amd64 $(MAKE) build
 
 install: go.sum
-	starport chain build
+	go install $(BUILD_FLAGS) ./cmd/fundraisingd
 
 build-reproducible: go.sum
 	$(DOCKER) rm latest-build || true
@@ -123,17 +125,6 @@ clean:
 ###############################################################################
 
 ###############################################################################
-###                                Linting                                  ###
-###############################################################################
-
-# lint: Run Golang CI Lint.
-lint:
-	@echo Running gocilint...
-	@golangci-lint run --out-format=tab --issues-exit-code=0
-
-.PHONY: lint
-
-###############################################################################
 ###                                Protobuf                                 ###
 ###############################################################################
 
@@ -143,7 +134,7 @@ containerProtoGen=cosmos-sdk-proto-gen-$(containerProtoVer)
 containerProtoGenSwagger=cosmos-sdk-proto-gen-swagger-$(containerProtoVer)
 containerProtoFmt=cosmos-sdk-proto-fmt-$(containerProtoVer)
 
-proto-all: proto-format proto-lint proto-gen proto-swagger-gen update-swagger-docs
+proto-all: proto-format proto-lint proto-gen proto-swagger-gen 
 
 proto-gen:
 	starport generate proto-go
