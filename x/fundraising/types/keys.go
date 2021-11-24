@@ -21,20 +21,20 @@ const (
 
 // keys for fundraising store prefixes
 var (
-	AuctionIdKey = []byte("0x11") // key for the latest auction id
-	SequenceKey  = []byte("0x12") // key for the latest sequence number
+	AuctionIdKey = []byte{0x11} // key for the latest auction id
+	SequenceKey  = []byte{0x12} // key for the latest sequence number
 
-	AuctionKeyPrefix    = []byte("0x21") // key for auction id to find an auction
-	AuctioneerKeyPrefix = []byte("0x22") // key for auctineer address to find an auction id
+	AuctionKeyPrefix    = []byte{0x21} // key for auction id to find an auction
+	AuctioneerKeyPrefix = []byte{0x22} // key for auctineer address to find an auction id
 
-	SequenceKeyPrefix = []byte("0x31") // key for auction id with the sequence number to find the bid
-	BidKeyPrefix      = []byte("0x32") // key for auction id with bidder address to find the sequence number
-	BidderKeyPrefix   = []byte("0x33") // key for bidder address to find the sequence number
+	SequenceKeyPrefix = []byte{0x31} // key for auction id with the sequence number to find the bid
+	BidKeyPrefix      = []byte{0x32} // key for auction id with bidder address to find the sequence number
+	BidderKeyPrefix   = []byte{0x33} // key for bidder address to find the sequence number
 )
 
 // GetAuctionKey returns key/value indexing key of the auction.
 func GetAuctionKey(auctionID uint64) []byte {
-	return append(AuctionIdKey, sdk.Uint64ToBigEndian(auctionID)...)
+	return append(AuctionKeyPrefix, sdk.Uint64ToBigEndian(auctionID)...)
 }
 
 // GetAuctioneerKey returns key/value indexing key of the auction.
