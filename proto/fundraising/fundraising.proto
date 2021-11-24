@@ -1,23 +1,24 @@
 syntax = "proto3";
 package tendermint.fundraising;
 
-import "gogoproto/gogo.proto";
-import "cosmos_proto/cosmos.proto";
 import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/tendermint/fundraising/x/fundraising/types";
 
 // Params defines the set of params for the fundraising module.
 message Params {
-  option (gogoproto.goproto_getters)  = false;
+  option (gogoproto.equal) = true;
   option (gogoproto.goproto_stringer) = false;
 
   // fundraising_creation_fee specifies the fee for fundraisin creation fee.
-  // this prevents from spamming attack and it is collected in the community pool
+  // this prevents from spamming attack and it is collected in the community
+  // pool
   repeated cosmos.base.v1beta1.Coin fundraising_creation_fee = 1 [
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
-    (gogoproto.nullable)     = false
+    (gogoproto.nullable) = false
   ];
 
   // extended_period specifies the extended period that determines how long
@@ -27,7 +28,8 @@ message Params {
 
 // BaseAuction defines a base auction type. It contains all the necessary fields
 // for basic auction functionality. Any custom auction type should extend this
-// type for additional functionality (e.g. english auction, fixed price auction).
+// type for additional functionality (e.g. english auction, fixed price
+// auction).
 message BaseAuction {
   option (gogoproto.goproto_getters) = false;
 
@@ -42,69 +44,83 @@ message BaseAuction {
   // auctioneer specifies the bech32-encoded address that creates the auction
   string auctioneer = 3;
 
-  // selling_pool_address specifies the bech32-encoded address that has all the selling coin
+  // selling_pool_address specifies the bech32-encoded address that has all the
+  // selling coin
   string selling_pool_address = 4;
 
-  // paying_pool_address specifies the bech32-encoded address that has all the paying coin
+  // paying_pool_address specifies the bech32-encoded address that has all the
+  // paying coin
   string paying_pool_address = 5;
 
   // start_price specifies the starting price of the auction
-  string start_price = 6 
-    [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+  string start_price = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
   // selling_coin specifies the selling coin for the auction
-  repeated cosmos.base.v1beta1.Coin selling_coin = 7
-    [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"];
+  cosmos.base.v1beta1.Coin selling_coin = 7 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
 
-  // paying_coin_denom specifies the paying coin denom that bidders use to bid for
+  // paying_coin_denom specifies the paying coin denom that bidders use to bid
+  // for
   string paying_coin_denom = 8;
 
-  // vesting_address specifies the bech32-encoded vesting address that holds vesting amounts of coin
+  // vesting_address specifies the bech32-encoded vesting address that holds
+  // vesting amounts of coin
   string vesting_address = 9;
 
   // vesting_schedules specifies the vesting schedules for the auction
-  repeated VestingSchedule vesting_schedules = 10 [(gogoproto.nullable) = false];
+  repeated VestingSchedule vesting_schedules = 10
+      [ (gogoproto.nullable) = false ];
 
   // start_time specifies the start time of the plan
   google.protobuf.Timestamp start_time = 11
-      [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // end_time specifies the end time of the plan
   google.protobuf.Timestamp end_time = 12
-      [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // status specifies the auction status
   AuctionStatus status = 13;
 }
 
-// FixedPriceAuction defines the fixed price auction type. It is the most simpliest way to
-// raise funds. An auctioneer sets the starting price for each selling amounts of coin and 
-// bidders bid to purchase based on the fixed price. 
+// FixedPriceAuction defines the fixed price auction type. It is the most
+// simpliest way to raise funds. An auctioneer sets the starting price for each
+// selling amounts of coin and bidders bid to purchase based on the fixed price.
 message FixedPriceAuction {
   option (gogoproto.goproto_getters) = false;
 
-  BaseAuction base_auction = 1 [(gogoproto.embed) = true];
+  BaseAuction base_auction = 1 [ (gogoproto.embed) = true ];
 }
 
-// EnglishAuction defines the english auction type. It is an ascending dynamic auction that
-// an auctioneer decides the starting price of the selling amount of coin and 
-// bidders bid to purchase the amounts of coin. 
-// It creates competition for the price, not how fast bidders can bid.
+// EnglishAuction defines the english auction type. It is an ascending dynamic
+// auction that an auctioneer decides the starting price of the selling amount
+// of coin and bidders bid to purchase the amounts of coin. It creates
+// competition for the price, not how fast bidders can bid.
 message EnglishAuction {
   option (gogoproto.goproto_getters) = false;
 
-  BaseAuction base_auction = 1 [(gogoproto.embed) = true];
+  BaseAuction base_auction = 1 [ (gogoproto.embed) = true ];
 
   // maximum_bid_price specifies the maximum bid price for the auction
-  string maximum_bid_price = 6 
-    [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+  string maximum_bid_price = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
   // extended specifies a number of extended rounds
-  uint32 extended = 1;
+  uint32 extended = 3;
 
-  // extend_rate specifies the rate that decides if the auction needs another round
-  string extend_rate = 6 
-    [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+  // extend_rate specifies the rate that decides if the auction needs another
+  // round
+  string extend_rate = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // AuctionType enumerates the valid types of an auction.
@@ -112,11 +128,14 @@ enum AuctionType {
   option (gogoproto.goproto_enum_prefix) = false;
 
   // AUCTION_TYPE_UNSPECIFIED defines the default auction type
-  AUCTION_TYPE_UNSPECIFIED = 0 [(gogoproto.enumvalue_customname) = "AuctionTypeNil"];
+  AUCTION_TYPE_UNSPECIFIED = 0
+      [ (gogoproto.enumvalue_customname) = "AuctionTypeNil" ];
   // AUCTION_TYPE_FIXED_PRICE defines the fixed price auction type
-  AUCTION_TYPE_FIXED_PRICE = 1 [(gogoproto.enumvalue_customname) = "AuctionTypeFixedPrice"];
+  AUCTION_TYPE_FIXED_PRICE = 1
+      [ (gogoproto.enumvalue_customname) = "AuctionTypeFixedPrice" ];
   // AUCTION_TYPE_ENGLISH defines the english auction type
-  AUCTION_TYPE_ENGLISH = 2 [(gogoproto.enumvalue_customname) = "AuctionTypeEnglish"];
+  AUCTION_TYPE_ENGLISH = 2
+      [ (gogoproto.enumvalue_customname) = "AuctionTypeEnglish" ];
 }
 
 // AuctionStatus enumerates the valid status of an auction.
@@ -124,17 +143,23 @@ enum AuctionStatus {
   option (gogoproto.goproto_enum_prefix) = false;
 
   // AUCTION_STATUS_UNSPECIFIED defines the default auction status
-  AUCTION_STATUS_UNSPECIFIED = 0 [(gogoproto.enumvalue_customname) = "AuctionStatusNil"];
+  AUCTION_STATUS_UNSPECIFIED = 0
+      [ (gogoproto.enumvalue_customname) = "AuctionStatusNil" ];
   // AUCTION_STATUS_STANDBY defines the standby auction status
-  AUCTION_STATUS_STANDBY = 1 [(gogoproto.enumvalue_customname) = "AuctionStatusStandBy"];
+  AUCTION_STATUS_STANDBY = 1
+      [ (gogoproto.enumvalue_customname) = "AuctionStatusStandBy" ];
   // AUCTION_STATUS_STARTED defines the started auction status
-  AUCTION_STATUS_STARTED = 2 [(gogoproto.enumvalue_customname) = "AuctionStatusStarted"];
+  AUCTION_STATUS_STARTED = 2
+      [ (gogoproto.enumvalue_customname) = "AuctionStatusStarted" ];
   // AUCTION_STATUS_VESTING defines the vesting auction status
-  AUCTION_STATUS_VESTING = 3 [(gogoproto.enumvalue_customname) = "AuctionStatusVesting"];
+  AUCTION_STATUS_VESTING = 3
+      [ (gogoproto.enumvalue_customname) = "AuctionStatusVesting" ];
   // AUCTION_STATUS_FINISHED defines the finished auction status
-  AUCTION_STATUS_FINISHED = 4 [(gogoproto.enumvalue_customname) = "AuctionStatusFinished"];
+  AUCTION_STATUS_FINISHED = 4
+      [ (gogoproto.enumvalue_customname) = "AuctionStatusFinished" ];
   // AUCTION_STATUS_CANCELLED defines the cancelled auction status
-  AUCTION_STATUS_CANCELLED = 5 [(gogoproto.enumvalue_customname) = "AuctionStatusCancelled"];
+  AUCTION_STATUS_CANCELLED = 5
+      [ (gogoproto.enumvalue_customname) = "AuctionStatusCancelled" ];
 }
 
 // AuctionMetadata defines the metadata for the auction
@@ -143,23 +168,30 @@ message AuctionMetadata {
   uint64 auction_id = 1;
 
   // winning_price specifies the winning price of the auction
-  string winning_price = 2 
-    [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+  string winning_price = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
-  // total_selling_coin specifes the total amount of coin that is sold when the auction is finished
-  repeated cosmos.base.v1beta1.Coin total_selling_coin = 3
-    [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"];
+  // total_selling_coin specifes the total amount of coin that is sold when the
+  // auction is finished
+  cosmos.base.v1beta1.Coin total_selling_coin = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
 }
 
 // VestingSchedule defines the vesting schedule for the owner of an auction.
 message VestingSchedule {
   // time specifies the vesting time
   google.protobuf.Timestamp time = 1
-      [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // weight specifies the vesting weight for the schedule
-  string weight = 2 
-    [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+  string weight = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // VestingQueue defines the vesting queue.
@@ -171,12 +203,14 @@ message VestingQueue {
   string auctioneer = 2;
 
   // paying_coin specifies the paying amount of coin
-  repeated cosmos.base.v1beta1.Coin paying_coin = 7
-    [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"];
+  cosmos.base.v1beta1.Coin paying_coin = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
 
-    // time specifies the timestamp of the vesting schedule
-  google.protobuf.Timestamp time = 1
-      [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+  // time specifies the timestamp of the vesting schedule
+  google.protobuf.Timestamp time = 4
+      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 }
 
 // Bid defines a standard bid for an auction.
@@ -184,24 +218,29 @@ message Bid {
   // auction_id specifies the id of the auction
   uint64 auction_id = 1;
 
-  // sequence specifies a number to track first come first served based auction type
+  // sequence specifies a number to track first come first served based auction
+  // type
   uint64 sequence = 2;
 
   // bidder specifies the bech32-encoded address that bids for the auction
   string bidder = 3;
 
   // price specifies the increasing bid price is only possible
-  string price = 4 
-    [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+  string price = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
   // coin specifies the paying amount of coin that the bidder bids
-  repeated cosmos.base.v1beta1.Coin coin = 5
-    [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"];
+  cosmos.base.v1beta1.Coin coin = 5 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
 
   // height specifies the block height of the bid
   uint64 height = 6;
 
-  // isWinner specifies the bid that is determined to be a winner when an auction ends; 
-  // default value is false
+  // isWinner specifies the bid that is determined to be a winner when an
+  // auction ends; default value is false
   bool isWinner = 7;
 }
