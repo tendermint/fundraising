@@ -1,3 +1,47 @@
-vue/node_modules
-vue/dist
-release/
+# OS
+.DS_Store
+*.swp
+*.swo
+*.swl
+*.swm
+*.swn
+.vscode
+.idea
+*.pyc
+
+# Build
+vendor
+build
+tools/bin/*
+examples/build/*
+docs/_build
+docs/tutorial
+docs/node_modules
+docs/modules
+dist
+tools-stamp
+proto-tools-stamp
+buf-stamp
+
+# Data - ideally these don't exist
+app/data/*
+x/farming/client/lcd/keys/*
+mytestnet
+
+# Testing
+coverage.txt
+profile.out
+sim_log_file
+
+# Vagrant
+.vagrant/
+*.box
+*.log
+vagrant
+
+# IDE
+.idea/
+*.iml
+
+# Localnet
+data/

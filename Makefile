@@ -83,7 +83,7 @@ build-linux: go.sum
 	LEDGER_ENABLED=false GOOS=linux GOARCH=amd64 $(MAKE) build
 
 install: go.sum
-	starport chain build
+	go install $(BUILD_FLAGS) ./cmd/farmingd
 
 build-reproducible: go.sum
 	$(DOCKER) rm latest-build || true

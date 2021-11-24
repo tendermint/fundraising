@@ -19,6 +19,6 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 }
 
 var (
-	amino     = codec.NewLegacyAmino() //nolint:golint
+	amino     = codec.NewLegacyAmino() //nolint:deadcode
 	ModuleCdc = codec.NewProtoCodec(cdctypes.NewInterfaceRegistry())
 )
