@@ -1,6 +1,8 @@
 package types
 
 import (
+	"bytes"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 )
@@ -52,4 +54,20 @@ func GetBidKey(auctionID uint64, auctioneerAcc sdk.AccAddress) []byte {
 
 func GetBidderKey(auctioneerAcc sdk.AccAddress) []byte {
 	return append(BidderKeyPrefix, address.MustLengthPrefix(auctioneerAcc)...)
+}
+
+func ParseSequenceKey(key []byte) (auctionID uint64, sequence uint64) {
+	if !bytes.HasPrefix(key, SequenceKeyPrefix) {
+		panic("key does not have proper prefix")
+	}
+	// TODO: not implemented yet
+	return
+}
+
+func ParseBidKey(key []byte) (auctionID uint64, auctioneerAcc sdk.AccAddress) {
+	if !bytes.HasPrefix(key, BidKeyPrefix) {
+		panic("key does not have proper prefix")
+	}
+	// TODO: not implemented yet
+	return
 }
