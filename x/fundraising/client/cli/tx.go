@@ -16,7 +16,8 @@ var (
 )
 
 const (
-	flagPacketTimeoutTimestamp = "packet-timeout-timestamp" //nolint:deadcode
+	//nolint:golint
+	flagPacketTimeoutTimestamp = "packet-timeout-timestamp"
 )
 
 // GetTxCmd returns the transaction commands for this module

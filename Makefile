@@ -12,6 +12,7 @@ SIMAPP = ./app
 export GO111MODULE = on
 
 # process build tags
+
 build_tags = netgo
 ifeq ($(LEDGER_ENABLED),true)
   ifeq ($(OS),Windows_NT)
@@ -48,6 +49,7 @@ comma := ,
 build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
 
 # process linker flags
+
 ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=fundraisingd \
 		  -X github.com/cosmos/cosmos-sdk/version.AppName=fundraisingd \
 		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
@@ -83,7 +85,7 @@ build-linux: go.sum
 	LEDGER_ENABLED=false GOOS=linux GOARCH=amd64 $(MAKE) build
 
 install: go.sum
-	go install $(BUILD_FLAGS) ./cmd/farmingd
+	go install $(BUILD_FLAGS) ./cmd/fundraisingd
 
 build-reproducible: go.sum
 	$(DOCKER) rm latest-build || true
@@ -121,17 +123,6 @@ clean:
 ###############################################################################
 ###                           Tests & Simulation                            ###
 ###############################################################################
-
-###############################################################################
-###                                Linting                                  ###
-###############################################################################
-
-# lint: Run Golang CI Lint.
-lint:
-	@echo Running gocilint...
-	@golangci-lint run --out-format=tab --issues-exit-code=0
-
-.PHONY: lint
 
 ###############################################################################
 ###                                Protobuf                                 ###

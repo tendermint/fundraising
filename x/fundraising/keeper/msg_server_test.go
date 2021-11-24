@@ -10,7 +10,7 @@ import (
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
 
-//nolint:deadcode
+//nolint:golint
 func setupMsgServer(t testing.TB) (types.MsgServer, context.Context) {
 	k, ctx := keepertest.FundraisingKeeper(t)
 	return keeper.NewMsgServerImpl(*k), sdk.WrapSDKContext(ctx)
