@@ -41,8 +41,8 @@ message MsgCreateEnglishAuction {
 
   // selling_coin specifies the selling coin for the auction
   cosmos.base.v1beta1.Coin selling_coin = 2 [
-    (gogoproto.nullable) = false,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.nullable) = false
   ];
 
   // paying_coin_denom specifies the paying coin denom that bidders use to bid for
