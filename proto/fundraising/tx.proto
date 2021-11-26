@@ -33,6 +33,7 @@ service Msg {
 //
 // See: https://github.com/tendermint/fundraising/tree/main/x/fundraising/spec/04_messages.md
 message MsgCreateEnglishAuction {
+  // start_price specifies the starting price of the auction
   string start_price = 1 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
