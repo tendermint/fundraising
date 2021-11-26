@@ -87,6 +87,7 @@ message MsgCreateEnglishAuction {
 message MsgCreateEnglishAuctionResponse {}
 
 message MsgCreateFixedPriceAuction {
+  // start_price specifies the starting price of the auction
   string start_price = 1 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
