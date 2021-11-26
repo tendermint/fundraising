@@ -4,7 +4,7 @@ package tendermint.fundraising.fundraising;
 import "gogoproto/gogo.proto";
 import "cosmos_proto/coin.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
-import "fundraising/makfundraising.proto";
+import "fundraising/fundraising.proto";
 
 // this line is used by starport scaffolding # proto/tx/import
 
@@ -37,39 +37,119 @@ message MsgCreateEnglishAuction {
     (gogoproto.nullable)   = false
   ];
 
-  string pool_creator_address = 1 [(gogoproto.moretags) = "yaml:\"pool_creator_address\"",
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "account address of the origin of this message",
-      example: "\"cosmos1e35y69rhrt7y4yce5l5u73sjnxu0l33wvznyun\"",
-      format: "sdk.AccAddress"
-    }];
+  // selling_coin specifies the selling coin for the auction
+  cosmos.base.v1beta1.Coin selling_coin = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
 
-  // id of the target pool type, must match the value in the pool. Only pool-type-id 1 is supported.
-  uint32 pool_type_id = 2 [(gogoproto.moretags) = "yaml:\"pool_type_id\"",
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      example: "\"1\"",
-      format: "uint32"
-    }];
+  // paying_coin_denom specifies the paying coin denom that bidders use to bid for
+  string paying_coin_denom = 3;
 
-  // reserve coin pair of the pool to deposit.
-  repeated cosmos.base.v1beta1.Coin deposit_coins = 4 [(gogoproto.nullable) = false,
-    (gogoproto.moretags) = "yaml:\"deposit_coins\"",
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      example: "[{\"denom\": \"denomX\", \"amount\": \"1000000\"}, {\"denom\": \"denomY\", \"amount\": \"2000000\"}]",
-      format: "sdk.Coins"
-    }];
+  // vesting_address specifies the bech32-encoded vesting address that holds
+  // vesting amounts of coin
+  string vesting_address = 4;
+
+  // vesting_schedules specifies the vesting schedules for the auction
+  repeated VestingSchedule vesting_schedules = 5 [
+    (gogoproto.nullable) = false
+  ];
+
+  // maximum_bid_price specifies the maximum bid price for the auction
+  string maximum_bid_price = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // extend_rate specifies the rate that decides if the auction needs another
+  // round
+  string extend_rate = 7 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // start_time specifies the start time of the plan
+  google.protobuf.Timestamp start_time = 8 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false
+  ];
+
+  // end_time specifies the end time of the plan
+  google.protobuf.Timestamp end_time = 9 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false
+  ];
 }
 
+// MsgCreateEnglishAuctionResponse defines the Msg/MsgCreateEnglishAuctionResponse response type.
+message MsgCreateEnglishAuctionResponse {}
 
-    StartPrice       sdk.Dec           // starting price of the auction
-    SellingCoin      sdk.Coin          // selling coin for the auction
-    PayingCoinDenom string             // the paying coin denom that a bidder needs to bid for
-    VestingAddress   string            // the vesting account that releases the paying amount of coins based on the schedules
-    VestingSchedules []VestingSchedule // vesting schedules for the auction
-    MaximumBidPrice  sdk.Dec           // the maximum bid price for the auction
-    ExtendRate       sdk.Dec           // rate that decides if the auction needs another round
-    StartTime        time.Time         // start time of the auction
-    EndTime          time.Time         // end time of the auction
-    }
-    ```
+message MsgCreateFixedPriceAuction {
+  string start_price = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
+
+  // selling_coin specifies the selling coin for the auction
+  cosmos.base.v1beta1.Coin selling_coin = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
+
+  // paying_coin_denom specifies the paying coin denom that bidders use to bid for
+  string paying_coin_denom = 3;
+
+  // vesting_address specifies the bech32-encoded vesting address that holds
+  // vesting amounts of coin
+  string vesting_address = 4;
+
+  // vesting_schedules specifies the vesting schedules for the auction
+  repeated VestingSchedule vesting_schedules = 5 [
+    (gogoproto.nullable) = false
+  ];
+
+  // start_time specifies the start time of the plan
+  google.protobuf.Timestamp start_time = 6 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false
+  ];
+
+  // end_time specifies the end time of the plan
+  google.protobuf.Timestamp end_time = 7 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+// MsgCreateFixedPriceAuctionResponse defines the Msg/MsgCreateFixedPriceAuctionResponse response type.
+message MsgCreateFixedPriceAuctionResponse {}
+
+message MsgCancelFundraising {
+  // id specifies index of the auction
+  uint64 id = 1;
+}
+
+// MsgCancelFundraisingResponse defines the Msg/MsgCancelFundraisingResponse response type.
+message MsgCancelFundraisingResponse {}
+
+message MsgPlaceBid {
+  // id specifies index of the auction
+  uint64 auction_id = 1;
+
+  // price specifies the increasing bid price is only possible
+  string price = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // coin specifies the paying amount of coin that the bidder bids
+  cosmos.base.v1beta1.Coin coin = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
+}
+
+// MsgPlaceBidResponse defines the Msg/MsgPlaceBidResponse response type.
+message MsgPlaceBidResponse {}
+
+
