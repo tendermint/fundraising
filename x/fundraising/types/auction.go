@@ -3,8 +3,10 @@ package types
 import (
 	time "time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	proto "github.com/gogo/protobuf/proto"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 var (
@@ -156,6 +158,27 @@ func (auction *BaseAuction) SetStatus(status AuctionStatus) error {
 
 // Validate checks for errors on the Auction fields
 func (auction BaseAuction) Validate() error {
+	if auction.Type != AuctionTypeFixedPrice && auction.Type != AuctionTypeEnglish {
+		return sdkerrors.Wrapf(ErrInvalidAuctionType, "unknown plan type: %s", auction.Type)
+	}
+	if _, err := sdk.AccAddressFromBech32(auction.Auctioneer); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid auctioneer address %q: %v", auction.Auctioneer, err)
+	}
+	if _, err := sdk.AccAddressFromBech32(auction.SellingPoolAddress); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid selling pool address %q: %v", auction.SellingPoolAddress, err)
+	}
+	if _, err := sdk.AccAddressFromBech32(auction.PayingPoolAddress); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid paying pool address %q: %v", auction.PayingPoolAddress, err)
+	}
+	if _, err := sdk.AccAddressFromBech32(auction.VestingAddress); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid vesting address %q: %v", auction.VestingAddress, err)
+	}
+	if !auction.StartPrice.IsPositive() {
+		return sdkerrors.Wrapf(ErrInvalidStartPrice, "invalid start price: %f", auction.StartPrice)
+	}
+	if err := auction.SellingCoin.Validate(); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "invalid selling coin: %v", auction.SellingCoin)
+	}
 	// TODO: not implemented yet
 	return nil
 }
