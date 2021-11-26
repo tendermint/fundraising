@@ -24,7 +24,6 @@ const (
 	MemStoreKey = "mem_fundraising"
 )
 
-// keys for fundraising store prefixes
 var (
 	AuctionIdKey = []byte{0x11} // key for the latest auction id
 	SequenceKey  = []byte{0x12} // key for the latest sequence number
@@ -63,7 +62,8 @@ func ParseSequenceKey(key []byte) (auctionID uint64, sequence uint64) {
 	if !bytes.HasPrefix(key, SequenceKeyPrefix) {
 		panic("key does not have proper prefix")
 	}
-	// TODO: not implemented yet
+	// auctionID = sdk.BigEndianToUint64(key[2:])
+	// sequence = sdk.BigEndianToUint64(key[2:])
 	return
 }
 
