@@ -147,8 +147,8 @@ message MsgPlaceBid {
 
   // coin specifies the paying amount of coin that the bidder bids
   cosmos.base.v1beta1.Coin coin = 3 [
-    (gogoproto.nullable) = false,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.nullable) = false
   ];
 }
 
