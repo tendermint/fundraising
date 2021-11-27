@@ -82,6 +82,16 @@ func (k Keeper) GetAuction(ctx sdk.Context, id uint64) (auction types.AuctionI, 
 	return k.decodeAuction(bz), true
 }
 
+// GetAuctions returns all auctions in the store.
+func (k Keeper) GetAuctions(ctx sdk.Context) (auctions []types.AuctionI) {
+	k.IterateAuctions(ctx, func(auction types.AuctionI) (stop bool) {
+		auctions = append(auctions, auction)
+		return false
+	})
+
+	return auctions
+}
+
 // SetAuction sets an auction with the given auction id.
 func (k Keeper) SetAuction(ctx sdk.Context, auction types.AuctionI) {
 	id := auction.GetId()
@@ -93,6 +103,22 @@ func (k Keeper) SetAuction(ctx sdk.Context, auction types.AuctionI) {
 	}
 
 	store.Set(types.GetAuctionKey(id), bz)
+}
+
+// IterateAuctions iterates over all the stored auctions and performs a callback function.
+// Stops iteration when callback returns true.
+func (k Keeper) IterateAuctions(ctx sdk.Context, cb func(auction types.AuctionI) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iterator := sdk.KVStorePrefixIterator(store, types.AuctionKeyPrefix)
+
+	defer iterator.Close()
+	for ; iterator.Valid(); iterator.Next() {
+		auction := k.decodeAuction(iterator.Value())
+
+		if cb(auction) {
+			break
+		}
+	}
 }
 
 func (k Keeper) decodeAuction(bz []byte) types.AuctionI {
