@@ -9,9 +9,10 @@ Messages (Msg) are objects that trigger state transitions. Msgs are wrapped in t
 ```go
 // MsgCreateEnglishAuction defines a SDK message for creating a English type auction
 type MsgCreateEnglishAuction struct {
+	Auctioneer       string            // the account that creates the auction
 	StartPrice       sdk.Dec           // starting price of the auction
 	SellingCoin      sdk.Coin          // selling coin for the auction
-	PayingCoinDenom string             // the paying coin denom that a bidder needs to bid for
+	PayingCoinDenom  string            // the paying coin denom that a bidder needs to bid for
 	VestingAddress   string            // the vesting account that releases the paying amount of coins based on the schedules
 	VestingSchedules []VestingSchedule // vesting schedules for the auction
 	MaximumBidPrice  sdk.Dec           // the maximum bid price for the auction
@@ -26,6 +27,7 @@ type MsgCreateEnglishAuction struct {
 ```go
 // MsgCreateFixedPriceAuction defines a SDK message for creating a fixed price type auction
 type MsgCreateFixedPriceAuction struct {
+	Auctioneer        string           // the account that creates the auction
 	StartPrice       sdk.Dec           // starting price of the auction
 	SellingCoin      sdk.Coin          // selling coin for the auction
 	PayingCoinDenom  string            // the paying denom that participants need to bid for
@@ -42,7 +44,8 @@ type MsgCreateFixedPriceAuction struct {
 ```go
 // MsgCancelFundraising defines a SDK message for cancelling an auction
 type MsgCancelFundraising struct {
-	Id uint64 // id of the auction
+	Auctioneer string // the account that is in charge of the auction
+	Id 	 	   uint64 // id of the auction
 }
 ```
 
@@ -52,7 +55,8 @@ type MsgCancelFundraising struct {
 // MsgPlaceBid defines a SDK message for placing a bid for the auction
 type MsgPlaceBid struct {
 	AuctionId uint64   // id of the auction
-	Price     sdk.Dec  // increasing bid price is only possible
+	Bidder    string   // the bidder who places a bid for the auction
+	Price     sdk.Dec  // bid price can only be increasing
 	Coin      sdk.Coin // paying amount of coin that the bidder bids
 }
 ```
