@@ -34,6 +34,8 @@ service Msg {
 // MsgCreateFixedPriceAuction defines a SDK message for creating a fixed price
 // auction.
 message MsgCreateFixedPriceAuction {
+  option (gogoproto.goproto_getters) = false;
+
   // auctioneer specifies the bech32-encoded address that creates the auction
   string auctioneer = 1;
 
@@ -80,6 +82,8 @@ message MsgCreateFixedPriceAuctionResponse {}
 // See:
 // https://github.com/tendermint/fundraising/tree/main/x/fundraising/spec/04_messages.md
 message MsgCreateEnglishAuction {
+  option (gogoproto.goproto_getters) = false;
+
   // auctioneer specifies the bech32-encoded address that creates the auction
   string auctioneer = 1;
 
@@ -136,12 +140,14 @@ message MsgCreateEnglishAuctionResponse {}
 // MsgCancelFundraising defines a SDK message for cancelling the auction.
 // Cancelling is only allowed when the auction hasn't started yet.
 message MsgCancelFundraising {
+  option (gogoproto.goproto_getters) = false;
+
   // auctioneer specifies the bech32-encoded address that is in charge of the
   // auction
   string auctioneer = 1;
 
-  // id specifies index of the auction
-  uint64 id = 2;
+  // auction_id specifies the auction id
+  uint64 auction_id = 2;
 }
 
 // MsgCancelFundraisingResponse defines the Msg/MsgCancelFundraisingResponse
@@ -150,6 +156,9 @@ message MsgCancelFundraisingResponse {}
 
 // MsgPlaceBid defines a SDK message for placing a bid for the auction.
 message MsgPlaceBid { // id specifies index of the auction
+  option (gogoproto.goproto_getters) = false;
+
+  // auction_id specifies the auction id
   uint64 auction_id = 1;
 
   // bidder specifies the bech32-encoded address that bids for the auction

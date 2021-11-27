@@ -45,7 +45,7 @@ type MsgCreateFixedPriceAuction struct {
 // MsgCancelFundraising defines a SDK message for cancelling an auction
 type MsgCancelFundraising struct {
 	Auctioneer string // the account that is in charge of the auction
-	Id 	 	   uint64 // id of the auction
+	AuctionId  uint64 // id of the auction
 }
 ```
 
