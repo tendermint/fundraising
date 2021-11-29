@@ -80,8 +80,8 @@ message BaseAuction {
   google.protobuf.Timestamp start_time = 11
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
-  // end_time specifies the end time of the plan
-  google.protobuf.Timestamp end_time = 12
+  // end_times specifies the end time of the plan
+  repeated google.protobuf.Timestamp end_times = 12
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // status specifies the auction status
