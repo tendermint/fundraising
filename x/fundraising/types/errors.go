@@ -8,6 +8,8 @@ import (
 
 // x/fundraising module sentinel errors
 var (
-	ErrInvalidAuctionType = sdkerrors.Register(ModuleName, 2, "invalid auction type")
-	ErrInvalidStartPrice  = sdkerrors.Register(ModuleName, 3, "invalid start price")
+	ErrInvalidAuctionType      = sdkerrors.Register(ModuleName, 2, "invalid auction type")
+	ErrInvalidStartPrice       = sdkerrors.Register(ModuleName, 3, "invalid start price")
+	ErrInvalidAuctionEndTime   = sdkerrors.Register(ModuleName, 4, "invalid auction end time")
+	ErrInvalidVestingSchedules = sdkerrors.Register(ModuleName, 5, "invalid vesting schedules")
 )

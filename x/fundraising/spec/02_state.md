@@ -92,8 +92,8 @@ type AuctionMetadata struct {
 ```go
 // VestingSchedule defines the vesting schedule for the owner of an auction.
 type VestingSchedule struct {
-	Time   time.Time // vesting time
-	Weight sdk.Dec   // vesting weight for the schedule
+	Time   time.Time // the time for distribution of the vesting coin
+	Weight sdk.Dec   // the vesting weight for the schedule
 }
 
 // VestingQueue defines the vesting queue.

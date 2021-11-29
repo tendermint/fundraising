@@ -2,12 +2,172 @@ syntax = "proto3";
 package tendermint.fundraising.fundraising;
 
 // this line is used by starport scaffolding # proto/tx/import
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "fundraising/fundraising.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/tendermint/fundraising/x/fundraising/types";
 
 // Msg defines the Msg service.
 service Msg {
   // this line is used by starport scaffolding # proto/tx/rpc
+  // Submit a create fixed price auction message.
+  rpc CreateFixedPriceAuction(MsgCreateFixedPriceAuction)
+      returns (MsgCreateFixedPriceAuctionResponse);
+
+  // Submit a create english auction message.
+  rpc CreateEnglishAuction(MsgCreateEnglishAuction)
+      returns (MsgCreateEnglishAuctionResponse);
+
+  // Submit a cancel fundraising message.
+  rpc CancelFundraising(MsgCancelFundraising)
+      returns (MsgCancelFundraisingResponse);
+
+  // Submit a PlaceBid message to the certain fundraising.
+  rpc PlaceBid(MsgPlaceBid) returns (MsgPlaceBidResponse);
 }
 
 // this line is used by starport scaffolding # proto/tx/message
+
+// MsgCreateFixedPriceAuction defines a SDK message for creating a fixed price
+// auction.
+message MsgCreateFixedPriceAuction {
+  option (gogoproto.goproto_getters) = false;
+
+  // auctioneer specifies the bech32-encoded address that creates the auction
+  string auctioneer = 1;
+
+  // start_price specifies the starting price of the auction
+  string start_price = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // selling_coin specifies the selling coin for the auction
+  cosmos.base.v1beta1.Coin selling_coin = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
+
+  // paying_coin_denom specifies the paying coin denom that bidders use to bid
+  // for
+  string paying_coin_denom = 4;
+
+  // vesting_schedules specifies the vesting schedules for the auction
+  repeated VestingSchedule vesting_schedules = 5
+      [ (gogoproto.nullable) = false ];
+
+  // start_time specifies the start time of the plan
+  google.protobuf.Timestamp start_time = 6
+      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
+
+  // end_time specifies the end time of the plan
+  google.protobuf.Timestamp end_time = 7
+      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
+}
+
+// MsgCreateFixedPriceAuctionResponse defines the
+// Msg/MsgCreateFixedPriceAuctionResponse response type.
+message MsgCreateFixedPriceAuctionResponse {}
+
+// MsgCreateEnglishAuction defines a SDK message for creating an english
+// auction.
+//
+// See:
+// https://github.com/tendermint/fundraising/tree/main/x/fundraising/spec/04_messages.md
+message MsgCreateEnglishAuction {
+  option (gogoproto.goproto_getters) = false;
+
+  // auctioneer specifies the bech32-encoded address that creates the auction
+  string auctioneer = 1;
+
+  // start_price specifies the starting price of the auction
+  string start_price = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // selling_coin specifies the selling coin for the auction
+  cosmos.base.v1beta1.Coin selling_coin = 3 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.nullable) = false
+  ];
+
+  // paying_coin_denom specifies the paying coin denom that bidders use to bid
+  // for
+  string paying_coin_denom = 4;
+
+  // vesting_schedules specifies the vesting schedules for the auction
+  repeated VestingSchedule vesting_schedules = 5
+      [ (gogoproto.nullable) = false ];
+
+  // maximum_bid_price specifies the maximum bid price for the auction
+  string maximum_bid_price = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // extend_rate specifies the rate that decides if the auction needs another
+  // round
+  string extend_rate = 7 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // start_time specifies the start time of the plan
+  google.protobuf.Timestamp start_time = 8
+      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
+
+  // end_time specifies the end time of the plan
+  google.protobuf.Timestamp end_time = 9
+      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
+}
+
+// MsgCreateEnglishAuctionResponse defines the
+// Msg/MsgCreateEnglishAuctionResponse response type.
+message MsgCreateEnglishAuctionResponse {}
+
+// MsgCancelFundraising defines a SDK message for cancelling the auction.
+// Cancelling is only allowed when the auction hasn't started yet.
+message MsgCancelFundraising {
+  option (gogoproto.goproto_getters) = false;
+
+  // auctioneer specifies the bech32-encoded address that is in charge of the
+  // auction
+  string auctioneer = 1;
+
+  // auction_id specifies the auction id
+  uint64 auction_id = 2;
+}
+
+// MsgCancelFundraisingResponse defines the Msg/MsgCancelFundraisingResponse
+// response type.
+message MsgCancelFundraisingResponse {}
+
+// MsgPlaceBid defines a SDK message for placing a bid for the auction.
+message MsgPlaceBid { // id specifies index of the auction
+  option (gogoproto.goproto_getters) = false;
+
+  // auction_id specifies the auction id
+  uint64 auction_id = 1;
+
+  // bidder specifies the bech32-encoded address that bids for the auction
+  string bidder = 2;
+
+  // price specifies the bid price. The bid price can only be increasing
+  string price = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // coin specifies the paying amount of coin that the bidder bids
+  cosmos.base.v1beta1.Coin coin = 4 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// MsgPlaceBidResponse defines the Msg/MsgPlaceBidResponse response type.
+message MsgPlaceBidResponse {}
