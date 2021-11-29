@@ -15,8 +15,10 @@ import (
 
 func TestMsgCreateFixedPriceAuction(t *testing.T) {
 	auctioneerAcc := sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer")))
-	startTime, _ := time.Parse(time.RFC3339, "2021-11-01T22:08:41+00:00") // needs to be deterministic for test
-	endTime := startTime.AddDate(1, 0, 0)
+	startTime, _ := time.Parse(time.RFC3339, "2021-11-01T22:00:00+00:00")
+	endTime := startTime.AddDate(0, 1, 0) // add 1 month
+	distributedTime1, _ := time.Parse(time.RFC3339, "2022-06-01T22:08:41+00:00")
+	distributedTime2, _ := time.Parse(time.RFC3339, "2022-12-01T22:08:41+00:00")
 
 	testCases := []struct {
 		expectedErr string
@@ -35,7 +37,7 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 			),
 		},
 		{
-			"start price must be positve 0.000000000000000000: invalid request",
+			"start price must be positve: invalid request",
 			types.NewMsgCreateFixedPriceAuction(
 				auctioneerAcc.String(),
 				sdk.MustNewDecFromStr("0"),
@@ -47,7 +49,7 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 			),
 		},
 		{
-			"selling coin amount must be positive 0ugdex: invalid request",
+			"selling coin amount must be positive: invalid request",
 			types.NewMsgCreateFixedPriceAuction(
 				auctioneerAcc.String(),
 				sdk.MustNewDecFromStr("0.5"),
@@ -58,9 +60,51 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 				endTime,
 			),
 		},
-		// TODO: vesting schedules not covered
 		{
-			"end time 2020-11-01T22:08:41Z must be greater than start time 2021-11-01T22:08:41Z: invalid auction end time",
+			"vesting weight must be positive: invalid request",
+			types.NewMsgCreateFixedPriceAuction(
+				auctioneerAcc.String(),
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.NewInt64Coin("ugdex", 10_000_000_000_000),
+				"uatom",
+				[]types.VestingSchedule{
+					types.NewVestingSchedule(distributedTime1, sdk.ZeroDec()),
+				},
+				startTime,
+				endTime,
+			),
+		},
+		{
+			"total vesting weight must not greater than 1: invalid request",
+			types.NewMsgCreateFixedPriceAuction(
+				auctioneerAcc.String(),
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.NewInt64Coin("ugdex", 10_000_000_000_000),
+				"uatom",
+				[]types.VestingSchedule{
+					types.NewVestingSchedule(distributedTime1, sdk.MustNewDecFromStr("1.1")),
+				},
+				startTime,
+				endTime,
+			),
+		},
+		{
+			"total vesting weight must be equal to 1: invalid request",
+			types.NewMsgCreateFixedPriceAuction(
+				auctioneerAcc.String(),
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.NewInt64Coin("ugdex", 10_000_000_000_000),
+				"uatom",
+				[]types.VestingSchedule{
+					types.NewVestingSchedule(distributedTime1, sdk.MustNewDecFromStr("0.5")),
+					types.NewVestingSchedule(distributedTime2, sdk.MustNewDecFromStr("0.3")),
+				},
+				startTime,
+				endTime,
+			),
+		},
+		{
+			"end time must be greater than start time: invalid auction end time",
 			types.NewMsgCreateFixedPriceAuction(
 				auctioneerAcc.String(),
 				sdk.MustNewDecFromStr("0.5"),
@@ -96,9 +140,87 @@ func TestMsgCreateEnglishAuction(t *testing.T) {
 }
 
 func TestMsgCancelFundraising(t *testing.T) {
-	// TODO: not implemented yet
+	testCases := []struct {
+		expectedErr string
+		msg         *types.MsgCancelFundraising
+	}{
+		{
+			"", // empty means no error expected
+			types.NewMsgCancelFundraising(
+				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
+				uint64(1),
+			),
+		},
+	}
+
+	for _, tc := range testCases {
+		require.IsType(t, &types.MsgCancelFundraising{}, tc.msg)
+		require.Equal(t, types.TypeMsgCancelFundraising, tc.msg.Type())
+		require.Equal(t, types.RouterKey, tc.msg.Route())
+		require.Equal(t, sdk.MustSortJSON(legacy.Cdc.MustMarshalJSON(tc.msg)), tc.msg.GetSignBytes())
+
+		err := tc.msg.ValidateBasic()
+		if tc.expectedErr == "" {
+			require.Nil(t, err)
+			signers := tc.msg.GetSigners()
+			require.Len(t, signers, 1)
+			require.Equal(t, tc.msg.GetAuctioneer(), signers[0])
+		} else {
+			require.EqualError(t, err, tc.expectedErr)
+		}
+	}
 }
 
 func TestMsgPlaceBid(t *testing.T) {
-	// TODO: not implemented yet
+	bidderAcc := sdk.AccAddress(crypto.AddressHash([]byte("Bidder")))
+
+	testCases := []struct {
+		expectedErr string
+		msg         *types.MsgPlaceBid
+	}{
+		{
+			"", // empty means no error expected
+			types.NewMsgPlaceBid(
+				uint64(1),
+				bidderAcc.String(),
+				sdk.OneDec(),
+				sdk.NewInt64Coin("ugdex", 1000000),
+			),
+		},
+		{
+			"bid price must be positve value: invalid request",
+			types.NewMsgPlaceBid(
+				uint64(1),
+				bidderAcc.String(),
+				sdk.ZeroDec(),
+				sdk.NewInt64Coin("ugdex", 1000000),
+			),
+		},
+		{
+			"bid price must be positve value: invalid request",
+			types.NewMsgPlaceBid(
+				uint64(1),
+				bidderAcc.String(),
+				sdk.ZeroDec(),
+				sdk.NewInt64Coin("ugdex", 0),
+			),
+		},
+	}
+
+	for _, tc := range testCases {
+		require.IsType(t, &types.MsgPlaceBid{}, tc.msg)
+		require.Equal(t, types.TypeMsgPlaceBid, tc.msg.Type())
+		require.Equal(t, types.RouterKey, tc.msg.Route())
+		require.Equal(t, sdk.MustSortJSON(legacy.Cdc.MustMarshalJSON(tc.msg)), tc.msg.GetSignBytes())
+
+		err := tc.msg.ValidateBasic()
+		if tc.expectedErr == "" {
+			require.Nil(t, err)
+			signers := tc.msg.GetSigners()
+			require.Len(t, signers, 1)
+			require.Equal(t, tc.msg.GetBidder(), signers[0])
+		} else {
+			require.EqualError(t, err, tc.expectedErr)
+		}
+	}
 }

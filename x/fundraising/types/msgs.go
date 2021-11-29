@@ -50,40 +50,25 @@ func (msg MsgCreateFixedPriceAuction) Type() string { return TypeMsgCreateFixedP
 
 func (msg MsgCreateFixedPriceAuction) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Auctioneer); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid auctioneer address %q: %v", msg.Auctioneer, err)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid auctioneer address: %v", err)
 	}
 	if !msg.StartPrice.IsPositive() {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "start price must be positve %s", msg.StartPrice)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "start price must be positve")
 	}
 	if err := msg.SellingCoin.Validate(); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid selling coin %q: %v", msg.SellingCoin, err)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid selling coin: %v", err)
 	}
 	if !msg.SellingCoin.Amount.IsPositive() {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "selling coin amount must be positive %s", msg.SellingCoin)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "selling coin amount must be positive")
 	}
 	if err := sdk.ValidateDenom(msg.PayingCoinDenom); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid paying coin denom %s: %v", msg.PayingCoinDenom, err)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid paying coin denom: %v", err)
 	}
 	if !msg.EndTime.After(msg.StartTime) {
-		return sdkerrors.Wrapf(ErrInvalidAuctionEndTime, "end time %s must be greater than start time %s", msg.EndTime.Format(time.RFC3339), msg.StartTime.Format(time.RFC3339))
+		return sdkerrors.Wrapf(ErrInvalidAuctionEndTime, "end time must be greater than start time")
 	}
-
-	// TODO: consider if we want infinite number of vesting schedules
-	if len(msg.VestingSchedules) > 0 {
-		totalWeight := sdk.ZeroDec()
-		for _, vs := range msg.VestingSchedules {
-			if !vs.Weight.IsPositive() {
-				return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "vesting weight must be positive %s", vs.Weight)
-			}
-			if vs.Weight.GT(sdk.NewDec(1)) {
-				return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "vesting weight must not greater than 1 %s", vs.Weight)
-			}
-			totalWeight = totalWeight.Add(vs.Weight)
-		}
-
-		if !totalWeight.Equal(sdk.NewDec(1)) {
-			return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "total vesting weight must be equal to 1 %s", totalWeight)
-		}
+	if err := ValidateVestingSchedules(msg.VestingSchedules); err != nil {
+		return err
 	}
 	return nil
 }
@@ -139,27 +124,32 @@ func (msg MsgCreateEnglishAuction) Type() string { return TypeMsgCreateEnglishAu
 
 func (msg MsgCreateEnglishAuction) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Auctioneer); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid auctioneer address %q: %v", msg.Auctioneer, err)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid auctioneer address: %v", err)
 	}
 	if !msg.StartPrice.IsPositive() {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "start price must be positve value %s", msg.StartPrice)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "start price must be positve")
 	}
 	if err := msg.SellingCoin.Validate(); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid selling coin %q: %v", msg.SellingCoin, err)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid selling coin: %v", err)
+	}
+	if !msg.SellingCoin.Amount.IsPositive() {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "selling coin amount must be positive")
 	}
 	if err := sdk.ValidateDenom(msg.PayingCoinDenom); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid paygin coin denom %s: %v", msg.PayingCoinDenom, err)
-	}
-	if !msg.MaximumBidPrice.IsPositive() {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "maximum bid price must be positve value %s", msg.MaximumBidPrice)
-	}
-	if !msg.ExtendRate.IsPositive() {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "extend rate must be positve value %s", msg.ExtendRate)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid paying coin denom: %v", err)
 	}
 	if !msg.EndTime.After(msg.StartTime) {
-		return sdkerrors.Wrapf(ErrInvalidAuctionEndTime, "end time %s must be greater than start time %s", msg.EndTime.Format(time.RFC3339), msg.StartTime.Format(time.RFC3339))
+		return sdkerrors.Wrapf(ErrInvalidAuctionEndTime, "end time must be greater than start time")
 	}
-	// TODO: vesting schedules validation not implemented yet
+	if err := ValidateVestingSchedules(msg.VestingSchedules); err != nil {
+		return err
+	}
+	if !msg.MaximumBidPrice.IsPositive() {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "maximum bid price must be positve")
+	}
+	if !msg.ExtendRate.IsPositive() {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "extend rate must be positve")
+	}
 	return nil
 }
 
@@ -246,13 +236,13 @@ func (msg MsgPlaceBid) Type() string { return TypeMsgPlaceBid }
 
 func (msg MsgPlaceBid) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Bidder); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid bidder address %q: %v", msg.Bidder, err)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid bidder address: %v", err)
 	}
 	if !msg.Price.IsPositive() {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "bid price must be positve value %s", msg.Price)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "bid price must be positve value")
 	}
 	if err := msg.Coin.Validate(); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid bid coin %q: %v", msg.Coin, err)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid bid coin: %v", err)
 	}
 	return nil
 }
