@@ -55,20 +55,16 @@ message MsgCreateFixedPriceAuction {
   // for
   string paying_coin_denom = 4;
 
-  // vesting_address specifies the bech32-encoded vesting address that holds
-  // vesting amounts of coin
-  string vesting_address = 5;
-
   // vesting_schedules specifies the vesting schedules for the auction
-  repeated VestingSchedule vesting_schedules = 6
+  repeated VestingSchedule vesting_schedules = 5
       [ (gogoproto.nullable) = false ];
 
   // start_time specifies the start time of the plan
-  google.protobuf.Timestamp start_time = 7
+  google.protobuf.Timestamp start_time = 6
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // end_time specifies the end time of the plan
-  google.protobuf.Timestamp end_time = 8
+  google.protobuf.Timestamp end_time = 7
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 }
 
@@ -103,33 +99,29 @@ message MsgCreateEnglishAuction {
   // for
   string paying_coin_denom = 4;
 
-  // vesting_address specifies the bech32-encoded vesting address that
-  // holds vesting amounts of coin
-  string vesting_address = 5;
-
   // vesting_schedules specifies the vesting schedules for the auction
-  repeated VestingSchedule vesting_schedules = 6
+  repeated VestingSchedule vesting_schedules = 5
       [ (gogoproto.nullable) = false ];
 
   // maximum_bid_price specifies the maximum bid price for the auction
-  string maximum_bid_price = 7 [
+  string maximum_bid_price = 6 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // extend_rate specifies the rate that decides if the auction needs another
   // round
-  string extend_rate = 8 [
+  string extend_rate = 7 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // start_time specifies the start time of the plan
-  google.protobuf.Timestamp start_time = 9
+  google.protobuf.Timestamp start_time = 8
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // end_time specifies the end time of the plan
-  google.protobuf.Timestamp end_time = 10
+  google.protobuf.Timestamp end_time = 9
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 }
 

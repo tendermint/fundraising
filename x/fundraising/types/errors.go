@@ -8,5 +8,5 @@ import (
 
 // x/fundraising module sentinel errors
 var (
-	ErrSample = sdkerrors.Register(ModuleName, 1100, "sample error")
+	ErrInvalidAuctionEndTime = sdkerrors.Register(ModuleName, 4, "invalid auction end time")
 )

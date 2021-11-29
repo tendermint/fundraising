@@ -5,6 +5,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec/legacy"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 var (
@@ -28,7 +29,6 @@ func NewMsgCreateFixedPriceAuction(
 	startPrice sdk.Dec,
 	sellingCoin sdk.Coin,
 	payingCoinDenom string,
-	vestingAddress string,
 	vestingSchedules []VestingSchedule,
 	startTime time.Time,
 	endTime time.Time,
@@ -38,7 +38,6 @@ func NewMsgCreateFixedPriceAuction(
 		StartPrice:       startPrice,
 		SellingCoin:      sellingCoin,
 		PayingCoinDenom:  payingCoinDenom,
-		VestingAddress:   vestingAddress,
 		VestingSchedules: vestingSchedules,
 		StartTime:        startTime,
 		EndTime:          endTime,
@@ -50,7 +49,24 @@ func (msg MsgCreateFixedPriceAuction) Route() string { return RouterKey }
 func (msg MsgCreateFixedPriceAuction) Type() string { return TypeMsgCreateFixedPriceAuction }
 
 func (msg MsgCreateFixedPriceAuction) ValidateBasic() error {
-	// TODO: not implemented yet
+	if _, err := sdk.AccAddressFromBech32(msg.Auctioneer); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid auctioneer address %q: %v", msg.Auctioneer, err)
+	}
+	if !msg.StartPrice.IsPositive() {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "start price must be positve value %s", msg.StartPrice)
+	}
+	if err := msg.SellingCoin.Validate(); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid selling coin %q: %v", msg.SellingCoin, err)
+	}
+	if err := sdk.ValidateDenom(msg.PayingCoinDenom); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid paygin coin denom %s: %v", msg.PayingCoinDenom, err)
+	}
+
+	if !msg.EndTime.After(msg.StartTime) {
+		return sdkerrors.Wrapf(ErrInvalidAuctionEndTime, "end time %s must be greater than start time %s", msg.EndTime.Format(time.RFC3339), msg.StartTime.Format(time.RFC3339))
+	}
+	// TODO: vesting schedules validation not implemented yet
+
 	return nil
 }
 
@@ -80,7 +96,6 @@ func NewMsgCreateEnglishAuction(
 	startPrice sdk.Dec,
 	sellingCoin sdk.Coin,
 	payingCoinDenom string,
-	vestingAddress string,
 	vestingSchedules []VestingSchedule,
 	maximumBidPrice sdk.Dec,
 	extendRate sdk.Dec,
@@ -92,7 +107,6 @@ func NewMsgCreateEnglishAuction(
 		StartPrice:       startPrice,
 		SellingCoin:      sellingCoin,
 		PayingCoinDenom:  payingCoinDenom,
-		VestingAddress:   vestingAddress,
 		VestingSchedules: vestingSchedules,
 		MaximumBidPrice:  maximumBidPrice,
 		ExtendRate:       extendRate,
