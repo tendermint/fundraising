@@ -11,8 +11,8 @@ The auction interface exposes methods to read and write standard auction informa
 Note that all of these methods operate on a auction struct that confirms to the interface. In order to write the auction to the store, the auction keeper is required.
 
 ```go
-// AuctionI is an interface that exposes common methods to read and write
-// standard auction information.
+// AuctionI is an interface that inherits the BaseAuction and exposes common functions 
+// to get and set standard auction data.
 type AuctionI interface {
 	GetId() uint64
 	SetId(uint64) error
