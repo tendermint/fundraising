@@ -44,7 +44,12 @@ func (k msgServer) CreateEnglishAuction(goCtx context.Context, msg *types.MsgCre
 
 // CancelAuction defines a method to cancel auction.
 func (k msgServer) CancelAuction(goCtx context.Context, msg *types.MsgCancelAuction) (*types.MsgCancelAuctionResponse, error) {
-	// TODO: not implemented yet
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if err := k.Keeper.CancelAuction(ctx, msg.AuctionId); err != nil {
+		return nil, err
+	}
+
 	return &types.MsgCancelAuctionResponse{}, nil
 }
 

@@ -109,6 +109,13 @@ func (k Keeper) SetAuction(ctx sdk.Context, auction types.AuctionI) {
 	store.Set(types.GetAuctionKey(id), bz)
 }
 
+// RemoveAuction removes the auction from the store
+func (k Keeper) RemoveAuction(ctx sdk.Context, auction types.AuctionI) {
+	id := auction.GetId()
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.GetAuctionKey(id))
+}
+
 // IterateAuctions iterates over all the stored auctions and performs a callback function.
 // Stops iteration when callback returns true.
 func (k Keeper) IterateAuctions(ctx sdk.Context, cb func(auction types.AuctionI) (stop bool)) {
@@ -159,6 +166,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 	if err := k.bankKeeper.SendCoins(ctx, auctioneerAcc, sellingReserveAcc, sdk.NewCoins(msg.SellingCoin)); err != nil {
 		return nil, sdkerrors.Wrap(err, "failed to escrow selling coin to selling reserve account")
 	}
+
 	payingReserveAcc := types.PayingReserveAcc(msg.SellingCoin.Denom)
 	vestingReserveAcc := types.VestingReserveAcc(msg.SellingCoin.Denom)
 
@@ -201,4 +209,30 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 	})
 
 	return nil, nil
+}
+
+// CancelAuction cancels the auction in an event of modification for the auction.
+// The auctioneer can only delete it when it is not already started.
+func (k Keeper) CancelAuction(ctx sdk.Context, id uint64) error {
+	auction, found := k.GetAuction(ctx, id)
+	if !found {
+		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", id)
+	}
+
+	if auction.GetStatus() != types.AuctionStatusStandBy {
+		return sdkerrors.Wrap(types.ErrInvalidAuctionStatus, "invalid auction status")
+	}
+
+	// TODO: consider if we want the auction to be deleted or leave history
+	k.RemoveAuction(ctx, auction)
+
+	logger := k.Logger(ctx)
+	logger.Info(
+		"Removed auction",
+		"auction_id", auction.GetId(),
+		"auction_status", auction.GetStatus(),
+		"auction_selling_coin", auction.GetSellingCoin(),
+	)
+
+	return nil
 }

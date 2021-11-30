@@ -17,8 +17,6 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 	auctioneerAcc := sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer")))
 	startTime, _ := time.Parse(time.RFC3339, "2021-11-01T22:00:00+00:00")
 	endTime := startTime.AddDate(0, 1, 0) // add 1 month
-	releaseTime1, _ := time.Parse(time.RFC3339, "2022-06-01T22:08:41+00:00")
-	releaseTime2, _ := time.Parse(time.RFC3339, "2022-12-01T22:08:41+00:00")
 
 	testCases := []struct {
 		expectedErr string
@@ -68,7 +66,7 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 				sdk.NewInt64Coin("ugdex", 10_000_000_000_000),
 				"uatom",
 				[]types.VestingSchedule{
-					types.NewVestingSchedule(releaseTime1, sdk.ZeroDec()),
+					types.NewVestingSchedule(types.ParseTime("2022-06-01T22:08:41+00:00"), sdk.ZeroDec()),
 				},
 				startTime,
 				endTime,
@@ -82,7 +80,7 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 				sdk.NewInt64Coin("ugdex", 10_000_000_000_000),
 				"uatom",
 				[]types.VestingSchedule{
-					types.NewVestingSchedule(releaseTime1, sdk.MustNewDecFromStr("1.1")),
+					types.NewVestingSchedule(types.ParseTime("2022-06-01T22:08:41+00:00"), sdk.MustNewDecFromStr("1.1")),
 				},
 				startTime,
 				endTime,
@@ -96,8 +94,8 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 				sdk.NewInt64Coin("ugdex", 10_000_000_000_000),
 				"uatom",
 				[]types.VestingSchedule{
-					types.NewVestingSchedule(releaseTime1, sdk.MustNewDecFromStr("0.5")),
-					types.NewVestingSchedule(releaseTime2, sdk.MustNewDecFromStr("0.3")),
+					types.NewVestingSchedule(types.ParseTime("2022-06-01T22:08:41+00:00"), sdk.MustNewDecFromStr("0.5")),
+					types.NewVestingSchedule(types.ParseTime("2022-12-01T22:08:41+00:00"), sdk.MustNewDecFromStr("0.3")),
 				},
 				startTime,
 				endTime,
