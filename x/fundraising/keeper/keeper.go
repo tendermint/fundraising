@@ -49,6 +49,7 @@ func NewKeeper(
 		paramSpace:    paramSpace,
 		accountKeeper: accountKeeper,
 		bankKeeper:    bankKeeper,
+		blockedAddrs:  blockedAddrs,
 	}
 }
 
