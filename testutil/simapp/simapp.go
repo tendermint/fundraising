@@ -14,23 +14,7 @@ import (
 	"github.com/tendermint/fundraising/app"
 )
 
-// New creates application instance with in-memory database and disabled logging.
-func New(dir string) cosmoscmd.App {
-	db := tmdb.NewMemDB()
-	logger := log.NewNopLogger()
-
-	encoding := cosmoscmd.MakeEncodingConfig(app.ModuleBasics)
-
-	a := app.New(logger, db, nil, true, map[int64]bool{}, dir, 0, encoding,
-		simapp.EmptyAppOptions{})
-	// InitChain updates deliverState which is required when app.NewContext is called
-	a.InitChain(abci.RequestInitChain{
-		ConsensusParams: defaultConsensusParams,
-		AppStateBytes:   []byte("{}"),
-	})
-	return a
-}
-
+// defaultConsensusParams defines the default Tendermint consensus params used in testing.
 var defaultConsensusParams = &abci.ConsensusParams{
 	Block: &abci.BlockParams{
 		MaxBytes: 200000,
@@ -46,4 +30,28 @@ var defaultConsensusParams = &abci.ConsensusParams{
 			tmtypes.ABCIPubKeyTypeEd25519,
 		},
 	},
+}
+
+// New creates application instance with in-memory database and disabled logging.
+func New(dir string) *app.App {
+	db := tmdb.NewMemDB()
+	logger := log.NewNopLogger()
+
+	encodingCfg := cosmoscmd.MakeEncodingConfig(app.ModuleBasics)
+
+	a := app.New(
+		logger, db, nil, true, map[int64]bool{}, dir, 0, encodingCfg, simapp.EmptyAppOptions{},
+	)
+
+	// InitChain updates deliverState which is required when app.NewContext is called
+	a.InitChain(
+		abci.RequestInitChain{
+			ConsensusParams: defaultConsensusParams,
+			AppStateBytes:   []byte("{}"),
+		},
+	)
+
+	fundraisingApp := a.(*app.App)
+
+	return fundraisingApp
 }
