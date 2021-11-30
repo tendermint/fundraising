@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -30,7 +31,7 @@ func (k Keeper) GetAuctionId(ctx sdk.Context) uint64 {
 	return id
 }
 
-// GetNextAuctionIdWithUpdate increments auction id by one, set the auction id, and returns it.
+// GetNextAuctionIdWithUpdate increments auction id by one and set it.
 func (k Keeper) GetNextAuctionIdWithUpdate(ctx sdk.Context) uint64 {
 	id := k.GetAuctionId(ctx) + 1
 	k.SetAuctionId(ctx, id)
@@ -62,8 +63,8 @@ func (k Keeper) GetSequence(ctx sdk.Context) uint64 {
 	return seq
 }
 
-// GetNextSequence increments sequence by one and returns it.
-func (k Keeper) GetNextSequence(ctx sdk.Context) uint64 {
+// GetNextSequence increments sequence number by one and set it.
+func (k Keeper) GetNextSequenceWithUpdate(ctx sdk.Context) uint64 {
 	id := k.GetAuctionId(ctx) + 1
 	k.SetAuctionId(ctx, id)
 	return id
@@ -153,18 +154,18 @@ func (k Keeper) UnmarshalAuction(bz []byte) (auction types.AuctionI, err error) 
 }
 
 // CreateFixedPriceAuction sets fixed price auction.
-func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFixedPriceAuction) (types.AuctionI, error) {
+func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFixedPriceAuction) error {
 	nextId := k.GetNextAuctionIdWithUpdate(ctx)
 
 	auctioneerAcc, err := sdk.AccAddressFromBech32(msg.Auctioneer)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// escrow the selling coin to the selling reserve account
 	sellingReserveAcc := types.SellingReserveAcc(msg.SellingCoin.Denom)
 	if err := k.bankKeeper.SendCoins(ctx, auctioneerAcc, sellingReserveAcc, sdk.NewCoins(msg.SellingCoin)); err != nil {
-		return nil, sdkerrors.Wrap(err, "failed to escrow selling coin to selling reserve account")
+		return sdkerrors.Wrap(err, "failed to escrow selling coin to selling reserve account")
 	}
 
 	payingReserveAcc := types.PayingReserveAcc(msg.SellingCoin.Denom)
@@ -208,7 +209,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		),
 	})
 
-	return nil, nil
+	return nil
 }
 
 // CancelAuction cancels the auction in an event of modification for the auction.
@@ -233,6 +234,22 @@ func (k Keeper) CancelAuction(ctx sdk.Context, id uint64) error {
 		"auction_status", auction.GetStatus(),
 		"auction_selling_coin", auction.GetSellingCoin(),
 	)
+
+	return nil
+}
+
+// PlaceBid places bid for the auction.
+func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
+	auction, found := k.GetAuction(ctx, msg.AuctionId)
+	if !found {
+		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", msg.AuctionId)
+	}
+
+	fmt.Println(auction)
+	// TODO: not implemented yet
+	//
+	// Get next sequence num
+	// Set bid with auction id + sequence
 
 	return nil
 }

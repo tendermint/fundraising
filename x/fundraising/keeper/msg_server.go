@@ -29,7 +29,7 @@ var _ types.MsgServer = msgServer{}
 func (k msgServer) CreateFixedPriceAuction(goCtx context.Context, msg *types.MsgCreateFixedPriceAuction) (*types.MsgCreateFixedPriceAuctionResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if _, err := k.Keeper.CreateFixedPriceAuction(ctx, msg); err != nil {
+	if err := k.Keeper.CreateFixedPriceAuction(ctx, msg); err != nil {
 		return nil, err
 	}
 
@@ -55,6 +55,11 @@ func (k msgServer) CancelAuction(goCtx context.Context, msg *types.MsgCancelAuct
 
 // PlaceBid defines a method to cancel fundraising.
 func (k msgServer) PlaceBid(goCtx context.Context, msg *types.MsgPlaceBid) (*types.MsgPlaceBidResponse, error) {
-	// TODO: not implemented yet
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if err := k.Keeper.PlaceBid(ctx, msg); err != nil {
+		return nil, err
+	}
+
 	return &types.MsgPlaceBidResponse{}, nil
 }
