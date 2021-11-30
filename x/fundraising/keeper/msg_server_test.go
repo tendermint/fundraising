@@ -5,9 +5,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	testkeeper "github.com/tendermint/fundarising/testutil/keeper"
-	"github.com/tendermint/fundarising/x/fundraising/keeper"
-	"github.com/tendermint/fundarising/x/fundraising/types"
+	testkeeper "github.com/tendermint/fundraising/testutil/keeper"
+	"github.com/tendermint/fundraising/x/fundraising/keeper"
+	"github.com/tendermint/fundraising/x/fundraising/types"
 )
 
 func setupMsgServer(t testing.TB) (
@@ -17,7 +17,7 @@ func setupMsgServer(t testing.TB) (
 ) {
 	ctx, fundraisingKeeper := testkeeper.Fundraising(t)
 
-	return ctx, fundraisingKeeper, keeper.NewMsgServerImpl(*&fundraisingKeeper)
+	return ctx, fundraisingKeeper, keeper.NewMsgServerImpl(*fundraisingKeeper)
 }
 
 func TestMsgCreateFixedPriceAuction(t *testing.T) {
