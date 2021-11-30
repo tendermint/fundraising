@@ -37,11 +37,11 @@ type MsgCreateFixedPriceAuction struct {
 ```
 
 
-## MsgCancelFundraising
+## MsgCancelAuction
 
 ```go
-// MsgCancelFundraising defines a SDK message for cancelling an auction
-type MsgCancelFundraising struct {
+// MsgCancelAuction defines a SDK message for cancelling an auction
+type MsgCancelAuction struct {
 	Auctioneer string // the account that is in charge of the auction
 	AuctionId  uint64 // id of the auction
 }
