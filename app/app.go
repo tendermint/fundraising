@@ -155,6 +155,7 @@ var (
 		govtypes.ModuleName:            {authtypes.Burner},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		// this line is used by starport scaffolding # stargate/app/maccPerms
+		fundraisingtypes.ModuleName: nil,
 	}
 )
 
@@ -352,7 +353,6 @@ func New(
 		app.BankKeeper,
 		app.ModuleAccountAddrs(),
 	)
-	fundraising := fundraising.NewAppModule(appCodec, app.FundraisingKeeper)
 
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
@@ -392,7 +392,7 @@ func New(
 		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 		transferModule,
-		fundraising,
+		fundraising.NewAppModule(appCodec, app.FundraisingKeeper),
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 

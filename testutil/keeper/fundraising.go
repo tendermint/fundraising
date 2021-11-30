@@ -28,6 +28,8 @@ import (
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
 
+// TODO: consider if this testutil keeper package should exist for better testing environment
+
 var (
 	moduleAccountPerms = map[string][]string{
 		authtypes.FeeCollectorName:     nil,

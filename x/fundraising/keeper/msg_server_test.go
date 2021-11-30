@@ -1,64 +1,60 @@
 package keeper_test
 
 import (
-	"testing"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	testkeeper "github.com/tendermint/fundraising/testutil/keeper"
-	"github.com/tendermint/fundraising/x/fundraising/keeper"
 	"github.com/tendermint/fundraising/x/fundraising/types"
+
+	_ "github.com/stretchr/testify/suite"
 )
 
-func setupMsgServer(t testing.TB) (
-	sdk.Context,
-	*keeper.Keeper,
-	types.MsgServer,
-) {
-	ctx, fundraisingKeeper := testkeeper.Fundraising(t)
-
-	return ctx, fundraisingKeeper, keeper.NewMsgServerImpl(*fundraisingKeeper)
-}
-
-func TestMsgCreateFixedPriceAuction(t *testing.T) {
-	sdkCtx, k, srv := setupMsgServer(t)
-	ctx := sdk.WrapSDKContext(sdkCtx)
+func (suite *KeeperTestSuite) TestMsgCreateFixedPriceAuction() {
+	ctx := sdk.WrapSDKContext(suite.ctx)
 
 	for _, tc := range []struct {
 		name string
 		msg  *types.MsgCreateFixedPriceAuction
-		expectedErr error
+		err  error
 	}{
 		{
 			"valid message",
 			types.NewMsgCreateFixedPriceAuction(
-				sample.Address(), 
-				sample.StartPrice("1.0"), 
-				sample.SellingCoin("ugex", 1_000_000_000_000), 
-				sample.PayingCoinDenom(), 
-				vestingSchedules []types.VestingSchedule, 
-				startTime time.Time, 
-				endTime time.Time,
+				suite.addrs[0].String(),
+				suite.StartPrice("1.0"),
+				suite.SellingCoin(1_000_000_000_000),
+				suite.PayingCoinDenom(),
+				suite.VestingSchedules(),
+				types.ParseTime("2021-12-01T00:00:00Z"),
+				types.ParseTime("2022-01-01T00:00:00Z"),
 			),
-			nil
+			nil,
 		},
 	} {
-		t.Run(tc.name, func(t *testing.T) {
-			// TODO: not implemented yet
-			srv.CreateFixedPriceAuction(ctx, tc.msg)
+		suite.Run(tc.name, func() {
+			_, err := suite.srv.CreateFixedPriceAuction(ctx, tc.msg)
+			if tc.err != nil {
+				suite.Require().ErrorIs(err, tc.err)
+				return
+			}
+			suite.Require().NoError(err)
+
+			auction, found := suite.keeper.GetAuction(suite.ctx, 1)
+			fmt.Println("found: ", found)
+			fmt.Println("auction: ", auction)
 		})
 	}
-
 }
 
-func TestMsgCreateEnglishAuction(t *testing.T) {
+func (suite *KeeperTestSuite) TestMsgCreateEnglishAuction() {
 	// TODO: not implemented yet
 }
 
-func TestMsgCancelAuction(t *testing.T) {
+func (suite *KeeperTestSuite) TestMsgCancelAuction() {
 	// TODO: not implemented yet
 }
 
-func TestMsgPlaceBid(t *testing.T) {
+func (suite *KeeperTestSuite) TestMsgPlaceBid() {
 	// TODO: not implemented yet
 }

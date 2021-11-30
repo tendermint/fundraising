@@ -30,8 +30,8 @@ func (k Keeper) GetAuctionId(ctx sdk.Context) uint64 {
 	return id
 }
 
-// GetNextAuctionId increments auction id by one and returns it.
-func (k Keeper) GetNextAuctionId(ctx sdk.Context) uint64 {
+// GetNextAuctionIdWithUpdate increments auction id by one, set the auction id, and returns it.
+func (k Keeper) GetNextAuctionIdWithUpdate(ctx sdk.Context) uint64 {
 	id := k.GetAuctionId(ctx) + 1
 	k.SetAuctionId(ctx, id)
 	return id
@@ -140,14 +140,14 @@ func (k Keeper) MarshalAuction(auction types.AuctionI) ([]byte, error) { // noli
 }
 
 // UnmarshalAuction returns an auction from raw serialized
-// bytes of a Proto-based Plan type.
+// bytes of a Proto-based Auction type.
 func (k Keeper) UnmarshalAuction(bz []byte) (auction types.AuctionI, err error) {
 	return auction, k.cdc.UnmarshalInterface(bz, &auction)
 }
 
 // CreateFixedPriceAuction sets fixed price auction.
 func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFixedPriceAuction) (types.AuctionI, error) {
-	nextId := k.GetNextAuctionId(ctx)
+	nextId := k.GetNextAuctionIdWithUpdate(ctx)
 
 	auctioneerAcc, err := sdk.AccAddressFromBech32(msg.Auctioneer)
 	if err != nil {
