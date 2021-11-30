@@ -1,9 +1,13 @@
 package keeper
 
 import (
+	"strconv"
+	"time"
+
 	gogotypes "github.com/gogo/protobuf/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
@@ -139,4 +143,62 @@ func (k Keeper) MarshalAuction(auction types.AuctionI) ([]byte, error) { // noli
 // bytes of a Proto-based Plan type.
 func (k Keeper) UnmarshalAuction(bz []byte) (auction types.AuctionI, err error) {
 	return auction, k.cdc.UnmarshalInterface(bz, &auction)
+}
+
+// CreateFixedPriceAuction sets fixed price auction.
+func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFixedPriceAuction) (types.AuctionI, error) {
+	nextId := k.GetNextAuctionId(ctx)
+
+	auctioneerAcc, err := sdk.AccAddressFromBech32(msg.Auctioneer)
+	if err != nil {
+		return nil, err
+	}
+
+	// escrow the selling coin to the selling reserve account
+	sellingReserveAcc := types.SellingReserveAcc(msg.SellingCoin.Denom)
+	if err := k.bankKeeper.SendCoins(ctx, auctioneerAcc, sellingReserveAcc, sdk.NewCoins(msg.SellingCoin)); err != nil {
+		return nil, sdkerrors.Wrap(err, "failed to escrow selling coin to selling reserve account")
+	}
+	payingReserveAcc := types.PayingReserveAcc(msg.SellingCoin.Denom)
+	vestingReserveAcc := types.VestingReserveAcc(msg.SellingCoin.Denom)
+
+	baseAuction := types.NewBaseAuction(
+		nextId,
+		types.AuctionTypeFixedPrice,
+		auctioneerAcc.String(),
+		sellingReserveAcc.String(),
+		payingReserveAcc.String(),
+		msg.StartPrice,
+		msg.SellingCoin,
+		msg.PayingCoinDenom,
+		vestingReserveAcc.String(),
+		msg.VestingSchedules,
+		msg.StartTime,
+		[]time.Time{msg.EndTime},
+		types.AuctionStatusStandBy,
+	)
+
+	fixedPriceAuction := types.NewFixedPriceAuction(baseAuction)
+
+	k.SetAuction(ctx, fixedPriceAuction)
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCreateFixedPriceAuction,
+			sdk.NewAttribute(types.AttributeKeyAuctionId, strconv.FormatUint(nextId, 10)),
+			sdk.NewAttribute(types.AttributeKeyAuctioneerAddress, auctioneerAcc.String()),
+			sdk.NewAttribute(types.AttributeKeyStartPrice, msg.StartPrice.String()),
+			sdk.NewAttribute(types.AttributeKeySellingPoolAddress, sellingReserveAcc.String()),
+			sdk.NewAttribute(types.AttributeKeyPayingPoolAddress, payingReserveAcc.String()),
+			sdk.NewAttribute(types.AttributeKeyVestingPoolAddress, vestingReserveAcc.String()),
+			sdk.NewAttribute(types.AttributeKeySellingCoin, msg.SellingCoin.String()),
+			sdk.NewAttribute(types.AttributeKeyPayingCoinDenom, msg.PayingCoinDenom),
+			// sdk.NewAttribute(types.AttributeKeyVestingSchedules, msg.VestingSchedules), // TODO: stringtify
+			sdk.NewAttribute(types.AttributeKeyStartTime, msg.StartTime.String()),
+			sdk.NewAttribute(types.AttributeKeyEndTime, msg.EndTime.String()),
+			sdk.NewAttribute(types.AttributeKeyAuctionStatus, types.AuctionStatusStandBy.String()),
+		),
+	})
+
+	return nil, nil
 }

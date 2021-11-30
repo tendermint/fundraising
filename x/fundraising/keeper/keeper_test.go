@@ -6,11 +6,16 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/tendermint/fundraising/app"
+	"github.com/tendermint/fundraising/testutil/simapp"
 	"github.com/tendermint/fundraising/x/fundraising/keeper"
 )
 
+//
+// TODO: not implemented yet
+//
 type KeeperTestSuite struct {
 	suite.Suite
 
@@ -18,7 +23,6 @@ type KeeperTestSuite struct {
 	ctx     sdk.Context
 	keeper  keeper.Keeper
 	querier keeper.Querier
-	// TODO: not implemented yet
 }
 
 func TestKeeperTestSuite(t *testing.T) {
@@ -26,5 +30,11 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (suite *KeeperTestSuite) SetupTest() {
-	// TODO: not implemented yet
+	app := simapp.New(app.DefaultNodeHome)
+	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
+
+	suite.app = app
+	suite.ctx = ctx
+	suite.keeper = suite.app.FundraisingKeeper
+	suite.querier = keeper.Querier{Keeper: suite.keeper}
 }

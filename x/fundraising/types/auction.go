@@ -9,6 +9,17 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
+const (
+	SellingReserveAccPrefix string = "SellingReserveAcc"
+	PayingReserveAccPrefix  string = "PayingReserveAcc"
+	VestingReserveAccPrefix string = "VestingReserveAcc"
+	AccNameSplitter         string = "|"
+
+	// ReserveAddressType is an address type of reserve pool for selling or paying.
+	// The module uses the address type of 32 bytes length, but it can be changed depending on Cosmos SDK's direction.
+	ReserveAddressType = AddressType32Bytes
+)
+
 var (
 	_ AuctionI = (*FixedPriceAuction)(nil)
 	_ AuctionI = (*EnglishAuction)(nil)
@@ -17,8 +28,8 @@ var (
 // NewBaseAuction creates a new BaseAuction object
 //nolint:interfacer
 func NewBaseAuction(
-	id uint64, name string, typ AuctionType, auctioneerAddr string,
-	sellingPoolAddr string, payingPoolAddr string, startPrice sdk.Dec, sellingCoin sdk.Coin,
+	id uint64, typ AuctionType, auctioneerAddr string, sellingPoolAddr string,
+	payingPoolAddr string, startPrice sdk.Dec, sellingCoin sdk.Coin,
 	payingCoinDenom string, vestingAddr string, vestingSchedules []VestingSchedule,
 	startTime time.Time, endTimes []time.Time, status AuctionStatus,
 ) *BaseAuction {
@@ -243,4 +254,19 @@ type AuctionI interface {
 
 	GetStatus() AuctionStatus
 	SetStatus(AuctionStatus) error
+}
+
+// SellingReserveAcc returns module account for the selling reserve pool account with the given selling coin denom.
+func SellingReserveAcc(sellingCoinDenom string) sdk.AccAddress {
+	return DeriveAddress(ReserveAddressType, ModuleName, SellingReserveAccPrefix+AccNameSplitter+sellingCoinDenom)
+}
+
+// PayingReserveAcc returns module account for the paying reserve pool account with the given selling coin denom.
+func PayingReserveAcc(sellingCoinDenom string) sdk.AccAddress {
+	return DeriveAddress(ReserveAddressType, ModuleName, PayingReserveAccPrefix+AccNameSplitter+sellingCoinDenom)
+}
+
+// VestingReserveAcc returns module account for the vesting reserve pool account with the given selling coin denom.
+func VestingReserveAcc(sellingCoinDenom string) sdk.AccAddress {
+	return DeriveAddress(ReserveAddressType, ModuleName, VestingReserveAccPrefix+AccNameSplitter+sellingCoinDenom)
 }

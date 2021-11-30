@@ -139,14 +139,14 @@ func TestMsgCreateEnglishAuction(t *testing.T) {
 	// TODO: not implemented yet
 }
 
-func TestMsgCancelFundraising(t *testing.T) {
+func TestMsgCancelAuction(t *testing.T) {
 	testCases := []struct {
 		expectedErr string
-		msg         *types.MsgCancelFundraising
+		msg         *types.MsgCancelAuction
 	}{
 		{
 			"", // empty means no error expected
-			types.NewMsgCancelFundraising(
+			types.NewMsgCancelAuction(
 				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				uint64(1),
 			),
@@ -154,8 +154,8 @@ func TestMsgCancelFundraising(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		require.IsType(t, &types.MsgCancelFundraising{}, tc.msg)
-		require.Equal(t, types.TypeMsgCancelFundraising, tc.msg.Type())
+		require.IsType(t, &types.MsgCancelAuction{}, tc.msg)
+		require.Equal(t, types.TypeMsgCancelAuction, tc.msg.Type())
 		require.Equal(t, types.RouterKey, tc.msg.Route())
 		require.Equal(t, sdk.MustSortJSON(legacy.Cdc.MustMarshalJSON(tc.msg)), tc.msg.GetSignBytes())
 
