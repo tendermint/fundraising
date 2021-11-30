@@ -21,7 +21,34 @@ func setupMsgServer(t testing.TB) (
 }
 
 func TestMsgCreateFixedPriceAuction(t *testing.T) {
-	// TODO: not implemented yet
+	sdkCtx, k, srv := setupMsgServer(t)
+	ctx := sdk.WrapSDKContext(sdkCtx)
+
+	for _, tc := range []struct {
+		name string
+		msg  *types.MsgCreateFixedPriceAuction
+		expectedErr error
+	}{
+		{
+			"valid message",
+			types.NewMsgCreateFixedPriceAuction(
+				sample.Address(), 
+				sample.StartPrice("1.0"), 
+				sample.SellingCoin("ugex", 1_000_000_000_000), 
+				sample.PayingCoinDenom(), 
+				vestingSchedules []types.VestingSchedule, 
+				startTime time.Time, 
+				endTime time.Time,
+			),
+			nil
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			// TODO: not implemented yet
+			srv.CreateFixedPriceAuction(ctx, tc.msg)
+		})
+	}
+
 }
 
 func TestMsgCreateEnglishAuction(t *testing.T) {

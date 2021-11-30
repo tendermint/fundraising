@@ -183,8 +183,8 @@ message AuctionMetadata {
 
 // VestingSchedule defines the vesting schedule for the owner of an auction.
 message VestingSchedule {
-  // distributed_time specifies the time for distribution of the vesting coin
-  google.protobuf.Timestamp distributed_time = 1
+  // release_time specifies the time for distribution of the vesting coin
+  google.protobuf.Timestamp release_time = 1
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // weight specifies the vesting weight for the schedule
