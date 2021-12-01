@@ -45,38 +45,6 @@ func (k Keeper) SetAuctionId(ctx sdk.Context, id uint64) {
 	store.Set(types.AuctionIdKey, bz)
 }
 
-// GetSequence returns the last sequence number of the bid.
-func (k Keeper) GetSequence(ctx sdk.Context) uint64 {
-	var seq uint64
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.SequenceKey)
-	if bz == nil {
-		seq = 0 // initialize the sequence
-	} else {
-		val := gogotypes.UInt64Value{}
-		err := k.cdc.Unmarshal(bz, &val)
-		if err != nil {
-			panic(err)
-		}
-		seq = val.GetValue()
-	}
-	return seq
-}
-
-// GetNextSequence increments sequence number by one and set it.
-func (k Keeper) GetNextSequenceWithUpdate(ctx sdk.Context) uint64 {
-	id := k.GetAuctionId(ctx) + 1
-	k.SetAuctionId(ctx, id)
-	return id
-}
-
-// SetSequence sets the sequence number of the bid.
-func (k Keeper) SetSequence(ctx sdk.Context, seq uint64) {
-	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshal(&gogotypes.UInt64Value{Value: seq})
-	store.Set(types.SequenceKey, bz)
-}
-
 // GetAuction returns an auction for a given auction id.
 func (k Keeper) GetAuction(ctx sdk.Context, id uint64) (auction types.AuctionI, found bool) {
 	store := ctx.KVStore(k.storeKey)
@@ -115,25 +83,6 @@ func (k Keeper) RemoveAuction(ctx sdk.Context, auction types.AuctionI) {
 	id := auction.GetId()
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(types.GetAuctionKey(id))
-}
-
-// GetBidWithSequence returns the bid from its indexes.
-func (k Keeper) GetBidWithSequence(ctx sdk.Context, auctionID uint64, sequence uint64) (bid types.Bid, found bool) {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetSequenceIndexKey(auctionID, sequence))
-	if bz == nil {
-		return bid, false
-	}
-	k.cdc.MustUnmarshal(bz, &bid)
-
-	return bid, true
-}
-
-// SetBidWithSequence sets a bid in the store with its indexes.
-func (k Keeper) SetBidWithSequence(ctx sdk.Context, auctionID uint64, sequence uint64, bid types.Bid) {
-	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshal(&bid)
-	store.Set(types.GetSequenceIndexKey(auctionID, sequence), bz)
 }
 
 // IterateAuctions iterates over all the stored auctions and performs a callback function.
@@ -264,13 +213,8 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", msg.AuctionId)
 	}
 
-	nextSeq := k.GetNextSequenceWithUpdate(ctx)
-
 	// TODO: not implemented yet
-	//
-	// Get next sequence num
-	// Set bid with auction id + sequence
-	fmt.Println(auction, nextSeq)
+	fmt.Println(auction)
 
 	return nil
 }

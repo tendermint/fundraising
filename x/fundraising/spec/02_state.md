@@ -74,8 +74,8 @@ type BaseAuction struct {
 	PayingCoinDenom    string            // the paying coin denom that bidders use to bid for
 	VestingAddress     string            // the vesting account that releases the paying amount of coins based on the schedules
 	VestingSchedules   []VestingSchedule // vesting schedules for the auction
-	WinningPrice       sdk.Dec 			 // the winning price of the auction
-	TotalSellingCoin   sdk.Coin 		 // the total amount of coin that is sold when the auction is finished
+	WinningPrice       sdk.Dec           // the winning price of the auction
+	TotalSellingCoin   sdk.Coin          // the total amount of coin that is sold when the auction is finished
 	StartTime          time.Time         // start time of the auction
 	EndTime            []time.Time       // end times of the auction since extended round(s) can occur
 	Status             AuctionStatus     // the auction status
