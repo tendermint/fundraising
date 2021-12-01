@@ -76,16 +76,29 @@ message BaseAuction {
   repeated VestingSchedule vesting_schedules = 10
       [ (gogoproto.nullable) = false ];
 
+  // winning_price specifies the winning price of the auction
+  string winning_price = 11 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // total_selling_coin specifes the total amount of coin that is sold when the
+  // auction is finished
+  cosmos.base.v1beta1.Coin total_selling_coin = 12 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
+
   // start_time specifies the start time of the plan
-  google.protobuf.Timestamp start_time = 11
+  google.protobuf.Timestamp start_time = 13
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // end_times specifies the end time of the plan
-  repeated google.protobuf.Timestamp end_times = 12
+  repeated google.protobuf.Timestamp end_times = 14
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // status specifies the auction status
-  AuctionStatus status = 13;
+  AuctionStatus status = 15;
 }
 
 // FixedPriceAuction defines the fixed price auction type. It is the most
@@ -160,25 +173,6 @@ enum AuctionStatus {
   // AUCTION_STATUS_CANCELLED defines the cancelled auction status
   AUCTION_STATUS_CANCELLED = 5
       [ (gogoproto.enumvalue_customname) = "AuctionStatusCancelled" ];
-}
-
-// AuctionMetadata defines the metadata for the auction
-message AuctionMetadata {
-  // auction_id specifes the id of the auction
-  uint64 auction_id = 1;
-
-  // winning_price specifies the winning price of the auction
-  string winning_price = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
-  // total_selling_coin specifes the total amount of coin that is sold when the
-  // auction is finished
-  cosmos.base.v1beta1.Coin total_selling_coin = 3 [
-    (gogoproto.nullable) = false,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
-  ];
 }
 
 // VestingSchedule defines the vesting schedule for the owner of an auction.
