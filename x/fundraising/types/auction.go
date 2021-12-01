@@ -31,7 +31,8 @@ func NewBaseAuction(
 	id uint64, typ AuctionType, auctioneerAddr string, sellingPoolAddr string,
 	payingPoolAddr string, startPrice sdk.Dec, sellingCoin sdk.Coin,
 	payingCoinDenom string, vestingAddr string, vestingSchedules []VestingSchedule,
-	startTime time.Time, endTimes []time.Time, status AuctionStatus,
+	winningPrice sdk.Dec, totalSellingCoin sdk.Coin, startTime time.Time,
+	endTimes []time.Time, status AuctionStatus,
 ) *BaseAuction {
 	return &BaseAuction{
 		Id:                 id,
@@ -44,6 +45,8 @@ func NewBaseAuction(
 		PayingCoinDenom:    payingCoinDenom,
 		VestingAddress:     vestingAddr,
 		VestingSchedules:   vestingSchedules,
+		WinningPrice:       winningPrice,
+		TotalSellingCoin:   totalSellingCoin,
 		StartTime:          startTime,
 		EndTimes:           endTimes,
 		Status:             status,
@@ -144,7 +147,7 @@ func (ba BaseAuction) GetWinningPrice() sdk.Dec {
 	return ba.WinningPrice
 }
 
-func (ba BaseAuction) SetWinningPrice(price sdk.Dec) error {
+func (ba *BaseAuction) SetWinningPrice(price sdk.Dec) error {
 	ba.WinningPrice = price
 	return nil
 }
@@ -153,7 +156,7 @@ func (ba BaseAuction) GetTotalSellingCoin() sdk.Coin {
 	return ba.TotalSellingCoin
 }
 
-func (ba BaseAuction) SetTotalSellingCoin(coin sdk.Coin) error {
+func (ba *BaseAuction) SetTotalSellingCoin(coin sdk.Coin) error {
 	ba.TotalSellingCoin = coin
 	return nil
 }
