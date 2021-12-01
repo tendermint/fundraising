@@ -69,5 +69,5 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 	k.paramSpace.SetParamSet(ctx, &params)
 }
 
-// GetCodec returns codec.Codec object used by the keeper>
+// GetCodec returns codec.Codec object used by the keeper.
 func (k Keeper) GetCodec() codec.BinaryCodec { return k.cdc }

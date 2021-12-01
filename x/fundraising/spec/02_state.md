@@ -175,10 +175,10 @@ type Bid struct {
 
 ## Parameters
 
-- ModuleName: `farming`
-- RouterKey: `farming`
-- StoreKey: `farming`
-- QuerierRoute: `farming`
+- ModuleName: `fundraising`
+- RouterKey: `fundraising`
+- StoreKey: `fundraising`
+- QuerierRoute: `fundraising`
 
 ## Stores
 
@@ -196,13 +196,9 @@ Stores are KVStores in the multi-store. The key to find the store is the first p
 
 - `AuctionKeyPrefix: 0x21 | AuctionId -> ProtocolBuffer(Auction)`
 
-### prefix key for auctioneer address to find an auction id
-
-- `AuctioneerKeyPrefix: 0x22 | AuctioneerAddrLen (1 byte) | AuctioneerAddr -> uint64`
-
 ### prefix key for the auction id with the sequence number to find the bid
 
-- `SequenceKeyPrefix: 0x31 | Sequence -> ProtocolBuffer(Bid)`
+- `SequenceKeyPrefix: 0x31 | AuctionId | Sequence -> ProtocolBuffer(Bid)`
 
 ### prefix key for auction id with bidder address to find the sequence number
 
