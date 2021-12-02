@@ -213,12 +213,13 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", msg.AuctionId)
 	}
 
-	if !msg.Price.Equal(auction.GetStartPrice()) {
-		return sdkerrors.Wrap(types.ErrInvalidStartPrice, "bid price must be equal to start price")
+	// substract total selling coin from the request amount of coin when the request is fixed price auction type
+	if auction.GetType() == types.AuctionTypeFixedPrice {
+		if !msg.Price.Equal(auction.GetStartPrice()) {
+			return sdkerrors.Wrap(types.ErrInvalidStartPrice, "bid price must be equal to start price")
+		}
+		auction.SetTotalSellingCoin(auction.GetTotalSellingCoin().Sub(msg.Coin))
 	}
-
-	// substract total selling coin from the request amount of coin
-	auction.SetTotalSellingCoin(auction.GetTotalSellingCoin().Sub(msg.Coin))
 
 	k.SetAuction(ctx, auction)
 

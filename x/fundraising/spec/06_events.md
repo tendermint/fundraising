@@ -59,5 +59,5 @@ The `fundraising` module emits the following events:
 | place_bid | price          | {price}         |
 | place_bid | coin           | {coin}          |
 | message   | module         | fundraising     |
-| message   | action         | cancel_auction  |
+| message   | action         | place_bid       |
 | message   | bidder         | {bidderAddress} | 
