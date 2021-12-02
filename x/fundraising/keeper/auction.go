@@ -218,7 +218,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 		if !msg.Price.Equal(auction.GetStartPrice()) {
 			return sdkerrors.Wrap(types.ErrInvalidStartPrice, "bid price must be equal to start price")
 		}
-		auction.SetTotalSellingCoin(auction.GetTotalSellingCoin().Sub(msg.Coin))
+		_ = auction.SetTotalSellingCoin(auction.GetTotalSellingCoin().Sub(msg.Coin))
 	}
 
 	k.SetAuction(ctx, auction)
