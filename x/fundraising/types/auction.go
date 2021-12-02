@@ -9,6 +9,17 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
+const (
+	SellingReserveAccPrefix string = "SellingReserveAcc"
+	PayingReserveAccPrefix  string = "PayingReserveAcc"
+	VestingReserveAccPrefix string = "VestingReserveAcc"
+	AccNameSplitter         string = "|"
+
+	// ReserveAddressType is an address type of reserve pool for selling or paying.
+	// The module uses the address type of 32 bytes length, but it can be changed depending on Cosmos SDK's direction.
+	ReserveAddressType = AddressType32Bytes
+)
+
 var (
 	_ AuctionI = (*FixedPriceAuction)(nil)
 	_ AuctionI = (*EnglishAuction)(nil)
@@ -17,10 +28,11 @@ var (
 // NewBaseAuction creates a new BaseAuction object
 //nolint:interfacer
 func NewBaseAuction(
-	id uint64, name string, typ AuctionType, auctioneerAddr string,
-	sellingPoolAddr string, payingPoolAddr string, startPrice sdk.Dec, sellingCoin sdk.Coin,
+	id uint64, typ AuctionType, auctioneerAddr string, sellingPoolAddr string,
+	payingPoolAddr string, startPrice sdk.Dec, sellingCoin sdk.Coin,
 	payingCoinDenom string, vestingAddr string, vestingSchedules []VestingSchedule,
-	startTime time.Time, endTimes []time.Time, status AuctionStatus,
+	winningPrice sdk.Dec, totalSellingCoin sdk.Coin, startTime time.Time,
+	endTimes []time.Time, status AuctionStatus,
 ) *BaseAuction {
 	return &BaseAuction{
 		Id:                 id,
@@ -33,164 +45,184 @@ func NewBaseAuction(
 		PayingCoinDenom:    payingCoinDenom,
 		VestingAddress:     vestingAddr,
 		VestingSchedules:   vestingSchedules,
+		WinningPrice:       winningPrice,
+		TotalSellingCoin:   totalSellingCoin,
 		StartTime:          startTime,
 		EndTimes:           endTimes,
 		Status:             status,
 	}
 }
 
-func (auction BaseAuction) GetId() uint64 { //nolint:golint
-	return auction.Id
+func (ba BaseAuction) GetId() uint64 { //nolint:golint
+	return ba.Id
 }
 
-func (auction *BaseAuction) SetId(id uint64) error { //nolint:golint
-	auction.Id = id
+func (ba *BaseAuction) SetId(id uint64) error { //nolint:golint
+	ba.Id = id
 	return nil
 }
 
-func (auction BaseAuction) GetType() AuctionType {
-	return auction.Type
+func (ba BaseAuction) GetType() AuctionType {
+	return ba.Type
 }
 
-func (auction *BaseAuction) SetType(typ AuctionType) error {
-	auction.Type = typ
+func (ba *BaseAuction) SetType(typ AuctionType) error {
+	ba.Type = typ
 	return nil
 }
 
-func (auction BaseAuction) GetAuctioneer() string {
-	return auction.Auctioneer
+func (ba BaseAuction) GetAuctioneer() string {
+	return ba.Auctioneer
 }
 
-func (auction *BaseAuction) SetAuctioneer(addr string) error {
-	auction.Auctioneer = addr
+func (ba *BaseAuction) SetAuctioneer(addr string) error {
+	ba.Auctioneer = addr
 	return nil
 }
 
-func (auction BaseAuction) GetSellingPoolAddress() string {
-	return auction.SellingPoolAddress
+func (ba BaseAuction) GetSellingPoolAddress() string {
+	return ba.SellingPoolAddress
 }
 
-func (auction *BaseAuction) SetSellingPoolAddress(addr string) error {
-	auction.SellingPoolAddress = addr
+func (ba *BaseAuction) SetSellingPoolAddress(addr string) error {
+	ba.SellingPoolAddress = addr
 	return nil
 }
 
-func (auction BaseAuction) GetPayingPoolAddress() string {
-	return auction.PayingPoolAddress
+func (ba BaseAuction) GetPayingPoolAddress() string {
+	return ba.PayingPoolAddress
 }
 
-func (auction *BaseAuction) SetPayingPoolAddress(addr string) error {
-	auction.PayingPoolAddress = addr
+func (ba *BaseAuction) SetPayingPoolAddress(addr string) error {
+	ba.PayingPoolAddress = addr
 	return nil
 }
 
-func (auction BaseAuction) GetStartPrice() sdk.Dec {
-	return auction.StartPrice
+func (ba BaseAuction) GetStartPrice() sdk.Dec {
+	return ba.StartPrice
 }
 
-func (auction *BaseAuction) SetStartPrice(price sdk.Dec) error {
-	auction.StartPrice = price
+func (ba *BaseAuction) SetStartPrice(price sdk.Dec) error {
+	ba.StartPrice = price
 	return nil
 }
 
-func (auction BaseAuction) GetSellingCoin() sdk.Coin {
-	return auction.SellingCoin
+func (ba BaseAuction) GetSellingCoin() sdk.Coin {
+	return ba.SellingCoin
 }
 
-func (auction *BaseAuction) SetSellingCoin(coin sdk.Coin) error {
-	auction.SellingCoin = coin
+func (ba *BaseAuction) SetSellingCoin(coin sdk.Coin) error {
+	ba.SellingCoin = coin
 	return nil
 }
 
-func (auction BaseAuction) GetPayingCoinDenom() string {
-	return auction.PayingCoinDenom
+func (ba BaseAuction) GetPayingCoinDenom() string {
+	return ba.PayingCoinDenom
 }
 
-func (auction *BaseAuction) SetPayingCoinDenom(denom string) error {
-	auction.PayingCoinDenom = denom
+func (ba *BaseAuction) SetPayingCoinDenom(denom string) error {
+	ba.PayingCoinDenom = denom
 	return nil
 }
 
-func (auction BaseAuction) GetVestingAddress() string {
-	return auction.VestingAddress
+func (ba BaseAuction) GetVestingAddress() string {
+	return ba.VestingAddress
 }
 
-func (auction *BaseAuction) SetVestingAddress(addr string) error {
-	auction.VestingAddress = addr
+func (ba *BaseAuction) SetVestingAddress(addr string) error {
+	ba.VestingAddress = addr
 	return nil
 }
 
-func (auction BaseAuction) GetVestingSchedules() []VestingSchedule {
-	return auction.VestingSchedules
+func (ba BaseAuction) GetVestingSchedules() []VestingSchedule {
+	return ba.VestingSchedules
 }
 
-func (auction *BaseAuction) SetVestingSchedules(schedules []VestingSchedule) error {
-	auction.VestingSchedules = schedules
+func (ba *BaseAuction) SetVestingSchedules(schedules []VestingSchedule) error {
+	ba.VestingSchedules = schedules
 	return nil
 }
 
-func (auction BaseAuction) GetStartTime() time.Time {
-	return auction.StartTime
+func (ba BaseAuction) GetWinningPrice() sdk.Dec {
+	return ba.WinningPrice
 }
 
-func (auction *BaseAuction) SetStartTime(t time.Time) error {
-	auction.StartTime = t
+func (ba *BaseAuction) SetWinningPrice(price sdk.Dec) error {
+	ba.WinningPrice = price
 	return nil
 }
 
-func (auction BaseAuction) GetEndTimes() []time.Time {
-	return auction.EndTimes
+func (ba BaseAuction) GetTotalSellingCoin() sdk.Coin {
+	return ba.TotalSellingCoin
 }
 
-func (auction *BaseAuction) SetEndTimes(t []time.Time) error {
-	auction.EndTimes = t
+func (ba *BaseAuction) SetTotalSellingCoin(coin sdk.Coin) error {
+	ba.TotalSellingCoin = coin
 	return nil
 }
 
-func (auction BaseAuction) GetStatus() AuctionStatus {
-	return auction.Status
+func (ba BaseAuction) GetStartTime() time.Time {
+	return ba.StartTime
 }
 
-func (auction *BaseAuction) SetStatus(status AuctionStatus) error {
-	auction.Status = status
+func (ba *BaseAuction) SetStartTime(t time.Time) error {
+	ba.StartTime = t
+	return nil
+}
+
+func (ba BaseAuction) GetEndTimes() []time.Time {
+	return ba.EndTimes
+}
+
+func (ba *BaseAuction) SetEndTimes(t []time.Time) error {
+	ba.EndTimes = t
+	return nil
+}
+
+func (ba BaseAuction) GetStatus() AuctionStatus {
+	return ba.Status
+}
+
+func (ba *BaseAuction) SetStatus(status AuctionStatus) error {
+	ba.Status = status
 	return nil
 }
 
 // Validate checks for errors on the Auction fields
-func (auction BaseAuction) Validate() error {
-	if auction.Type != AuctionTypeFixedPrice && auction.Type != AuctionTypeEnglish {
-		return sdkerrors.Wrapf(ErrInvalidAuctionType, "unknown plan type: %s", auction.Type)
+func (ba BaseAuction) Validate() error {
+	if ba.Type != AuctionTypeFixedPrice && ba.Type != AuctionTypeEnglish {
+		return sdkerrors.Wrapf(ErrInvalidAuctionType, "unknown plan type: %s", ba.Type)
 	}
-	if _, err := sdk.AccAddressFromBech32(auction.Auctioneer); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid auctioneer address %q: %v", auction.Auctioneer, err)
+	if _, err := sdk.AccAddressFromBech32(ba.Auctioneer); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid auctioneer address %q: %v", ba.Auctioneer, err)
 	}
-	if _, err := sdk.AccAddressFromBech32(auction.SellingPoolAddress); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid selling pool address %q: %v", auction.SellingPoolAddress, err)
+	if _, err := sdk.AccAddressFromBech32(ba.SellingPoolAddress); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid selling pool address %q: %v", ba.SellingPoolAddress, err)
 	}
-	if _, err := sdk.AccAddressFromBech32(auction.PayingPoolAddress); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid paying pool address %q: %v", auction.PayingPoolAddress, err)
+	if _, err := sdk.AccAddressFromBech32(ba.PayingPoolAddress); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid paying pool address %q: %v", ba.PayingPoolAddress, err)
 	}
-	if _, err := sdk.AccAddressFromBech32(auction.VestingAddress); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid vesting address %q: %v", auction.VestingAddress, err)
+	if _, err := sdk.AccAddressFromBech32(ba.VestingAddress); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid vesting address %q: %v", ba.VestingAddress, err)
 	}
-	if !auction.StartPrice.IsPositive() {
-		return sdkerrors.Wrapf(ErrInvalidStartPrice, "invalid start price: %f", auction.StartPrice)
+	if !ba.StartPrice.IsPositive() {
+		return sdkerrors.Wrapf(ErrInvalidStartPrice, "invalid start price: %f", ba.StartPrice)
 	}
-	if err := auction.SellingCoin.Validate(); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "invalid selling coin: %v", auction.SellingCoin)
+	if err := ba.SellingCoin.Validate(); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "invalid selling coin: %v", ba.SellingCoin)
 	}
 	// TODO: not implemented yet
 	return nil
 }
 
-// NewFixedPriceAuction returns a new fixed price auction.
+// NewFixedPriceAuction returns a new fixed price ba.
 func NewFixedPriceAuction(baseAuction *BaseAuction) *FixedPriceAuction {
 	return &FixedPriceAuction{
 		BaseAuction: baseAuction,
 	}
 }
 
-// NewEnglishAuction returns a new english auction.
+// NewEnglishAuction returns a new english ba.
 func NewEnglishAuction(baseAuction *BaseAuction, maximumBidPrice sdk.Dec, extended uint32, extendRate sdk.Dec) *EnglishAuction {
 	return &EnglishAuction{
 		BaseAuction:     baseAuction,
@@ -235,6 +267,12 @@ type AuctionI interface {
 	GetVestingSchedules() []VestingSchedule
 	SetVestingSchedules([]VestingSchedule) error
 
+	GetWinningPrice() sdk.Dec
+	SetWinningPrice(sdk.Dec) error
+
+	GetTotalSellingCoin() sdk.Coin
+	SetTotalSellingCoin(sdk.Coin) error
+
 	GetStartTime() time.Time
 	SetStartTime(time.Time) error
 
@@ -243,4 +281,19 @@ type AuctionI interface {
 
 	GetStatus() AuctionStatus
 	SetStatus(AuctionStatus) error
+}
+
+// SellingReserveAcc returns module account for the selling reserve pool account with the given selling coin denom.
+func SellingReserveAcc(sellingCoinDenom string) sdk.AccAddress {
+	return DeriveAddress(ReserveAddressType, ModuleName, SellingReserveAccPrefix+AccNameSplitter+sellingCoinDenom)
+}
+
+// PayingReserveAcc returns module account for the paying reserve pool account with the given selling coin denom.
+func PayingReserveAcc(sellingCoinDenom string) sdk.AccAddress {
+	return DeriveAddress(ReserveAddressType, ModuleName, PayingReserveAccPrefix+AccNameSplitter+sellingCoinDenom)
+}
+
+// VestingReserveAcc returns module account for the vesting reserve pool account with the given selling coin denom.
+func VestingReserveAcc(sellingCoinDenom string) sdk.AccAddress {
+	return DeriveAddress(ReserveAddressType, ModuleName, VestingReserveAccPrefix+AccNameSplitter+sellingCoinDenom)
 }

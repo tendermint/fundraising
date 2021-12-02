@@ -21,9 +21,8 @@ service Msg {
   rpc CreateEnglishAuction(MsgCreateEnglishAuction)
       returns (MsgCreateEnglishAuctionResponse);
 
-  // Submit a cancel fundraising message.
-  rpc CancelFundraising(MsgCancelFundraising)
-      returns (MsgCancelFundraisingResponse);
+  // Submit a cancel auction message.
+  rpc CancelAuction(MsgCancelAuction) returns (MsgCancelAuctionResponse);
 
   // Submit a PlaceBid message to the certain fundraising.
   rpc PlaceBid(MsgPlaceBid) returns (MsgPlaceBidResponse);
@@ -129,9 +128,9 @@ message MsgCreateEnglishAuction {
 // Msg/MsgCreateEnglishAuctionResponse response type.
 message MsgCreateEnglishAuctionResponse {}
 
-// MsgCancelFundraising defines a SDK message for cancelling the auction.
+// MsgCancelAuction defines a SDK message for cancelling the auction.
 // Cancelling is only allowed when the auction hasn't started yet.
-message MsgCancelFundraising {
+message MsgCancelAuction {
   option (gogoproto.goproto_getters) = false;
 
   // auctioneer specifies the bech32-encoded address that is in charge of the
@@ -142,9 +141,9 @@ message MsgCancelFundraising {
   uint64 auction_id = 2;
 }
 
-// MsgCancelFundraisingResponse defines the Msg/MsgCancelFundraisingResponse
+// MsgCancelAuctionResponse defines the Msg/MsgCancelAuctionResponse
 // response type.
-message MsgCancelFundraisingResponse {}
+message MsgCancelAuctionResponse {}
 
 // MsgPlaceBid defines a SDK message for placing a bid for the auction.
 message MsgPlaceBid { // id specifies index of the auction
@@ -156,7 +155,9 @@ message MsgPlaceBid { // id specifies index of the auction
   // bidder specifies the bech32-encoded address that bids for the auction
   string bidder = 2;
 
-  // price specifies the bid price. The bid price can only be increasing
+  // price specifies the bid price.
+  // The bid price must be the start price for fixed price auction whereas
+  // the bide price can only be increasd for english auction
   string price = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false

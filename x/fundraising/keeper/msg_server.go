@@ -8,6 +8,8 @@ package keeper
 import (
 	"context"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
 
@@ -25,7 +27,12 @@ var _ types.MsgServer = msgServer{}
 
 // CreateFixedPriceAuction defines a method to create fixed price auction.
 func (k msgServer) CreateFixedPriceAuction(goCtx context.Context, msg *types.MsgCreateFixedPriceAuction) (*types.MsgCreateFixedPriceAuctionResponse, error) {
-	// TODO: not implemented yet
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if err := k.Keeper.CreateFixedPriceAuction(ctx, msg); err != nil {
+		return nil, err
+	}
+
 	return &types.MsgCreateFixedPriceAuctionResponse{}, nil
 }
 
@@ -35,14 +42,24 @@ func (k msgServer) CreateEnglishAuction(goCtx context.Context, msg *types.MsgCre
 	return &types.MsgCreateEnglishAuctionResponse{}, nil
 }
 
-// CancelFundraising defines a method to cancel fundraising.
-func (k msgServer) CancelFundraising(goCtx context.Context, msg *types.MsgCancelFundraising) (*types.MsgCancelFundraisingResponse, error) {
-	// TODO: not implemented yet
-	return &types.MsgCancelFundraisingResponse{}, nil
+// CancelAuction defines a method to cancel auction.
+func (k msgServer) CancelAuction(goCtx context.Context, msg *types.MsgCancelAuction) (*types.MsgCancelAuctionResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if err := k.Keeper.CancelAuction(ctx, msg.AuctionId); err != nil {
+		return nil, err
+	}
+
+	return &types.MsgCancelAuctionResponse{}, nil
 }
 
 // PlaceBid defines a method to cancel fundraising.
 func (k msgServer) PlaceBid(goCtx context.Context, msg *types.MsgPlaceBid) (*types.MsgPlaceBidResponse, error) {
-	// TODO: not implemented yet
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if err := k.Keeper.PlaceBid(ctx, msg); err != nil {
+		return nil, err
+	}
+
 	return &types.MsgPlaceBidResponse{}, nil
 }

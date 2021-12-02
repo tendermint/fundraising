@@ -10,8 +10,8 @@ import (
 // NewVestingSchedule creates a new VestingSchedule object.
 func NewVestingSchedule(time time.Time, weight sdk.Dec) VestingSchedule {
 	return VestingSchedule{
-		DistributedTime: time,
-		Weight:          weight,
+		ReleaseTime: time,
+		Weight:      weight,
 	}
 }
 

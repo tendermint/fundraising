@@ -74,16 +74,11 @@ type BaseAuction struct {
 	PayingCoinDenom    string            // the paying coin denom that bidders use to bid for
 	VestingAddress     string            // the vesting account that releases the paying amount of coins based on the schedules
 	VestingSchedules   []VestingSchedule // vesting schedules for the auction
+	WinningPrice       sdk.Dec           // the winning price of the auction
+	TotalSellingCoin   sdk.Coin          // the total amount of coin that is sold when the auction is finished
 	StartTime          time.Time         // start time of the auction
 	EndTime            []time.Time       // end times of the auction since extended round(s) can occur
 	Status             AuctionStatus     // the auction status
-}
-
-// AuctionMetadata defines the metadata for the auction
-type AuctionMetadata struct {
-	AuctionId        uint64   // id of the auction
-	WinningPrice     sdk.Dec  // the winning price of the auction
-	TotalSellingCoin sdk.Coin // the total amount of coin that is sold when the auction is finished
 }
 ```
 
@@ -92,8 +87,8 @@ type AuctionMetadata struct {
 ```go
 // VestingSchedule defines the vesting schedule for the owner of an auction.
 type VestingSchedule struct {
-	Time   time.Time // the time for distribution of the vesting coin
-	Weight sdk.Dec   // the vesting weight for the schedule
+	ReleaseTime time.Time // the time for distribution of the vesting coin
+	Weight      sdk.Dec   // the vesting weight for the schedule
 }
 
 // VestingQueue defines the vesting queue.
@@ -164,9 +159,8 @@ const (
 // Bid defines a standard bid for an auction.
 type Bid struct {
 	AuctionId uint64   // id of the auction
-	Sequence  uint64   // a number to track first come first served based auction type
 	Bidder    string   // the account that bids for the auction
-	Price     sdk.Dec  // increasing bid price is only possible
+	Price     sdk.Dec  // the price for the bid
 	Coin      sdk.Coin // paying amount of coin that the bidder bids
 	Height    uint64   // block height
 	isWinner  bool     // the bid that is determined to be a winner when an auction ends; default value is false
@@ -175,39 +169,27 @@ type Bid struct {
 
 ## Parameters
 
-- ModuleName: `farming`
-- RouterKey: `farming`
-- StoreKey: `farming`
-- QuerierRoute: `farming`
+- ModuleName: `fundraising`
+- RouterKey: `fundraising`
+- StoreKey: `fundraising`
+- QuerierRoute: `fundraising`
 
 ## Stores
 
 Stores are KVStores in the multi-store. The key to find the store is the first parameter in the list.
 
-### prefix key for the latest auction id
+### prefix key to retrieve the latest auction id
 
 - `AuctionIdKey: 0x11 -> uint64`
 
-### prefix key for the latest sequence number
-
-- `SequencePrefix: 0x12 -> uint64`
-
-### prefix key for auction id to find an auction
+### prefix key to retrieve the auction from the auction id
 
 - `AuctionKeyPrefix: 0x21 | AuctionId -> ProtocolBuffer(Auction)`
 
-### prefix key for auctioneer address to find an auction id
+### prefix key to retrieve the bid from the auction id
 
-- `AuctioneerKeyPrefix: 0x22 | AuctioneerAddrLen (1 byte) | AuctioneerAddr -> uint64`
+- `BidKeyPrefix: 0x31 | AuctionId -> ProtocolBuffer(Bid)`
 
-### prefix key for the auction id with the sequence number to find the bid
+### prefix key to retrieve the bid from the bidder address
 
-- `SequenceKeyPrefix: 0x31 | Sequence -> ProtocolBuffer(Bid)`
-
-### prefix key for auction id with bidder address to find the sequence number
-
-- `BidKeyPrefix: 0x32 | AuctionId | BidderAddrLen (1 byte) | BidderAddr -> uint64`
-
-### prefix key for bidder address to find the sequence number
-
-- `BidderKeyPrefix: 0x33 | BidderAddrLen (1 byte) | BidderAddr -> uint64`
+- `BidderKeyPrefix: 0x32 | BidderAddrLen (1 byte) | BidderAddr -> ProtocolBuffer(Bid)`

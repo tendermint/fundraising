@@ -76,16 +76,29 @@ message BaseAuction {
   repeated VestingSchedule vesting_schedules = 10
       [ (gogoproto.nullable) = false ];
 
+  // winning_price specifies the winning price of the auction
+  string winning_price = 11 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // total_selling_coin specifes the total amount of coin that is sold when the
+  // auction is finished
+  cosmos.base.v1beta1.Coin total_selling_coin = 12 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
+
   // start_time specifies the start time of the plan
-  google.protobuf.Timestamp start_time = 11
+  google.protobuf.Timestamp start_time = 13
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // end_times specifies the end time of the plan
-  repeated google.protobuf.Timestamp end_times = 12
+  repeated google.protobuf.Timestamp end_times = 14
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // status specifies the auction status
-  AuctionStatus status = 13;
+  AuctionStatus status = 15;
 }
 
 // FixedPriceAuction defines the fixed price auction type. It is the most
@@ -162,29 +175,10 @@ enum AuctionStatus {
       [ (gogoproto.enumvalue_customname) = "AuctionStatusCancelled" ];
 }
 
-// AuctionMetadata defines the metadata for the auction
-message AuctionMetadata {
-  // auction_id specifes the id of the auction
-  uint64 auction_id = 1;
-
-  // winning_price specifies the winning price of the auction
-  string winning_price = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
-  // total_selling_coin specifes the total amount of coin that is sold when the
-  // auction is finished
-  cosmos.base.v1beta1.Coin total_selling_coin = 3 [
-    (gogoproto.nullable) = false,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
-  ];
-}
-
 // VestingSchedule defines the vesting schedule for the owner of an auction.
 message VestingSchedule {
-  // distributed_time specifies the time for distribution of the vesting coin
-  google.protobuf.Timestamp distributed_time = 1
+  // release_time specifies the time for distribution of the vesting coin
+  google.protobuf.Timestamp release_time = 1
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // weight specifies the vesting weight for the schedule
@@ -218,29 +212,37 @@ message Bid {
   // auction_id specifies the id of the auction
   uint64 auction_id = 1;
 
-  // sequence specifies a number to track first come first served based auction
-  // type
-  uint64 sequence = 2;
-
   // bidder specifies the bech32-encoded address that bids for the auction
-  string bidder = 3;
+  string bidder = 2;
 
   // price specifies the increasing bid price is only possible
-  string price = 4 [
+  string price = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // coin specifies the paying amount of coin that the bidder bids
-  cosmos.base.v1beta1.Coin coin = 5 [
+  cosmos.base.v1beta1.Coin coin = 4 [
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
   ];
 
   // height specifies the block height of the bid
-  uint64 height = 6;
+  uint64 height = 5;
 
   // isWinner specifies the bid that is determined to be a winner when an
   // auction ends; default value is false
-  bool isWinner = 7;
+  bool isWinner = 6;
+}
+
+// AddressType enumerates the available types of a address.
+enum AddressType {
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  // the 32 bytes length address type of ADR 028.
+  ADDRESS_TYPE_32_BYTES = 0
+      [ (gogoproto.enumvalue_customname) = "AddressType32Bytes" ];
+  // the default 20 bytes length address type.
+  ADDRESS_TYPE_20_BYTES = 1
+      [ (gogoproto.enumvalue_customname) = "AddressType20Bytes" ];
 }

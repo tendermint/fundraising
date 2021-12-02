@@ -37,24 +37,23 @@ type MsgCreateFixedPriceAuction struct {
 ```
 
 
-## MsgCancelFundraising
+## MsgCancelAuction
 
 ```go
-// MsgCancelFundraising defines a SDK message for cancelling an auction
-type MsgCancelFundraising struct {
+// MsgCancelAuction defines a SDK message for cancelling an auction
+type MsgCancelAuction struct {
 	Auctioneer string // the account that is in charge of the auction
 	AuctionId  uint64 // id of the auction
 }
 ```
 
 ## MsgPlaceBid
-
 ```go
 // MsgPlaceBid defines a SDK message for placing a bid for the auction
 type MsgPlaceBid struct {
 	AuctionId uint64   // id of the auction
 	Bidder    string   // the bidder who places a bid for the auction
-	Price     sdk.Dec  // bid price can only be increasing
+	Price     sdk.Dec  // bid price must be the start price for FixedPriceAuction whereas it can only be increased for EnglishAuction
 	Coin      sdk.Coin // paying amount of coin that the bidder bids
 }
 ```

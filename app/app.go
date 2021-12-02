@@ -88,9 +88,9 @@ import (
 
 	"github.com/tendermint/fundraising/docs"
 
-	fundraisingmodule "github.com/tendermint/fundraising/x/fundraising"
-	fundraisingmodulekeeper "github.com/tendermint/fundraising/x/fundraising/keeper"
-	fundraisingmoduletypes "github.com/tendermint/fundraising/x/fundraising/types"
+	fundraising "github.com/tendermint/fundraising/x/fundraising"
+	fundraisingkeeper "github.com/tendermint/fundraising/x/fundraising/keeper"
+	fundraisingtypes "github.com/tendermint/fundraising/x/fundraising/types"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 )
 
@@ -141,7 +141,7 @@ var (
 		evidence.AppModuleBasic{},
 		transfer.AppModuleBasic{},
 		vesting.AppModuleBasic{},
-		fundraisingmodule.AppModuleBasic{},
+		fundraising.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -155,6 +155,7 @@ var (
 		govtypes.ModuleName:            {authtypes.Burner},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		// this line is used by starport scaffolding # stargate/app/maccPerms
+		fundraisingtypes.ModuleName: nil,
 	}
 )
 
@@ -210,7 +211,7 @@ type App struct {
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
 	ScopedTransferKeeper capabilitykeeper.ScopedKeeper
 
-	FundraisingKeeper fundraisingmodulekeeper.Keeper
+	FundraisingKeeper fundraisingkeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	// the module manager
@@ -244,7 +245,7 @@ func New(
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey,
-		fundraisingmoduletypes.StoreKey,
+		fundraisingtypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -343,12 +344,15 @@ func New(
 		&stakingKeeper, govRouter,
 	)
 
-	app.FundraisingKeeper = *fundraisingmodulekeeper.NewKeeper(
+	app.FundraisingKeeper = *fundraisingkeeper.NewKeeper(
 		appCodec,
-		keys[fundraisingmoduletypes.StoreKey],
-		keys[fundraisingmoduletypes.MemStoreKey],
+		keys[fundraisingtypes.StoreKey],
+		keys[fundraisingtypes.MemStoreKey],
+		app.GetSubspace(fundraisingtypes.ModuleName),
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.ModuleAccountAddrs(),
 	)
-	fundraisingModule := fundraisingmodule.NewAppModule(appCodec, app.FundraisingKeeper)
 
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
@@ -388,7 +392,7 @@ func New(
 		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 		transferModule,
-		fundraisingModule,
+		fundraising.NewAppModule(appCodec, app.FundraisingKeeper),
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -423,7 +427,7 @@ func New(
 		genutiltypes.ModuleName,
 		evidencetypes.ModuleName,
 		ibctransfertypes.ModuleName,
-		fundraisingmoduletypes.ModuleName,
+		fundraisingtypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -611,7 +615,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(crisistypes.ModuleName)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
-	paramsKeeper.Subspace(fundraisingmoduletypes.ModuleName)
+	paramsKeeper.Subspace(fundraisingtypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper

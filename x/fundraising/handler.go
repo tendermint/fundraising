@@ -27,8 +27,8 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 			res, err := msgServer.CreateEnglishAuction(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 
-		case *types.MsgCancelFundraising:
-			res, err := msgServer.CancelFundraising(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgCancelAuction:
+			res, err := msgServer.CancelAuction(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 
 		case *types.MsgPlaceBid:

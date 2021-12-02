@@ -11,7 +11,7 @@ import (
 var (
 	_ sdk.Msg = (*MsgCreateFixedPriceAuction)(nil)
 	_ sdk.Msg = (*MsgCreateEnglishAuction)(nil)
-	_ sdk.Msg = (*MsgCancelFundraising)(nil)
+	_ sdk.Msg = (*MsgCancelAuction)(nil)
 	_ sdk.Msg = (*MsgPlaceBid)(nil)
 )
 
@@ -19,7 +19,7 @@ var (
 const (
 	TypeMsgCreateFixedPriceAuction = "create_fixed_price_auction"
 	TypeMsgCreateEnglishAuction    = "create_english_auction"
-	TypeMsgCancelFundraising       = "cancel_fundraising"
+	TypeMsgCancelAuction           = "cancel_auction"
 	TypeMsgPlaceBid                = "place_bid"
 )
 
@@ -173,33 +173,33 @@ func (msg MsgCreateEnglishAuction) GetAuctioneer() sdk.AccAddress {
 	return addr
 }
 
-// NewMsgCancelFundraising creates a new MsgCancelFundraising.
-func NewMsgCancelFundraising(
+// NewMsgCancelAuction creates a new MsgCancelAuction.
+func NewMsgCancelAuction(
 	auctionner string,
 	auctionId uint64,
-) *MsgCancelFundraising {
-	return &MsgCancelFundraising{
+) *MsgCancelAuction {
+	return &MsgCancelAuction{
 		Auctioneer: auctionner,
 		AuctionId:  auctionId,
 	}
 }
 
-func (msg MsgCancelFundraising) Route() string { return RouterKey }
+func (msg MsgCancelAuction) Route() string { return RouterKey }
 
-func (msg MsgCancelFundraising) Type() string { return TypeMsgCancelFundraising }
+func (msg MsgCancelAuction) Type() string { return TypeMsgCancelAuction }
 
-func (msg MsgCancelFundraising) ValidateBasic() error {
+func (msg MsgCancelAuction) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Auctioneer); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid auctioneer address %q: %v", msg.Auctioneer, err)
 	}
 	return nil
 }
 
-func (msg MsgCancelFundraising) GetSignBytes() []byte {
+func (msg MsgCancelAuction) GetSignBytes() []byte {
 	return sdk.MustSortJSON(legacy.Cdc.MustMarshalJSON(&msg))
 }
 
-func (msg MsgCancelFundraising) GetSigners() []sdk.AccAddress {
+func (msg MsgCancelAuction) GetSigners() []sdk.AccAddress {
 	addr, err := sdk.AccAddressFromBech32(msg.Auctioneer)
 	if err != nil {
 		panic(err)
@@ -207,7 +207,7 @@ func (msg MsgCancelFundraising) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{addr}
 }
 
-func (msg MsgCancelFundraising) GetAuctioneer() sdk.AccAddress {
+func (msg MsgCancelAuction) GetAuctioneer() sdk.AccAddress {
 	addr, err := sdk.AccAddressFromBech32(msg.Auctioneer)
 	if err != nil {
 		panic(err)
