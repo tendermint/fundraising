@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"fmt"
 	"strconv"
 	"time"
 
@@ -197,13 +196,12 @@ func (k Keeper) CancelAuction(ctx sdk.Context, id uint64) error {
 	// TODO: consider if we want the auction to be deleted or leave history
 	k.RemoveAuction(ctx, auction)
 
-	logger := k.Logger(ctx)
-	logger.Info(
-		"Removed auction",
-		"auction_id", auction.GetId(),
-		"auction_status", auction.GetStatus(),
-		"auction_selling_coin", auction.GetSellingCoin(),
-	)
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCancelAuction,
+			sdk.NewAttribute(types.AttributeKeyAuctionId, strconv.FormatUint(auction.GetId(), 10)),
+		),
+	})
 
 	return nil
 }
@@ -215,8 +213,24 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", msg.AuctionId)
 	}
 
-	// TODO: not implemented yet
-	fmt.Println(auction)
+	if !msg.Price.Equal(auction.GetStartPrice()) {
+		return sdkerrors.Wrap(types.ErrInvalidStartPrice, "bid price must be equal to start price")
+	}
+
+	// substract total selling coin from the request amount of coin
+	auction.SetTotalSellingCoin(auction.GetTotalSellingCoin().Sub(msg.Coin))
+
+	k.SetAuction(ctx, auction)
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypePlaceBid,
+			sdk.NewAttribute(types.AttributeKeyAuctionId, strconv.FormatUint(auction.GetId(), 10)),
+			sdk.NewAttribute(types.AttributeKeyBidderAddress, msg.GetBidder().String()),
+			sdk.NewAttribute(types.AttributeKeyBidPrice, msg.Price.String()),
+			sdk.NewAttribute(types.AttributeKeyBidCoin, msg.Coin.String()),
+		),
+	})
 
 	return nil
 }

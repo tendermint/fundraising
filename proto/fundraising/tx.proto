@@ -155,7 +155,9 @@ message MsgPlaceBid { // id specifies index of the auction
   // bidder specifies the bech32-encoded address that bids for the auction
   string bidder = 2;
 
-  // price specifies the bid price. The bid price can only be increasing
+  // price specifies the bid price.
+  // The bid price must be the start price for fixed price auction whereas
+  // the bide price can only be increasd for english auction
   string price = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false

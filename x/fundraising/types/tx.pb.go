@@ -312,7 +312,9 @@ type MsgPlaceBid struct {
 	AuctionId uint64 `protobuf:"varint,1,opt,name=auction_id,json=auctionId,proto3" json:"auction_id,omitempty"`
 	// bidder specifies the bech32-encoded address that bids for the auction
 	Bidder string `protobuf:"bytes,2,opt,name=bidder,proto3" json:"bidder,omitempty"`
-	// price specifies the bid price. The bid price can only be increasing
+	// price specifies the bid price.
+	// The bid price must be the start price for fixed price auction whereas
+	// the bide price can only be increasd for english auction
 	Price github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=price,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"price"`
 	// coin specifies the paying amount of coin that the bidder bids
 	Coin types.Coin `protobuf:"bytes,4,opt,name=coin,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coin" json:"coin"`

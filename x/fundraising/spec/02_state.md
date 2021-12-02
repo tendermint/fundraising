@@ -160,7 +160,7 @@ const (
 type Bid struct {
 	AuctionId uint64   // id of the auction
 	Bidder    string   // the account that bids for the auction
-	Price     sdk.Dec  // increasing bid price is only possible
+	Price     sdk.Dec  // the price for the bid
 	Coin      sdk.Coin // paying amount of coin that the bidder bids
 	Height    uint64   // block height
 	isWinner  bool     // the bid that is determined to be a winner when an auction ends; default value is false

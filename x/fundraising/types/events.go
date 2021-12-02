@@ -19,4 +19,7 @@ const (
 	AttributeKeyAuctionStatus      = "auction_status"
 	AttributeKeyStartTime          = "start_time"
 	AttributeKeyEndTime            = "end_time"
+	AttributeKeyBidderAddress      = "bidder_address"
+	AttributeKeyBidPrice           = "bid_price"
+	AttributeKeyBidCoin            = "bid_coin"
 )
