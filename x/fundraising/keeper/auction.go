@@ -109,11 +109,47 @@ func (k Keeper) SetAuction(ctx sdk.Context, auction types.AuctionI) {
 	store.Set(types.GetAuctionKey(id), bz)
 }
 
-// RemoveAuction removes the auction from the store
-func (k Keeper) RemoveAuction(ctx sdk.Context, auction types.AuctionI) {
+// DeleteAuction removes the auction from the store
+func (k Keeper) DeleteAuction(ctx sdk.Context, auction types.AuctionI) {
 	id := auction.GetId()
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(types.GetAuctionKey(id))
+}
+
+// GetVestingQueue returns a slice of vesting queues that the auction is complete and
+// waiting in a queue to release the vesting amount of coin at the respective release time.
+func (k Keeper) GetVestingQueue(ctx sdk.Context, releaseTime time.Time, auctionID uint64) []types.VestingQueue {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.GetVestingQueueKey(releaseTime, auctionID))
+	if bz == nil {
+		return []types.VestingQueue{}
+	}
+
+	queues := types.VestingQueues{}
+	k.cdc.MustUnmarshal(bz, &queues)
+
+	return queues.Queues
+}
+
+// SetVestingQueue sets a given slice of vesting queues into
+// the vesting queue by a given release time and auction id.
+func (k Keeper) SetVestingQueue(ctx sdk.Context, releaseTime time.Time, auctionID uint64, queues []types.VestingQueue) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshal(&types.VestingQueues{Queues: queues})
+	store.Set(types.GetVestingQueueKey(releaseTime, auctionID), bz)
+}
+
+// DeleteVestingQueue removes vesting queue by an auctioneer from the vesting queue
+// indexed by a given auction id and time.
+func (k Keeper) DeleteVestingQueue(ctx sdk.Context, vesting types.VestingQueue) {
+	// TODO: consider if we need this when implementing the next logic
+}
+
+// VestingQueueIterator returns an iterator ranging over vesting queues that are
+// vesting whose vesting completion occurs at the given release time for the auction.
+func (k Keeper) VestingQueueIterator(ctx sdk.Context, releaseTime time.Time, auctionID uint64) sdk.Iterator {
+	store := ctx.KVStore(k.storeKey)
+	return store.Iterator(types.VestingQueueKeyPrefix, sdk.InclusiveEndBytes(types.GetVestingQueueKey(releaseTime, auctionID)))
 }
 
 // IterateAuctions iterates over all the stored auctions and performs a callback function.
@@ -226,7 +262,7 @@ func (k Keeper) CancelAuction(ctx sdk.Context, id uint64) error {
 	}
 
 	// TODO: consider if we want the auction to be deleted or leave history
-	k.RemoveAuction(ctx, auction)
+	k.DeleteAuction(ctx, auction)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
