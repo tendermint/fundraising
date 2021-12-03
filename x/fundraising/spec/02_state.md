@@ -87,16 +87,16 @@ type BaseAuction struct {
 ```go
 // VestingSchedule defines the vesting schedule for the owner of an auction.
 type VestingSchedule struct {
-	ReleaseTime time.Time // the time for distribution of the vesting coin
-	Weight      sdk.Dec   // the vesting weight for the schedule
+	ReleaseTime time.Time // release time for distribution of the vesting coin
+	Weight      sdk.Dec   // vesting weight for the schedule
 }
 
 // VestingQueue defines the vesting queue.
 type VestingQueue struct {
-	AuctionId  uint64    // id of the auction
-	Auctioneer string    // the account that is in charge of the auction
-	PayingCoin sdk.Coin  // the paying amount of coin 
-	Time       time.Time // timestamp of the vesting schedule
+	AuctionId   uint64    // id of the auction
+	Auctioneer  string    // account that creates the auction
+	PayingCoin  sdk.Coin  // paying amount of coin 
+	ReleaseTime time.Time // release time of the vesting coin
 }
 ```
 
@@ -182,14 +182,22 @@ Stores are KVStores in the multi-store. The key to find the store is the first p
 
 - `AuctionIdKey: 0x11 -> uint64`
 
+### prefix key to retrieve the latest sequence number from the auction id
+
+- `SequenceKey: 0x12 | AuctionId -> uint64`
+
 ### prefix key to retrieve the auction from the auction id
 
 - `AuctionKeyPrefix: 0x21 | AuctionId -> ProtocolBuffer(Auction)`
 
-### prefix key to retrieve the bid from the auction id
+### prefix key to retrieve the bid from the auction id and sequence number
 
-- `BidKeyPrefix: 0x31 | AuctionId -> ProtocolBuffer(Bid)`
+- `BidKeyPrefix: 0x31 | AuctionId | Sequence -> ProtocolBuffer(Bid)`
 
-### prefix key to retrieve the bid from the bidder address
+### prefix key to retrieve the auction id and sequence by iterating the bidder address
 
-- `BidderKeyPrefix: 0x32 | BidderAddrLen (1 byte) | BidderAddr -> ProtocolBuffer(Bid)`
+- `BidIndexKeyPrefix: 0x32 | BidderAddrLen (1 byte) | BidderAddr | AuctionId | Sequence -> nil`
+
+### prefix key to retrive the vestings from the auction id and vesting release time
+
+- `VestingQueueKeyPrefix: 0x41 | AuctionId | format(time) -> ProtocolBuffer(VestingQueue)`

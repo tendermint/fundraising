@@ -202,8 +202,8 @@ message VestingQueue {
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
   ];
 
-  // time specifies the timestamp of the vesting schedule
-  google.protobuf.Timestamp time = 4
+  // release_time specifies the timestamp of the vesting schedule
+  google.protobuf.Timestamp release_time = 4
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 }
 
