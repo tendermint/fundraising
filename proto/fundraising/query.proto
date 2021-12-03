@@ -15,21 +15,25 @@ service Query {
   // Params returns parameters of the fundraising module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/cosmos/fundraising/v1beta1/params";
-  };
+  }
+
   // Auctions returns all auctions.
   rpc Auctions(QueryAuctionsRequest) returns (QueryAuctionsResponse) {
     option (google.api.http).get = "/cosmos/fundraising/v1beta1/auctions";
   }
+
   // Auction returns the specific auction.
   rpc Auction(QueryAuctionRequest) returns (QueryAuctionResponse) {
     option (google.api.http).get =
         "/cosmos/fundraising/v1beta1/auctions/{auction_id}";
   }
+
   // Bids returns all bids.
   rpc Bids(QueryBidsRequest) returns (QueryBidsResponse) {
     option (google.api.http).get =
         "/cosmos/fundraising/v1beta1/auctions/{auction_id}/bids";
   }
+  
   // Vestings returns all vestings for the auction.
   rpc Vestings(QueryVestingsRequest) returns (QueryVestingsResponse) {
     option (google.api.http).get =

@@ -1,16 +1,16 @@
 accounts:
   - name: alice
-    coins: ["20000token", "200000000stake"]
+    coins: ["2000000000000stake","1000000000000000denom1","1000000000000000denom2"]
   - name: bob
-    coins: ["10000token", "100000000stake"]
+    coins: ["1000000000000stake","1000000000000000denom1","1000000000000000denom2"]
 validator:
   name: alice
   staked: "100000000stake"
-client:
-  openapi:
-    path: "docs/static/openapi.yml"
-  vuex:
-    path: "vue/src/store"
+# client:
+  # openapi:
+    # path: "docs/static/openapi.yml"
+  # vuex:
+    # path: "vue/src/store"
 faucet:
   name: bob
-  coins: ["5token", "100000stake"]
+  coins: ["100000stake", "1000000denom1", "1000000denom2"]

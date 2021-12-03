@@ -206,6 +206,13 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 	payingReserveAcc := types.PayingReserveAcc(msg.SellingCoin.Denom)
 	vestingReserveAcc := types.VestingReserveAcc(msg.SellingCoin.Denom)
 
+	var status types.AuctionStatus
+	if ctx.BlockTime().Before(msg.StartTime) {
+		status = types.AuctionStatusStandBy
+	} else {
+		status = types.AuctionStatusStarted
+	}
+
 	baseAuction := types.NewBaseAuction(
 		nextId,
 		types.AuctionTypeFixedPrice,
@@ -221,7 +228,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		msg.SellingCoin, // add selling coin to total selling coin
 		msg.StartTime,
 		[]time.Time{msg.EndTime},
-		types.AuctionStatusStandBy,
+		status,
 	)
 
 	fixedPriceAuction := types.NewFixedPriceAuction(baseAuction)

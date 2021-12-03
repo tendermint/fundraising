@@ -19815,3 +19815,32 @@ definitions:
       and
 
       freezing clients
+  tendermint.fundraising.VestingSchedule:
+    type: object
+    properties:
+      releaseTime:
+        type: string
+        format: date-time
+        title: release_time specifies the time for distribution of the vesting coin
+      weight:
+        type: string
+        title: weight specifies the vesting weight for the schedule
+    description: VestingSchedule defines the vesting schedule for the owner of an auction.
+  tendermint.fundraising.fundraising.MsgCancelAuctionResponse:
+    type: object
+    description: |-
+      MsgCancelAuctionResponse defines the Msg/MsgCancelAuctionResponse
+      response type.
+  tendermint.fundraising.fundraising.MsgCreateEnglishAuctionResponse:
+    type: object
+    description: |-
+      MsgCreateEnglishAuctionResponse defines the
+      Msg/MsgCreateEnglishAuctionResponse response type.
+  tendermint.fundraising.fundraising.MsgCreateFixedPriceAuctionResponse:
+    type: object
+    description: |-
+      MsgCreateFixedPriceAuctionResponse defines the
+      Msg/MsgCreateFixedPriceAuctionResponse response type.
+  tendermint.fundraising.fundraising.MsgPlaceBidResponse:
+    type: object
+    description: MsgPlaceBidResponse defines the Msg/MsgPlaceBidResponse response type.

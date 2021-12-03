@@ -203,7 +203,7 @@ func NewPlaceBid() *cobra.Command {
 			fmt.Sprintf(`Bid for the auction with what price and amount of coin you want to bid for. 
 		
 Example:
-$ %s tx %s bid 1 1.0 100000000ugdex--from mykey 
+$ %s tx %s bid 1 1.0 100000000denom2--from mykey 
 
 Note that [price] argument specifies the price of the selling coin. For a fixed price auction, you must use the same start price of the auction.
 For an english auction, it is up to you for how much price you want to bid for. Moreover, you must have sufficient balance of the paying coin denom
