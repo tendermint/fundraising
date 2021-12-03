@@ -120,9 +120,9 @@ const (
 type EnglishAuction struct {
 	*BaseAuction
 
-	MaximumBidPrice sdk.Dec // the maximum bid price for the auction
+	MaximumBidPrice sdk.Dec // maximum bid price that bidders can bid for the auction
 	Extended        uint32  // a number of extended rounds
-	ExtendRate      sdk.Dec // rate that decides if the auction needs another round
+	ExtendRate      sdk.Dec // rate that determines if the auction needs an another round
 }
 
 // FixedPriceAuction defines the fixed price auction type
@@ -198,6 +198,6 @@ Stores are KVStores in the multi-store. The key to find the store is the first p
 
 - `BidIndexKeyPrefix: 0x32 | BidderAddrLen (1 byte) | BidderAddr | AuctionId | Sequence -> nil`
 
-### prefix key to retrive the vestings from the auction id and vesting release time
+### prefix key to retrieve the vesting queues from the auction id and vesting release time
 
 - `VestingQueueKeyPrefix: 0x41 | AuctionId | format(time) -> ProtocolBuffer(VestingQueue)`

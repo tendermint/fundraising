@@ -212,27 +212,31 @@ message Bid {
   // auction_id specifies the id of the auction
   uint64 auction_id = 1;
 
+  // sequence specifies a number to track first come first served based auction
+  // type
+  uint64 sequence = 2;
+
   // bidder specifies the bech32-encoded address that bids for the auction
-  string bidder = 2;
+  string bidder = 3;
 
   // price specifies the increasing bid price is only possible
-  string price = 3 [
+  string price = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // coin specifies the paying amount of coin that the bidder bids
-  cosmos.base.v1beta1.Coin coin = 4 [
+  cosmos.base.v1beta1.Coin coin = 5 [
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
   ];
 
   // height specifies the block height of the bid
-  uint64 height = 5;
+  uint64 height = 6;
 
   // isWinner specifies the bid that is determined to be a winner when an
   // auction ends; default value is false
-  bool isWinner = 6;
+  bool isWinner = 7;
 }
 
 // AddressType enumerates the available types of a address.
