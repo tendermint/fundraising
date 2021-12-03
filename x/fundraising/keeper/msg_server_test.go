@@ -103,6 +103,16 @@ func (suite *KeeperTestSuite) TestMsgPlaceBid() {
 			),
 			sdkerrors.Wrap(types.ErrInvalidStartPrice, "bid price must be equal to start price"),
 		},
+		{
+			"insufficient funds",
+			types.NewMsgPlaceBid(
+				auction.GetId(),
+				suite.addrs[0].String(),
+				sdk.MustNewDecFromStr("1.0"),
+				sdk.NewInt64Coin(auction.GetSellingCoin().Denom, 500_000_000_000_000_000),
+			),
+			sdkerrors.ErrInsufficientFunds,
+		},
 	} {
 		suite.Run(tc.name, func() {
 			_, err := suite.srv.PlaceBid(ctx, tc.msg)

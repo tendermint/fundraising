@@ -281,6 +281,14 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", msg.AuctionId)
 	}
 
+	// bidder must have greater than or equal to the amount of coin they want to bid
+	requireAmt := msg.Price.Mul(msg.Coin.Amount.ToDec()).TruncateInt()
+
+	balance := k.bankKeeper.GetBalance(ctx, msg.GetBidder(), auction.GetPayingCoinDenom())
+	if balance.Amount.Sub(requireAmt).IsNegative() {
+		return sdkerrors.ErrInsufficientFunds
+	}
+
 	// substract total selling coin from the request amount of coin when the request is fixed price auction type
 	if auction.GetType() == types.AuctionTypeFixedPrice {
 		if !msg.Price.Equal(auction.GetStartPrice()) {
