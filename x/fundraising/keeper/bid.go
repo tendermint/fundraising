@@ -96,6 +96,10 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 		return sdkerrors.ErrInsufficientFunds
 	}
 
+	if !auction.GetTotalSellingCoin().Sub(msg.Coin).IsPositive() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "request coin amount must be lower than or equal to the remaining total selling coin amount")
+	}
+
 	// substract total selling coin from the request amount of coin when the request is fixed price auction type
 	if auction.GetType() == types.AuctionTypeFixedPrice {
 		if !msg.Price.Equal(auction.GetStartPrice()) {

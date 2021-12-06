@@ -64,9 +64,9 @@ func (k Keeper) GetSequence(ctx sdk.Context) uint64 {
 
 // GetNextSequence increments sequence number by one and set it.
 func (k Keeper) GetNextSequenceWithUpdate(ctx sdk.Context) uint64 {
-	id := k.GetAuctionId(ctx) + 1
-	k.SetAuctionId(ctx, id)
-	return id
+	seq := k.GetSequence(ctx) + 1
+	k.SetSequence(ctx, seq)
+	return seq
 }
 
 // SetSequence sets the sequence number of the bid.
