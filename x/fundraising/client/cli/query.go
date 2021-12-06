@@ -3,18 +3,16 @@ package cli
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
-
-	// "strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/version"
-
-	// "github.com/cosmos/cosmos-sdk/client/flags"
-	// sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
@@ -81,12 +79,19 @@ func QueryAuctions() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "auctions",
 		Args:  cobra.NoArgs,
-		Short: "Query the current fundraising parameters information",
+		Short: "Query for all auctions",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Query values set as fundraising parameters.
+			fmt.Sprintf(`Query for all auctions with the given optional flags.
 Example:
-$ %s query %s params
+$ %s query %s auctions
+$ %s query %s auctions --status AUCTION_STATUS_STANDBY
+$ %s query %s auctions --type AUCTION_TYPE_FIXED_PRICE
+
+Auction statuses: AUCTION_STATUS_STANDBY, AUCTION_STATUS_STARTED, AUCTION_STATUS_VESTING, AUCTION_STATUS_FINISHED, and AUCTION_STATUS_CANCELLED
+Auction types: AUCTION_TYPE_FIXED_PRICE and AUCTION_TYPE_ENGLISH
 `,
+				version.AppName, types.ModuleName,
+				version.AppName, types.ModuleName,
 				version.AppName, types.ModuleName,
 			),
 		),
@@ -96,16 +101,31 @@ $ %s query %s params
 				return err
 			}
 
+			status, _ := cmd.Flags().GetString(FlagAuctionStatus)
+			typ, _ := cmd.Flags().GetString(FlagAuctionType)
+
 			queryClient := types.NewQueryClient(clientCtx)
-			fmt.Println(queryClient)
+			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-			// TODO: not implemented yet
+			req := &types.QueryAuctionsRequest{
+				Status:     status,
+				Type:       typ,
+				Pagination: pageReq,
+			}
 
-			// return clientCtx.PrintProto(&resp.Params)
-			return nil
+			resp, err := queryClient.Auctions(cmd.Context(), req)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(resp)
 		},
 	}
 
+	cmd.Flags().AddFlagSet(flagSetAuctions())
 	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
@@ -113,13 +133,13 @@ $ %s query %s params
 
 func QueryAuction() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "auction",
-		Args:  cobra.NoArgs,
-		Short: "Query the current fundraising parameters information",
+		Use:   "auction [auction-id]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Query a specific auction",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Query values set as fundraising parameters.
+			fmt.Sprintf(`Query details about a speicif auction.
 Example:
-$ %s query %s params
+$ %s query %s auction 1
 `,
 				version.AppName, types.ModuleName,
 			),
@@ -130,13 +150,21 @@ $ %s query %s params
 				return err
 			}
 
+			auctionID, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "auction-id %s is not valid", args[0])
+			}
+
 			queryClient := types.NewQueryClient(clientCtx)
-			fmt.Println(queryClient)
 
-			// TODO: not implemented yet
+			resp, err := queryClient.Auction(cmd.Context(), &types.QueryAuctionRequest{
+				AuctionId: auctionID,
+			})
+			if err != nil {
+				return err
+			}
 
-			// return clientCtx.PrintProto(&resp.Params)
-			return nil
+			return clientCtx.PrintProto(resp)
 		},
 	}
 
@@ -146,15 +174,21 @@ $ %s query %s params
 }
 
 func QueryBids() *cobra.Command {
+	bech32PrefixAccAddr := sdk.GetConfig().GetBech32AccountAddrPrefix()
+
 	cmd := &cobra.Command{
-		Use:   "bids",
-		Args:  cobra.NoArgs,
-		Short: "Query the current fundraising parameters information",
+		Use:   "bids [auction-id]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Query all bids for the auction",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Query values set as fundraising parameters.
+			fmt.Sprintf(`Query all bids for the auction.
 Example:
-$ %s query %s params
+$ %s query %s bids 1
+$ %s query %s bids 1 --bidder %s1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj
+$ %s query %s bids 1 --winner 
 `,
+				version.AppName, types.ModuleName,
+				version.AppName, types.ModuleName, bech32PrefixAccAddr,
 				version.AppName, types.ModuleName,
 			),
 		),
@@ -164,16 +198,31 @@ $ %s query %s params
 				return err
 			}
 
+			bidderAddr, _ := cmd.Flags().GetString(FlagBidderAddr)
+			isWinner, _ := cmd.Flags().GetString(FlagWinner)
+
 			queryClient := types.NewQueryClient(clientCtx)
-			fmt.Println(queryClient)
+			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-			// TODO: not implemented yet
+			req := &types.QueryBidsRequest{
+				Bidder:     bidderAddr,
+				IsWinner:   isWinner,
+				Pagination: pageReq,
+			}
 
-			// return clientCtx.PrintProto(&resp.Params)
-			return nil
+			resp, err := queryClient.Bids(cmd.Context(), req)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(resp)
 		},
 	}
 
+	cmd.Flags().AddFlagSet(flagSetBids())
 	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
@@ -181,13 +230,13 @@ $ %s query %s params
 
 func QueryVestings() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "vestings",
-		Args:  cobra.NoArgs,
-		Short: "Query the current fundraising parameters information",
+		Use:   "vestings [auction-id]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Query vesting schedules about the auction",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Query values set as fundraising parameters.
+			fmt.Sprintf(`Query vesting schedules for the auction.
 Example:
-$ %s query %s params
+$ %s query %s vestings 1
 `,
 				version.AppName, types.ModuleName,
 			),
@@ -198,13 +247,23 @@ $ %s query %s params
 				return err
 			}
 
+			auctionID, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "auction-id %s is not valid", args[0])
+			}
+
 			queryClient := types.NewQueryClient(clientCtx)
-			fmt.Println(queryClient)
 
-			// TODO: not implemented yet
+			req := &types.QueryVestingsRequest{
+				AuctionId: auctionID,
+			}
 
-			// return clientCtx.PrintProto(&resp.Params)
-			return nil
+			resp, err := queryClient.Vestings(cmd.Context(), req)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(resp)
 		},
 	}
 
