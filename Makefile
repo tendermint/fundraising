@@ -157,6 +157,6 @@ proto-lint:
 ###############################################################################
 
 localnet: 
-	starport chain serve
+	starport chain serve -v
 
 .PHONY: localnet

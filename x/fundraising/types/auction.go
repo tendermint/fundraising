@@ -5,6 +5,8 @@ import (
 
 	proto "github.com/gogo/protobuf/proto"
 
+	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -281,6 +283,63 @@ type AuctionI interface {
 
 	GetStatus() AuctionStatus
 	SetStatus(AuctionStatus) error
+}
+
+// UnmarshalBid unmarshals bid from a store value.
+func UnmarshalBid(cdc codec.BinaryCodec, value []byte) (b Bid, err error) {
+	err = cdc.Unmarshal(value, &b)
+	return b, err
+}
+
+// PackAuction converts AuctionI to Any.
+func PackAuction(auction AuctionI) (*codectypes.Any, error) {
+	any, err := codectypes.NewAnyWithValue(auction)
+	if err != nil {
+		return nil, err
+	}
+	return any, nil
+}
+
+// UnpackAuction converts Any to AuctionI.
+func UnpackAuction(any *codectypes.Any) (AuctionI, error) {
+	if any == nil {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "cannot unpack nil")
+	}
+
+	if any.TypeUrl == "" {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidType, "empty type url")
+	}
+
+	var auction AuctionI
+	v := any.GetCachedValue()
+	if v == nil {
+		registry := codectypes.NewInterfaceRegistry()
+		RegisterInterfaces(registry)
+		if err := registry.UnpackAny(any, &auction); err != nil {
+			return nil, err
+		}
+		return auction, nil
+	}
+
+	auction, ok := v.(AuctionI)
+	if !ok {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "cannot unpack auction from %T", v)
+	}
+
+	return auction, nil
+}
+
+// UnpackAuctions converts Any slice to AuctionIs.
+func UnpackAuctions(auctionsAny []*codectypes.Any) ([]AuctionI, error) {
+	auctions := make([]AuctionI, len(auctionsAny))
+	for i, any := range auctionsAny {
+		p, err := UnpackAuction(any)
+		if err != nil {
+			return nil, err
+		}
+		auctions[i] = p
+	}
+	return auctions, nil
 }
 
 // SellingReserveAcc returns module account for the selling reserve pool account with the given selling coin denom.
