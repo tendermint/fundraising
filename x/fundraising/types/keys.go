@@ -48,6 +48,11 @@ func GetBidKey(auctionID uint64, sequence uint64) []byte {
 	return append(append(BidKeyPrefix, sdk.Uint64ToBigEndian(auctionID)...), sdk.Uint64ToBigEndian(sequence)...)
 }
 
+// GetBidAuctionIDKey returns the store key to retrieve the bid from the auction id.
+func GetBidAuctionIDKey(auctionID uint64) []byte {
+	return append(BidKeyPrefix, sdk.Uint64ToBigEndian(auctionID)...)
+}
+
 // GetBidIndexKey returns the store key to retrieve the sequence number from the index fields.
 func GetBidIndexKey(bidderAcc sdk.AccAddress, auctionID uint64, sequence uint64) []byte {
 	return append(append(append(BidIndexKeyPrefix, address.MustLengthPrefix(bidderAcc)...), sdk.Uint64ToBigEndian(auctionID)...), sdk.Uint64ToBigEndian(sequence)...)

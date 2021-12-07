@@ -197,14 +197,14 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		return err
 	}
 
-	// escrow the selling coin to the selling reserve account
 	sellingReserveAcc := types.SellingReserveAcc(msg.SellingCoin.Denom)
+	payingReserveAcc := types.PayingReserveAcc(msg.SellingCoin.Denom)
+	vestingReserveAcc := types.VestingReserveAcc(msg.SellingCoin.Denom)
+
+	// Reserve the selling coin to the selling reserve account
 	if err := k.bankKeeper.SendCoins(ctx, auctioneerAcc, sellingReserveAcc, sdk.NewCoins(msg.SellingCoin)); err != nil {
 		return sdkerrors.Wrap(err, "failed to escrow selling coin to selling reserve account")
 	}
-
-	payingReserveAcc := types.PayingReserveAcc(msg.SellingCoin.Denom)
-	vestingReserveAcc := types.VestingReserveAcc(msg.SellingCoin.Denom)
 
 	baseAuction := types.NewBaseAuction(
 		nextId,
@@ -224,6 +224,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		types.AuctionStatusStandBy,
 	)
 
+	// Update status if the start time is already passed over the current time
 	if types.IsAuctionStarted(baseAuction, ctx.BlockTime()) {
 		baseAuction.Status = types.AuctionStatusStarted
 	}
@@ -253,8 +254,14 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 	return nil
 }
 
-// CancelAuction cancels the auction in an event of modification for the auction.
-// The auctioneer can only delete it when it is not already started.
+// CreateEnglishAuction sets english auction.
+func (k Keeper) CreateEnglishAuction(ctx sdk.Context, msg *types.MsgCreateEnglishAuction) error {
+	// TODO: not implemented yet
+	return nil
+}
+
+// CancelAuction cancels the auction in an event when the auctioneer needs to modify the auction.
+// However, it can only be canceled when the auction has not started yet.
 func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) error {
 	auction, found := k.GetAuction(ctx, msg.AuctionId)
 	if !found {
@@ -262,14 +269,14 @@ func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) erro
 	}
 
 	if auction.GetAuctioneer() != msg.Auctioneer {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "failed to verify ownership of the auction")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "failed to verify ownership of the auction")
 	}
 
 	if auction.GetStatus() != types.AuctionStatusStandBy {
-		return sdkerrors.Wrapf(types.ErrInvalidAuctionStatus, "auction cannot be canceled because current status is %s", auction.GetStatus().String())
+		return sdkerrors.Wrap(types.ErrInvalidAuctionStatus, "auction cannot be canceled due to current status")
 	}
 
-	// TODO: consider if we want the auction to be deleted or leave history
+	// TODO: consider if we want the auction to be deleted indefinitely
 	k.DeleteAuction(ctx, auction)
 
 	ctx.EventManager().EmitEvents(sdk.Events{

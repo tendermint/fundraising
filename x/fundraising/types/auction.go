@@ -27,6 +27,57 @@ var (
 	_ AuctionI = (*EnglishAuction)(nil)
 )
 
+// AuctionI is an interface that inherits the BaseAuction and exposes common functions
+// to get and set standard auction data.
+type AuctionI interface {
+	proto.Message
+
+	GetId() uint64
+	SetId(uint64) error
+
+	GetType() AuctionType
+	SetType(AuctionType) error
+
+	GetAuctioneer() string
+	SetAuctioneer(string) error
+
+	GetSellingPoolAddress() string
+	SetSellingPoolAddress(string) error
+
+	GetPayingPoolAddress() string
+	SetPayingPoolAddress(string) error
+
+	GetStartPrice() sdk.Dec
+	SetStartPrice(sdk.Dec) error
+
+	GetSellingCoin() sdk.Coin
+	SetSellingCoin(sdk.Coin) error
+
+	GetPayingCoinDenom() string
+	SetPayingCoinDenom(string) error
+
+	GetVestingAddress() string
+	SetVestingAddress(string) error
+
+	GetVestingSchedules() []VestingSchedule
+	SetVestingSchedules([]VestingSchedule) error
+
+	GetWinningPrice() sdk.Dec
+	SetWinningPrice(sdk.Dec) error
+
+	GetTotalSellingCoin() sdk.Coin
+	SetTotalSellingCoin(sdk.Coin) error
+
+	GetStartTime() time.Time
+	SetStartTime(time.Time) error
+
+	GetEndTimes() []time.Time
+	SetEndTimes([]time.Time) error
+
+	GetStatus() AuctionStatus
+	SetStatus(AuctionStatus) error
+}
+
 // NewBaseAuction creates a new BaseAuction object
 //nolint:interfacer
 func NewBaseAuction(
@@ -232,57 +283,6 @@ func NewEnglishAuction(baseAuction *BaseAuction, maximumBidPrice sdk.Dec, extend
 		Extended:        extended,
 		ExtendRate:      extendRate,
 	}
-}
-
-// AuctionI is an interface that inherits the BaseAuction and exposes common functions
-// to get and set standard auction data.
-type AuctionI interface {
-	proto.Message
-
-	GetId() uint64
-	SetId(uint64) error
-
-	GetType() AuctionType
-	SetType(AuctionType) error
-
-	GetAuctioneer() string
-	SetAuctioneer(string) error
-
-	GetSellingPoolAddress() string
-	SetSellingPoolAddress(string) error
-
-	GetPayingPoolAddress() string
-	SetPayingPoolAddress(string) error
-
-	GetStartPrice() sdk.Dec
-	SetStartPrice(sdk.Dec) error
-
-	GetSellingCoin() sdk.Coin
-	SetSellingCoin(sdk.Coin) error
-
-	GetPayingCoinDenom() string
-	SetPayingCoinDenom(string) error
-
-	GetVestingAddress() string
-	SetVestingAddress(string) error
-
-	GetVestingSchedules() []VestingSchedule
-	SetVestingSchedules([]VestingSchedule) error
-
-	GetWinningPrice() sdk.Dec
-	SetWinningPrice(sdk.Dec) error
-
-	GetTotalSellingCoin() sdk.Coin
-	SetTotalSellingCoin(sdk.Coin) error
-
-	GetStartTime() time.Time
-	SetStartTime(time.Time) error
-
-	GetEndTimes() []time.Time
-	SetEndTimes([]time.Time) error
-
-	GetStatus() AuctionStatus
-	SetStatus(AuctionStatus) error
 }
 
 // UnmarshalBid unmarshals bid from a store value.

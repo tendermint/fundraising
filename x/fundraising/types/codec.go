@@ -24,7 +24,7 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	)
 
 	registry.RegisterInterface(
-		"cosmos.farming.v1beta1.PlanI",
+		"cosmos.fundraising.v1beta1.AuctionI",
 		(*AuctionI)(nil),
 		&FixedPriceAuction{},
 		&EnglishAuction{},
