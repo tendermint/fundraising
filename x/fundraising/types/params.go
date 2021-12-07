@@ -1,6 +1,8 @@
 package types
 
 import (
+	fmt "fmt"
+
 	"gopkg.in/yaml.v2"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -62,11 +64,27 @@ func (p Params) Validate() error {
 }
 
 func validateAuctionCreationFee(i interface{}) error {
-	// TODO: not implmented yet
+	v, ok := i.(sdk.Coin)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if err := v.Validate(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func validateExtendedPeriod(i interface{}) error {
-	// TODO: not implmented yet
+	v, ok := i.(uint32)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v <= 0 {
+		return fmt.Errorf("extended period must be positive: %d", v)
+	}
+
 	return nil
 }

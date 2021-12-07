@@ -138,7 +138,7 @@ func (AddressType) EnumDescriptor() ([]byte, []int) {
 
 // Params defines the set of params for the fundraising module.
 type Params struct {
-	// auction_creation_fee specifies the fee for fundraisin creation fee.
+	// auction_creation_fee specifies the fee for fundraising creation fee.
 	// this prevents from spamming attack and it is collected in the community
 	// pool
 	AuctionCreationFee github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,1,rep,name=auction_creation_fee,json=auctionCreationFee,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"auction_creation_fee"`

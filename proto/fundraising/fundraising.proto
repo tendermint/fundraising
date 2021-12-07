@@ -13,7 +13,7 @@ message Params {
   option (gogoproto.equal) = true;
   option (gogoproto.goproto_stringer) = false;
 
-  // auction_creation_fee specifies the fee for fundraisin creation fee.
+  // auction_creation_fee specifies the fee for fundraising creation fee.
   // this prevents from spamming attack and it is collected in the community
   // pool
   repeated cosmos.base.v1beta1.Coin auction_creation_fee = 1 [
