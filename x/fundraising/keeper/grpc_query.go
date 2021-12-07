@@ -139,6 +139,10 @@ func (k Querier) Bids(c context.Context, req *types.QueryBidsRequest) (*types.Qu
 			return false, nil
 		}
 
+		if bid.AuctionId != req.AuctionId {
+			return false, nil
+		}
+
 		if req.Bidder != "" && bid.GetBidder() != req.Bidder {
 			return false, nil
 		}
