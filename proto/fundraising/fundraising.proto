@@ -191,9 +191,9 @@ message VestingSchedule {
 // VestingQueues defines a repeated set of vesting queues.
 message VestingQueues {
   option (gogoproto.goproto_stringer) = false;
-  option (gogoproto.stringer)         = true;
+  option (gogoproto.stringer) = true;
 
-  repeated VestingQueue queues = 1 [(gogoproto.nullable) = false];
+  repeated VestingQueue queues = 1 [ (gogoproto.nullable) = false ];
 }
 
 // VestingQueue defines the vesting queue.
@@ -242,9 +242,9 @@ message Bid {
   // height specifies the block height of the bid
   uint64 height = 6;
 
-  // isWinner specifies the bid that is determined to be a winner when an
+  // is_winner specifies the bid that is determined to be a winner when an
   // auction ends; default value is false
-  bool isWinner = 7;
+  bool is_winner = 7;
 }
 
 // AddressType enumerates the available types of a address.

@@ -33,7 +33,7 @@ service Query {
     option (google.api.http).get =
         "/cosmos/fundraising/v1beta1/auctions/{auction_id}/bids";
   }
-  
+
   // Vestings returns all vestings for the auction.
   rpc Vestings(QueryVestingsRequest) returns (QueryVestingsResponse) {
     option (google.api.http).get =

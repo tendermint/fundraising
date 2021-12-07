@@ -201,6 +201,11 @@ $ %s query %s bids 1 --winner
 			bidderAddr, _ := cmd.Flags().GetString(FlagBidderAddr)
 			isWinner, _ := cmd.Flags().GetString(FlagWinner)
 
+			auctionID, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "auction-id %s is not valid", args[0])
+			}
+
 			queryClient := types.NewQueryClient(clientCtx)
 			pageReq, err := client.ReadPageRequest(cmd.Flags())
 			if err != nil {
@@ -208,6 +213,7 @@ $ %s query %s bids 1 --winner
 			}
 
 			req := &types.QueryBidsRequest{
+				AuctionId:  auctionID,
 				Bidder:     bidderAddr,
 				IsWinner:   isWinner,
 				Pagination: pageReq,
