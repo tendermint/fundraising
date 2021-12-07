@@ -13,10 +13,10 @@ message Params {
   option (gogoproto.equal) = true;
   option (gogoproto.goproto_stringer) = false;
 
-  // fundraising_creation_fee specifies the fee for fundraisin creation fee.
+  // auction_creation_fee specifies the fee for fundraisin creation fee.
   // this prevents from spamming attack and it is collected in the community
   // pool
-  repeated cosmos.base.v1beta1.Coin fundraising_creation_fee = 1 [
+  repeated cosmos.base.v1beta1.Coin auction_creation_fee = 1 [
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
     (gogoproto.nullable) = false
   ];
@@ -188,6 +188,14 @@ message VestingSchedule {
   ];
 }
 
+// VestingQueues defines a repeated set of vesting queues.
+message VestingQueues {
+  option (gogoproto.goproto_stringer) = false;
+  option (gogoproto.stringer) = true;
+
+  repeated VestingQueue queues = 1 [ (gogoproto.nullable) = false ];
+}
+
 // VestingQueue defines the vesting queue.
 message VestingQueue {
   // auction_id specifes the id of the auction
@@ -202,8 +210,8 @@ message VestingQueue {
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
   ];
 
-  // time specifies the timestamp of the vesting schedule
-  google.protobuf.Timestamp time = 4
+  // release_time specifies the timestamp of the vesting schedule
+  google.protobuf.Timestamp release_time = 4
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 }
 
@@ -212,27 +220,31 @@ message Bid {
   // auction_id specifies the id of the auction
   uint64 auction_id = 1;
 
+  // sequence specifies a number to track first come first served based auction
+  // type
+  uint64 sequence = 2;
+
   // bidder specifies the bech32-encoded address that bids for the auction
-  string bidder = 2;
+  string bidder = 3;
 
   // price specifies the increasing bid price is only possible
-  string price = 3 [
+  string price = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // coin specifies the paying amount of coin that the bidder bids
-  cosmos.base.v1beta1.Coin coin = 4 [
+  cosmos.base.v1beta1.Coin coin = 5 [
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
   ];
 
   // height specifies the block height of the bid
-  uint64 height = 5;
+  uint64 height = 6;
 
-  // isWinner specifies the bid that is determined to be a winner when an
+  // is_winner specifies the bid that is determined to be a winner when an
   // auction ends; default value is false
-  bool isWinner = 6;
+  bool is_winner = 7;
 }
 
 // AddressType enumerates the available types of a address.

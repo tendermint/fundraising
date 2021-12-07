@@ -27,8 +27,8 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 			types.NewMsgCreateFixedPriceAuction(
 				auctioneerAcc.String(),
 				sdk.MustNewDecFromStr("0.5"),
-				sdk.NewInt64Coin("ugdex", 10_000_000_000_000),
-				"uatom",
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom1",
 				[]types.VestingSchedule{},
 				startTime,
 				endTime,
@@ -39,8 +39,8 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 			types.NewMsgCreateFixedPriceAuction(
 				auctioneerAcc.String(),
 				sdk.MustNewDecFromStr("0"),
-				sdk.NewInt64Coin("ugdex", 10_000_000_000_000),
-				"uatom",
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom1",
 				[]types.VestingSchedule{},
 				startTime,
 				endTime,
@@ -51,8 +51,8 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 			types.NewMsgCreateFixedPriceAuction(
 				auctioneerAcc.String(),
 				sdk.MustNewDecFromStr("0.5"),
-				sdk.NewInt64Coin("ugdex", 0),
-				"uatom",
+				sdk.NewInt64Coin("denom2", 0),
+				"denom1",
 				[]types.VestingSchedule{},
 				startTime,
 				endTime,
@@ -63,8 +63,8 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 			types.NewMsgCreateFixedPriceAuction(
 				auctioneerAcc.String(),
 				sdk.MustNewDecFromStr("0.5"),
-				sdk.NewInt64Coin("ugdex", 10_000_000_000_000),
-				"uatom",
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom1",
 				[]types.VestingSchedule{
 					types.NewVestingSchedule(types.ParseTime("2022-06-01T22:08:41+00:00"), sdk.ZeroDec()),
 				},
@@ -73,12 +73,12 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 			),
 		},
 		{
-			"total vesting weight must not greater than 1: invalid request",
+			"each vesting weight must not be greater than 1: invalid request",
 			types.NewMsgCreateFixedPriceAuction(
 				auctioneerAcc.String(),
 				sdk.MustNewDecFromStr("0.5"),
-				sdk.NewInt64Coin("ugdex", 10_000_000_000_000),
-				"uatom",
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom1",
 				[]types.VestingSchedule{
 					types.NewVestingSchedule(types.ParseTime("2022-06-01T22:08:41+00:00"), sdk.MustNewDecFromStr("1.1")),
 				},
@@ -91,11 +91,11 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 			types.NewMsgCreateFixedPriceAuction(
 				auctioneerAcc.String(),
 				sdk.MustNewDecFromStr("0.5"),
-				sdk.NewInt64Coin("ugdex", 10_000_000_000_000),
-				"uatom",
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom1",
 				[]types.VestingSchedule{
-					types.NewVestingSchedule(types.ParseTime("2022-06-01T22:08:41+00:00"), sdk.MustNewDecFromStr("0.5")),
-					types.NewVestingSchedule(types.ParseTime("2022-12-01T22:08:41+00:00"), sdk.MustNewDecFromStr("0.3")),
+					types.NewVestingSchedule(types.ParseTime("2022-06-01T22:00:00+00:00"), sdk.MustNewDecFromStr("0.5")),
+					types.NewVestingSchedule(types.ParseTime("2022-12-01T22:00:00+00:00"), sdk.MustNewDecFromStr("0.3")),
 				},
 				startTime,
 				endTime,
@@ -106,11 +106,26 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 			types.NewMsgCreateFixedPriceAuction(
 				auctioneerAcc.String(),
 				sdk.MustNewDecFromStr("0.5"),
-				sdk.NewInt64Coin("ugdex", 10_000_000_000_000),
-				"uatom",
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom1",
 				[]types.VestingSchedule{},
 				startTime,
 				startTime.AddDate(-1, 0, 0),
+			),
+		},
+		{
+			"release time must be chronological: invalid vesting schedules",
+			types.NewMsgCreateFixedPriceAuction(
+				auctioneerAcc.String(),
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom1",
+				[]types.VestingSchedule{
+					types.NewVestingSchedule(types.ParseTime("2022-12-01T22:00:00+00:00"), sdk.MustNewDecFromStr("0.5")),
+					types.NewVestingSchedule(types.ParseTime("2022-06-01T22:00:00+00:00"), sdk.MustNewDecFromStr("0.5")),
+				},
+				startTime,
+				endTime,
 			),
 		},
 	}
@@ -182,7 +197,7 @@ func TestMsgPlaceBid(t *testing.T) {
 				uint64(1),
 				bidderAcc.String(),
 				sdk.OneDec(),
-				sdk.NewInt64Coin("ugdex", 1000000),
+				sdk.NewInt64Coin("denom2", 1000000),
 			),
 		},
 		{
@@ -191,7 +206,7 @@ func TestMsgPlaceBid(t *testing.T) {
 				uint64(1),
 				bidderAcc.String(),
 				sdk.ZeroDec(),
-				sdk.NewInt64Coin("ugdex", 1000000),
+				sdk.NewInt64Coin("denom2", 1000000),
 			),
 		},
 		{
@@ -200,7 +215,7 @@ func TestMsgPlaceBid(t *testing.T) {
 				uint64(1),
 				bidderAcc.String(),
 				sdk.ZeroDec(),
-				sdk.NewInt64Coin("ugdex", 0),
+				sdk.NewInt64Coin("denom2", 0),
 			),
 		},
 	}

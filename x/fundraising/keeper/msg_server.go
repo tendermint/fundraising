@@ -46,7 +46,7 @@ func (k msgServer) CreateEnglishAuction(goCtx context.Context, msg *types.MsgCre
 func (k msgServer) CancelAuction(goCtx context.Context, msg *types.MsgCancelAuction) (*types.MsgCancelAuctionResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if err := k.Keeper.CancelAuction(ctx, msg.AuctionId); err != nil {
+	if err := k.Keeper.CancelAuction(ctx, msg); err != nil {
 		return nil, err
 	}
 

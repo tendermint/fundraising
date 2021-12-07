@@ -5,8 +5,8 @@ package tendermint.fundraising.fundraising;
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
-import "fundraising/fundraising.proto";
 import "google/protobuf/timestamp.proto";
+import "fundraising/fundraising.proto";
 
 option go_package = "github.com/tendermint/fundraising/x/fundraising/types";
 

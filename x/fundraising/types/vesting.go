@@ -18,24 +18,34 @@ func NewVestingSchedule(time time.Time, weight sdk.Dec) VestingSchedule {
 // ValidateVestingSchedules validates the vesting schedules.
 // Each weight of the vesting schedule must be positive and total weight must be equal to 1.
 // If a number of schedule equals to zero, the auctioneer doesn't want any vesting schedule.
+// The release times must be chronological for vesting schedules. Otherwise it returns an error.
 func ValidateVestingSchedules(schedules []VestingSchedule) error {
 	if len(schedules) == 0 {
 		return nil
 	}
 
+	// initialize timestamp with max time and total weight with zero
+	ts := ParseTime("0001-01-01T00:00:00Z")
 	totalWeight := sdk.ZeroDec()
+
 	for _, s := range schedules {
 		if !s.Weight.IsPositive() {
 			return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "vesting weight must be positive")
 		}
 		if s.Weight.GT(sdk.OneDec()) {
-			return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "total vesting weight must not greater than 1")
+			return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "each vesting weight must not be greater than 1")
 		}
 		totalWeight = totalWeight.Add(s.Weight)
+
+		if !s.ReleaseTime.After(ts) {
+			return sdkerrors.Wrapf(ErrInvalidVestingSchedules, "release time must be chronological")
+		}
+		ts = s.ReleaseTime
 	}
 
 	if !totalWeight.Equal(sdk.OneDec()) {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "total vesting weight must be equal to 1")
 	}
+
 	return nil
 }

@@ -9,11 +9,11 @@ import (
 
 // Parameter store keys
 var (
-	KeyFundraisingCreationFee = []byte("FundraisingCreationFee")
-	KeyExtendedPeriod         = []byte("ExtendedPeriod")
+	KeyAuctionCreationFee = []byte("AuctionCreationFee")
+	KeyExtendedPeriod     = []byte("ExtendedPeriod")
 
-	DefaultFundraisingCreationFee = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100_000_000)))
-	DefaultExtendedPeriod         = uint32(1)
+	DefaultAuctionCreationFee = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100_000_000)))
+	DefaultExtendedPeriod     = uint32(1)
 )
 
 var _ paramstypes.ParamSet = (*Params)(nil)
@@ -26,15 +26,15 @@ func ParamKeyTable() paramstypes.KeyTable {
 // DefaultParams returns the default farming module parameters.
 func DefaultParams() Params {
 	return Params{
-		FundraisingCreationFee: DefaultFundraisingCreationFee,
-		ExtendedPeriod:         DefaultExtendedPeriod,
+		AuctionCreationFee: DefaultAuctionCreationFee,
+		ExtendedPeriod:     DefaultExtendedPeriod,
 	}
 }
 
 // ParamSetPairs implements paramstypes.ParamSet.
 func (p *Params) ParamSetPairs() paramstypes.ParamSetPairs {
 	return paramstypes.ParamSetPairs{
-		paramstypes.NewParamSetPair(KeyFundraisingCreationFee, &p.FundraisingCreationFee, validateFundraisingCreationFee),
+		paramstypes.NewParamSetPair(KeyAuctionCreationFee, &p.AuctionCreationFee, validateAuctionCreationFee),
 		paramstypes.NewParamSetPair(KeyExtendedPeriod, &p.ExtendedPeriod, validateExtendedPeriod),
 	}
 }
@@ -51,7 +51,7 @@ func (p Params) Validate() error {
 		value     interface{}
 		validator func(interface{}) error
 	}{
-		{p.FundraisingCreationFee, validateFundraisingCreationFee},
+		{p.AuctionCreationFee, validateAuctionCreationFee},
 		{p.ExtendedPeriod, validateExtendedPeriod},
 	} {
 		if err := v.validator(v.value); err != nil {
@@ -61,7 +61,7 @@ func (p Params) Validate() error {
 	return nil
 }
 
-func validateFundraisingCreationFee(i interface{}) error {
+func validateAuctionCreationFee(i interface{}) error {
 	// TODO: not implmented yet
 	return nil
 }

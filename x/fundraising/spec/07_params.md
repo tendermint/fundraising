@@ -6,12 +6,12 @@ The `fundraising` module contains the following parameters:
 
 | Key                        | Type      | Example             |
 | -------------------------- | --------- | ------------------- |
-| FundraisingCreationFee     | sdk.Coins | TBD                 |
+| AuctionCreationFee     | sdk.Coins | TBD                 |
 | ExtendedPeriod             | uint32    | 3600 * 24           |
 
-## FundraisingCreationFee
+## AuctionCreationFee
 
-`FundraisingCreationFee` is the fee required to pay to create a fundraising. This fee prevents from spamming attack.
+`AuctionCreationFee` is the fee required to pay to create an auction. This fee prevents from spamming attack.
 
 ## ExtendedPeriod
 
