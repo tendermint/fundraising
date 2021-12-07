@@ -356,3 +356,8 @@ func PayingReserveAcc(sellingCoinDenom string) sdk.AccAddress {
 func VestingReserveAcc(sellingCoinDenom string) sdk.AccAddress {
 	return DeriveAddress(ReserveAddressType, ModuleName, VestingReserveAccPrefix+AccNameSplitter+sellingCoinDenom)
 }
+
+// IsAuctionStarted returns true if the start time of the auction is passed over the given time t.
+func IsAuctionStarted(auction AuctionI, t time.Time) bool {
+	return auction.GetStartTime().After(t)
+}

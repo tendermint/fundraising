@@ -126,7 +126,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 		Price:     msg.Price,
 		Coin:      msg.Coin,
 		Height:    uint64(ctx.BlockHeader().Height),
-		IsWinner:  false,
+		IsWinner:  true, // TODO: since there is no revert, we set this true in message level
 	}
 	k.SetBid(ctx, msg.GetBidder(), bid)
 
