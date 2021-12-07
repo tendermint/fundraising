@@ -46,14 +46,14 @@ func (k msgServer) CreateEnglishAuction(goCtx context.Context, msg *types.MsgCre
 func (k msgServer) CancelAuction(goCtx context.Context, msg *types.MsgCancelAuction) (*types.MsgCancelAuctionResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if err := k.Keeper.CancelAuction(ctx, msg.AuctionId); err != nil {
+	if err := k.Keeper.CancelAuction(ctx, msg); err != nil {
 		return nil, err
 	}
 
 	return &types.MsgCancelAuctionResponse{}, nil
 }
 
-// PlaceBid defines a method to place bid for the auction.
+// PlaceBid defines a method to cancel fundraising.
 func (k msgServer) PlaceBid(goCtx context.Context, msg *types.MsgPlaceBid) (*types.MsgPlaceBidResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 

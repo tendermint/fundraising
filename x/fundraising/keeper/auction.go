@@ -258,14 +258,18 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 
 // CancelAuction cancels the auction in an event of modification for the auction.
 // The auctioneer can only delete it when it is not already started.
-func (k Keeper) CancelAuction(ctx sdk.Context, id uint64) error {
-	auction, found := k.GetAuction(ctx, id)
+func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) error {
+	auction, found := k.GetAuction(ctx, msg.AuctionId)
 	if !found {
-		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", id)
+		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", msg.AuctionId)
+	}
+
+	if auction.GetAuctioneer() != msg.Auctioneer {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "failed to verify ownership of the auction")
 	}
 
 	if auction.GetStatus() != types.AuctionStatusStandBy {
-		return sdkerrors.Wrap(types.ErrInvalidAuctionStatus, "invalid auction status")
+		return sdkerrors.Wrapf(types.ErrInvalidAuctionStatus, "auction cannot be canceled because current status is %s", auction.GetStatus().String())
 	}
 
 	// TODO: consider if we want the auction to be deleted or leave history

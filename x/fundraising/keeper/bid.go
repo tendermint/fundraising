@@ -88,6 +88,10 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", msg.AuctionId)
 	}
 
+	if auction.GetStatus() != types.AuctionStatusStarted {
+		return sdkerrors.Wrapf(types.ErrInvalidAuctionStatus, "auction is in %s status", auction.GetStatus().String())
+	}
+
 	// bidder must have greater than or equal to the amount of coin they want to bid
 	requireAmt := msg.Price.Mul(msg.Coin.Amount.ToDec()).TruncateInt()
 
