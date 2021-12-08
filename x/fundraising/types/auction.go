@@ -65,8 +65,8 @@ type AuctionI interface {
 	GetWinningPrice() sdk.Dec
 	SetWinningPrice(sdk.Dec) error
 
-	GetTotalSellingCoin() sdk.Coin
-	SetTotalSellingCoin(sdk.Coin) error
+	GetRemainingCoin() sdk.Coin
+	SetRemainingCoin(sdk.Coin) error
 
 	GetStartTime() time.Time
 	SetStartTime(time.Time) error
@@ -84,7 +84,7 @@ func NewBaseAuction(
 	id uint64, typ AuctionType, auctioneerAddr string, sellingPoolAddr string,
 	payingPoolAddr string, startPrice sdk.Dec, sellingCoin sdk.Coin,
 	payingCoinDenom string, vestingAddr string, vestingSchedules []VestingSchedule,
-	winningPrice sdk.Dec, totalSellingCoin sdk.Coin, startTime time.Time,
+	winningPrice sdk.Dec, remainingCoin sdk.Coin, startTime time.Time,
 	endTimes []time.Time, status AuctionStatus,
 ) *BaseAuction {
 	return &BaseAuction{
@@ -99,7 +99,7 @@ func NewBaseAuction(
 		VestingAddress:     vestingAddr,
 		VestingSchedules:   vestingSchedules,
 		WinningPrice:       winningPrice,
-		TotalSellingCoin:   totalSellingCoin,
+		RemainingCoin:      remainingCoin,
 		StartTime:          startTime,
 		EndTimes:           endTimes,
 		Status:             status,
@@ -205,12 +205,12 @@ func (ba *BaseAuction) SetWinningPrice(price sdk.Dec) error {
 	return nil
 }
 
-func (ba BaseAuction) GetTotalSellingCoin() sdk.Coin {
-	return ba.TotalSellingCoin
+func (ba BaseAuction) GetRemainingCoin() sdk.Coin {
+	return ba.RemainingCoin
 }
 
-func (ba *BaseAuction) SetTotalSellingCoin(coin sdk.Coin) error {
-	ba.TotalSellingCoin = coin
+func (ba *BaseAuction) SetRemainingCoin(coin sdk.Coin) error {
+	ba.RemainingCoin = coin
 	return nil
 }
 

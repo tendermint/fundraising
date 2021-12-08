@@ -52,31 +52,31 @@ func (suite *KeeperTestSuite) TestMsgCreateEnglishAuction() {
 func (suite *KeeperTestSuite) TestMsgCancelAuction() {
 	ctx := sdk.WrapSDKContext(suite.ctx)
 
-	auctionID := uint64(1)
+	auctionId := uint64(1)
 	auctioneerAddr := suite.addrs[4].String()
 
 	_, err := suite.srv.CancelAuction(ctx, types.NewMsgCancelAuction(
 		auctioneerAddr,
-		auctionID,
+		auctionId,
 	))
-	suite.Require().ErrorIs(err, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", auctionID))
+	suite.Require().ErrorIs(err, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", auctionId))
 
 	// Create a fixed price auction
 	suite.keeper.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[0])
 
-	_, found := suite.keeper.GetAuction(suite.ctx, auctionID)
+	_, found := suite.keeper.GetAuction(suite.ctx, auctionId)
 	suite.Require().True(found)
 
 	// Try to cancel with an incorrect address
 	_, err = suite.srv.CancelAuction(ctx, types.NewMsgCancelAuction(
 		suite.addrs[0].String(),
-		auctionID,
+		auctionId,
 	))
 	suite.Require().ErrorIs(err, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "failed to verify ownership of the auction"))
 
 	_, err = suite.srv.CancelAuction(ctx, types.NewMsgCancelAuction(
 		auctioneerAddr,
-		auctionID,
+		auctionId,
 	))
 	suite.Require().NoError(err)
 }
@@ -136,8 +136,8 @@ func (suite *KeeperTestSuite) TestMsgPlaceBid() {
 			suite.Require().True(found)
 
 			// Verify the total selling coin
-			original := auction.GetTotalSellingCoin()
-			remaining := a.GetTotalSellingCoin()
+			original := auction.GetRemainingCoin()
+			remaining := a.GetRemainingCoin()
 			suite.Require().Equal(original.Sub(remaining), tc.msg.Coin)
 		})
 	}

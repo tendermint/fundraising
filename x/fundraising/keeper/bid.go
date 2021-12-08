@@ -73,8 +73,8 @@ func (k Keeper) IterateBidsByBidder(ctx sdk.Context, bidderAcc sdk.AccAddress, c
 	iter := sdk.KVStorePrefixIterator(store, types.GetBidIndexByBidderPrefix(bidderAcc))
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		auctionID, sequence := types.ParseBidIndexKey(iter.Key())
-		bid, _ := k.GetBid(ctx, auctionID, sequence)
+		auctionId, sequence := types.ParseBidIndexKey(iter.Key())
+		bid, _ := k.GetBid(ctx, auctionId, sequence)
 		if cb(bid) {
 			break
 		}
@@ -100,7 +100,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 		return sdkerrors.ErrInsufficientFunds
 	}
 
-	if !auction.GetTotalSellingCoin().Sub(msg.Coin).IsPositive() {
+	if !auction.GetRemainingCoin().Sub(msg.Coin).IsPositive() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "request coin must be lower than or equal to the remaining total selling coin")
 	}
 
@@ -110,8 +110,8 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 		}
 
 		// Bidder cannot bid more than the total selling coin
-		remaining := auction.GetTotalSellingCoin().Sub(msg.Coin)
-		if err := auction.SetTotalSellingCoin(remaining); err != nil {
+		remaining := auction.GetRemainingCoin().Sub(msg.Coin)
+		if err := auction.SetRemainingCoin(remaining); err != nil {
 			return err
 		}
 
@@ -127,7 +127,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 		Price:     msg.Price,
 		Coin:      msg.Coin,
 		Height:    uint64(ctx.BlockHeader().Height),
-		IsWinner:  false, // it becomes true when a bidder receives succesfully during distribution in endblocker
+		Eligible:  false, // it becomes true when a bidder receives succesfully during distribution in endblocker
 	}
 
 	k.SetBid(ctx, bid.AuctionId, bid.Sequence, msg.GetBidder(), bid)

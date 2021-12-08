@@ -75,7 +75,7 @@ type BaseAuction struct {
 	VestingAddress     string            // the vesting account that releases the paying amount of coins based on the schedules
 	VestingSchedules   []VestingSchedule // vesting schedules for the auction
 	WinningPrice       sdk.Dec           // the winning price of the auction
-	TotalSellingCoin   sdk.Coin          // the total amount of coin that is sold when the auction is finished
+	RemainingCoin      sdk.Coin          // the remaining amount of coin to sell
 	StartTime          time.Time         // start time of the auction
 	EndTime            []time.Time       // end times of the auction since extended round(s) can occur
 	Status             AuctionStatus     // the auction status
@@ -151,10 +151,12 @@ const (
 	StatusStarted AuctionStatus = 2
 	// AUCTION_STATUS_VESTING defines an auction status that is in distribution based on the vesting schedules
 	StatusVesting AuctionStatus = 3
-	// AUCTION_STATUS_FINISHED defines an auction status that is finished
-	StatusFinished AuctionStatus = 4
+	// AUCTION_STATUS_DISTRIBUTING defines an auction status that is ready to distribute
+	StatusDistributed AuctionStatus = 4
+	// AUCTION_STATUS_FINISHED defines an auction status that is finished 
+	StatusFinished AuctionStatus = 5
 	// AUCTION_STATUS_CANCELLED defines an auction sttus that is cancelled
-	StatusCancelled AuctionStatus = 5
+	StatusCancelled AuctionStatus = 6
 )
 ```
 

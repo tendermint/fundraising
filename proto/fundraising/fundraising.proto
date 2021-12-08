@@ -82,9 +82,8 @@ message BaseAuction {
     (gogoproto.nullable) = false
   ];
 
-  // total_selling_coin specifes the total amount of coin that is sold when the
-  // auction is finished
-  cosmos.base.v1beta1.Coin total_selling_coin = 12 [
+  // remaining_coin specifes the remaining amount of selling coin to sell
+  cosmos.base.v1beta1.Coin remaining_coin = 12 [
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
   ];
@@ -167,11 +166,14 @@ enum AuctionStatus {
   // AUCTION_STATUS_VESTING defines the vesting auction status
   AUCTION_STATUS_VESTING = 3
       [ (gogoproto.enumvalue_customname) = "AuctionStatusVesting" ];
+  // AUCTION_STATUS_DISTRIBUTED defines the distributing auction status
+  AUCTION_STATUS_DISTRIBUTED = 4
+      [ (gogoproto.enumvalue_customname) = "AuctionStatusDistributing" ];
   // AUCTION_STATUS_FINISHED defines the finished auction status
-  AUCTION_STATUS_FINISHED = 4
+  AUCTION_STATUS_FINISHED = 5
       [ (gogoproto.enumvalue_customname) = "AuctionStatusFinished" ];
   // AUCTION_STATUS_CANCELLED defines the cancelled auction status
-  AUCTION_STATUS_CANCELLED = 5
+  AUCTION_STATUS_CANCELLED = 6
       [ (gogoproto.enumvalue_customname) = "AuctionStatusCancelled" ];
 }
 
@@ -242,9 +244,8 @@ message Bid {
   // height specifies the block height of the bid
   uint64 height = 6;
 
-  // is_winner specifies the bid that is determined to be a winner when an
-  // auction ends; default value is false
-  bool is_winner = 7;
+  // eligible specifies the bid that is eligible to purchase the selling coin
+  bool eligible = 7;
 }
 
 // AddressType enumerates the available types of a address.

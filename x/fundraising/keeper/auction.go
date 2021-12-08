@@ -118,9 +118,9 @@ func (k Keeper) DeleteAuction(ctx sdk.Context, auction types.AuctionI) {
 
 // GetVestingQueue returns a slice of vesting queues that the auction is complete and
 // waiting in a queue to release the vesting amount of coin at the respective release time.
-func (k Keeper) GetVestingQueue(ctx sdk.Context, releaseTime time.Time, auctionID uint64) []types.VestingQueue {
+func (k Keeper) GetVestingQueue(ctx sdk.Context, releaseTime time.Time, auctionId uint64) []types.VestingQueue {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetVestingQueueKey(releaseTime, auctionID))
+	bz := store.Get(types.GetVestingQueueKey(releaseTime, auctionId))
 	if bz == nil {
 		return []types.VestingQueue{}
 	}
@@ -133,10 +133,10 @@ func (k Keeper) GetVestingQueue(ctx sdk.Context, releaseTime time.Time, auctionI
 
 // SetVestingQueue sets a given slice of vesting queues into
 // the vesting queue by a given release time and auction id.
-func (k Keeper) SetVestingQueue(ctx sdk.Context, releaseTime time.Time, auctionID uint64, queues []types.VestingQueue) {
+func (k Keeper) SetVestingQueue(ctx sdk.Context, releaseTime time.Time, auctionId uint64, queues []types.VestingQueue) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshal(&types.VestingQueues{Queues: queues})
-	store.Set(types.GetVestingQueueKey(releaseTime, auctionID), bz)
+	store.Set(types.GetVestingQueueKey(releaseTime, auctionId), bz)
 }
 
 // DeleteVestingQueue removes vesting queue by an auctioneer from the vesting queue
@@ -147,9 +147,9 @@ func (k Keeper) DeleteVestingQueue(ctx sdk.Context, vesting types.VestingQueue) 
 
 // VestingQueueIterator returns an iterator ranging over vesting queues that are
 // vesting whose vesting completion occurs at the given release time for the auction.
-func (k Keeper) VestingQueueIterator(ctx sdk.Context, releaseTime time.Time, auctionID uint64) sdk.Iterator {
+func (k Keeper) VestingQueueIterator(ctx sdk.Context, releaseTime time.Time, auctionId uint64) sdk.Iterator {
 	store := ctx.KVStore(k.storeKey)
-	return store.Iterator(types.VestingQueueKeyPrefix, sdk.InclusiveEndBytes(types.GetVestingQueueKey(releaseTime, auctionID)))
+	return store.Iterator(types.VestingQueueKeyPrefix, sdk.InclusiveEndBytes(types.GetVestingQueueKey(releaseTime, auctionId)))
 }
 
 // IterateAuctions iterates over all the stored auctions and performs a callback function.
@@ -197,7 +197,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		return err
 	}
 
-	sellingReserveAcc := types.SellingReserveAcc(msg.SellingCoin.Denom)
+	sellingReserveAcc := types.SellingReserveAcc(msg.SellingCoin.Denom) // auction id 로 조합
 	payingReserveAcc := types.PayingReserveAcc(msg.SellingCoin.Denom)
 	vestingReserveAcc := types.VestingReserveAcc(msg.SellingCoin.Denom)
 

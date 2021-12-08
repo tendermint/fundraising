@@ -5,12 +5,12 @@ import (
 )
 
 func (suite *KeeperTestSuite) TestAuctionId() {
-	auctionID := suite.keeper.GetAuctionId(suite.ctx)
-	suite.Require().Equal(uint64(0), auctionID)
+	auctionId := suite.keeper.GetAuctionId(suite.ctx)
+	suite.Require().Equal(uint64(0), auctionId)
 
 	cacheCtx, _ := suite.ctx.CacheContext()
-	nextAuctionID := suite.keeper.GetNextAuctionIdWithUpdate(cacheCtx)
-	suite.Require().Equal(uint64(1), nextAuctionID)
+	nextAuctionId := suite.keeper.GetNextAuctionIdWithUpdate(cacheCtx)
+	suite.Require().Equal(uint64(1), nextAuctionId)
 
 	// TODO: not implemented yet
 }

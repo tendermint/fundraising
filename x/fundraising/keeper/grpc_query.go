@@ -120,10 +120,10 @@ func (k Querier) Bids(c context.Context, req *types.QueryBidsRequest) (*types.Qu
 		}
 	}
 
-	var isWinner bool
-	if req.IsWinner != "" {
+	var eligible bool
+	if req.Eligible != "" {
 		var err error
-		isWinner, err = strconv.ParseBool(req.IsWinner)
+		eligible, err = strconv.ParseBool(req.Eligible)
 		if err != nil {
 			return nil, err
 		}
@@ -147,8 +147,8 @@ func (k Querier) Bids(c context.Context, req *types.QueryBidsRequest) (*types.Qu
 			return false, nil
 		}
 
-		if req.IsWinner != "" {
-			if bid.IsWinner != isWinner {
+		if req.Eligible != "" {
+			if bid.Eligible != eligible {
 				return false, nil
 			}
 		}

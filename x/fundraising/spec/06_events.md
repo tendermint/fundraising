@@ -16,7 +16,7 @@ The `fundraising` module emits the following events:
 
 | Type                       | Attribute Key         | Attribute Value            |
 | -------------------------- | --------------------- | -------------------------- |
-| create_fixed_price_auction | auction_id            | {auctionID}                |
+| create_fixed_price_auction | auction_id            | {auctionId}                |
 | create_fixed_price_auction | auctioneer_address    | {auctioneerAddress}        |
 | create_fixed_price_auction | selling_pool_address  | {sellingPoolAddress}       |
 | create_fixed_price_auction | paying_pool_address   | {payingPoolAddress}        |
@@ -46,7 +46,7 @@ The `fundraising` module emits the following events:
 
 | Type           | Attribute Key | Attribute Value     |
 | -------------- | ------------- | ------------------- |
-| cancel_auction | auction_id    | {auctionID}         |
+| cancel_auction | auction_id    | {auctionId}         |
 | message        | module        | fundraising         |
 | message        | action        | cancel_auction      |
 | message        | auctioneer    | {auctioneerAddress} | 
