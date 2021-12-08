@@ -21,7 +21,7 @@ func (suite *KeeperTestSuite) TestCreateAuctionStatus() {
 	suite.ctx = suite.ctx.WithBlockTime(types.ParseTime("2021-12-01T00:00:00Z"))
 
 	// Create a fixed price auction with the future start time
-	suite.keeper.CreateFixedPriceAuction(suite.ctx, types.NewMsgCreateFixedPriceAuction(
+	err := suite.keeper.CreateFixedPriceAuction(suite.ctx, types.NewMsgCreateFixedPriceAuction(
 		suite.addrs[0].String(),
 		suite.StartPrice("0.5"),
 		suite.SellingCoin(denom2, 100_000_000_000),
@@ -30,13 +30,14 @@ func (suite *KeeperTestSuite) TestCreateAuctionStatus() {
 		types.ParseTime("2022-12-10T00:00:00Z"),
 		types.ParseTime("2022-12-20T00:00:00Z"),
 	))
+	suite.Require().NoError(err)
 
 	auction, found := suite.keeper.GetAuction(suite.ctx, 1)
 	suite.Require().True(found)
 	suite.Require().Equal(types.AuctionStatusStandBy, auction.GetStatus())
 
 	// Create a fixed price auction with the past start time
-	suite.keeper.CreateFixedPriceAuction(suite.ctx, types.NewMsgCreateFixedPriceAuction(
+	err = suite.keeper.CreateFixedPriceAuction(suite.ctx, types.NewMsgCreateFixedPriceAuction(
 		suite.addrs[0].String(),
 		suite.StartPrice("0.5"),
 		suite.SellingCoin(denom2, 100_000_000_000),
@@ -45,6 +46,7 @@ func (suite *KeeperTestSuite) TestCreateAuctionStatus() {
 		types.ParseTime("2021-11-01T00:00:00Z"),
 		types.ParseTime("2021-12-10T00:00:00Z"),
 	))
+	suite.Require().NoError(err)
 
 	auction, found = suite.keeper.GetAuction(suite.ctx, 2)
 	suite.Require().True(found)

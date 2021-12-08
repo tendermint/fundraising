@@ -27,7 +27,10 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 			case types.AuctionStatusStandBy:
 				// Update the status to AUCTION_STATUS_STARTED if the start time is passed over the current time
 				if types.IsAuctionStarted(auction.GetStartTime(), ctx.BlockTime()) {
-					auction.SetStatus(types.AuctionStatusStarted)
+					if err := auction.SetStatus(types.AuctionStatusStarted); err != nil {
+						logger.Error("error is returned when setting auction status", "auction", auction)
+						return
+					}
 				}
 			case types.AuctionStatusFinished:
 				// Calculate allocation for each bidder of the auction and distribute them to the bidders
