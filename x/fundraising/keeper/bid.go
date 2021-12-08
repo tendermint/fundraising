@@ -11,9 +11,9 @@ import (
 
 // GetBid returns a bid for the given auction id and sequence number.
 // A bidder can have as many bids as they want, so sequence is required to get the bid.
-func (k Keeper) GetBid(ctx sdk.Context, auctionID uint64, sequence uint64) (bid types.Bid, found bool) {
+func (k Keeper) GetBid(ctx sdk.Context, auctionId uint64, sequence uint64) (bid types.Bid, found bool) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetBidKey(auctionID, sequence))
+	bz := store.Get(types.GetBidKey(auctionId, sequence))
 	if bz == nil {
 		return bid, false
 	}
@@ -22,17 +22,17 @@ func (k Keeper) GetBid(ctx sdk.Context, auctionID uint64, sequence uint64) (bid 
 }
 
 // SetBid sets a bid with the given arguments.
-func (k Keeper) SetBid(ctx sdk.Context, auctionID uint64, sequence uint64, bidderAcc sdk.AccAddress, bid types.Bid) {
+func (k Keeper) SetBid(ctx sdk.Context, auctionId uint64, sequence uint64, bidderAcc sdk.AccAddress, bid types.Bid) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshal(&bid)
-	store.Set(types.GetBidKey(auctionID, sequence), bz)
-	store.Set(types.GetBidIndexKey(bidderAcc, auctionID, sequence), []byte{})
+	store.Set(types.GetBidKey(auctionId, sequence), bz)
+	store.Set(types.GetBidIndexKey(bidderAcc, auctionId, sequence), []byte{})
 }
 
-// GetBids returns all bids registered in the store.
-func (k Keeper) GetBids(ctx sdk.Context, auctionID uint64) []types.Bid {
+// GetBidsByAuctionId returns all bids registered in the store.
+func (k Keeper) GetBidsByAuctionId(ctx sdk.Context, auctionId uint64) []types.Bid {
 	bids := []types.Bid{}
-	k.IterateBids(ctx, auctionID, func(auctionID uint64, bid types.Bid) (stop bool) {
+	k.IterateBidsByAuctionId(ctx, auctionId, func(bid types.Bid) (stop bool) {
 		bids = append(bids, bid)
 		return false
 	})
@@ -49,18 +49,17 @@ func (k Keeper) GetBidsByBidder(ctx sdk.Context, bidderAcc sdk.AccAddress) []typ
 	return bids
 }
 
-// IterateBids iterates through all bids stored in the store
+// IterateBidsByAuctionId iterates through all bids stored in the store
 // and invokes callback function for each item.
 // Stops the iteration when the callback function returns true.
-func (k Keeper) IterateBids(ctx sdk.Context, auctionID uint64, cb func(auctionID uint64, bid types.Bid) (stop bool)) {
+func (k Keeper) IterateBidsByAuctionId(ctx sdk.Context, auctionId uint64, cb func(bid types.Bid) (stop bool)) {
 	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.GetBidAuctionIDKey(auctionID))
+	iter := sdk.KVStorePrefixIterator(store, types.GetBidAuctionIDKey(auctionId))
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var bid types.Bid
 		k.cdc.MustUnmarshal(iter.Value(), &bid)
-		auctionID, _ := types.ParseBidKey(iter.Key())
-		if cb(auctionID, bid) {
+		if cb(bid) {
 			break
 		}
 	}
@@ -93,9 +92,10 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 		return sdkerrors.Wrapf(types.ErrInvalidAuctionStatus, "unable to bid because the auction is in %s", auction.GetStatus().String())
 	}
 
-	// Bid amount must have greater than or equal to the amount of coin they want to bid
 	requireAmt := msg.Price.Mul(msg.Coin.Amount.ToDec()).TruncateInt()
 	balance := k.bankKeeper.GetBalance(ctx, msg.GetBidder(), auction.GetPayingCoinDenom())
+
+	// The bidder's balance must have greater than or equal to the bid amount
 	if balance.Amount.Sub(requireAmt).IsNegative() {
 		return sdkerrors.ErrInsufficientFunds
 	}

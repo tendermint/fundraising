@@ -28,7 +28,7 @@ func (suite *keysTestSuite) TestGetAuctionKey() {
 
 func (suite *keysTestSuite) TestGetBidKey() {
 	testCases := []struct {
-		auctionID uint64
+		auctionId uint64
 		sequence  uint64
 		expected  []byte
 	}{
@@ -50,19 +50,15 @@ func (suite *keysTestSuite) TestGetBidKey() {
 	}
 
 	for _, tc := range testCases {
-		key := types.GetBidKey(tc.auctionID, tc.sequence)
+		key := types.GetBidKey(tc.auctionId, tc.sequence)
 		suite.Require().Equal(tc.expected, key)
-
-		auctionID, sequence := types.ParseBidKey(key)
-		suite.Require().Equal(tc.auctionID, auctionID)
-		suite.Require().Equal(tc.sequence, sequence)
 	}
 }
 
 func (suite *keysTestSuite) TestBidIndexKey() {
 	testCases := []struct {
 		bidderAcc sdk.AccAddress
-		auctionID uint64
+		auctionId uint64
 		sequence  uint64
 		expected  []byte
 	}{
@@ -96,11 +92,11 @@ func (suite *keysTestSuite) TestBidIndexKey() {
 	}
 
 	for _, tc := range testCases {
-		key := types.GetBidIndexKey(tc.bidderAcc, tc.auctionID, tc.sequence)
+		key := types.GetBidIndexKey(tc.bidderAcc, tc.auctionId, tc.sequence)
 		suite.Require().Equal(tc.expected, key)
 
-		auctionID, sequence := types.ParseBidIndexKey(key)
-		suite.Require().Equal(tc.auctionID, auctionID)
+		auctionId, sequence := types.ParseBidIndexKey(key)
+		suite.Require().Equal(tc.auctionId, auctionId)
 		suite.Require().Equal(tc.sequence, sequence)
 	}
 }
@@ -108,7 +104,7 @@ func (suite *keysTestSuite) TestBidIndexKey() {
 func (suite *keysTestSuite) TestVestingQueueKey() {
 	testCases := []struct {
 		timestamp time.Time
-		auctionID uint64
+		auctionId uint64
 		expected  []byte
 	}{
 		{
@@ -138,13 +134,13 @@ func (suite *keysTestSuite) TestVestingQueueKey() {
 	}
 
 	for _, tc := range testCases {
-		key := types.GetVestingQueueKey(tc.timestamp, tc.auctionID)
+		key := types.GetVestingQueueKey(tc.timestamp, tc.auctionId)
 		suite.Require().Equal(tc.expected, key)
 
-		timestamp, auctionID, err := types.ParseVestingQueueKey(key)
+		timestamp, auctionId, err := types.ParseVestingQueueKey(key)
 		suite.Require().NoError(err)
 
 		suite.Require().Equal(tc.timestamp, timestamp)
-		suite.Require().Equal(tc.auctionID, auctionID)
+		suite.Require().Equal(tc.auctionId, auctionId)
 	}
 }

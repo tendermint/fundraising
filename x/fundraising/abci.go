@@ -32,7 +32,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 			case types.AuctionStatusFinished:
 				// Calculate allocation for each bidder of the auction and distribute them to the bidders
 				// Lastly, store vesting queue if the auction has any vesting schedules and set status to AuctionStatusVesting
-				for _, bid := range k.GetBids(ctx, auction.GetId()) {
+				for _, bid := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
 					logger.Info("Bid information", "bid", bid)
 				}
 

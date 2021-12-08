@@ -88,17 +88,18 @@ func GetVestingQueueKey(timestamp time.Time, auctionID uint64) []byte {
 	return bz
 }
 
-// ParseBidKey returnes the auction id and sequence from a key created
-// from GetBidKey.
-func ParseBidKey(key []byte) (auctionID uint64, sequence uint64) {
-	if !bytes.HasPrefix(key, BidKeyPrefix) {
-		panic("key does not have proper prefix")
-	}
-	bytesLen := 8
-	auctionID = sdk.BigEndianToUint64(key[1:])
-	sequence = sdk.BigEndianToUint64(key[1+bytesLen:])
-	return
-}
+//
+// // ParseBidKey returnes the auction id and sequence from a key created
+// // from GetBidKey.
+// func ParseBidKey(key []byte) (auctionID uint64, sequence uint64) {
+// 	if !bytes.HasPrefix(key, BidKeyPrefix) {
+// 		panic("key does not have proper prefix")
+// 	}
+// 	bytesLen := 8
+// 	auctionID = sdk.BigEndianToUint64(key[1:])
+// 	sequence = sdk.BigEndianToUint64(key[1+bytesLen:])
+// 	return
+// }
 
 func ParseBidIndexKey(key []byte) (auctionID, sequence uint64) {
 	if !bytes.HasPrefix(key, BidIndexKeyPrefix) {
