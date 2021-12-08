@@ -166,7 +166,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 			sdk.NewAttribute(types.AttributeKeyBidderAddress, msg.GetBidder().String()),
 			sdk.NewAttribute(types.AttributeKeyBidPrice, msg.Price.String()),
 			sdk.NewAttribute(types.AttributeKeyBidCoin, msg.Coin.String()),
-			sdk.NewAttribute(types.AttributeKeyBidAmount, bidAmt.String()),
+			sdk.NewAttribute(types.AttributeKeyBidAmount, bidCoin.String()),
 		),
 	})
 
