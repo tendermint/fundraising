@@ -215,6 +215,9 @@ message VestingQueue {
   // release_time specifies the timestamp of the vesting schedule
   google.protobuf.Timestamp release_time = 4
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
+
+  // vested specifies the status of distribution
+  bool vested = 5;
 }
 
 // Bid defines a standard bid for an auction.
