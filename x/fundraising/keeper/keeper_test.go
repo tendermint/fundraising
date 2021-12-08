@@ -18,8 +18,8 @@ import (
 const (
 	denom1 = "denom1" // selling coin denom
 	denom2 = "denom2" // paying coin denom
-	denom3 = "denom3" // selling coin denom
-	denom4 = "denom4" // paying coin denom
+	denom3 = "denom3"
+	denom4 = "denom4"
 )
 
 var (
@@ -81,7 +81,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 				suite.TotalSellingCoin(1_000_000_000_000),
 				types.ParseTime("2021-12-01T00:00:00Z"),
 				[]time.Time{types.ParseTime("2022-01-01T00:00:00Z")},
-				types.AuctionStatusStandBy,
+				types.AuctionStatusStarted,
 			),
 		),
 		types.NewFixedPriceAuction(
@@ -120,23 +120,27 @@ func (suite *KeeperTestSuite) SetupTest() {
 			1,
 			suite.addrs[1].String(),
 			suite.Price("1.0"),
-			suite.Coin(denom2, 50_000_000),
+			suite.Coin(denom2, 100_000_000),
 		),
 	}
 }
 
+// StartPrice is a convenient method to test
 func (suite *KeeperTestSuite) StartPrice(price string) sdk.Dec {
 	return sdk.MustNewDecFromStr(price)
 }
 
+// SellingCoin is a convenient method to test
 func (suite *KeeperTestSuite) SellingCoin(denom string, amount int64) sdk.Coin {
 	return sdk.NewInt64Coin(denom, amount)
 }
 
+// PayingCoinDenom is a convenient method to test
 func (suite *KeeperTestSuite) PayingCoinDenom(denom string) string {
 	return denom
 }
 
+// VestingSchedules is a convenient method to test
 func (suite *KeeperTestSuite) VestingSchedules() []types.VestingSchedule {
 	return []types.VestingSchedule{
 		types.NewVestingSchedule(types.ParseTime("2022-01-01T22:00:00+00:00"), sdk.MustNewDecFromStr("0.25")),
@@ -146,14 +150,17 @@ func (suite *KeeperTestSuite) VestingSchedules() []types.VestingSchedule {
 	}
 }
 
+// TotalSellingCoin is a convenient method to test
 func (suite *KeeperTestSuite) TotalSellingCoin(amount int64) sdk.Coin {
 	return sdk.NewInt64Coin(denom1, amount)
 }
 
+// Price is a convenient method to test
 func (suite *KeeperTestSuite) Price(price string) sdk.Dec {
 	return sdk.MustNewDecFromStr(price)
 }
 
+// Coin is a convenient method to test
 func (suite *KeeperTestSuite) Coin(denom string, amount int64) sdk.Coin {
 	return sdk.NewInt64Coin(denom, amount)
 }

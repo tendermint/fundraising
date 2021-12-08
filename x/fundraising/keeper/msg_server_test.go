@@ -1,8 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -89,8 +87,6 @@ func (suite *KeeperTestSuite) TestMsgPlaceBid() {
 	// Create a fixed price auction that should start right away
 	auction := suite.sampleFixedPriceAuctions[0]
 	suite.keeper.SetAuction(suite.ctx, auction)
-
-	fmt.Println("status: ", auction.GetStatus())
 
 	for _, tc := range []struct {
 		name string

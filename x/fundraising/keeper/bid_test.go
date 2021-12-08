@@ -1,18 +1,15 @@
 package keeper_test
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/tendermint/fundraising/x/fundraising/types"
 
 	_ "github.com/stretchr/testify/suite"
 )
 
-func (suite *KeeperTestSuite) TestBid() {
+func (suite *KeeperTestSuite) TestBidIterators() {
 	ctx := sdk.WrapSDKContext(suite.ctx)
 
+	// Create a fixed price auction with already started status
 	suite.keeper.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[0])
 
 	auction, found := suite.keeper.GetAuction(suite.ctx, 1)
@@ -24,39 +21,12 @@ func (suite *KeeperTestSuite) TestBid() {
 	_, err = suite.srv.PlaceBid(ctx, suite.sampleFixedPriceBids[1])
 	suite.Require().NoError(err)
 
-	fmt.Println("msgs: ", suite.sampleFixedPriceBids)
+	bids := suite.keeper.GetBids(suite.ctx)
+	suite.Require().Len(bids, 2)
 
-	bids := []types.Bid{}
-	suite.keeper.IterateBidsByAuctionId(suite.ctx, auction.GetId(), func(bid types.Bid) (stop bool) {
-		bids = append(bids, bid)
-		return false
-	})
+	bidsById := suite.keeper.GetBidsByAuctionId(suite.ctx, auction.GetId())
+	suite.Require().Len(bidsById, 2)
 
-	fmt.Println("len: ", len(bids))
-	for _, b := range bids {
-		fmt.Println("b: ", b)
-	}
-
-	// bidderAcc := suite.addrs[0]
-	// price := sdk.MustNewDecFromStr("")
-	// coin := sdk.NewInt64Coin("", 1_000_000)
-	// nextSeq := suite.keeper.GetNextSequenceWithUpdate(suite.ctx)
-
-	// bid := types.Bid{
-	// 	AuctionId: auction.GetId(),
-	// 	Sequence:  nextSeq,
-	// 	Bidder:    bidderAcc.String(),
-	// 	Price:     price,
-	// 	Coin:      coin,
-	// }
-
-	// suite.keeper.SetBid(
-	// 	suite.ctx,
-	// 	auction.GetId(),
-	// 	nextSeq,
-	// 	bidderAcc,
-	// 	bid,
-	// )
-
-	// Iterate 테스트 필요
+	bidsByBidder := suite.keeper.GetBidsByBidder(suite.ctx, suite.addrs[0])
+	suite.Require().Len(bidsByBidder, 1)
 }

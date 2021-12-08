@@ -120,14 +120,16 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 
 	bidAmt := msg.Price.Mul(msg.Coin.Amount.ToDec()).TruncateInt()
 	balanceAmt := k.bankKeeper.GetBalance(ctx, msg.GetBidder(), auction.GetPayingCoinDenom()).Amount
+	bidCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidAmt)
 
 	// The bidder must have greater than or equal to the bid amount
 	if balanceAmt.Sub(bidAmt).IsNegative() {
 		return sdkerrors.ErrInsufficientFunds
 	}
 
-	// The bidder cannot bid more than the remaining coin to sell
-	if !auction.GetRemainingCoin().Amount.Sub(bidAmt).IsPositive() {
+	// The bidder cannot bid more than the remaining coin
+	remaining := auction.GetRemainingCoin().Sub(bidCoin)
+	if remaining.IsNegative() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "request coin must be lower than or equal to the remaining total selling coin")
 	}
 
@@ -136,8 +138,6 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 			return sdkerrors.Wrap(types.ErrInvalidStartPrice, "bid price must be equal to the start price of the auction")
 		}
 
-		// Bidder cannot bid more than the total selling coin
-		remaining := auction.GetRemainingCoin().Sub(msg.Coin)
 		if err := auction.SetRemainingCoin(remaining); err != nil {
 			return err
 		}
