@@ -20,13 +20,13 @@ func TestKeysTestSuite(t *testing.T) {
 	suite.Run(t, new(keysTestSuite))
 }
 
-func (s *keysTestSuite) TestGetAuctionKey() {
-	s.Require().Equal([]byte{0x21, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}, types.GetAuctionKey(0))
-	s.Require().Equal([]byte{0x21, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x9}, types.GetAuctionKey(9))
-	s.Require().Equal([]byte{0x21, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xa}, types.GetAuctionKey(10))
+func (suite *keysTestSuite) TestGetAuctionKey() {
+	suite.Require().Equal([]byte{0x21, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}, types.GetAuctionKey(0))
+	suite.Require().Equal([]byte{0x21, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x9}, types.GetAuctionKey(9))
+	suite.Require().Equal([]byte{0x21, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xa}, types.GetAuctionKey(10))
 }
 
-func (s *keysTestSuite) TestGetBidKey() {
+func (suite *keysTestSuite) TestGetBidKey() {
 	testCases := []struct {
 		auctionID uint64
 		sequence  uint64
@@ -51,15 +51,15 @@ func (s *keysTestSuite) TestGetBidKey() {
 
 	for _, tc := range testCases {
 		key := types.GetBidKey(tc.auctionID, tc.sequence)
-		s.Require().Equal(tc.expected, key)
+		suite.Require().Equal(tc.expected, key)
 
 		auctionID, sequence := types.ParseBidKey(key)
-		s.Require().Equal(tc.auctionID, auctionID)
-		s.Require().Equal(tc.sequence, sequence)
+		suite.Require().Equal(tc.auctionID, auctionID)
+		suite.Require().Equal(tc.sequence, sequence)
 	}
 }
 
-func (s *keysTestSuite) TestBidIndexKey() {
+func (suite *keysTestSuite) TestBidIndexKey() {
 	testCases := []struct {
 		bidderAcc sdk.AccAddress
 		auctionID uint64
@@ -97,15 +97,15 @@ func (s *keysTestSuite) TestBidIndexKey() {
 
 	for _, tc := range testCases {
 		key := types.GetBidIndexKey(tc.bidderAcc, tc.auctionID, tc.sequence)
-		s.Require().Equal(tc.expected, key)
+		suite.Require().Equal(tc.expected, key)
 
 		auctionID, sequence := types.ParseBidIndexKey(key)
-		s.Require().Equal(tc.auctionID, auctionID)
-		s.Require().Equal(tc.sequence, sequence)
+		suite.Require().Equal(tc.auctionID, auctionID)
+		suite.Require().Equal(tc.sequence, sequence)
 	}
 }
 
-func (s *keysTestSuite) TestVestingQueueKey() {
+func (suite *keysTestSuite) TestVestingQueueKey() {
 	testCases := []struct {
 		timestamp time.Time
 		auctionID uint64
@@ -139,12 +139,12 @@ func (s *keysTestSuite) TestVestingQueueKey() {
 
 	for _, tc := range testCases {
 		key := types.GetVestingQueueKey(tc.timestamp, tc.auctionID)
-		s.Require().Equal(tc.expected, key)
+		suite.Require().Equal(tc.expected, key)
 
 		timestamp, auctionID, err := types.ParseVestingQueueKey(key)
-		s.Require().NoError(err)
+		suite.Require().NoError(err)
 
-		s.Require().Equal(tc.timestamp, timestamp)
-		s.Require().Equal(tc.auctionID, auctionID)
+		suite.Require().Equal(tc.timestamp, timestamp)
+		suite.Require().Equal(tc.auctionID, auctionID)
 	}
 }
