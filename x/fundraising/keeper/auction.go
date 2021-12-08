@@ -197,9 +197,13 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		return err
 	}
 
-	sellingReserveAcc := types.SellingReserveAcc(msg.SellingCoin.Denom) // auction id 로 조합
-	payingReserveAcc := types.PayingReserveAcc(msg.SellingCoin.Denom)
-	vestingReserveAcc := types.VestingReserveAcc(msg.SellingCoin.Denom)
+	if ctx.BlockTime().After(msg.EndTime) {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be prior to current time")
+	}
+
+	sellingReserveAcc := types.SellingReserveAcc(nextId)
+	payingReserveAcc := types.PayingReserveAcc(nextId)
+	vestingReserveAcc := types.VestingReserveAcc(nextId)
 
 	// Reserve the selling coin to the selling reserve account
 	if err := k.bankKeeper.SendCoins(ctx, auctioneerAcc, sellingReserveAcc, sdk.NewCoins(msg.SellingCoin)); err != nil {
@@ -225,7 +229,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 	)
 
 	// Update status if the start time is already passed over the current time
-	if types.IsAuctionStarted(baseAuction, ctx.BlockTime()) {
+	if types.IsAuctionStarted(baseAuction.StartTime, ctx.BlockTime()) {
 		baseAuction.Status = types.AuctionStatusStarted
 	}
 

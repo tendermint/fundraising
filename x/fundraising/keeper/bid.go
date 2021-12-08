@@ -29,7 +29,17 @@ func (k Keeper) SetBid(ctx sdk.Context, auctionId uint64, sequence uint64, bidde
 	store.Set(types.GetBidIndexKey(bidderAcc, auctionId, sequence), []byte{})
 }
 
-// GetBidsByAuctionId returns all bids registered in the store.
+// GetBids returns all bids registered in the store.
+func (k Keeper) GetBids(ctx sdk.Context) []types.Bid {
+	bids := []types.Bid{}
+	k.IterateBids(ctx, func(bid types.Bid) (stop bool) {
+		bids = append(bids, bid)
+		return false
+	})
+	return bids
+}
+
+// GetBidsByAuctionId returns all bids associated with the auction id that are registered in the store.
 func (k Keeper) GetBidsByAuctionId(ctx sdk.Context, auctionId uint64) []types.Bid {
 	bids := []types.Bid{}
 	k.IterateBidsByAuctionId(ctx, auctionId, func(bid types.Bid) (stop bool) {
@@ -39,7 +49,7 @@ func (k Keeper) GetBidsByAuctionId(ctx sdk.Context, auctionId uint64) []types.Bi
 	return bids
 }
 
-// GetBidsByBidder returns all bids that are created by a bidder.
+// GetBidsByBidder returns all bids associated with the bidder that are registered in the store.
 func (k Keeper) GetBidsByBidder(ctx sdk.Context, bidderAcc sdk.AccAddress) []types.Bid {
 	bids := []types.Bid{}
 	k.IterateBidsByBidder(ctx, bidderAcc, func(bid types.Bid) (stop bool) {
@@ -49,7 +59,23 @@ func (k Keeper) GetBidsByBidder(ctx sdk.Context, bidderAcc sdk.AccAddress) []typ
 	return bids
 }
 
-// IterateBidsByAuctionId iterates through all bids stored in the store
+// IterateBids iterates through all bids stored in the store
+// and invokes callback function for each item.
+// Stops the iteration when the callback function returns true.
+func (k Keeper) IterateBids(ctx sdk.Context, cb func(bid types.Bid) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, types.BidKeyPrefix)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var bid types.Bid
+		k.cdc.MustUnmarshal(iter.Value(), &bid)
+		if cb(bid) {
+			break
+		}
+	}
+}
+
+// IterateBidsByAuctionId iterates through all bids associated with the auction id stored in the store
 // and invokes callback function for each item.
 // Stops the iteration when the callback function returns true.
 func (k Keeper) IterateBidsByAuctionId(ctx sdk.Context, auctionId uint64, cb func(bid types.Bid) (stop bool)) {
@@ -65,7 +91,7 @@ func (k Keeper) IterateBidsByAuctionId(ctx sdk.Context, auctionId uint64, cb fun
 	}
 }
 
-// IterateBidsByBidder iterates through all bids by a bidder stored in the store
+// IterateBidsByBidder iterates through all bids associated with the bidder stored in the store
 // and invokes callback function for each item.
 // Stops the iteration when the callback function returns true.
 func (k Keeper) IterateBidsByBidder(ctx sdk.Context, bidderAcc sdk.AccAddress, cb func(bid types.Bid) (stop bool)) {

@@ -42,6 +42,7 @@ type KeeperTestSuite struct {
 	srv                      types.MsgServer
 	addrs                    []sdk.AccAddress
 	sampleFixedPriceAuctions []types.AuctionI
+	sampleFixedPriceBids     []*types.MsgPlaceBid
 }
 
 func TestKeeperTestSuite(t *testing.T) {
@@ -54,6 +55,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 
 	suite.app = app
 	suite.ctx = ctx
+	suite.ctx = suite.ctx.WithBlockTime(time.Now()) // set to current time
 	suite.keeper = suite.app.FundraisingKeeper
 	suite.querier = keeper.Querier{Keeper: suite.keeper}
 	suite.srv = keeper.NewMsgServerImpl(suite.keeper)
@@ -68,12 +70,12 @@ func (suite *KeeperTestSuite) SetupTest() {
 				1,
 				types.AuctionTypeFixedPrice,
 				suite.addrs[4].String(),
-				types.SellingReserveAcc(denom1).String(),
-				types.PayingReserveAcc(denom2).String(),
+				types.SellingReserveAcc(1).String(),
+				types.PayingReserveAcc(1).String(),
 				suite.StartPrice("1.0"), // 1:1 price of paying coin
 				suite.SellingCoin(denom1, 1_000_000_000_000),
 				suite.PayingCoinDenom(denom2),
-				types.VestingReserveAcc(denom1).String(),
+				types.VestingReserveAcc(1).String(),
 				[]types.VestingSchedule{}, // no vesting schedules
 				sdk.ZeroDec(),
 				suite.TotalSellingCoin(1_000_000_000_000),
@@ -87,12 +89,12 @@ func (suite *KeeperTestSuite) SetupTest() {
 				2,
 				types.AuctionTypeFixedPrice,
 				suite.addrs[5].String(),
-				types.SellingReserveAcc(denom3).String(),
-				types.PayingReserveAcc(denom4).String(),
+				types.SellingReserveAcc(1).String(),
+				types.PayingReserveAcc(1).String(),
 				suite.StartPrice("0.5"), // half price of paying coin
 				suite.SellingCoin(denom3, 1_000_000_000_000),
 				suite.PayingCoinDenom(denom4),
-				types.VestingReserveAcc(denom3).String(),
+				types.VestingReserveAcc(1).String(),
 				[]types.VestingSchedule{
 					types.NewVestingSchedule(types.ParseTime("2022-01-01T00:00:00Z"), sdk.MustNewDecFromStr("0.25")),
 					types.NewVestingSchedule(types.ParseTime("2022-04-01T00:00:00Z"), sdk.MustNewDecFromStr("0.25")),
@@ -102,9 +104,23 @@ func (suite *KeeperTestSuite) SetupTest() {
 				sdk.ZeroDec(),
 				suite.TotalSellingCoin(1_000_000_000_000),
 				types.ParseTime("2021-12-01T00:00:00Z"),
-				[]time.Time{types.ParseTime("2022-01-01T00:00:00Z")},
+				[]time.Time{types.ParseTime("2022-12-12T00:00:00Z")},
 				types.AuctionStatusStandBy,
 			),
+		),
+	}
+	suite.sampleFixedPriceBids = []*types.MsgPlaceBid{
+		types.NewMsgPlaceBid(
+			1,
+			suite.addrs[0].String(),
+			suite.Price("1.0"),
+			suite.Coin(denom2, 50_000_000),
+		),
+		types.NewMsgPlaceBid(
+			1,
+			suite.addrs[1].String(),
+			suite.Price("1.0"),
+			suite.Coin(denom2, 50_000_000),
 		),
 	}
 }
@@ -132,4 +148,12 @@ func (suite *KeeperTestSuite) VestingSchedules() []types.VestingSchedule {
 
 func (suite *KeeperTestSuite) TotalSellingCoin(amount int64) sdk.Coin {
 	return sdk.NewInt64Coin(denom1, amount)
+}
+
+func (suite *KeeperTestSuite) Price(price string) sdk.Dec {
+	return sdk.MustNewDecFromStr(price)
+}
+
+func (suite *KeeperTestSuite) Coin(denom string, amount int64) sdk.Coin {
+	return sdk.NewInt64Coin(denom, amount)
 }

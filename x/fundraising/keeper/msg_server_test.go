@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -18,15 +20,15 @@ func (suite *KeeperTestSuite) TestMsgCreateFixedPriceAuction() {
 		err  error
 	}{
 		{
-			"valid message",
+			"valid message with the future start time",
 			types.NewMsgCreateFixedPriceAuction(
 				suite.addrs[0].String(),
 				suite.StartPrice("1.0"),
 				suite.SellingCoin(denom1, 1_000_000_000_000),
 				suite.PayingCoinDenom(denom2),
 				suite.VestingSchedules(),
-				types.ParseTime("2021-12-01T00:00:00Z"),
-				types.ParseTime("2022-01-01T00:00:00Z"),
+				types.ParseTime("2030-01-01T00:00:00Z"),
+				types.ParseTime("2030-01-10T00:00:00Z"),
 			),
 			nil,
 		},
@@ -87,6 +89,8 @@ func (suite *KeeperTestSuite) TestMsgPlaceBid() {
 	// Create a fixed price auction that should start right away
 	auction := suite.sampleFixedPriceAuctions[0]
 	suite.keeper.SetAuction(suite.ctx, auction)
+
+	fmt.Println("status: ", auction.GetStatus())
 
 	for _, tc := range []struct {
 		name string

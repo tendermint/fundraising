@@ -1,6 +1,7 @@
 package types
 
 import (
+	"fmt"
 	time "time"
 
 	proto "github.com/gogo/protobuf/proto"
@@ -342,22 +343,22 @@ func UnpackAuctions(auctionsAny []*codectypes.Any) ([]AuctionI, error) {
 	return auctions, nil
 }
 
-// SellingReserveAcc returns module account for the selling reserve pool account with the given selling coin denom.
-func SellingReserveAcc(sellingCoinDenom string) sdk.AccAddress {
-	return DeriveAddress(ReserveAddressType, ModuleName, SellingReserveAccPrefix+AccNameSplitter+sellingCoinDenom)
+// SellingReserveAcc returns module account for the selling reserve pool account with the given auction id.
+func SellingReserveAcc(auctionId uint64) sdk.AccAddress {
+	return DeriveAddress(ReserveAddressType, ModuleName, SellingReserveAccPrefix+AccNameSplitter+fmt.Sprint(auctionId))
 }
 
-// PayingReserveAcc returns module account for the paying reserve pool account with the given selling coin denom.
-func PayingReserveAcc(sellingCoinDenom string) sdk.AccAddress {
-	return DeriveAddress(ReserveAddressType, ModuleName, PayingReserveAccPrefix+AccNameSplitter+sellingCoinDenom)
+// PayingReserveAcc returns module account for the paying reserve pool account with the given auction id.
+func PayingReserveAcc(auctionId uint64) sdk.AccAddress {
+	return DeriveAddress(ReserveAddressType, ModuleName, PayingReserveAccPrefix+AccNameSplitter+fmt.Sprint(auctionId))
 }
 
-// VestingReserveAcc returns module account for the vesting reserve pool account with the given selling coin denom.
-func VestingReserveAcc(sellingCoinDenom string) sdk.AccAddress {
-	return DeriveAddress(ReserveAddressType, ModuleName, VestingReserveAccPrefix+AccNameSplitter+sellingCoinDenom)
+// VestingReserveAcc returns module account for the vesting reserve pool account with the given auction id.
+func VestingReserveAcc(auctionId uint64) sdk.AccAddress {
+	return DeriveAddress(ReserveAddressType, ModuleName, VestingReserveAccPrefix+AccNameSplitter+fmt.Sprint(auctionId))
 }
 
 // IsAuctionStarted returns true if the start time of the auction is passed over the given time t.
-func IsAuctionStarted(auction AuctionI, t time.Time) bool {
-	return auction.GetStartTime().After(t)
+func IsAuctionStarted(startTime time.Time, t time.Time) bool {
+	return !startTime.After(t)
 }
