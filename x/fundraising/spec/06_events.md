@@ -56,8 +56,9 @@ The `fundraising` module emits the following events:
 | Type      | Attribute Key  | Attribute Value |
 | --------- | -------------- | --------------- |
 | place_bid | bidder_address | {bidderAddress} |
-| place_bid | price          | {price}         |
-| place_bid | coin           | {coin}          |
+| place_bid | bid_price      | {bidPrice}      |
+| place_bid | bid_coin       | {bidCoin}       |
+| place_bid | bid_amount     | {bidAmount}     |
 | message   | module         | fundraising     |
 | message   | action         | place_bid       |
 | message   | bidder         | {bidderAddress} | 

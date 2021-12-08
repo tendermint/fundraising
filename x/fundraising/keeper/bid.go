@@ -92,15 +92,16 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 		return sdkerrors.Wrapf(types.ErrInvalidAuctionStatus, "unable to bid because the auction is in %s", auction.GetStatus().String())
 	}
 
-	requireAmt := msg.Price.Mul(msg.Coin.Amount.ToDec()).TruncateInt()
-	balance := k.bankKeeper.GetBalance(ctx, msg.GetBidder(), auction.GetPayingCoinDenom())
+	bidAmt := msg.Price.Mul(msg.Coin.Amount.ToDec()).TruncateInt()
+	balanceAmt := k.bankKeeper.GetBalance(ctx, msg.GetBidder(), auction.GetPayingCoinDenom()).Amount
 
-	// The bidder's balance must have greater than or equal to the bid amount
-	if balance.Amount.Sub(requireAmt).IsNegative() {
+	// The bidder must have greater than or equal to the bid amount
+	if balanceAmt.Sub(bidAmt).IsNegative() {
 		return sdkerrors.ErrInsufficientFunds
 	}
 
-	if !auction.GetRemainingCoin().Sub(msg.Coin).IsPositive() {
+	// The bidder cannot bid more than the remaining coin to sell
+	if !auction.GetRemainingCoin().Amount.Sub(bidAmt).IsPositive() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "request coin must be lower than or equal to the remaining total selling coin")
 	}
 
@@ -139,6 +140,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 			sdk.NewAttribute(types.AttributeKeyBidderAddress, msg.GetBidder().String()),
 			sdk.NewAttribute(types.AttributeKeyBidPrice, msg.Price.String()),
 			sdk.NewAttribute(types.AttributeKeyBidCoin, msg.Coin.String()),
+			sdk.NewAttribute(types.AttributeKeyBidAmount, bidAmt.String()),
 		),
 	})
 
