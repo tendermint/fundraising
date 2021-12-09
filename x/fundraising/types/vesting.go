@@ -15,6 +15,16 @@ func NewVestingSchedule(time time.Time, weight sdk.Dec) VestingSchedule {
 	}
 }
 
+// NewVestingQueue creates a new VestingQueue object.
+func NewVestingQueue(auctionId uint64, auctioneer string, payingCoin sdk.Coin, releaseTime time.Time) VestingQueue {
+	return VestingQueue{
+		AuctionId:   auctionId,
+		Auctioneer:  auctioneer,
+		PayingCoin:  payingCoin,
+		ReleaseTime: releaseTime,
+	}
+}
+
 // ValidateVestingSchedules validates the vesting schedules.
 // Each weight of the vesting schedule must be positive and total weight must be equal to 1.
 // If a number of schedule equals to zero, the auctioneer doesn't want any vesting schedule.

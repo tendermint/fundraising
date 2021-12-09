@@ -187,14 +187,6 @@ message VestingSchedule {
   ];
 }
 
-// VestingQueues defines a repeated set of vesting queues.
-message VestingQueues {
-  option (gogoproto.goproto_stringer) = false;
-  option (gogoproto.stringer) = true;
-
-  repeated VestingQueue queues = 1 [ (gogoproto.nullable) = false ];
-}
-
 // VestingQueue defines the vesting queue.
 message VestingQueue {
   // auction_id specifes the id of the auction

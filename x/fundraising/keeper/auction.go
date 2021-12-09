@@ -109,42 +109,6 @@ func (k Keeper) SetAuction(ctx sdk.Context, auction types.AuctionI) {
 	store.Set(types.GetAuctionKey(id), bz)
 }
 
-// GetVestingQueue returns a slice of vesting queues that the auction is complete and
-// waiting in a queue to release the vesting amount of coin at the respective release time.
-func (k Keeper) GetVestingQueue(ctx sdk.Context, releaseTime time.Time, auctionId uint64) []types.VestingQueue {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetVestingQueueKey(releaseTime, auctionId))
-	if bz == nil {
-		return []types.VestingQueue{}
-	}
-
-	queues := types.VestingQueues{}
-	k.cdc.MustUnmarshal(bz, &queues)
-
-	return queues.Queues
-}
-
-// SetVestingQueue sets a given slice of vesting queues into
-// the vesting queue by a given release time and auction id.
-func (k Keeper) SetVestingQueue(ctx sdk.Context, releaseTime time.Time, auctionId uint64, queues []types.VestingQueue) {
-	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshal(&types.VestingQueues{Queues: queues})
-	store.Set(types.GetVestingQueueKey(releaseTime, auctionId), bz)
-}
-
-// DeleteVestingQueue removes vesting queue by an auctioneer from the vesting queue
-// indexed by a given auction id and time.
-func (k Keeper) DeleteVestingQueue(ctx sdk.Context, vesting types.VestingQueue) {
-	// TODO: consider if we need this when implementing the next logic
-}
-
-// VestingQueueIterator returns an iterator ranging over vesting queues that are
-// vesting whose vesting completion occurs at the given release time for the auction.
-func (k Keeper) VestingQueueIterator(ctx sdk.Context, releaseTime time.Time, auctionId uint64) sdk.Iterator {
-	store := ctx.KVStore(k.storeKey)
-	return store.Iterator(types.VestingQueueKeyPrefix, sdk.InclusiveEndBytes(types.GetVestingQueueKey(releaseTime, auctionId)))
-}
-
 // IterateAuctions iterates over all the stored auctions and performs a callback function.
 // Stops iteration when callback returns true.
 func (k Keeper) IterateAuctions(ctx sdk.Context, cb func(auction types.AuctionI) (stop bool)) {
@@ -168,6 +132,50 @@ func (k Keeper) decodeAuction(bz []byte) types.AuctionI {
 	}
 
 	return acc
+}
+
+// DistributeSellingCoin releases designated selling coin from the selling reserve module account.
+func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) error {
+	sellingReserveAcc := types.SellingReserveAcc(auction.GetId())
+
+	for _, bid := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
+		bidAmt := bid.Coin.Amount.ToDec().Quo(bid.Price).TruncateInt()
+		bidCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidAmt)
+
+		bidderAcc, err := sdk.AccAddressFromBech32(bid.GetBidder())
+		if err != nil {
+			return err
+		}
+
+		err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, sellingReserveAcc.String(), bidderAcc, sdk.NewCoins(bidCoin))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// DistributePayingCoin releases vested selling coin from the vesting reserve module account.
+func (k Keeper) DistributePayingCoin(ctx sdk.Context, auction types.AuctionI) error {
+	for _, vq := range k.GetVestingQueuesByAuctionId(ctx, auction.GetId()) {
+		if !vq.GetReleaseTime().Before(ctx.BlockTime()) {
+			vestingReserveAcc := types.VestingReserveAcc(auction.GetId())
+
+			auctioneerAcc, err := sdk.AccAddressFromBech32(auction.GetAuctioneer())
+			if err != nil {
+				return err
+			}
+
+			reserveBalance := k.bankKeeper.GetBalance(ctx, vestingReserveAcc, auction.GetPayingCoinDenom())
+			reserveCoins := sdk.NewCoins(reserveBalance)
+
+			if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, vestingReserveAcc.String(), auctioneerAcc, reserveCoins); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // MarshalAuction serializes an auction.

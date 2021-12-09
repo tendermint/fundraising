@@ -99,11 +99,6 @@ type VestingQueue struct {
 	ReleaseTime time.Time // release time of the vesting coin
 	Vested      bool      // status of distribution
 }
-
-// VestingQueues defines a repeated set of vesting queues.
-type VestingQueues struct {
-	Queues []VestingQueue // vesting queues
-}
 ```
 
 
@@ -206,4 +201,4 @@ Stores are KVStores in the multi-store. The key to find the store is the first p
 
 ### prefix key to retrieve the vesting queues from the auction id and vesting release time
 
-- `VestingQueueKeyPrefix: 0x41 | AuctionId | format(time) -> ProtocolBuffer(VestingQueues)`
+- `VestingQueueKeyPrefix: 0x41 | AuctionId | format(time) -> ProtocolBuffer(VestingQueue)`

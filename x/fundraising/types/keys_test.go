@@ -134,7 +134,7 @@ func (suite *keysTestSuite) TestVestingQueueKey() {
 	}
 
 	for _, tc := range testCases {
-		key := types.GetVestingQueueKey(tc.timestamp, tc.auctionId)
+		key := types.GetVestingQueueKey(tc.auctionId, tc.timestamp)
 		suite.Require().Equal(tc.expected, key)
 
 		timestamp, auctionId, err := types.ParseVestingQueueKey(key)

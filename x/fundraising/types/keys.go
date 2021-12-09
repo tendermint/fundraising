@@ -65,41 +65,15 @@ func GetBidIndexByBidderPrefix(bidderAcc sdk.AccAddress) []byte {
 }
 
 // GetVestingQueueKey returns the store key to retrieve the vesting queue from the index fields.
-func GetVestingQueueKey(timestamp time.Time, auctionId uint64) []byte {
-	idBz := sdk.Uint64ToBigEndian(auctionId)
-	timeBz := sdk.FormatTimeBytes(timestamp)
-	timeBzL := len(timeBz)
-	prefixL := len(VestingQueueKeyPrefix)
-
-	bz := make([]byte, prefixL+8+timeBzL+8)
-
-	// copy the prefix
-	copy(bz[:prefixL], VestingQueueKeyPrefix)
-
-	// copy the encoded time bytes length
-	copy(bz[prefixL:prefixL+8], sdk.Uint64ToBigEndian(uint64(timeBzL)))
-
-	// copy the encoded time bytes
-	copy(bz[prefixL+8:prefixL+8+timeBzL], timeBz)
-
-	// copy the encoded auction id
-	copy(bz[prefixL+8+timeBzL:], idBz)
-
-	return bz
+func GetVestingQueueKey(auctionId uint64, timestamp time.Time) []byte {
+	return append(append(VestingQueueKeyPrefix, sdk.Uint64ToBigEndian(auctionId)...), sdk.FormatTimeBytes(timestamp)...)
 }
 
-//
-// // ParseBidKey returnes the auction id and sequence from a key created
-// // from GetBidKey.
-// func ParseBidKey(key []byte) (auctionId uint64, sequence uint64) {
-// 	if !bytes.HasPrefix(key, BidKeyPrefix) {
-// 		panic("key does not have proper prefix")
-// 	}
-// 	bytesLen := 8
-// 	auctionId = sdk.BigEndianToUint64(key[1:])
-// 	sequence = sdk.BigEndianToUint64(key[1+bytesLen:])
-// 	return
-// }
+// GetVestingQueueByAuctionIdPrefix returns a key prefix used to iterate
+// vesting queues by an auction id.
+func GetVestingQueueByAuctionIdPrefix(auctionId uint64) []byte {
+	return append(VestingQueueKeyPrefix, sdk.Uint64ToBigEndian(auctionId)...)
+}
 
 func ParseBidIndexKey(key []byte) (auctionId, sequence uint64) {
 	if !bytes.HasPrefix(key, BidIndexKeyPrefix) {
