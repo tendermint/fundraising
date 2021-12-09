@@ -136,6 +136,8 @@ test-race:
 test-cover:
 	@go test -mod=readonly -timeout 30m -coverprofile=coverage.txt -covermode=atomic -tags='norace ledger test_ledger_mock' ./...
 
+.PHONY: test test-all test-unit test-race test-cover 
+
 ###############################################################################
 ###                                Protobuf                                 ###
 ###############################################################################

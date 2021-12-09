@@ -128,7 +128,8 @@ func (suite *KeeperTestSuite) TestGRPCBids() {
 	}
 
 	for _, bid := range suite.sampleFixedPriceBids {
-		suite.keeper.PlaceBid(suite.ctx, bid)
+		err := suite.keeper.PlaceBid(suite.ctx, bid)
+		suite.Require().NoError(err)
 	}
 
 	for _, tc := range []struct {
