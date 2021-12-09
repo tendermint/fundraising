@@ -199,16 +199,16 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be prior to current time")
 	}
 
-	params := k.GetParams(ctx)
-	moduleAcc, err := sdk.AccAddressFromBech32(types.ModuleName)
-	if err != nil {
-		return err
-	}
+	// TODO: where should fees go? module account or community pool?
+	// params := k.GetParams(ctx)
+	// moduleAcc, err := sdk.AccAddressFromBech32(types.ModuleName)
+	// if err != nil {
+	// 	return err
+	// }
 
-	// TODO: fee to module account or community?
-	if err := k.bankKeeper.SendCoins(ctx, msg.GetAuctioneer(), moduleAcc, params.AuctionCreationFee); err != nil {
-		return sdkerrors.Wrap(err, "failed to pay auction creation fee")
-	}
+	// if err := k.bankKeeper.SendCoins(ctx, msg.GetAuctioneer(), moduleAcc, params.AuctionCreationFee); err != nil {
+	// 	return sdkerrors.Wrap(err, "failed to pay auction creation fee")
+	// }
 
 	sellingReserveAcc := types.SellingReserveAcc(nextId)
 	payingReserveAcc := types.PayingReserveAcc(nextId)

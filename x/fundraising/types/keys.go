@@ -2,7 +2,6 @@ package types
 
 import (
 	"bytes"
-	fmt "fmt"
 	time "time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -85,23 +84,4 @@ func ParseBidIndexKey(key []byte) (auctionId, sequence uint64) {
 	auctionId = sdk.BigEndianToUint64(key[2+addrLen:])
 	sequence = sdk.BigEndianToUint64(key[2+addrLen+byte(bytesLen):])
 	return
-}
-
-// ParseVestingQueueKey returns the encoded time and auction id from a key created
-// from GetVestingQueueKey.
-func ParseVestingQueueKey(bz []byte) (time.Time, uint64, error) {
-	prefixL := len(VestingQueueKeyPrefix)
-	if prefix := bz[:prefixL]; !bytes.Equal(prefix, VestingQueueKeyPrefix) {
-		return time.Time{}, 0, fmt.Errorf("invalid prefix; expected: %X, got: %X", VestingQueueKeyPrefix, prefix)
-	}
-
-	timeBzL := sdk.BigEndianToUint64(bz[prefixL : prefixL+8])
-	ts, err := sdk.ParseTimeBytes(bz[prefixL+8 : prefixL+8+int(timeBzL)])
-	if err != nil {
-		return time.Time{}, 0, err
-	}
-
-	auctionId := sdk.BigEndianToUint64(bz[prefixL+8+int(timeBzL):])
-
-	return ts, auctionId, nil
 }
