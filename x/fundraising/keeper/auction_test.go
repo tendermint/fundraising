@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/tendermint/fundraising/x/fundraising/types"
 
 	_ "github.com/stretchr/testify/suite"
@@ -37,9 +39,9 @@ func (suite *KeeperTestSuite) TestCreateAuctionStatus() {
 	// Create a fixed price auction with the future start time
 	err := suite.keeper.CreateFixedPriceAuction(suite.ctx, types.NewMsgCreateFixedPriceAuction(
 		suite.addrs[0].String(),
-		suite.StartPrice("0.5"),
-		suite.SellingCoin(denom2, 100_000_000_000),
-		suite.PayingCoinDenom("denom1"),
+		sdk.MustNewDecFromStr("0.5"),
+		sdk.NewInt64Coin(denom2, 100_000_000_000),
+		denom1,
 		[]types.VestingSchedule{},
 		types.ParseTime("2022-12-10T00:00:00Z"),
 		types.ParseTime("2022-12-20T00:00:00Z"),
@@ -53,9 +55,9 @@ func (suite *KeeperTestSuite) TestCreateAuctionStatus() {
 	// Create a fixed price auction with the past start time
 	err = suite.keeper.CreateFixedPriceAuction(suite.ctx, types.NewMsgCreateFixedPriceAuction(
 		suite.addrs[0].String(),
-		suite.StartPrice("0.5"),
-		suite.SellingCoin(denom2, 100_000_000_000),
-		suite.PayingCoinDenom("denom1"),
+		sdk.MustNewDecFromStr("0.5"),
+		sdk.NewInt64Coin(denom2, 100_000_000_000),
+		denom1,
 		[]types.VestingSchedule{},
 		types.ParseTime("2021-11-01T00:00:00Z"),
 		types.ParseTime("2021-12-10T00:00:00Z"),

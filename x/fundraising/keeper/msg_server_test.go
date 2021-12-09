@@ -21,9 +21,9 @@ func (suite *KeeperTestSuite) TestMsgCreateFixedPriceAuction() {
 			"valid message with the future start time",
 			types.NewMsgCreateFixedPriceAuction(
 				suite.addrs[0].String(),
-				suite.StartPrice("1.0"),
-				suite.SellingCoin(denom1, 1_000_000_000_000),
-				suite.PayingCoinDenom(denom2),
+				sdk.OneDec(),
+				sdk.NewInt64Coin(denom1, 1_000_000_000_000),
+				denom2,
 				suite.VestingSchedules(),
 				types.ParseTime("2030-01-01T00:00:00Z"),
 				types.ParseTime("2030-01-10T00:00:00Z"),
@@ -52,31 +52,44 @@ func (suite *KeeperTestSuite) TestMsgCreateEnglishAuction() {
 func (suite *KeeperTestSuite) TestMsgCancelAuction() {
 	ctx := sdk.WrapSDKContext(suite.ctx)
 
-	auctionId := uint64(1)
-	auctioneerAddr := suite.addrs[4].String()
-
 	_, err := suite.srv.CancelAuction(ctx, types.NewMsgCancelAuction(
-		auctioneerAddr,
-		auctionId,
+		suite.addrs[4].String(),
+		uint64(1),
 	))
-	suite.Require().ErrorIs(err, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", auctionId))
+	suite.Require().ErrorIs(err, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", uint64(1)))
 
-	// Create a fixed price auction
+	// Create a fixed price auction that is started status
 	suite.keeper.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[0])
 
-	_, found := suite.keeper.GetAuction(suite.ctx, auctionId)
+	auction, found := suite.keeper.GetAuction(suite.ctx, uint64(1))
 	suite.Require().True(found)
+	suite.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	// Try to cancel with an incorrect address
+	// Try to cancel with an incorrect auctioneer
 	_, err = suite.srv.CancelAuction(ctx, types.NewMsgCancelAuction(
 		suite.addrs[0].String(),
-		auctionId,
+		uint64(1),
 	))
-	suite.Require().ErrorIs(err, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "failed to verify ownership of the auction"))
+	suite.Require().ErrorIs(err, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "failed to verify ownership of the auction"))
 
+	// Try to cancel with the auction that is already started
 	_, err = suite.srv.CancelAuction(ctx, types.NewMsgCancelAuction(
-		auctioneerAddr,
-		auctionId,
+		auction.GetAuctioneer(),
+		auction.GetId(),
+	))
+	suite.Require().ErrorIs(err, sdkerrors.Wrap(types.ErrInvalidAuctionStatus, "auction cannot be canceled due to current status"))
+
+	// Create another fixed price auction that is stand by status
+	suite.keeper.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[1])
+
+	auction, found = suite.keeper.GetAuction(suite.ctx, uint64(2))
+	suite.Require().True(found)
+	suite.Require().Equal(types.AuctionStatusStandBy, auction.GetStatus())
+
+	// Success
+	_, err = suite.srv.CancelAuction(ctx, types.NewMsgCancelAuction(
+		auction.GetAuctioneer(),
+		auction.GetId(),
 	))
 	suite.Require().NoError(err)
 }
