@@ -112,7 +112,7 @@ func (suite *KeeperTestSuite) TestMsgPlaceBid() {
 				auction.GetId(),
 				suite.addrs[0].String(),
 				sdk.MustNewDecFromStr("1.0"),
-				sdk.NewInt64Coin(auction.GetSellingCoin().Denom, 1_000_000),
+				sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 1_000_000),
 			),
 			nil,
 		},
@@ -122,9 +122,19 @@ func (suite *KeeperTestSuite) TestMsgPlaceBid() {
 				auction.GetId(),
 				suite.addrs[0].String(),
 				sdk.MustNewDecFromStr("0.5"),
-				sdk.NewInt64Coin(auction.GetSellingCoin().Denom, 1_000_000),
+				sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 1_000_000),
 			),
 			sdkerrors.Wrap(types.ErrInvalidStartPrice, "bid price must be equal to start price"),
+		},
+		{
+			"invalid coin demo",
+			types.NewMsgPlaceBid(
+				auction.GetId(),
+				suite.addrs[0].String(),
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.NewInt64Coin(auction.GetSellingCoin().Denom, 1_000_000),
+			),
+			sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "coin denom must match with the paying coin denom"),
 		},
 		{
 			"insufficient funds",
@@ -132,7 +142,7 @@ func (suite *KeeperTestSuite) TestMsgPlaceBid() {
 				auction.GetId(),
 				suite.addrs[0].String(),
 				sdk.MustNewDecFromStr("1.0"),
-				sdk.NewInt64Coin(auction.GetSellingCoin().Denom, 500_000_000_000_000_000),
+				sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 500_000_000_000_000_000),
 			),
 			sdkerrors.ErrInsufficientFunds,
 		},
@@ -144,14 +154,6 @@ func (suite *KeeperTestSuite) TestMsgPlaceBid() {
 				return
 			}
 			suite.Require().NoError(err)
-
-			a, found := suite.keeper.GetAuction(suite.ctx, uint64(1))
-			suite.Require().True(found)
-
-			// Verify the total selling coin
-			original := auction.GetRemainingCoin()
-			remaining := a.GetRemainingCoin()
-			suite.Require().Equal(original.Sub(remaining), tc.msg.Coin)
 		})
 	}
 }
