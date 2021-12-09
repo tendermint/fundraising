@@ -1,9 +1,9 @@
 package keeper_test
 
 import (
-	_ "github.com/stretchr/testify/suite"
-
 	"github.com/tendermint/fundraising/x/fundraising/types"
+
+	_ "github.com/stretchr/testify/suite"
 )
 
 func (suite *KeeperTestSuite) TestAuctionId() {
@@ -14,7 +14,21 @@ func (suite *KeeperTestSuite) TestAuctionId() {
 	nextAuctionId := suite.keeper.GetNextAuctionIdWithUpdate(cacheCtx)
 	suite.Require().Equal(uint64(1), nextAuctionId)
 
-	// TODO: not implemented yet
+	// Set an auction
+	suite.keeper.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[0])
+	nextAuctionId = suite.keeper.GetNextAuctionIdWithUpdate(cacheCtx)
+	suite.Require().Equal(uint64(2), nextAuctionId)
+
+	auctions := suite.keeper.GetAuctions(suite.ctx)
+	suite.Require().Len(auctions, 1)
+
+	// Set another auction
+	suite.keeper.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[1])
+	nextAuctionId = suite.keeper.GetNextAuctionIdWithUpdate(cacheCtx)
+	suite.Require().Equal(uint64(3), nextAuctionId)
+
+	auctions = suite.keeper.GetAuctions(suite.ctx)
+	suite.Require().Len(auctions, 2)
 }
 
 func (suite *KeeperTestSuite) TestCreateAuctionStatus() {
