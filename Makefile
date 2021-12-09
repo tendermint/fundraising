@@ -9,6 +9,8 @@ DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bu
 BUILDDIR ?= $(CURDIR)/build
 SIMAPP = ./app
 
+export GO111MODULE = on
+
 # process build tags
 
 build_tags = netgo
@@ -123,18 +125,12 @@ clean:
 ###############################################################################
 
 test: test-unit
-test-all: test-unit test-race test-cover
+test-all: test-unit 
 
 test-unit: 
 	@VERSION=$(VERSION) go test -mod=readonly -tags='norace' $(PACKAGES_NOSIMULATION)
 
-test-race:
-	@go test -mod=readonly -timeout 30m -race -coverprofile=coverage.txt -covermode=atomic -tags='ledger test_ledger_mock' ./...
-
-test-cover:
-	@go test -mod=readonly -timeout 30m -coverprofile=coverage.txt -covermode=atomic -tags='norace ledger test_ledger_mock' ./...
-
-.PHONY: test test-all test-unit test-race test-cover 
+.PHONY: test test-all test-unit 
 
 ###############################################################################
 ###                                Protobuf                                 ###

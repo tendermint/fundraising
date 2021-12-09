@@ -273,7 +273,9 @@ func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) erro
 		return sdkerrors.Wrap(types.ErrInvalidAuctionStatus, "auction cannot be canceled due to current status")
 	}
 
-	auction.SetStatus(types.AuctionStatusCancelled)
+	if err := auction.SetStatus(types.AuctionStatusCancelled); err != nil {
+		return err
+	}
 	k.SetAuction(ctx, auction)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
