@@ -15,21 +15,27 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 
 	logger := k.Logger(ctx)
 
-	// 1. AuctionStatusVesting: look up the release time of vesting queue for the auction and
-	//	  see if the module needs to be release the vested amount of coin to the auctioneer
+	// Get all auctions in the store and proceed operations depending on auction status.
 	//
-	// 2. AuctionStatusStandBy: update the status to AUCTION_STATUS_STARTED
-	//    if the start time is passed over the current time
+	// For AuctionStatusVesting, it first gets all vesting queues in the store and
+	// look up the release time of each vesting queue to see if the module needs to distribute
+	// the paying coin to the auctioneer.
 	//
-	// 3. AuctionStatusStarted: proceed to calculate allocation for each bidder
-	//    if the start time is on time or has passed the current block time.
+	// For AuctionStatusStandBy, it compares the current time and the start time of the auction and
+	// updte the status if necessary.
 	//
+	// For AuctionStatusStarted, distribute the allocated paying coin for bidders for the auction and
+	// set vesting schedules if they are defined.
 	for _, auction := range k.GetAuctions(ctx) {
 		if auction.GetType() == types.AuctionTypeFixedPrice {
 			switch auction.GetStatus() {
 			case types.AuctionStatusVesting:
-				if err := k.DistributePayingCoin(ctx, auction); err != nil {
-					panic(err)
+				for _, vq := range k.GetVestingQueuesByAuctionId(ctx, auction.GetId()) {
+					if !vq.GetReleaseTime().Before(ctx.BlockTime()) {
+						if err := k.DistributePayingCoin(ctx, auction); err != nil {
+							panic(err)
+						}
+					}
 				}
 
 			case types.AuctionStatusStandBy:
@@ -40,12 +46,11 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 				}
 
 			case types.AuctionStatusStarted:
-				if !auction.GetStartTime().Before(ctx.BlockTime()) {
+				if types.IsAuctionFinished(auction.GetEndTimes()[0], ctx.BlockTime()) {
 					if err := k.DistributeSellingCoin(ctx, auction); err != nil {
 						panic(err)
 					}
 
-					// Set vesting schedules and change status
 					if err := k.SetVestingSchedules(ctx, auction); err != nil {
 						panic(err)
 					}

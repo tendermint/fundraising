@@ -362,3 +362,8 @@ func VestingReserveAcc(auctionId uint64) sdk.AccAddress {
 func IsAuctionStarted(startTime time.Time, t time.Time) bool {
 	return !startTime.After(t)
 }
+
+// IsAuctionFinished returns true if the end time of the auction is passed over the given time t.
+func IsAuctionFinished(endTime time.Time, t time.Time) bool {
+	return !endTime.Before(t)
+}

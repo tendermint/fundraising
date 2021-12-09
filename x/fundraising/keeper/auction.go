@@ -158,23 +158,20 @@ func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) e
 
 // DistributePayingCoin releases vested selling coin from the vesting reserve module account.
 func (k Keeper) DistributePayingCoin(ctx sdk.Context, auction types.AuctionI) error {
-	for _, vq := range k.GetVestingQueuesByAuctionId(ctx, auction.GetId()) {
-		if !vq.GetReleaseTime().Before(ctx.BlockTime()) {
-			vestingReserveAcc := types.VestingReserveAcc(auction.GetId())
+	vestingReserveAcc := types.VestingReserveAcc(auction.GetId())
 
-			auctioneerAcc, err := sdk.AccAddressFromBech32(auction.GetAuctioneer())
-			if err != nil {
-				return err
-			}
-
-			reserveBalance := k.bankKeeper.GetBalance(ctx, vestingReserveAcc, auction.GetPayingCoinDenom())
-			reserveCoins := sdk.NewCoins(reserveBalance)
-
-			if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, vestingReserveAcc.String(), auctioneerAcc, reserveCoins); err != nil {
-				return err
-			}
-		}
+	auctioneerAcc, err := sdk.AccAddressFromBech32(auction.GetAuctioneer())
+	if err != nil {
+		return err
 	}
+
+	reserveBalance := k.bankKeeper.GetBalance(ctx, vestingReserveAcc, auction.GetPayingCoinDenom())
+	reserveCoins := sdk.NewCoins(reserveBalance)
+
+	if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, vestingReserveAcc.String(), auctioneerAcc, reserveCoins); err != nil {
+		return err
+	}
+
 	return nil
 }
 
