@@ -9,8 +9,6 @@ DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bu
 BUILDDIR ?= $(CURDIR)/build
 SIMAPP = ./app
 
-export GO111MODULE = on
-
 # process build tags
 
 build_tags = netgo

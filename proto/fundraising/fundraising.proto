@@ -166,14 +166,11 @@ enum AuctionStatus {
   // AUCTION_STATUS_VESTING defines the vesting auction status
   AUCTION_STATUS_VESTING = 3
       [ (gogoproto.enumvalue_customname) = "AuctionStatusVesting" ];
-  // AUCTION_STATUS_DISTRIBUTED defines the distributing auction status
-  AUCTION_STATUS_DISTRIBUTED = 4
-      [ (gogoproto.enumvalue_customname) = "AuctionStatusDistributing" ];
   // AUCTION_STATUS_FINISHED defines the finished auction status
-  AUCTION_STATUS_FINISHED = 5
+  AUCTION_STATUS_FINISHED = 4
       [ (gogoproto.enumvalue_customname) = "AuctionStatusFinished" ];
   // AUCTION_STATUS_CANCELLED defines the cancelled auction status
-  AUCTION_STATUS_CANCELLED = 6
+  AUCTION_STATUS_CANCELLED = 5
       [ (gogoproto.enumvalue_customname) = "AuctionStatusCancelled" ];
 }
 

@@ -152,12 +152,10 @@ const (
 	StatusStarted AuctionStatus = 2
 	// AUCTION_STATUS_VESTING defines an auction status that is in distribution based on the vesting schedules
 	StatusVesting AuctionStatus = 3
-	// AUCTION_STATUS_DISTRIBUTING defines an auction status that is ready to distribute
-	StatusDistributed AuctionStatus = 4
 	// AUCTION_STATUS_FINISHED defines an auction status that is finished 
-	StatusFinished AuctionStatus = 5
+	StatusFinished AuctionStatus = 4
 	// AUCTION_STATUS_CANCELLED defines an auction sttus that is cancelled
-	StatusCancelled AuctionStatus = 6
+	StatusCancelled AuctionStatus = 5
 )
 ```
 

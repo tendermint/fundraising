@@ -109,13 +109,6 @@ func (k Keeper) SetAuction(ctx sdk.Context, auction types.AuctionI) {
 	store.Set(types.GetAuctionKey(id), bz)
 }
 
-// DeleteAuction removes the auction from the store
-func (k Keeper) DeleteAuction(ctx sdk.Context, auction types.AuctionI) {
-	id := auction.GetId()
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.GetAuctionKey(id))
-}
-
 // GetVestingQueue returns a slice of vesting queues that the auction is complete and
 // waiting in a queue to release the vesting amount of coin at the respective release time.
 func (k Keeper) GetVestingQueue(ctx sdk.Context, releaseTime time.Time, auctionId uint64) []types.VestingQueue {
@@ -280,8 +273,8 @@ func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) erro
 		return sdkerrors.Wrap(types.ErrInvalidAuctionStatus, "auction cannot be canceled due to current status")
 	}
 
-	// TODO: consider if we want the auction to be deleted indefinitely
-	k.DeleteAuction(ctx, auction)
+	auction.SetStatus(types.AuctionStatusCancelled)
+	k.SetAuction(ctx, auction)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
