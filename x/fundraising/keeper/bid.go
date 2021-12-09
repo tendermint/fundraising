@@ -118,9 +118,9 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 		return sdkerrors.Wrapf(types.ErrInvalidAuctionStatus, "unable to bid because the auction is in %s", auction.GetStatus().String())
 	}
 
-	bidAmt := msg.Price.Mul(msg.Coin.Amount.ToDec()).TruncateInt()
-	balanceAmt := k.bankKeeper.GetBalance(ctx, msg.GetBidder(), auction.GetPayingCoinDenom()).Amount
+	bidAmt := msg.Coin.Amount.ToDec().Quo(msg.Price).TruncateInt()
 	bidCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidAmt)
+	balanceAmt := k.bankKeeper.GetBalance(ctx, msg.GetBidder(), auction.GetPayingCoinDenom()).Amount
 
 	// The bidder must have greater than or equal to the bid amount
 	if balanceAmt.Sub(bidAmt).IsNegative() {
