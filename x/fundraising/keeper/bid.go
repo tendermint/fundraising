@@ -118,6 +118,10 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 		return sdkerrors.Wrapf(types.ErrInvalidAuctionStatus, "unable to bid because the auction is in %s", auction.GetStatus().String())
 	}
 
+	if auction.GetPayingCoinDenom() != msg.Coin.Denom {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "coin denom must match with the paying coin denom")
+	}
+
 	bidAmt := msg.Coin.Amount.ToDec().Quo(msg.Price).TruncateInt()
 	bidCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidAmt)
 	balanceAmt := k.bankKeeper.GetBalance(ctx, msg.GetBidder(), auction.GetPayingCoinDenom()).Amount
