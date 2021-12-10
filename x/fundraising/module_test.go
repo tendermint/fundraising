@@ -79,9 +79,9 @@ func (suite *ModuleTestSuite) SetupTest() {
 				[]types.VestingSchedule{}, // no vesting schedules
 				sdk.ZeroDec(),
 				sdk.NewInt64Coin(denom1, 1_000_000_000_000),
-				types.ParseTime("2021-12-01T00:00:00Z"),
-				[]time.Time{types.ParseTime("2022-01-01T00:00:00Z")},
-				types.AuctionStatusStarted,
+				types.ParseTime("2021-12-20T00:00:00Z"),
+				[]time.Time{types.ParseTime("2021-12-27T00:00:00Z")},
+				types.AuctionStatusStandBy,
 			),
 		),
 		types.NewFixedPriceAuction(
@@ -104,8 +104,8 @@ func (suite *ModuleTestSuite) SetupTest() {
 				sdk.ZeroDec(),
 				sdk.NewInt64Coin(denom3, 1_000_000_000_000),
 				types.ParseTime("2021-12-01T00:00:00Z"),
-				[]time.Time{types.ParseTime("2022-12-12T00:00:00Z")},
-				types.AuctionStatusStandBy,
+				[]time.Time{types.ParseTime("2022-12-20T00:00:00Z")},
+				types.AuctionStatusStarted,
 			),
 		),
 	}

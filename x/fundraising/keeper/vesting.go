@@ -42,6 +42,7 @@ func (k Keeper) SetVestingSchedules(ctx sdk.Context, auction types.AuctionI) err
 			auction.GetAuctioneer(),
 			sdk.NewCoin(auction.GetPayingCoinDenom(), payingAmt),
 			vs.ReleaseTime,
+			false,
 		)
 
 		// Store vesting queue

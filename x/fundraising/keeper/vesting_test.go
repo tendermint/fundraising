@@ -23,6 +23,7 @@ func (suite *KeeperTestSuite) TestVestingQueues() {
 			auctioneerAcc.String(),
 			sdk.NewCoin(payingCoinDenom, payingAmt),
 			vs.ReleaseTime,
+			false,
 		)
 		suite.keeper.SetVestingQueue(suite.ctx, auctionId, vs.ReleaseTime, queue)
 	}

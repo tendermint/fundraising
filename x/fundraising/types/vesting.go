@@ -16,12 +16,19 @@ func NewVestingSchedule(time time.Time, weight sdk.Dec) VestingSchedule {
 }
 
 // NewVestingQueue creates a new VestingQueue object.
-func NewVestingQueue(auctionId uint64, auctioneer string, payingCoin sdk.Coin, releaseTime time.Time) VestingQueue {
+func NewVestingQueue(
+	auctionId uint64,
+	auctioneer string,
+	payingCoin sdk.Coin,
+	releaseTime time.Time,
+	vested bool,
+) VestingQueue {
 	return VestingQueue{
 		AuctionId:   auctionId,
 		Auctioneer:  auctioneer,
 		PayingCoin:  payingCoin,
 		ReleaseTime: releaseTime,
+		Vested:      vested,
 	}
 }
 

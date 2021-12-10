@@ -35,6 +35,9 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 						if err := k.DistributePayingCoin(ctx, auction); err != nil {
 							panic(err)
 						}
+
+						vq.Vested = true
+						k.SetVestingQueue(ctx, auction.GetId(), vq.ReleaseTime, vq)
 					}
 				}
 
@@ -43,6 +46,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 					if err := auction.SetStatus(types.AuctionStatusStarted); err != nil {
 						logger.Error("error is returned when setting auction status", "auction", auction)
 					}
+					k.SetAuction(ctx, auction)
 				}
 
 			case types.AuctionStatusStarted:

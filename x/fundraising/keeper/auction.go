@@ -134,6 +134,17 @@ func (k Keeper) decodeAuction(bz []byte) types.AuctionI {
 	return acc
 }
 
+// MarshalAuction serializes an auction.
+func (k Keeper) MarshalAuction(auction types.AuctionI) ([]byte, error) { // nolint:interfacer
+	return k.cdc.MarshalInterface(auction)
+}
+
+// UnmarshalAuction returns an auction from raw serialized
+// bytes of a Proto-based Auction type.
+func (k Keeper) UnmarshalAuction(bz []byte) (auction types.AuctionI, err error) {
+	return auction, k.cdc.UnmarshalInterface(bz, &auction)
+}
+
 // DistributeSellingCoin releases designated selling coin from the selling reserve module account.
 func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) error {
 	sellingReserveAcc := types.SellingReserveAcc(auction.GetId())
@@ -173,17 +184,6 @@ func (k Keeper) DistributePayingCoin(ctx sdk.Context, auction types.AuctionI) er
 	}
 
 	return nil
-}
-
-// MarshalAuction serializes an auction.
-func (k Keeper) MarshalAuction(auction types.AuctionI) ([]byte, error) { // nolint:interfacer
-	return k.cdc.MarshalInterface(auction)
-}
-
-// UnmarshalAuction returns an auction from raw serialized
-// bytes of a Proto-based Auction type.
-func (k Keeper) UnmarshalAuction(bz []byte) (auction types.AuctionI, err error) {
-	return auction, k.cdc.UnmarshalInterface(bz, &auction)
 }
 
 // CreateFixedPriceAuction sets fixed price auction.
