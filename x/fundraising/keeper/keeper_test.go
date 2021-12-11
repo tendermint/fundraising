@@ -66,72 +66,96 @@ func (suite *KeeperTestSuite) SetupTest() {
 	}
 	suite.sampleFixedPriceAuctions = []types.AuctionI{
 		types.NewFixedPriceAuction(
-			types.NewBaseAuction(
-				1,
-				types.AuctionTypeFixedPrice,
-				suite.addrs[4].String(),
-				types.SellingReserveAcc(1).String(),
-				types.PayingReserveAcc(1).String(),
-				sdk.OneDec(), // start price corresponds to ratio of the paying coin
-				sdk.NewInt64Coin(denom1, 1_000_000_000_000), // selling coin
-				denom2, // paying coin denom
-				types.VestingReserveAcc(1).String(),
-				[]types.VestingSchedule{}, // no vesting schedules
-				sdk.ZeroDec(),
-				sdk.NewInt64Coin(denom1, 1_000_000_000_000),
-				types.ParseTime("2021-12-01T00:00:00Z"),
-				[]time.Time{types.ParseTime("2022-01-01T00:00:00Z")},
-				types.AuctionStatusStarted,
-			),
+			&types.BaseAuction{
+				Id:                 1,
+				Type:               types.AuctionTypeFixedPrice,
+				Auctioneer:         suite.addrs[4].String(),
+				SellingPoolAddress: types.SellingReserveAcc(1).String(),
+				PayingPoolAddress:  types.PayingReserveAcc(1).String(),
+				StartPrice:         sdk.OneDec(), // start price corresponds to ratio of the paying coin
+				SellingCoin:        sdk.NewInt64Coin(denom1, 1_000_000_000_000),
+				PayingCoinDenom:    denom2,
+				VestingAddress:     types.VestingReserveAcc(1).String(),
+				VestingSchedules:   []types.VestingSchedule{}, // no vesting schedules
+				WinningPrice:       sdk.ZeroDec(),
+				RemainingCoin:      sdk.NewInt64Coin(denom1, 1_000_000_000_000),
+				StartTime:          types.ParseTime("2021-12-01T00:00:00Z"),
+				EndTimes:           []time.Time{types.ParseTime("2022-01-01T00:00:00Z")},
+				Status:             types.AuctionStatusStarted,
+			},
 		),
 		types.NewFixedPriceAuction(
-			types.NewBaseAuction(
-				2,
-				types.AuctionTypeFixedPrice,
-				suite.addrs[5].String(),
-				types.SellingReserveAcc(1).String(),
-				types.PayingReserveAcc(1).String(),
-				sdk.MustNewDecFromStr("0.5"),
-				sdk.NewInt64Coin(denom3, 1_000_000_000_000),
-				denom4,
-				types.VestingReserveAcc(1).String(),
-				[]types.VestingSchedule{
-					types.NewVestingSchedule(types.ParseTime("2022-01-01T00:00:00Z"), sdk.MustNewDecFromStr("0.25")),
-					types.NewVestingSchedule(types.ParseTime("2022-04-01T00:00:00Z"), sdk.MustNewDecFromStr("0.25")),
-					types.NewVestingSchedule(types.ParseTime("2022-08-01T00:00:00Z"), sdk.MustNewDecFromStr("0.25")),
-					types.NewVestingSchedule(types.ParseTime("2022-12-01T00:00:00Z"), sdk.MustNewDecFromStr("0.25")),
+			&types.BaseAuction{
+				Id:                 2,
+				Type:               types.AuctionTypeFixedPrice,
+				Auctioneer:         suite.addrs[5].String(),
+				SellingPoolAddress: types.SellingReserveAcc(1).String(),
+				PayingPoolAddress:  types.PayingReserveAcc(1).String(),
+				StartPrice:         sdk.MustNewDecFromStr("0.5"),
+				SellingCoin:        sdk.NewInt64Coin(denom3, 1_000_000_000_000),
+				PayingCoinDenom:    denom4,
+				VestingAddress:     types.VestingReserveAcc(1).String(),
+				VestingSchedules: []types.VestingSchedule{
+					{
+						ReleaseTime: types.ParseTime("2022-01-01T00:00:00Z"),
+						Weight:      sdk.MustNewDecFromStr("0.25"),
+					},
+					{
+						ReleaseTime: types.ParseTime("2022-04-01T00:00:00Z"),
+						Weight:      sdk.MustNewDecFromStr("0.25"),
+					},
+					{
+						ReleaseTime: types.ParseTime("2022-08-01T00:00:00Z"),
+						Weight:      sdk.MustNewDecFromStr("0.25"),
+					},
+					{
+						ReleaseTime: types.ParseTime("2022-12-01T00:00:00Z"),
+						Weight:      sdk.MustNewDecFromStr("0.25"),
+					},
 				},
-				sdk.ZeroDec(),
-				sdk.NewInt64Coin(denom3, 1_000_000_000_000),
-				types.ParseTime("2021-12-01T00:00:00Z"),
-				[]time.Time{types.ParseTime("2022-12-12T00:00:00Z")},
-				types.AuctionStatusStandBy,
-			),
+				WinningPrice:  sdk.ZeroDec(),
+				RemainingCoin: sdk.NewInt64Coin(denom3, 1_000_000_000_000),
+				StartTime:     types.ParseTime("2021-12-01T00:00:00Z"),
+				EndTimes:      []time.Time{types.ParseTime("2022-12-12T00:00:00Z")},
+				Status:        types.AuctionStatusStandBy,
+			},
 		),
 	}
 	suite.sampleFixedPriceBids = []*types.MsgPlaceBid{
-		types.NewMsgPlaceBid(
-			1,
-			suite.addrs[0].String(),
-			sdk.OneDec(),
-			sdk.NewInt64Coin(denom2, 50_000_000),
-		),
-		types.NewMsgPlaceBid(
-			1,
-			suite.addrs[1].String(),
-			sdk.OneDec(),
-			sdk.NewInt64Coin(denom2, 100_000_000),
-		),
+		{
+			AuctionId: 1,
+			Bidder:    suite.addrs[0].String(),
+			Price:     sdk.OneDec(),
+			Coin:      sdk.NewInt64Coin(denom2, 50_000_000),
+		},
+		{
+			AuctionId: 1,
+			Bidder:    suite.addrs[1].String(),
+			Price:     sdk.OneDec(),
+			Coin:      sdk.NewInt64Coin(denom2, 100_000_000),
+		},
 	}
 }
 
 // VestingSchedules is a convenient method to test
 func (suite *KeeperTestSuite) VestingSchedules() []types.VestingSchedule {
 	return []types.VestingSchedule{
-		types.NewVestingSchedule(types.ParseTime("2022-01-01T22:00:00+00:00"), sdk.MustNewDecFromStr("0.25")),
-		types.NewVestingSchedule(types.ParseTime("2022-04-01T22:00:00+00:00"), sdk.MustNewDecFromStr("0.25")),
-		types.NewVestingSchedule(types.ParseTime("2022-08-01T22:00:00+00:00"), sdk.MustNewDecFromStr("0.25")),
-		types.NewVestingSchedule(types.ParseTime("2022-12-01T22:00:00+00:00"), sdk.MustNewDecFromStr("0.25")),
+		{
+			ReleaseTime: types.ParseTime("2022-01-01T22:00:00+00:00"),
+			Weight:      sdk.MustNewDecFromStr("0.25"),
+		},
+		{
+			ReleaseTime: types.ParseTime("2022-04-01T22:00:00+00:00"),
+			Weight:      sdk.MustNewDecFromStr("0.25"),
+		},
+		{
+			ReleaseTime: types.ParseTime("2022-08-01T22:00:00+00:00"),
+			Weight:      sdk.MustNewDecFromStr("0.25"),
+		},
+		{
+			ReleaseTime: types.ParseTime("2022-12-01T22:00:00+00:00"),
+			Weight:      sdk.MustNewDecFromStr("0.25"),
+		},
 	}
 }
 

@@ -66,7 +66,10 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
 				[]types.VestingSchedule{
-					types.NewVestingSchedule(types.ParseTime("2022-06-01T22:08:41+00:00"), sdk.ZeroDec()),
+					{
+						types.ParseTime("2022-06-01T22:08:41+00:00"),
+						sdk.ZeroDec(),
+					},
 				},
 				startTime,
 				endTime,
@@ -80,7 +83,10 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
 				[]types.VestingSchedule{
-					types.NewVestingSchedule(types.ParseTime("2022-06-01T22:08:41+00:00"), sdk.MustNewDecFromStr("1.1")),
+					{
+						types.ParseTime("2022-06-01T22:08:41+00:00"),
+						sdk.MustNewDecFromStr("1.1"),
+					},
 				},
 				startTime,
 				endTime,
@@ -94,8 +100,14 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
 				[]types.VestingSchedule{
-					types.NewVestingSchedule(types.ParseTime("2022-06-01T22:00:00+00:00"), sdk.MustNewDecFromStr("0.5")),
-					types.NewVestingSchedule(types.ParseTime("2022-12-01T22:00:00+00:00"), sdk.MustNewDecFromStr("0.3")),
+					{
+						types.ParseTime("2022-06-01T22:00:00+00:00"),
+						sdk.MustNewDecFromStr("0.5"),
+					},
+					{
+						types.ParseTime("2022-12-01T22:00:00+00:00"),
+						sdk.MustNewDecFromStr("0.3"),
+					},
 				},
 				startTime,
 				endTime,
@@ -121,8 +133,14 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
 				[]types.VestingSchedule{
-					types.NewVestingSchedule(types.ParseTime("2022-12-01T22:00:00+00:00"), sdk.MustNewDecFromStr("0.5")),
-					types.NewVestingSchedule(types.ParseTime("2022-06-01T22:00:00+00:00"), sdk.MustNewDecFromStr("0.5")),
+					{
+						types.ParseTime("2022-12-01T22:00:00+00:00"),
+						sdk.MustNewDecFromStr("0.5"),
+					},
+					{
+						types.ParseTime("2022-06-01T22:00:00+00:00"),
+						sdk.MustNewDecFromStr("0.5"),
+					},
 				},
 				startTime,
 				endTime,

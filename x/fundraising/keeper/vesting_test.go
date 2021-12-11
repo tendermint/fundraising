@@ -18,14 +18,13 @@ func (suite *KeeperTestSuite) TestVestingQueues() {
 	for _, vs := range suite.VestingSchedules() {
 		payingAmt := reserveBalance.Amount.ToDec().Mul(vs.Weight).TruncateInt()
 
-		queue := types.NewVestingQueue(
-			auctionId,
-			auctioneerAcc.String(),
-			sdk.NewCoin(payingCoinDenom, payingAmt),
-			vs.ReleaseTime,
-			false,
-		)
-		suite.keeper.SetVestingQueue(suite.ctx, auctionId, vs.ReleaseTime, queue)
+		suite.keeper.SetVestingQueue(suite.ctx, auctionId, vs.ReleaseTime, types.VestingQueue{
+			AuctionId:   auctionId,
+			Auctioneer:  auctioneerAcc.String(),
+			PayingCoin:  sdk.NewCoin(payingCoinDenom, payingAmt),
+			ReleaseTime: vs.ReleaseTime,
+			Vested:      false,
+		})
 	}
 
 	vestingQueues := suite.keeper.GetVestingQueuesByAuctionId(suite.ctx, auctionId)

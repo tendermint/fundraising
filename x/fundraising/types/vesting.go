@@ -1,36 +1,9 @@
 package types
 
 import (
-	time "time"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
-
-// NewVestingSchedule creates a new VestingSchedule object.
-func NewVestingSchedule(time time.Time, weight sdk.Dec) VestingSchedule {
-	return VestingSchedule{
-		ReleaseTime: time,
-		Weight:      weight,
-	}
-}
-
-// NewVestingQueue creates a new VestingQueue object.
-func NewVestingQueue(
-	auctionId uint64,
-	auctioneer string,
-	payingCoin sdk.Coin,
-	releaseTime time.Time,
-	vested bool,
-) VestingQueue {
-	return VestingQueue{
-		AuctionId:   auctionId,
-		Auctioneer:  auctioneer,
-		PayingCoin:  payingCoin,
-		ReleaseTime: releaseTime,
-		Vested:      vested,
-	}
-}
 
 // ValidateVestingSchedules validates the vesting schedules.
 // Each weight of the vesting schedule must be positive and total weight must be equal to 1.

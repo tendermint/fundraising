@@ -37,16 +37,14 @@ func (k Keeper) SetVestingSchedules(ctx sdk.Context, auction types.AuctionI) err
 	for _, vs := range auction.GetVestingSchedules() {
 		payingAmt := reserveBalance.Amount.ToDec().Mul(vs.Weight).TruncateInt()
 
-		queue := types.NewVestingQueue(
-			auction.GetId(),
-			auction.GetAuctioneer(),
-			sdk.NewCoin(auction.GetPayingCoinDenom(), payingAmt),
-			vs.ReleaseTime,
-			false,
-		)
-
 		// Store vesting queue
-		k.SetVestingQueue(ctx, auction.GetId(), vs.ReleaseTime, queue)
+		k.SetVestingQueue(ctx, auction.GetId(), vs.ReleaseTime, types.VestingQueue{
+			AuctionId:   auction.GetId(),
+			Auctioneer:  auction.GetAuctioneer(),
+			PayingCoin:  sdk.NewCoin(auction.GetPayingCoinDenom(), payingAmt),
+			ReleaseTime: vs.ReleaseTime,
+			Vested:      false,
+		})
 	}
 
 	// Move paying coin to vesting reserve module account

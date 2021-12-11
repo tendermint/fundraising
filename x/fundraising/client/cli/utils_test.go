@@ -41,9 +41,18 @@ func TestParseFixedPriceAuction(t *testing.T) {
 `)
 
 	expSchedules := []types.VestingSchedule{
-		types.NewVestingSchedule(types.ParseTime("2022-01-01T00:00:00Z"), sdk.MustNewDecFromStr("0.50")),
-		types.NewVestingSchedule(types.ParseTime("2022-06-01T00:00:00Z"), sdk.MustNewDecFromStr("0.25")),
-		types.NewVestingSchedule(types.ParseTime("2022-12-01T00:00:00Z"), sdk.MustNewDecFromStr("0.25")),
+		{
+			ReleaseTime: types.ParseTime("2022-01-01T00:00:00Z"),
+			Weight:      sdk.MustNewDecFromStr("0.50"),
+		},
+		{
+			ReleaseTime: types.ParseTime("2022-06-01T00:00:00Z"),
+			Weight:      sdk.MustNewDecFromStr("0.25"),
+		},
+		{
+			ReleaseTime: types.ParseTime("2022-12-01T00:00:00Z"),
+			Weight:      sdk.MustNewDecFromStr("0.25"),
+		},
 	}
 
 	auction, err := cli.ParseFixedPriceAuctionRequest(okJSON.Name())
