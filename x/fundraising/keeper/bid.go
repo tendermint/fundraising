@@ -123,9 +123,8 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 	}
 
 	bidAmt := msg.Coin.Amount.ToDec().Quo(msg.Price).TruncateInt()
-	bidCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidAmt)
+	receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidAmt)
 	balanceAmt := k.bankKeeper.GetBalance(ctx, msg.GetBidder(), auction.GetPayingCoinDenom()).Amount
-	payingReserveAcc := types.PayingReserveAcc(auction.GetId())
 
 	// The bidder must have greater than or equal to the bid amount
 	if balanceAmt.Sub(bidAmt).IsNegative() {
@@ -133,7 +132,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 	}
 
 	// The bidder cannot bid more than the remaining coin
-	remaining := auction.GetRemainingCoin().Sub(bidCoin)
+	remaining := auction.GetRemainingCoin().Sub(receiveCoin)
 	if remaining.IsNegative() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "request coin must be lower than or equal to the remaining total selling coin")
 	}
@@ -147,7 +146,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 			return err
 		}
 
-		err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, msg.GetBidder(), payingReserveAcc.String(), sdk.NewCoins(msg.Coin))
+		err := k.bankKeeper.SendCoins(ctx, msg.GetBidder(), types.PayingReserveAcc(auction.GetId()), sdk.NewCoins(msg.Coin))
 		if err != nil {
 			return err
 		}
@@ -176,7 +175,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 			sdk.NewAttribute(types.AttributeKeyBidderAddress, msg.GetBidder().String()),
 			sdk.NewAttribute(types.AttributeKeyBidPrice, msg.Price.String()),
 			sdk.NewAttribute(types.AttributeKeyBidCoin, msg.Coin.String()),
-			sdk.NewAttribute(types.AttributeKeyBidAmount, bidCoin.String()),
+			sdk.NewAttribute(types.AttributeKeyBidAmount, receiveCoin.String()),
 		),
 	})
 

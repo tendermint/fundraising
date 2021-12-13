@@ -149,6 +149,7 @@ func (k Keeper) UnmarshalAuction(bz []byte) (auction types.AuctionI, err error) 
 func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) error {
 	sellingReserveAcc := types.SellingReserveAcc(auction.GetId())
 
+	// Distribute coin to all bidders who bid for the uaction
 	for _, bid := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
 		bidAmt := bid.Coin.Amount.ToDec().Quo(bid.Price).TruncateInt()
 		bidCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidAmt)
@@ -158,10 +159,16 @@ func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) e
 			return err
 		}
 
-		err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, sellingReserveAcc.String(), bidderAcc, sdk.NewCoins(bidCoin))
-		if err != nil {
+		if err := k.bankKeeper.SendCoins(ctx, sellingReserveAcc, bidderAcc, sdk.NewCoins(bidCoin)); err != nil {
 			return err
 		}
+	}
+
+	reserveBalance := k.bankKeeper.GetBalance(ctx, sellingReserveAcc, auction.GetSellingCoin().Denom)
+
+	// Send remaining selling coin to the auctioneer
+	if err := k.bankKeeper.SendCoins(ctx, sellingReserveAcc, auction.GetAuctioneer(), sdk.NewCoins(reserveBalance)); err != nil {
+		return err
 	}
 
 	return nil
@@ -169,18 +176,18 @@ func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) e
 
 // DistributePayingCoin releases vested selling coin from the vesting reserve module account.
 func (k Keeper) DistributePayingCoin(ctx sdk.Context, auction types.AuctionI) error {
-	vestingReserveAcc := types.VestingReserveAcc(auction.GetId())
+	for _, vq := range k.GetVestingQueuesByAuctionId(ctx, auction.GetId()) {
+		if types.IsVested(vq.GetReleaseTime(), ctx.BlockTime()) {
+			vestingReserveAcc := types.VestingReserveAcc(auction.GetId())
+			reserveBalance := k.bankKeeper.GetBalance(ctx, vestingReserveAcc, auction.GetPayingCoinDenom())
 
-	auctioneerAcc, err := sdk.AccAddressFromBech32(auction.GetAuctioneer())
-	if err != nil {
-		return err
-	}
+			if err := k.bankKeeper.SendCoins(ctx, vestingReserveAcc, auction.GetAuctioneer(), sdk.NewCoins(reserveBalance)); err != nil {
+				return err
+			}
 
-	reserveBalance := k.bankKeeper.GetBalance(ctx, vestingReserveAcc, auction.GetPayingCoinDenom())
-	reserveCoins := sdk.NewCoins(reserveBalance)
-
-	if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, vestingReserveAcc.String(), auctioneerAcc, reserveCoins); err != nil {
-		return err
+			vq.Vested = true
+			k.SetVestingQueue(ctx, auction.GetId(), vq.ReleaseTime, vq)
+		}
 	}
 
 	return nil
@@ -231,7 +238,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		vestingReserveAcc.String(),
 		msg.VestingSchedules,
 		sdk.ZeroDec(),
-		msg.SellingCoin, // add selling coin to total selling coin
+		msg.SellingCoin, // add selling coin to remaining coin
 		msg.StartTime,
 		[]time.Time{msg.EndTime},
 		types.AuctionStatusStandBy,
@@ -281,7 +288,7 @@ func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) erro
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", msg.AuctionId)
 	}
 
-	if auction.GetAuctioneer() != msg.Auctioneer {
+	if auction.GetAuctioneer().String() != msg.Auctioneer {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "failed to verify ownership of the auction")
 	}
 

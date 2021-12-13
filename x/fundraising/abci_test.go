@@ -1,6 +1,8 @@
 package fundraising_test
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/tendermint/fundraising/x/fundraising"
 	"github.com/tendermint/fundraising/x/fundraising/types"
 
@@ -32,32 +34,68 @@ func (suite *ModuleTestSuite) TestEndBlockerStartedStatus() {
 	auction, found := suite.keeper.GetAuction(suite.ctx, 1)
 	suite.Require().True(found)
 	suite.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
-	suite.Require().Equal(types.ParseTime("2021-12-20T00:00:00Z"), auction.GetEndTimes()[0])
 
-	sellingReserveAcc := types.SellingReserveAcc(auction.GetId())
-	sellingPool := suite.app.BankKeeper.GetBalance(suite.ctx, sellingReserveAcc, auction.GetSellingCoin().Denom)
-	suite.Require().Equal(auction.GetSellingCoin(), sellingPool)
+	totalBidCoin := sdk.NewInt64Coin(denom2, 0)
+	for _, bid := range suite.sampleFixedPriceBids {
+		err := suite.keeper.PlaceBid(suite.ctx, bid)
+		suite.Require().NoError(err)
 
-	// for _, bid := range suite.sampleFixedPriceBids {
-	// 	err := suite.keeper.PlaceBid(suite.ctx, bid)
-	// 	suite.Require().NoError(err)
-	// }
+		totalBidCoin = totalBidCoin.Add(bid.Coin)
+	}
+	bidAmt := totalBidCoin.Amount.ToDec().Quo(auction.GetStartPrice()).TruncateInt()
+	receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidAmt)
 
-	// payingReserveAcc := types.PayingReserveAcc(auction.GetId())
-	// payingPool := suite.app.BankKeeper.GetBalance(suite.ctx, payingReserveAcc, auction.GetSellingCoin().Denom)
-	// fmt.Println("paying: ", payingPool)
+	// Bids with 30_000_000denom2 and 50_000_000denom2
+	payingReserve := suite.app.BankKeeper.GetBalance(
+		suite.ctx,
+		types.PayingReserveAcc(auction.GetId()),
+		auction.GetPayingCoinDenom(),
+	)
+	suite.Require().Equal(totalBidCoin, payingReserve)
 
-	// t := types.ParseTime("2021-12-20T00:00:00Z")
-	// suite.ctx = suite.ctx.WithBlockTime(t)
-	// fundraising.EndBlocker(suite.ctx, suite.keeper)
+	suite.ctx = suite.ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, -1))
+	fundraising.EndBlocker(suite.ctx, suite.keeper)
 
-	// sellingPool = suite.app.BankKeeper.GetBalance(suite.ctx, sellingReserveAcc, auction.GetSellingCoin().Denom)
-	// fmt.Println("sellingPool: ", sellingPool)
-
-	// balances := suite.app.BankKeeper.GetAllBalances(suite.ctx, suite.addrs[0])
-	// fmt.Println("balances: ", balances)
+	// Remaining selling coin should have returned to the auctioneer
+	auctioneerBalance := suite.app.BankKeeper.GetBalance(
+		suite.ctx,
+		suite.addrs[5],
+		auction.GetSellingCoin().Denom,
+	)
+	suite.Require().Equal(auction.GetSellingCoin(), auctioneerBalance.Add(receiveCoin))
 }
 
 func (suite *ModuleTestSuite) TestEndBlockerVestingStatus() {
-	// TODO: not implemented yet
+	suite.keeper.CreateFixedPriceAuction(suite.ctx, suite.sampleFixedPriceAuctions[1])
+
+	auction, found := suite.keeper.GetAuction(suite.ctx, 1)
+	suite.Require().True(found)
+	suite.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	totalBidCoin := sdk.NewInt64Coin(denom2, 0)
+	for _, bid := range suite.sampleFixedPriceBids {
+		totalBidCoin = totalBidCoin.Add(bid.Coin)
+
+		err := suite.keeper.PlaceBid(suite.ctx, bid)
+		suite.Require().NoError(err)
+	}
+
+	suite.ctx = suite.ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, -1))
+	fundraising.EndBlocker(suite.ctx, suite.keeper)
+
+	vestingReserve := suite.app.BankKeeper.GetBalance(
+		suite.ctx,
+		types.VestingReserveAcc(auction.GetId()),
+		auction.GetPayingCoinDenom(),
+	)
+	suite.Require().Equal(totalBidCoin, vestingReserve)
+
+	queues := suite.keeper.GetVestingQueuesByAuctionId(suite.ctx, auction.GetId())
+	suite.Require().Len(queues, 4)
+
+	// TODO: check vesting queue 0 is ahead of vesting time and see if the module
+	// distributes well from the vesting reserve account.
+	// for _, q := range queues {
+	// 	fmt.Println("q: ", q)
+	// }
 }

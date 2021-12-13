@@ -75,7 +75,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 				StartPrice:         sdk.OneDec(), // start price corresponds to ratio of the paying coin
 				SellingCoin:        sdk.NewInt64Coin(denom1, 1_000_000_000_000),
 				PayingCoinDenom:    denom2,
-				VestingAddress:     types.VestingReserveAcc(1).String(),
+				VestingPoolAddress: types.VestingReserveAcc(1).String(),
 				VestingSchedules:   []types.VestingSchedule{}, // no vesting schedules
 				WinningPrice:       sdk.ZeroDec(),
 				RemainingCoin:      sdk.NewInt64Coin(denom1, 1_000_000_000_000),
@@ -94,7 +94,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 				StartPrice:         sdk.MustNewDecFromStr("0.5"),
 				SellingCoin:        sdk.NewInt64Coin(denom3, 1_000_000_000_000),
 				PayingCoinDenom:    denom4,
-				VestingAddress:     types.VestingReserveAcc(1).String(),
+				VestingPoolAddress: types.VestingReserveAcc(1).String(),
 				VestingSchedules: []types.VestingSchedule{
 					{
 						ReleaseTime: types.ParseTime("2022-01-01T00:00:00Z"),

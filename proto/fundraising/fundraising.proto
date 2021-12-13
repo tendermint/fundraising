@@ -68,9 +68,9 @@ message BaseAuction {
   // for
   string paying_coin_denom = 8;
 
-  // vesting_address specifies the bech32-encoded vesting address that holds
+  // vesting_pool_address specifies the bech32-encoded vesting address that holds
   // vesting amounts of coin
-  string vesting_address = 9;
+  string vesting_pool_address = 9;
 
   // vesting_schedules specifies the vesting schedules for the auction
   repeated VestingSchedule vesting_schedules = 10

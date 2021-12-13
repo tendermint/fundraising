@@ -18,43 +18,35 @@ func (k Keeper) SetVestingSchedules(ctx sdk.Context, auction types.AuctionI) err
 	reserveCoins := sdk.NewCoins(reserveBalance)
 
 	if len(auction.GetVestingSchedules()) == 0 {
-		auctioneerAcc, err := sdk.AccAddressFromBech32(auction.GetAuctioneer())
-		if err != nil {
-			return err
-		}
-
-		err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, payingReserveAcc.String(), auctioneerAcc, reserveCoins)
-		if err != nil {
-			return err
-		}
-
 		if err := auction.SetStatus(types.AuctionStatusFinished); err != nil {
 			return err
 		}
-		return nil
-	}
 
-	for _, vs := range auction.GetVestingSchedules() {
-		payingAmt := reserveBalance.Amount.ToDec().Mul(vs.Weight).TruncateInt()
+		if err := k.bankKeeper.SendCoins(ctx, payingReserveAcc, auction.GetAuctioneer(), reserveCoins); err != nil {
+			return err
+		}
 
-		// Store vesting queue
-		k.SetVestingQueue(ctx, auction.GetId(), vs.ReleaseTime, types.VestingQueue{
-			AuctionId:   auction.GetId(),
-			Auctioneer:  auction.GetAuctioneer(),
-			PayingCoin:  sdk.NewCoin(auction.GetPayingCoinDenom(), payingAmt),
-			ReleaseTime: vs.ReleaseTime,
-			Vested:      false,
-		})
-	}
+	} else {
+		for _, vs := range auction.GetVestingSchedules() {
+			payingAmt := reserveBalance.Amount.ToDec().Mul(vs.Weight).TruncateInt()
 
-	// Move paying coin to vesting reserve module account
-	err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, payingReserveAcc.String(), vestingReserveAcc.String(), reserveCoins)
-	if err != nil {
-		return err
-	}
+			k.SetVestingQueue(ctx, auction.GetId(), vs.ReleaseTime, types.VestingQueue{
+				AuctionId:   auction.GetId(),
+				Auctioneer:  auction.GetAuctioneer().String(),
+				PayingCoin:  sdk.NewCoin(auction.GetPayingCoinDenom(), payingAmt),
+				ReleaseTime: vs.ReleaseTime,
+				Vested:      false,
+			})
+		}
 
-	if err := auction.SetStatus(types.AuctionStatusVesting); err != nil {
-		return err
+		if err := auction.SetStatus(types.AuctionStatusVesting); err != nil {
+			return err
+		}
+
+		if err := k.bankKeeper.SendCoins(ctx, payingReserveAcc, vestingReserveAcc, reserveCoins); err != nil {
+			return err
+		}
+
 	}
 
 	return nil

@@ -74,7 +74,7 @@ func (suite *KeeperTestSuite) TestMsgCancelAuction() {
 
 	// Try to cancel with the auction that is already started
 	_, err = suite.srv.CancelAuction(ctx, types.NewMsgCancelAuction(
-		auction.GetAuctioneer(),
+		auction.GetAuctioneer().String(),
 		auction.GetId(),
 	))
 	suite.Require().ErrorIs(err, sdkerrors.Wrap(types.ErrInvalidAuctionStatus, "auction cannot be canceled due to current status"))
@@ -88,7 +88,7 @@ func (suite *KeeperTestSuite) TestMsgCancelAuction() {
 
 	// Success
 	_, err = suite.srv.CancelAuction(ctx, types.NewMsgCancelAuction(
-		auction.GetAuctioneer(),
+		auction.GetAuctioneer().String(),
 		auction.GetId(),
 	))
 	suite.Require().NoError(err)

@@ -13,8 +13,6 @@ import (
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 
-	logger := k.Logger(ctx)
-
 	// Get all auctions in the store and proceed operations depending on auction status.
 	//
 	// For AuctionStatusVesting, it first gets all vesting queues in the store and
@@ -29,23 +27,9 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	for _, auction := range k.GetAuctions(ctx) {
 		if auction.GetType() == types.AuctionTypeFixedPrice {
 			switch auction.GetStatus() {
-			case types.AuctionStatusVesting:
-				for _, vq := range k.GetVestingQueuesByAuctionId(ctx, auction.GetId()) {
-					if !vq.GetReleaseTime().Before(ctx.BlockTime()) {
-						if err := k.DistributePayingCoin(ctx, auction); err != nil {
-							panic(err)
-						}
-
-						vq.Vested = true
-						k.SetVestingQueue(ctx, auction.GetId(), vq.ReleaseTime, vq)
-					}
-				}
-
 			case types.AuctionStatusStandBy:
 				if types.IsAuctionStarted(auction.GetStartTime(), ctx.BlockTime()) {
-					if err := auction.SetStatus(types.AuctionStatusStarted); err != nil {
-						logger.Error("error is returned when setting auction status", "auction", auction)
-					}
+					_ = auction.SetStatus(types.AuctionStatusStarted)
 					k.SetAuction(ctx, auction)
 				}
 
@@ -58,6 +42,11 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 					if err := k.SetVestingSchedules(ctx, auction); err != nil {
 						panic(err)
 					}
+				}
+
+			case types.AuctionStatusVesting:
+				if err := k.DistributePayingCoin(ctx, auction); err != nil {
+					panic(err)
 				}
 
 			default:
