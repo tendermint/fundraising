@@ -8,7 +8,7 @@ import (
 )
 
 func (suite *ModuleTestSuite) TestEndBlockerStandByStatus() {
-	suite.keeper.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[0])
+	suite.keeper.CreateFixedPriceAuction(suite.ctx, suite.sampleFixedPriceAuctions[0])
 
 	auction, found := suite.keeper.GetAuction(suite.ctx, 1)
 	suite.Require().True(found)
@@ -27,20 +27,35 @@ func (suite *ModuleTestSuite) TestEndBlockerStandByStatus() {
 }
 
 func (suite *ModuleTestSuite) TestEndBlockerStartedStatus() {
-	suite.keeper.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[1])
+	suite.keeper.CreateFixedPriceAuction(suite.ctx, suite.sampleFixedPriceAuctions[1])
 
 	auction, found := suite.keeper.GetAuction(suite.ctx, 1)
 	suite.Require().True(found)
 	suite.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
-	suite.Require().Equal(types.ParseTime("2022-12-20T00:00:00Z"), auction.GetEndTimes()[0])
+	suite.Require().Equal(types.ParseTime("2021-12-20T00:00:00Z"), auction.GetEndTimes()[0])
 
-	t := types.ParseTime("2022-12-20T00:00:00Z")
-	suite.ctx = suite.ctx.WithBlockTime(t)
-	fundraising.EndBlocker(suite.ctx, suite.keeper)
+	sellingReserveAcc := types.SellingReserveAcc(auction.GetId())
+	sellingPool := suite.app.BankKeeper.GetBalance(suite.ctx, sellingReserveAcc, auction.GetSellingCoin().Denom)
+	suite.Require().Equal(auction.GetSellingCoin(), sellingPool)
 
-	// TODO: Place Bids
-	// auction, found = suite.keeper.GetAuction(suite.ctx, 1)
-	// suite.Require().True(found)
+	// for _, bid := range suite.sampleFixedPriceBids {
+	// 	err := suite.keeper.PlaceBid(suite.ctx, bid)
+	// 	suite.Require().NoError(err)
+	// }
+
+	// payingReserveAcc := types.PayingReserveAcc(auction.GetId())
+	// payingPool := suite.app.BankKeeper.GetBalance(suite.ctx, payingReserveAcc, auction.GetSellingCoin().Denom)
+	// fmt.Println("paying: ", payingPool)
+
+	// t := types.ParseTime("2021-12-20T00:00:00Z")
+	// suite.ctx = suite.ctx.WithBlockTime(t)
+	// fundraising.EndBlocker(suite.ctx, suite.keeper)
+
+	// sellingPool = suite.app.BankKeeper.GetBalance(suite.ctx, sellingReserveAcc, auction.GetSellingCoin().Denom)
+	// fmt.Println("sellingPool: ", sellingPool)
+
+	// balances := suite.app.BankKeeper.GetAllBalances(suite.ctx, suite.addrs[0])
+	// fmt.Println("balances: ", balances)
 }
 
 func (suite *ModuleTestSuite) TestEndBlockerVestingStatus() {

@@ -125,6 +125,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 	bidAmt := msg.Coin.Amount.ToDec().Quo(msg.Price).TruncateInt()
 	bidCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidAmt)
 	balanceAmt := k.bankKeeper.GetBalance(ctx, msg.GetBidder(), auction.GetPayingCoinDenom()).Amount
+	payingReserveAcc := types.PayingReserveAcc(auction.GetId())
 
 	// The bidder must have greater than or equal to the bid amount
 	if balanceAmt.Sub(bidAmt).IsNegative() {
@@ -143,6 +144,11 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 		}
 
 		if err := auction.SetRemainingCoin(remaining); err != nil {
+			return err
+		}
+
+		err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, msg.GetBidder(), payingReserveAcc.String(), sdk.NewCoins(msg.Coin))
+		if err != nil {
 			return err
 		}
 
