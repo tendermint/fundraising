@@ -25,7 +25,7 @@ func ParamKeyTable() paramstypes.KeyTable {
 	return paramstypes.NewKeyTable().RegisterParamSet(&Params{})
 }
 
-// DefaultParams returns the default farming module parameters.
+// DefaultParams returns the default fundraising module parameters.
 func DefaultParams() Params {
 	return Params{
 		AuctionCreationFee: DefaultAuctionCreationFee,
@@ -64,7 +64,7 @@ func (p Params) Validate() error {
 }
 
 func validateAuctionCreationFee(i interface{}) error {
-	v, ok := i.(sdk.Coin)
+	v, ok := i.(sdk.Coins)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
