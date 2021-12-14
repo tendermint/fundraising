@@ -18,13 +18,15 @@ func (k Keeper) SetVestingSchedules(ctx sdk.Context, auction types.AuctionI) err
 	reserveCoins := sdk.NewCoins(reserveBalance)
 
 	if len(auction.GetVestingSchedules()) == 0 {
+		if err := k.bankKeeper.SendCoins(ctx, payingReserveAcc, auction.GetAuctioneer(), reserveCoins); err != nil {
+			return err
+		}
+
 		if err := auction.SetStatus(types.AuctionStatusFinished); err != nil {
 			return err
 		}
 
-		if err := k.bankKeeper.SendCoins(ctx, payingReserveAcc, auction.GetAuctioneer(), reserveCoins); err != nil {
-			return err
-		}
+		k.SetAuction(ctx, auction)
 
 	} else {
 		for _, vs := range auction.GetVestingSchedules() {
@@ -39,14 +41,15 @@ func (k Keeper) SetVestingSchedules(ctx sdk.Context, auction types.AuctionI) err
 			})
 		}
 
-		if err := auction.SetStatus(types.AuctionStatusVesting); err != nil {
-			return err
-		}
-
 		if err := k.bankKeeper.SendCoins(ctx, payingReserveAcc, vestingReserveAcc, reserveCoins); err != nil {
 			return err
 		}
 
+		if err := auction.SetStatus(types.AuctionStatusVesting); err != nil {
+			return err
+		}
+
+		k.SetAuction(ctx, auction)
 	}
 
 	return nil

@@ -35,7 +35,7 @@ func (suite *ModuleTestSuite) TestEndBlockerStartedStatus() {
 	suite.Require().True(found)
 	suite.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	totalBidCoin := sdk.NewInt64Coin(denom2, 0)
+	totalBidCoin := sdk.NewInt64Coin(denom4, 0)
 	for _, bid := range suite.sampleFixedPriceBids {
 		err := suite.keeper.PlaceBid(suite.ctx, bid)
 		suite.Require().NoError(err)
@@ -72,7 +72,7 @@ func (suite *ModuleTestSuite) TestEndBlockerVestingStatus() {
 	suite.Require().True(found)
 	suite.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	totalBidCoin := sdk.NewInt64Coin(denom2, 0)
+	totalBidCoin := sdk.NewInt64Coin(denom4, 0)
 	for _, bid := range suite.sampleFixedPriceBids {
 		totalBidCoin = totalBidCoin.Add(bid.Coin)
 
@@ -90,12 +90,19 @@ func (suite *ModuleTestSuite) TestEndBlockerVestingStatus() {
 	)
 	suite.Require().Equal(totalBidCoin, vestingReserve)
 
+	suite.ctx = suite.ctx.WithBlockTime(types.ParseTime("2022-04-02T00:00:00Z"))
+	fundraising.EndBlocker(suite.ctx, suite.keeper)
+
 	queues := suite.keeper.GetVestingQueuesByAuctionId(suite.ctx, auction.GetId())
 	suite.Require().Len(queues, 4)
+	suite.Require().True(queues[0].Vested)
+	suite.Require().True(queues[1].Vested)
 
-	// TODO: check vesting queue 0 is ahead of vesting time and see if the module
-	// distributes well from the vesting reserve account.
-	// for _, q := range queues {
-	// 	fmt.Println("q: ", q)
-	// }
+	// Auctioneer should have received two vested amounts
+	auctioneerBalance := suite.app.BankKeeper.GetBalance(
+		suite.ctx,
+		suite.addrs[5],
+		auction.GetPayingCoinDenom(),
+	)
+	suite.Require().Equal(totalBidCoin.Amount, auctioneerBalance.Amount.Sub(initialBalances.AmountOf(denom4)))
 }

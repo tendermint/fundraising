@@ -18,6 +18,8 @@ import (
 const (
 	denom1 = "denom1" // selling coin denom
 	denom2 = "denom2" // paying coin denom
+	denom3 = "denom3"
+	denom4 = "denom4"
 )
 
 var (
@@ -25,6 +27,8 @@ var (
 		sdk.NewInt64Coin(sdk.DefaultBondDenom, 100_000_000),
 		sdk.NewInt64Coin(denom1, 1_000_000_000_000),
 		sdk.NewInt64Coin(denom2, 1_000_000_000_000),
+		sdk.NewInt64Coin(denom3, 1_000_000_000_000),
+		sdk.NewInt64Coin(denom4, 1_000_000_000_000),
 	)
 )
 
@@ -73,8 +77,8 @@ func (suite *ModuleTestSuite) SetupTest() {
 		{
 			Auctioneer:      suite.addrs[5].String(),
 			StartPrice:      sdk.MustNewDecFromStr("0.5"),
-			SellingCoin:     sdk.NewInt64Coin(denom1, 1_000_000_000_000),
-			PayingCoinDenom: denom2,
+			SellingCoin:     sdk.NewInt64Coin(denom3, 1_000_000_000_000),
+			PayingCoinDenom: denom4,
 			VestingSchedules: []types.VestingSchedule{
 				{
 					ReleaseTime: types.ParseTime("2022-01-01T00:00:00Z"),
@@ -102,13 +106,13 @@ func (suite *ModuleTestSuite) SetupTest() {
 			AuctionId: 1,
 			Bidder:    suite.addrs[0].String(),
 			Price:     sdk.MustNewDecFromStr("0.5"),
-			Coin:      sdk.NewInt64Coin(denom2, 30_000_000),
+			Coin:      sdk.NewInt64Coin(denom4, 30_000_000),
 		},
 		{
 			AuctionId: 1,
 			Bidder:    suite.addrs[1].String(),
 			Price:     sdk.MustNewDecFromStr("0.5"),
-			Coin:      sdk.NewInt64Coin(denom2, 50_000_000),
+			Coin:      sdk.NewInt64Coin(denom4, 50_000_000),
 		},
 	}
 }
