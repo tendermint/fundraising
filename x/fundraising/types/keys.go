@@ -74,6 +74,7 @@ func GetVestingQueueByAuctionIdPrefix(auctionId uint64) []byte {
 	return append(VestingQueueKeyPrefix, sdk.Uint64ToBigEndian(auctionId)...)
 }
 
+// ParseBidIndexKey parses bid index key.
 func ParseBidIndexKey(key []byte) (auctionId, sequence uint64) {
 	if !bytes.HasPrefix(key, BidIndexKeyPrefix) {
 		panic("key does not have proper prefix")

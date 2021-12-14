@@ -149,7 +149,7 @@ func (k Keeper) UnmarshalAuction(bz []byte) (auction types.AuctionI, err error) 
 func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) error {
 	sellingReserveAcc := types.SellingReserveAcc(auction.GetId())
 
-	// Distribute coin to all bidders who bid for the uaction
+	// distribute coin to all bidders who bid for the uaction
 	for _, bid := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
 		bidAmt := bid.Coin.Amount.ToDec().Quo(bid.Price).TruncateInt()
 		bidCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidAmt)
@@ -221,7 +221,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 	payingReserveAcc := types.PayingReserveAcc(nextId)
 	vestingReserveAcc := types.VestingReserveAcc(nextId)
 
-	// Reserve the selling coin to the selling reserve account
+	// reserve the selling coin to the selling reserve account
 	if err := k.bankKeeper.SendCoins(ctx, auctioneerAcc, sellingReserveAcc, sdk.NewCoins(msg.SellingCoin)); err != nil {
 		return sdkerrors.Wrap(err, "failed to escrow selling coin to selling reserve account")
 	}
@@ -244,7 +244,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		types.AuctionStatusStandBy,
 	)
 
-	// Updates status if the start time is already passed over the current time
+	// updates status if the start time is already passed over the current time
 	if types.IsAuctionStarted(baseAuction.GetStartTime(), ctx.BlockTime()) {
 		baseAuction.Status = types.AuctionStatusStarted
 	}
@@ -299,6 +299,7 @@ func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) erro
 	if err := auction.SetStatus(types.AuctionStatusCancelled); err != nil {
 		return err
 	}
+
 	k.SetAuction(ctx, auction)
 
 	ctx.EventManager().EmitEvents(sdk.Events{

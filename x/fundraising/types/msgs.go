@@ -15,7 +15,7 @@ var (
 	_ sdk.Msg = (*MsgPlaceBid)(nil)
 )
 
-// Message types for the fundraising module
+// Message types for the fundraising module.
 const (
 	TypeMsgCreateFixedPriceAuction = "create_fixed_price_auction"
 	TypeMsgCreateEnglishAuction    = "create_english_auction"
@@ -61,11 +61,14 @@ func (msg MsgCreateFixedPriceAuction) ValidateBasic() error {
 	if !msg.SellingCoin.Amount.IsPositive() {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "selling coin amount must be positive")
 	}
+	if msg.SellingCoin.Denom == msg.PayingCoinDenom {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "selling coin denom must not be the same as paying coin denom")
+	}
 	if err := sdk.ValidateDenom(msg.PayingCoinDenom); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid paying coin denom: %v", err)
 	}
 	if !msg.EndTime.After(msg.StartTime) {
-		return sdkerrors.Wrapf(ErrInvalidAuctionEndTime, "end time must be greater than start time")
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "end time must be greater than start time")
 	}
 	if err := ValidateVestingSchedules(msg.VestingSchedules); err != nil {
 		return err
@@ -135,11 +138,14 @@ func (msg MsgCreateEnglishAuction) ValidateBasic() error {
 	if !msg.SellingCoin.Amount.IsPositive() {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "selling coin amount must be positive")
 	}
+	if msg.SellingCoin.Denom == msg.PayingCoinDenom {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "selling coin denom must not be the same as paying coin denom")
+	}
 	if err := sdk.ValidateDenom(msg.PayingCoinDenom); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid paying coin denom: %v", err)
 	}
 	if !msg.EndTime.After(msg.StartTime) {
-		return sdkerrors.Wrapf(ErrInvalidAuctionEndTime, "end time must be greater than start time")
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "end time must be greater than start time")
 	}
 	if err := ValidateVestingSchedules(msg.VestingSchedules); err != nil {
 		return err

@@ -103,6 +103,7 @@ func (k Querier) Auction(c context.Context, req *types.QueryAuctionRequest) (*ty
 	return &types.QueryAuctionResponse{Auction: auctionAny}, nil
 }
 
+// Bids queries all bids for the auction.
 func (k Querier) Bids(c context.Context, req *types.QueryBidsRequest) (*types.QueryBidsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
@@ -166,6 +167,7 @@ func (k Querier) Bids(c context.Context, req *types.QueryBidsRequest) (*types.Qu
 	return &types.QueryBidsResponse{Bids: bids, Pagination: pageRes}, nil
 }
 
+// Vestings queries all vesting queues for the auction.
 func (k Querier) Vestings(c context.Context, req *types.QueryVestingsRequest) (*types.QueryVestingsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
