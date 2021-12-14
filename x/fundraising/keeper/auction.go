@@ -149,7 +149,7 @@ func (k Keeper) UnmarshalAuction(bz []byte) (auction types.AuctionI, err error) 
 func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) error {
 	sellingReserveAcc := types.SellingReserveAcc(auction.GetId())
 
-	// distribute coin to all bidders who bid for the uaction
+	// distribute coin to all bidders who bid for the auction
 	for _, bid := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
 		bidAmt := bid.Coin.Amount.ToDec().Quo(bid.Price).TruncateInt()
 		bidCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidAmt)
