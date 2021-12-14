@@ -146,17 +146,17 @@ func (suite *KeeperTestSuite) TestGRPCBids() {
 		},
 		{
 			"query by id",
-			&types.QueryBidsRequest{AuctionId: 1},
+			&types.QueryBidsRequest{AuctionId: 2},
 			false,
 			func(resp *types.QueryBidsResponse) {
 				suite.Require().Len(resp.Bids, 2)
-				suite.Require().True(coinEq(sdk.NewInt64Coin(denom2, 50_000_000), resp.Bids[0].Coin))
-				suite.Require().True(coinEq(sdk.NewInt64Coin(denom2, 100_000_000), resp.Bids[1].Coin))
+				suite.Require().True(coinEq(sdk.NewInt64Coin(denom4, 50_000_000), resp.Bids[0].Coin))
+				suite.Require().True(coinEq(sdk.NewInt64Coin(denom4, 100_000_000), resp.Bids[1].Coin))
 			},
 		},
 		{
 			"query by bidder address",
-			&types.QueryBidsRequest{AuctionId: 1, Bidder: suite.addrs[0].String()},
+			&types.QueryBidsRequest{AuctionId: 2, Bidder: suite.addrs[0].String()},
 			false,
 			func(resp *types.QueryBidsResponse) {
 				suite.Require().Len(resp.Bids, 1)
@@ -164,7 +164,7 @@ func (suite *KeeperTestSuite) TestGRPCBids() {
 		},
 		{
 			"query by eligible",
-			&types.QueryBidsRequest{AuctionId: 1, Eligible: "true"},
+			&types.QueryBidsRequest{AuctionId: 2, Eligible: "true"},
 			false,
 			func(resp *types.QueryBidsResponse) {
 				suite.Require().Len(resp.Bids, 0)

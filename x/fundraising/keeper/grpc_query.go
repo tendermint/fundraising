@@ -166,7 +166,18 @@ func (k Querier) Bids(c context.Context, req *types.QueryBidsRequest) (*types.Qu
 	return &types.QueryBidsResponse{Bids: bids, Pagination: pageRes}, nil
 }
 
-func (k Querier) Vestings(c context.Context, _ *types.QueryVestingsRequest) (*types.QueryVestingsResponse, error) {
-	// TODO: not implemented yet
-	return &types.QueryVestingsResponse{Vestings: nil}, nil
+func (k Querier) Vestings(c context.Context, req *types.QueryVestingsRequest) (*types.QueryVestingsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+	auction, found := k.Keeper.GetAuction(ctx, req.AuctionId)
+	if !found {
+		return nil, status.Errorf(codes.NotFound, "auction %d not found", req.AuctionId)
+	}
+
+	queues := k.Keeper.GetVestingQueuesByAuctionId(ctx, auction.GetId())
+
+	return &types.QueryVestingsResponse{Vestings: queues}, nil
 }

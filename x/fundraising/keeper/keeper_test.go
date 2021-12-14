@@ -79,9 +79,9 @@ func (suite *KeeperTestSuite) SetupTest() {
 				VestingSchedules:   []types.VestingSchedule{}, // no vesting schedules
 				WinningPrice:       sdk.ZeroDec(),
 				RemainingCoin:      sdk.NewInt64Coin(denom1, 1_000_000_000_000),
-				StartTime:          types.ParseTime("2021-12-01T00:00:00Z"),
-				EndTimes:           []time.Time{types.ParseTime("2022-01-01T00:00:00Z")},
-				Status:             types.AuctionStatusStarted,
+				StartTime:          types.ParseTime("2022-01-01T00:00:00Z"),
+				EndTimes:           []time.Time{types.ParseTime("2022-01-10T00:00:00Z")},
+				Status:             types.AuctionStatusStandBy,
 			},
 		),
 		types.NewFixedPriceAuction(
@@ -115,24 +115,24 @@ func (suite *KeeperTestSuite) SetupTest() {
 				},
 				WinningPrice:  sdk.ZeroDec(),
 				RemainingCoin: sdk.NewInt64Coin(denom3, 1_000_000_000_000),
-				StartTime:     types.ParseTime("2021-12-01T00:00:00Z"),
-				EndTimes:      []time.Time{types.ParseTime("2022-12-12T00:00:00Z")},
-				Status:        types.AuctionStatusStandBy,
+				StartTime:     types.ParseTime("2021-12-10T00:00:00Z"),
+				EndTimes:      []time.Time{types.ParseTime("2022-12-20T00:00:00Z")},
+				Status:        types.AuctionStatusStarted,
 			},
 		),
 	}
 	suite.sampleFixedPriceBids = []*types.MsgPlaceBid{
 		{
-			AuctionId: 1,
+			AuctionId: 2,
 			Bidder:    suite.addrs[0].String(),
-			Price:     sdk.OneDec(),
-			Coin:      sdk.NewInt64Coin(denom2, 50_000_000),
+			Price:     sdk.MustNewDecFromStr("0.5"),
+			Coin:      sdk.NewInt64Coin(denom4, 50_000_000),
 		},
 		{
-			AuctionId: 1,
+			AuctionId: 2,
 			Bidder:    suite.addrs[1].String(),
-			Price:     sdk.OneDec(),
-			Coin:      sdk.NewInt64Coin(denom2, 100_000_000),
+			Price:     sdk.MustNewDecFromStr("0.5"),
+			Coin:      sdk.NewInt64Coin(denom4, 100_000_000),
 		},
 	}
 }
