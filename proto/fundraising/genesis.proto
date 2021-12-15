@@ -20,7 +20,7 @@ message GenesisState {
 
   // auctions define the auction interface for genesis state; the module supports
   // FixedPriceAuction or EnglishAuction
-  repeated google.protobuf.Any auctions = 2 [(gogoproto.nullable) = false, (cosmos_proto.accepts_interface) = "AuctionI"];
+  repeated google.protobuf.Any auctions = 2 [(cosmos_proto.accepts_interface) = "AuctionI"];
 
   // bids defines the bid records used for genesis state
   repeated Bid bids = 3 [ (gogoproto.nullable) = false ];
