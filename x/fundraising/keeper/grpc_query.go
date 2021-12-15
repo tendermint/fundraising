@@ -103,6 +103,7 @@ func (k Querier) Auction(c context.Context, req *types.QueryAuctionRequest) (*ty
 	return &types.QueryAuctionResponse{Auction: auctionAny}, nil
 }
 
+// Bids queries all bids for the auction.
 func (k Querier) Bids(c context.Context, req *types.QueryBidsRequest) (*types.QueryBidsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
@@ -120,10 +121,10 @@ func (k Querier) Bids(c context.Context, req *types.QueryBidsRequest) (*types.Qu
 		}
 	}
 
-	var isWinner bool
-	if req.IsWinner != "" {
+	var eligible bool
+	if req.Eligible != "" {
 		var err error
-		isWinner, err = strconv.ParseBool(req.IsWinner)
+		eligible, err = strconv.ParseBool(req.Eligible)
 		if err != nil {
 			return nil, err
 		}
@@ -139,12 +140,16 @@ func (k Querier) Bids(c context.Context, req *types.QueryBidsRequest) (*types.Qu
 			return false, nil
 		}
 
+		if bid.AuctionId != req.AuctionId {
+			return false, nil
+		}
+
 		if req.Bidder != "" && bid.GetBidder() != req.Bidder {
 			return false, nil
 		}
 
-		if req.IsWinner != "" {
-			if bid.IsWinner != isWinner {
+		if req.Eligible != "" {
+			if bid.Eligible != eligible {
 				return false, nil
 			}
 		}
@@ -162,7 +167,19 @@ func (k Querier) Bids(c context.Context, req *types.QueryBidsRequest) (*types.Qu
 	return &types.QueryBidsResponse{Bids: bids, Pagination: pageRes}, nil
 }
 
-func (k Querier) Vestings(c context.Context, _ *types.QueryVestingsRequest) (*types.QueryVestingsResponse, error) {
-	// TODO: not implemented yet
-	return &types.QueryVestingsResponse{Vestings: nil}, nil
+// Vestings queries all vesting queues for the auction.
+func (k Querier) Vestings(c context.Context, req *types.QueryVestingsRequest) (*types.QueryVestingsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+	auction, found := k.Keeper.GetAuction(ctx, req.AuctionId)
+	if !found {
+		return nil, status.Errorf(codes.NotFound, "auction %d not found", req.AuctionId)
+	}
+
+	queues := k.Keeper.GetVestingQueuesByAuctionId(ctx, auction.GetId())
+
+	return &types.QueryVestingsResponse{Vestings: queues}, nil
 }

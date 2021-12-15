@@ -6,7 +6,7 @@ The `fundraising` module contains the following parameters:
 
 | Key                        | Type      | Example             |
 | -------------------------- | --------- | ------------------- |
-| AuctionCreationFee     | sdk.Coins | TBD                 |
+| AuctionCreationFee         | sdk.Coins | TBD                 |
 | ExtendedPeriod             | uint32    | 3600 * 24           |
 
 ## AuctionCreationFee

@@ -29,14 +29,20 @@ func TestDeriveAddress(t *testing.T) {
 		{
 			types.ReserveAddressType,
 			types.ModuleName,
-			"StakingReserveAcc|uatom",
-			"cosmos1qxs9gxctmd637l7ckpc99kw6ax6thgxx5kshpgzc8kup675xp9dsank7up",
+			"SellingReserveAcc|1",
+			"cosmos18xzvtd72y9j8xyf8a36z5jjhth7qgtcwhh8lz7yee3tvxqn6ll5quh78zq",
 		},
 		{
 			types.ReserveAddressType,
 			types.ModuleName,
-			"StakingReserveAcc|stake",
-			"cosmos1jn5vt4c3xg38ud89xjl8aumlf3akgdpllmt986w5tj9lureh65dsvk5z3t",
+			"PayingReserveAcc|1",
+			"cosmos18permjyqvk5flft8ey9egr7hd4ry8tauqt4f9mg9knn4vvtkry9sujucrl",
+		},
+		{
+			types.ReserveAddressType,
+			types.ModuleName,
+			"VestingReserveAcc|1",
+			"cosmos1gukaqt783nhz79uhcqklsty7lc7jfyy8scn5ke4x7v0m3rkpt4dst7y4l3",
 		},
 		{
 			types.AddressType20Bytes,
@@ -54,19 +60,19 @@ func TestDeriveAddress(t *testing.T) {
 			types.AddressType20Bytes,
 			types.ModuleName,
 			"",
-			"cosmos1g8n25wpvvs38dec43jtt5a8w2td3nkmz6d2qfh",
+			"cosmos1vh7g0ypukt8xyxm3zlf8f2t4sjnzxe63pe3cap",
 		},
 		{
 			types.AddressType20Bytes,
 			types.ModuleName,
 			"test1",
-			"cosmos19jjdxeykth523wg4xetyf2gr07pykjn60egn0y",
+			"cosmos1n7h778sm85f0x6h76nlrcd57eza702m6gskhhv",
 		},
 		{
 			types.AddressType32Bytes,
 			types.ModuleName,
 			"test1",
-			"cosmos1tveg5at4u8tzulwrq4qq4gnxln729t8r72aphsx9euwsw0cmeq7qudxdv8",
+			"cosmos1zrwtzgxy5urtfwp5r9t0qkeuynh78k7z2047sqafrx9hg8x4rq0qjspx0y",
 		},
 		{
 			types.AddressType32Bytes,

@@ -80,7 +80,7 @@ message QueryAuctionResponse {
 message QueryBidsRequest {
   uint64 auction_id = 1;
   string bidder = 2;
-  string is_winner = 3;
+  string eligible = 3;
   cosmos.base.query.v1beta1.PageRequest pagination = 4;
 }
 

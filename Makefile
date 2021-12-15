@@ -124,6 +124,14 @@ clean:
 ###                           Tests & Simulation                            ###
 ###############################################################################
 
+test: test-unit
+test-all: test-unit 
+
+test-unit: 
+	@VERSION=$(VERSION) go test -mod=readonly -tags='norace' $(PACKAGES_NOSIMULATION)
+
+.PHONY: test test-all test-unit 
+
 ###############################################################################
 ###                                Protobuf                                 ###
 ###############################################################################

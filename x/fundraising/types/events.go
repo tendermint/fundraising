@@ -20,6 +20,7 @@ const (
 	AttributeKeyStartTime          = "start_time"
 	AttributeKeyEndTime            = "end_time"
 	AttributeKeyBidderAddress      = "bidder_address"
-	AttributeKeyBidPrice           = "price"
-	AttributeKeyBidCoin            = "coin"
+	AttributeKeyBidPrice           = "bid_price"
+	AttributeKeyBidCoin            = "bid_coin"
+	AttributeKeyBidAmount          = "bid_amount"
 )

@@ -109,49 +109,6 @@ func (k Keeper) SetAuction(ctx sdk.Context, auction types.AuctionI) {
 	store.Set(types.GetAuctionKey(id), bz)
 }
 
-// DeleteAuction removes the auction from the store
-func (k Keeper) DeleteAuction(ctx sdk.Context, auction types.AuctionI) {
-	id := auction.GetId()
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.GetAuctionKey(id))
-}
-
-// GetVestingQueue returns a slice of vesting queues that the auction is complete and
-// waiting in a queue to release the vesting amount of coin at the respective release time.
-func (k Keeper) GetVestingQueue(ctx sdk.Context, releaseTime time.Time, auctionID uint64) []types.VestingQueue {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetVestingQueueKey(releaseTime, auctionID))
-	if bz == nil {
-		return []types.VestingQueue{}
-	}
-
-	queues := types.VestingQueues{}
-	k.cdc.MustUnmarshal(bz, &queues)
-
-	return queues.Queues
-}
-
-// SetVestingQueue sets a given slice of vesting queues into
-// the vesting queue by a given release time and auction id.
-func (k Keeper) SetVestingQueue(ctx sdk.Context, releaseTime time.Time, auctionID uint64, queues []types.VestingQueue) {
-	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshal(&types.VestingQueues{Queues: queues})
-	store.Set(types.GetVestingQueueKey(releaseTime, auctionID), bz)
-}
-
-// DeleteVestingQueue removes vesting queue by an auctioneer from the vesting queue
-// indexed by a given auction id and time.
-func (k Keeper) DeleteVestingQueue(ctx sdk.Context, vesting types.VestingQueue) {
-	// TODO: consider if we need this when implementing the next logic
-}
-
-// VestingQueueIterator returns an iterator ranging over vesting queues that are
-// vesting whose vesting completion occurs at the given release time for the auction.
-func (k Keeper) VestingQueueIterator(ctx sdk.Context, releaseTime time.Time, auctionID uint64) sdk.Iterator {
-	store := ctx.KVStore(k.storeKey)
-	return store.Iterator(types.VestingQueueKeyPrefix, sdk.InclusiveEndBytes(types.GetVestingQueueKey(releaseTime, auctionID)))
-}
-
 // IterateAuctions iterates over all the stored auctions and performs a callback function.
 // Stops iteration when callback returns true.
 func (k Keeper) IterateAuctions(ctx sdk.Context, cb func(auction types.AuctionI) (stop bool)) {
@@ -188,6 +145,54 @@ func (k Keeper) UnmarshalAuction(bz []byte) (auction types.AuctionI, err error) 
 	return auction, k.cdc.UnmarshalInterface(bz, &auction)
 }
 
+// DistributeSellingCoin releases designated selling coin from the selling reserve module account.
+func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) error {
+	sellingReserveAcc := types.SellingReserveAcc(auction.GetId())
+
+	// distribute coin to all bidders who bid for the auction
+	for _, bid := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
+		bidAmt := bid.Coin.Amount.ToDec().Quo(bid.Price).TruncateInt()
+		bidCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidAmt)
+
+		bidderAcc, err := sdk.AccAddressFromBech32(bid.GetBidder())
+		if err != nil {
+			return err
+		}
+
+		if err := k.bankKeeper.SendCoins(ctx, sellingReserveAcc, bidderAcc, sdk.NewCoins(bidCoin)); err != nil {
+			return err
+		}
+	}
+
+	reserveBalance := k.bankKeeper.GetBalance(ctx, sellingReserveAcc, auction.GetSellingCoin().Denom)
+
+	// Send remaining selling coin to the auctioneer
+	if err := k.bankKeeper.SendCoins(ctx, sellingReserveAcc, auction.GetAuctioneer(), sdk.NewCoins(reserveBalance)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DistributePayingCoin releases vested selling coin from the vesting reserve module account.
+func (k Keeper) DistributePayingCoin(ctx sdk.Context, auction types.AuctionI) error {
+	for _, vq := range k.GetVestingQueuesByAuctionId(ctx, auction.GetId()) {
+		if types.IsVested(vq.GetReleaseTime(), ctx.BlockTime()) {
+			vestingReserveAcc := types.VestingReserveAcc(auction.GetId())
+			reserveBalance := k.bankKeeper.GetBalance(ctx, vestingReserveAcc, auction.GetPayingCoinDenom())
+
+			if err := k.bankKeeper.SendCoins(ctx, vestingReserveAcc, auction.GetAuctioneer(), sdk.NewCoins(reserveBalance)); err != nil {
+				return err
+			}
+
+			vq.Vested = true
+			k.SetVestingQueue(ctx, auction.GetId(), vq.ReleaseTime, vq)
+		}
+	}
+
+	return nil
+}
+
 // CreateFixedPriceAuction sets fixed price auction.
 func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFixedPriceAuction) error {
 	nextId := k.GetNextAuctionIdWithUpdate(ctx)
@@ -197,18 +202,28 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		return err
 	}
 
-	// escrow the selling coin to the selling reserve account
-	sellingReserveAcc := types.SellingReserveAcc(msg.SellingCoin.Denom)
-	if err := k.bankKeeper.SendCoins(ctx, auctioneerAcc, sellingReserveAcc, sdk.NewCoins(msg.SellingCoin)); err != nil {
-		return sdkerrors.Wrap(err, "failed to escrow selling coin to selling reserve account")
+	if ctx.BlockTime().After(msg.EndTime) {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be prior to current time")
 	}
 
-	payingReserveAcc := types.PayingReserveAcc(msg.SellingCoin.Denom)
-	vestingReserveAcc := types.VestingReserveAcc(msg.SellingCoin.Denom)
+	// TODO: where should fees go? module account or community pool?
+	// params := k.GetParams(ctx)
+	// moduleAcc, err := sdk.AccAddressFromBech32(types.ModuleName)
+	// if err != nil {
+	// 	return err
+	// }
 
-	status := types.AuctionStatusStandBy
-	if !ctx.BlockTime().Before(msg.StartTime) {
-		status = types.AuctionStatusStarted
+	// if err := k.bankKeeper.SendCoins(ctx, msg.GetAuctioneer(), moduleAcc, params.AuctionCreationFee); err != nil {
+	// 	return sdkerrors.Wrap(err, "failed to pay auction creation fee")
+	// }
+
+	sellingReserveAcc := types.SellingReserveAcc(nextId)
+	payingReserveAcc := types.PayingReserveAcc(nextId)
+	vestingReserveAcc := types.VestingReserveAcc(nextId)
+
+	// reserve the selling coin to the selling reserve account
+	if err := k.bankKeeper.SendCoins(ctx, auctioneerAcc, sellingReserveAcc, sdk.NewCoins(msg.SellingCoin)); err != nil {
+		return sdkerrors.Wrap(err, "failed to escrow selling coin to selling reserve account")
 	}
 
 	baseAuction := types.NewBaseAuction(
@@ -223,11 +238,16 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		vestingReserveAcc.String(),
 		msg.VestingSchedules,
 		sdk.ZeroDec(),
-		msg.SellingCoin, // add selling coin to total selling coin
+		msg.SellingCoin, // add selling coin to remaining coin
 		msg.StartTime,
 		[]time.Time{msg.EndTime},
-		status,
+		types.AuctionStatusStandBy,
 	)
+
+	// updates status if the start time is already passed over the current time
+	if types.IsAuctionStarted(baseAuction.GetStartTime(), ctx.BlockTime()) {
+		baseAuction.Status = types.AuctionStatusStarted
+	}
 
 	fixedPriceAuction := types.NewFixedPriceAuction(baseAuction)
 
@@ -254,24 +274,33 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 	return nil
 }
 
-// CancelAuction cancels the auction in an event of modification for the auction.
-// The auctioneer can only delete it when it is not already started.
+// CreateEnglishAuction sets english auction.
+func (k Keeper) CreateEnglishAuction(ctx sdk.Context, msg *types.MsgCreateEnglishAuction) error {
+	// TODO: not implemented yet
+	return nil
+}
+
+// CancelAuction cancels the auction in an event when the auctioneer needs to modify the auction.
+// However, it can only be canceled when the auction has not started yet.
 func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) error {
 	auction, found := k.GetAuction(ctx, msg.AuctionId)
 	if !found {
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", msg.AuctionId)
 	}
 
-	if auction.GetAuctioneer() != msg.Auctioneer {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "failed to verify ownership of the auction")
+	if auction.GetAuctioneer().String() != msg.Auctioneer {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "failed to verify ownership of the auction")
 	}
 
 	if auction.GetStatus() != types.AuctionStatusStandBy {
-		return sdkerrors.Wrapf(types.ErrInvalidAuctionStatus, "auction cannot be canceled because current status is %s", auction.GetStatus().String())
+		return sdkerrors.Wrap(types.ErrInvalidAuctionStatus, "auction cannot be canceled due to current status")
 	}
 
-	// TODO: consider if we want the auction to be deleted or leave history
-	k.DeleteAuction(ctx, auction)
+	if err := auction.SetStatus(types.AuctionStatusCancelled); err != nil {
+		return err
+	}
+
+	k.SetAuction(ctx, auction)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(

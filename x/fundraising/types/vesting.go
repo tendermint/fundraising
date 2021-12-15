@@ -1,19 +1,9 @@
 package types
 
 import (
-	time "time"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
-
-// NewVestingSchedule creates a new VestingSchedule object.
-func NewVestingSchedule(time time.Time, weight sdk.Dec) VestingSchedule {
-	return VestingSchedule{
-		ReleaseTime: time,
-		Weight:      weight,
-	}
-}
 
 // ValidateVestingSchedules validates the vesting schedules.
 // Each weight of the vesting schedule must be positive and total weight must be equal to 1.
@@ -30,10 +20,10 @@ func ValidateVestingSchedules(schedules []VestingSchedule) error {
 
 	for _, s := range schedules {
 		if !s.Weight.IsPositive() {
-			return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "vesting weight must be positive")
+			return sdkerrors.Wrapf(ErrInvalidVestingSchedules, "vesting weight must be positive")
 		}
 		if s.Weight.GT(sdk.OneDec()) {
-			return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "each vesting weight must not be greater than 1")
+			return sdkerrors.Wrapf(ErrInvalidVestingSchedules, "each vesting weight must not be greater than 1")
 		}
 		totalWeight = totalWeight.Add(s.Weight)
 
@@ -44,7 +34,7 @@ func ValidateVestingSchedules(schedules []VestingSchedule) error {
 	}
 
 	if !totalWeight.Equal(sdk.OneDec()) {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "total vesting weight must be equal to 1")
+		return sdkerrors.Wrapf(ErrInvalidVestingSchedules, "total vesting weight must be equal to 1")
 	}
 
 	return nil
