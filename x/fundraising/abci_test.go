@@ -1,6 +1,8 @@
 package fundraising_test
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/tendermint/fundraising/x/fundraising"
@@ -44,10 +46,11 @@ func (suite *ModuleTestSuite) TestEndBlockerStartedStatus() {
 
 		totalBidCoin = totalBidCoin.Add(bid.Coin)
 	}
+
 	bidAmt := totalBidCoin.Amount.ToDec().Quo(auction.GetStartPrice()).TruncateInt()
 	receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidAmt)
 
-	// Bids with 30_000_000denom2 and 50_000_000denom2
+	// bids with 30_000_000denom2 and 50_000_000denom2
 	payingReserve := suite.app.BankKeeper.GetBalance(
 		suite.ctx,
 		types.PayingReserveAcc(auction.GetId()),
@@ -58,12 +61,14 @@ func (suite *ModuleTestSuite) TestEndBlockerStartedStatus() {
 	suite.ctx = suite.ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, -1))
 	fundraising.EndBlocker(suite.ctx, suite.keeper)
 
-	// Remaining selling coin should have returned to the auctioneer
+	// remaining selling coin should have returned to the auctioneer
 	auctioneerBalance := suite.app.BankKeeper.GetBalance(
 		suite.ctx,
 		suite.addrs[5],
 		auction.GetSellingCoin().Denom,
 	)
+	fmt.Println("auction.GetSellingCoin(): ", auction.GetSellingCoin())
+	fmt.Println("auctioneerBalance: ", auctioneerBalance)
 	suite.Require().Equal(auction.GetSellingCoin(), auctioneerBalance.Add(receiveCoin))
 }
 
