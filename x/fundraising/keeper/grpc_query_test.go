@@ -9,11 +9,10 @@ import (
 )
 
 func (suite *KeeperTestSuite) TestGRPCParams() {
-	// TODO: genesis implementation is required
-	// resp, err := suite.querier.Params(sdk.WrapSDKContext(suite.ctx), &types.QueryParamsRequest{})
-	// suite.Require().NoError(err)
+	resp, err := suite.querier.Params(sdk.WrapSDKContext(suite.ctx), &types.QueryParamsRequest{})
+	suite.Require().NoError(err)
 
-	// suite.Require().Equal(suite.keeper.GetParams(suite.ctx), resp.Params)
+	suite.Require().Equal(suite.keeper.GetParams(suite.ctx), resp.Params)
 }
 
 func (suite *KeeperTestSuite) TestGRPCAuctions() {

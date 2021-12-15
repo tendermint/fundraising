@@ -423,6 +423,7 @@ func New(
 		crisistypes.ModuleName,
 		govtypes.ModuleName,
 		stakingtypes.ModuleName,
+		fundraisingtypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are

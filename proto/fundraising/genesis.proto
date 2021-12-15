@@ -18,46 +18,15 @@ message GenesisState {
   // params defines all the parameters for the module
   Params params = 1 [ (gogoproto.nullable) = false ];
 
-  // auction_records defines the auction records used for genesis state
-  repeated AuctionRecord auction_records = 2 [ (gogoproto.nullable) = false ];
-
-  // bid_records defines the bid records used for genesis state
-  repeated BidRecord bid_records = 3 [ (gogoproto.nullable) = false ];
-
-  // vesting_queue_records defines the vesting queue records used for genesis
-  // state
-  repeated VestingQueueRecord vesting_queue_records = 4
-      [ (gogoproto.nullable) = false ];
-}
-
-// AuctionRecord stores the auction record that is used for import/export
-// through genesis json.
-message AuctionRecord {
-  option (gogoproto.equal) = false;
-  option (gogoproto.goproto_getters) = false;
-
-  // auction specifies the auction interface; the module supports
+  // auctions define the auction interface for genesis state; the module supports
   // FixedPriceAuction or EnglishAuction
-  google.protobuf.Any auction = 1 [
-    (gogoproto.nullable) = false,
-    (cosmos_proto.accepts_interface) = "AuctionI"
-  ];
-}
+  repeated google.protobuf.Any auctions = 2 [(gogoproto.nullable) = false, (cosmos_proto.accepts_interface) = "AuctionI"];
 
-// BidRecord stores the bid record that is used for import/export through
-// genesis json.
-message BidRecord {
-  option (gogoproto.equal) = false;
-  option (gogoproto.goproto_getters) = false;
+  // bids defines the bid records used for genesis state
+  repeated Bid bids = 3 [ (gogoproto.nullable) = false ];
 
-  Bid bid = 1 [ (gogoproto.nullable) = false ];
-}
-
-// VestingQueueRecord stores the vesting queue record that is used for
-// import/export through genesis json.
-message VestingQueueRecord {
-  option (gogoproto.equal) = false;
-  option (gogoproto.goproto_getters) = false;
-
-  VestingQueue vesting_queue = 1 [ (gogoproto.nullable) = false ];
+  // vesting_queues defines the vesting queue records used for genesis
+  // state
+  repeated VestingQueue vesting_queues = 4
+      [ (gogoproto.nullable) = false ];
 }

@@ -77,13 +77,9 @@ func validateAuctionCreationFee(i interface{}) error {
 }
 
 func validateExtendedPeriod(i interface{}) error {
-	v, ok := i.(uint32)
+	_, ok := i.(uint32)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if v <= 0 {
-		return fmt.Errorf("extended period must be positive: %d", v)
 	}
 
 	return nil

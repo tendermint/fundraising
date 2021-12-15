@@ -77,6 +77,8 @@ type AuctionI interface {
 
 	GetStatus() AuctionStatus
 	SetStatus(AuctionStatus) error
+
+	Validate() error
 }
 
 // NewBaseAuction creates a new BaseAuction object
@@ -269,7 +271,15 @@ func (ba BaseAuction) Validate() error {
 	if err := ba.SellingCoin.Validate(); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "invalid selling coin: %v", ba.SellingCoin)
 	}
-	// TODO: not implemented yet
+	if ba.SellingCoin.Denom == ba.PayingCoinDenom {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "selling coin denom must not be the same as paying coin denom")
+	}
+	if err := sdk.ValidateDenom(ba.PayingCoinDenom); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid paying coin denom: %v", err)
+	}
+	if err := ValidateVestingSchedules(ba.VestingSchedules); err != nil {
+		return err
+	}
 	return nil
 }
 
