@@ -116,6 +116,7 @@ func (k Querier) Bids(c context.Context, req *types.QueryBidsRequest) (*types.Qu
 	}
 
 	if req.Bidder != "" {
+		// TODO: unimplemented bidder filtering
 		if _, err := sdk.AccAddressFromBech32(req.Bidder); err != nil {
 			return nil, err
 		}

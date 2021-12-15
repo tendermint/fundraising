@@ -159,6 +159,7 @@ func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) e
 			return err
 		}
 
+		// TODO: to use one InputOutputCoins, not multiple SendCoins for gas optimizing
 		if err := k.bankKeeper.SendCoins(ctx, sellingReserveAcc, bidderAcc, sdk.NewCoins(bidCoin)); err != nil {
 			return err
 		}
@@ -166,6 +167,7 @@ func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) e
 
 	reserveBalance := k.bankKeeper.GetBalance(ctx, sellingReserveAcc, auction.GetSellingCoin().Denom)
 
+	// TODO: to use one InputOutputCoins with above case
 	// Send remaining selling coin to the auctioneer
 	if err := k.bankKeeper.SendCoins(ctx, sellingReserveAcc, auction.GetAuctioneer(), sdk.NewCoins(reserveBalance)); err != nil {
 		return err
@@ -206,7 +208,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be prior to current time")
 	}
 
-	// TODO: where should fees go? module account or community pool?
+	// TODO: where should fees go? module account or community pool? -> add params.AuctionFeeCollector
 	// params := k.GetParams(ctx)
 	// moduleAcc, err := sdk.AccAddressFromBech32(types.ModuleName)
 	// if err != nil {

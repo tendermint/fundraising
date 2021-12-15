@@ -156,6 +156,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 
 		k.SetAuction(ctx, auction)
 	}
+	// TODO: add exception logic when auction.GetType() is not types.AuctionTypeFixedPrice
 
 	sequenceId := k.GetNextSequenceWithUpdate(ctx)
 

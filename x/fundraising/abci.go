@@ -34,6 +34,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 				}
 
 			case types.AuctionStatusStarted:
+				// TODO: auction.GetEndTimes()[0] only for FixedPriceAuction
 				if types.IsAuctionFinished(auction.GetEndTimes()[0], ctx.BlockTime()) {
 					if err := k.DistributeSellingCoin(ctx, auction); err != nil {
 						panic(err)
