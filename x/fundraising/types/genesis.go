@@ -61,6 +61,9 @@ func (b Bid) Validate() error {
 	if err := b.Coin.Validate(); err != nil {
 		return err
 	}
+	if !b.Coin.Amount.IsPositive() {
+		return fmt.Errorf("coin amount must be positive: %s", b.Coin.Amount.String())
+	}
 	return nil
 }
 

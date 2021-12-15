@@ -85,6 +85,42 @@ func TestGenesisState_Validate(t *testing.T) {
 			valid: true,
 		},
 		{
+			desc: "invalid auction - unsupported auction type",
+			configure: func(genState *types.GenesisState) {
+				auctionAny, _ := types.PackAuction(types.NewFixedPriceAuction(
+					&types.BaseAuction{
+						Id:                 1,
+						Type:               types.AuctionTypeNil,
+						Auctioneer:         validAcc.String(),
+						SellingPoolAddress: types.SellingReserveAcc(1).String(),
+						PayingPoolAddress:  types.PayingReserveAcc(1).String(),
+						StartPrice:         sdk.MustNewDecFromStr("0.5"),
+						SellingCoin:        sdk.NewInt64Coin("denom1", 1_000_000_000_000),
+						PayingCoinDenom:    "denom2",
+						VestingPoolAddress: types.VestingReserveAcc(1).String(),
+						VestingSchedules: []types.VestingSchedule{
+							{
+								ReleaseTime: types.ParseTime("2022-06-01T00:00:00Z"),
+								Weight:      sdk.MustNewDecFromStr("0.5"),
+							},
+							{
+								ReleaseTime: types.ParseTime("2022-12-01T00:00:00Z"),
+								Weight:      sdk.MustNewDecFromStr("0.5"),
+							},
+						},
+						WinningPrice:  sdk.ZeroDec(),
+						RemainingCoin: sdk.NewInt64Coin("denom1", 1_000_000_000_000),
+						StartTime:     types.ParseTime("2021-12-10T00:00:00Z"),
+						EndTimes:      []time.Time{types.ParseTime("2022-12-20T00:00:00Z")},
+						Status:        types.AuctionStatusStarted,
+					},
+				))
+
+				genState.Auctions = []*codectypes.Any{auctionAny}
+			},
+			valid: false,
+		},
+		{
 			desc: "invalid auction - duplicate denom for selling and paying",
 			configure: func(genState *types.GenesisState) {
 				auctionAny, _ := types.PackAuction(types.NewFixedPriceAuction(
@@ -117,6 +153,108 @@ func TestGenesisState_Validate(t *testing.T) {
 				))
 
 				genState.Auctions = []*codectypes.Any{auctionAny}
+			},
+			valid: false,
+		},
+		{
+			desc: "invalid auction - invalid sum of vesting schedule weights",
+			configure: func(genState *types.GenesisState) {
+				auctionAny, _ := types.PackAuction(types.NewFixedPriceAuction(
+					&types.BaseAuction{
+						Id:                 1,
+						Type:               types.AuctionTypeFixedPrice,
+						Auctioneer:         validAcc.String(),
+						SellingPoolAddress: types.SellingReserveAcc(1).String(),
+						PayingPoolAddress:  types.PayingReserveAcc(1).String(),
+						StartPrice:         sdk.MustNewDecFromStr("0.5"),
+						SellingCoin:        sdk.NewInt64Coin("denom1", 1_000_000_000_000),
+						PayingCoinDenom:    "denom1",
+						VestingPoolAddress: types.VestingReserveAcc(1).String(),
+						VestingSchedules: []types.VestingSchedule{
+							{
+								ReleaseTime: types.ParseTime("2022-06-01T00:00:00Z"),
+								Weight:      sdk.MustNewDecFromStr("0.9"),
+							},
+							{
+								ReleaseTime: types.ParseTime("2022-12-01T00:00:00Z"),
+								Weight:      sdk.MustNewDecFromStr("0.5"),
+							},
+						},
+						WinningPrice:  sdk.ZeroDec(),
+						RemainingCoin: sdk.NewInt64Coin("denom1", 1_000_000_000_000),
+						StartTime:     types.ParseTime("2021-12-10T00:00:00Z"),
+						EndTimes:      []time.Time{types.ParseTime("2022-12-20T00:00:00Z")},
+						Status:        types.AuctionStatusStarted,
+					},
+				))
+
+				genState.Auctions = []*codectypes.Any{auctionAny}
+			},
+			valid: false,
+		},
+		{
+			desc: "invalid auction - invalid auctioneer address",
+			configure: func(genState *types.GenesisState) {
+				auctionAny, _ := types.PackAuction(types.NewFixedPriceAuction(
+					&types.BaseAuction{
+						Id:                 1,
+						Type:               types.AuctionTypeFixedPrice,
+						Auctioneer:         "invalid",
+						SellingPoolAddress: types.SellingReserveAcc(1).String(),
+						PayingPoolAddress:  types.PayingReserveAcc(1).String(),
+						StartPrice:         sdk.MustNewDecFromStr("0.5"),
+						SellingCoin:        sdk.NewInt64Coin("denom1", 1_000_000_000_000),
+						PayingCoinDenom:    "denom1",
+						VestingPoolAddress: types.VestingReserveAcc(1).String(),
+						VestingSchedules: []types.VestingSchedule{
+							{
+								ReleaseTime: types.ParseTime("2022-06-01T00:00:00Z"),
+								Weight:      sdk.MustNewDecFromStr("0.9"),
+							},
+							{
+								ReleaseTime: types.ParseTime("2022-12-01T00:00:00Z"),
+								Weight:      sdk.MustNewDecFromStr("0.5"),
+							},
+						},
+						WinningPrice:  sdk.ZeroDec(),
+						RemainingCoin: sdk.NewInt64Coin("denom1", 1_000_000_000_000),
+						StartTime:     types.ParseTime("2021-12-10T00:00:00Z"),
+						EndTimes:      []time.Time{types.ParseTime("2022-12-20T00:00:00Z")},
+						Status:        types.AuctionStatusStarted,
+					},
+				))
+
+				genState.Auctions = []*codectypes.Any{auctionAny}
+			},
+			valid: false,
+		},
+		{
+			desc: "invalid bid - invalid bidder address",
+			configure: func(genState *types.GenesisState) {
+				genState.Bids = []types.Bid{
+					{
+						AuctionId: 1,
+						Sequence:  1,
+						Bidder:    "invalid",
+						Price:     sdk.MustNewDecFromStr("0.5"),
+						Coin:      sdk.NewInt64Coin("denom2", 50_000_000),
+					},
+				}
+			},
+			valid: false,
+		},
+		{
+			desc: "invalid bid - invalid coin amount",
+			configure: func(genState *types.GenesisState) {
+				genState.Bids = []types.Bid{
+					{
+						AuctionId: 1,
+						Sequence:  1,
+						Bidder:    validAcc.String(),
+						Price:     sdk.MustNewDecFromStr("0.5"),
+						Coin:      sdk.NewInt64Coin("denom2", 0),
+					},
+				}
 			},
 			valid: false,
 		},

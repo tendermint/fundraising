@@ -250,6 +250,9 @@ func (msg MsgPlaceBid) ValidateBasic() error {
 	if err := msg.Coin.Validate(); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid bid coin: %v", err)
 	}
+	if !msg.Coin.Amount.IsPositive() {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid coin amount: %s", msg.Coin.Amount.String())
+	}
 	return nil
 }
 
