@@ -1,8 +1,6 @@
 package fundraising_test
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/tendermint/fundraising/x/fundraising"
@@ -19,7 +17,7 @@ func (suite *ModuleTestSuite) TestEndBlockerStandByStatus() {
 	suite.Require().True(found)
 	suite.Require().Equal(types.AuctionStatusStandBy, auction.GetStatus())
 
-	// Modify start time and block time
+	// modify start time and block time
 	t := types.ParseTime("2021-12-27T00:00:01Z")
 	_ = auction.SetStartTime(t)
 	suite.keeper.SetAuction(suite.ctx, auction)
@@ -67,8 +65,6 @@ func (suite *ModuleTestSuite) TestEndBlockerStartedStatus() {
 		suite.addrs[5],
 		auction.GetSellingCoin().Denom,
 	)
-	fmt.Println("auction.GetSellingCoin(): ", auction.GetSellingCoin())
-	fmt.Println("auctioneerBalance: ", auctioneerBalance)
 	suite.Require().Equal(auction.GetSellingCoin(), auctioneerBalance.Add(receiveCoin))
 }
 
@@ -106,7 +102,7 @@ func (suite *ModuleTestSuite) TestEndBlockerVestingStatus() {
 	suite.Require().True(queues[0].Vested)
 	suite.Require().True(queues[1].Vested)
 
-	// Auctioneer should have received two vested amounts
+	// auctioneer should have received two vested amounts
 	auctioneerBalance := suite.app.BankKeeper.GetBalance(
 		suite.ctx,
 		suite.addrs[5],
