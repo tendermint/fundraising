@@ -175,14 +175,14 @@ $ %s tx %s cancel 1 --from mykey
 				return err
 			}
 
-			auctionID, err := strconv.ParseUint(args[0], 10, 64)
+			auctionId, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
 				return err
 			}
 
 			msg := types.NewMsgCancelAuction(
 				clientCtx.GetFromAddress().String(),
-				auctionID,
+				auctionId,
 			)
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
@@ -218,7 +218,7 @@ in order to bid for the amount of coin you bid for the auction.
 				return err
 			}
 
-			auctionID, err := strconv.ParseUint(args[0], 10, 64)
+			auctionId, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
 				return err
 			}
@@ -234,7 +234,7 @@ in order to bid for the amount of coin you bid for the auction.
 			}
 
 			msg := types.NewMsgPlaceBid(
-				auctionID,
+				auctionId,
 				clientCtx.GetFromAddress().String(),
 				price,
 				coin,

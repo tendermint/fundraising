@@ -1,7 +1,7 @@
 package types
 
 import (
-	fmt "fmt"
+	"fmt"
 
 	"gopkg.in/yaml.v2"
 
@@ -9,7 +9,7 @@ import (
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
-// Parameter store keys
+// Parameter store keys.
 var (
 	KeyAuctionCreationFee = []byte("AuctionCreationFee")
 	KeyExtendedPeriod     = []byte("ExtendedPeriod")

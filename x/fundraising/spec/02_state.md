@@ -38,8 +38,8 @@ type AuctionI interface {
 	GetPayingCoinDenom() string
 	SetPayingCoinDenom(string) error
 
-	GetVestingAddress() string
-	SetVestingAddress(string) error
+	GetVestingPoolAddress() string
+	SetVestingPoolAddress(string) error
 
 	GetVestingSchedules() []VestingSchedule
 	SetVestingSchedules([]VestingSchedule) error
@@ -72,10 +72,10 @@ type BaseAuction struct {
 	StartPrice         sdk.Dec           // starting price of the auction
 	SellingCoin        sdk.Coin          // selling coin for the auction
 	PayingCoinDenom    string            // the paying coin denom that bidders use to bid for
-	VestingAddress     string            // the vesting account that releases the paying amount of coins based on the schedules
+	VestingPoolAddress string            // the vesting account that releases the paying amount of coins based on the schedules
 	VestingSchedules   []VestingSchedule // vesting schedules for the auction
 	WinningPrice       sdk.Dec           // the winning price of the auction
-	TotalSellingCoin   sdk.Coin          // the total amount of coin that is sold when the auction is finished
+	RemainingCoin      sdk.Coin          // the remaining amount of coin to sell
 	StartTime          time.Time         // start time of the auction
 	EndTime            []time.Time       // end times of the auction since extended round(s) can occur
 	Status             AuctionStatus     // the auction status
@@ -97,11 +97,7 @@ type VestingQueue struct {
 	Auctioneer  string    // account that creates the auction
 	PayingCoin  sdk.Coin  // paying amount of coin 
 	ReleaseTime time.Time // release time of the vesting coin
-}
-
-// VestingQueues defines a repeated set of vesting queues.
-type VestingQueues struct {
-	Queues []VestingQueue // vesting queues
+	Vested      bool      // status of distribution
 }
 ```
 
@@ -151,7 +147,7 @@ const (
 	StatusStarted AuctionStatus = 2
 	// AUCTION_STATUS_VESTING defines an auction status that is in distribution based on the vesting schedules
 	StatusVesting AuctionStatus = 3
-	// AUCTION_STATUS_FINISHED defines an auction status that is finished
+	// AUCTION_STATUS_FINISHED defines an auction status that is finished 
 	StatusFinished AuctionStatus = 4
 	// AUCTION_STATUS_CANCELLED defines an auction sttus that is cancelled
 	StatusCancelled AuctionStatus = 5
@@ -205,4 +201,4 @@ Stores are KVStores in the multi-store. The key to find the store is the first p
 
 ### prefix key to retrieve the vesting queues from the auction id and vesting release time
 
-- `VestingQueueKeyPrefix: 0x41 | AuctionId | format(time) -> ProtocolBuffer(VestingQueues)`
+- `VestingQueueKeyPrefix: 0x41 | AuctionId | format(time) -> ProtocolBuffer(VestingQueue)`

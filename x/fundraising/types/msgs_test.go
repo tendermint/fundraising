@@ -59,50 +59,62 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 			),
 		},
 		{
-			"vesting weight must be positive: invalid request",
+			"vesting weight must be positive: invalid vesting schedules",
 			types.NewMsgCreateFixedPriceAuction(
 				auctioneerAcc.String(),
 				sdk.MustNewDecFromStr("0.5"),
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
 				[]types.VestingSchedule{
-					types.NewVestingSchedule(types.ParseTime("2022-06-01T22:08:41+00:00"), sdk.ZeroDec()),
+					{
+						types.ParseTime("2022-06-01T22:08:41+00:00"),
+						sdk.ZeroDec(),
+					},
 				},
 				startTime,
 				endTime,
 			),
 		},
 		{
-			"each vesting weight must not be greater than 1: invalid request",
+			"each vesting weight must not be greater than 1: invalid vesting schedules",
 			types.NewMsgCreateFixedPriceAuction(
 				auctioneerAcc.String(),
 				sdk.MustNewDecFromStr("0.5"),
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
 				[]types.VestingSchedule{
-					types.NewVestingSchedule(types.ParseTime("2022-06-01T22:08:41+00:00"), sdk.MustNewDecFromStr("1.1")),
+					{
+						types.ParseTime("2022-06-01T22:08:41+00:00"),
+						sdk.MustNewDecFromStr("1.1"),
+					},
 				},
 				startTime,
 				endTime,
 			),
 		},
 		{
-			"total vesting weight must be equal to 1: invalid request",
+			"total vesting weight must be equal to 1: invalid vesting schedules",
 			types.NewMsgCreateFixedPriceAuction(
 				auctioneerAcc.String(),
 				sdk.MustNewDecFromStr("0.5"),
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
 				[]types.VestingSchedule{
-					types.NewVestingSchedule(types.ParseTime("2022-06-01T22:00:00+00:00"), sdk.MustNewDecFromStr("0.5")),
-					types.NewVestingSchedule(types.ParseTime("2022-12-01T22:00:00+00:00"), sdk.MustNewDecFromStr("0.3")),
+					{
+						types.ParseTime("2022-06-01T22:00:00+00:00"),
+						sdk.MustNewDecFromStr("0.5"),
+					},
+					{
+						types.ParseTime("2022-12-01T22:00:00+00:00"),
+						sdk.MustNewDecFromStr("0.3"),
+					},
 				},
 				startTime,
 				endTime,
 			),
 		},
 		{
-			"end time must be greater than start time: invalid auction end time",
+			"end time must be greater than start time: invalid request",
 			types.NewMsgCreateFixedPriceAuction(
 				auctioneerAcc.String(),
 				sdk.MustNewDecFromStr("0.5"),
@@ -121,8 +133,14 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
 				[]types.VestingSchedule{
-					types.NewVestingSchedule(types.ParseTime("2022-12-01T22:00:00+00:00"), sdk.MustNewDecFromStr("0.5")),
-					types.NewVestingSchedule(types.ParseTime("2022-06-01T22:00:00+00:00"), sdk.MustNewDecFromStr("0.5")),
+					{
+						types.ParseTime("2022-12-01T22:00:00+00:00"),
+						sdk.MustNewDecFromStr("0.5"),
+					},
+					{
+						types.ParseTime("2022-06-01T22:00:00+00:00"),
+						sdk.MustNewDecFromStr("0.5"),
+					},
 				},
 				startTime,
 				endTime,

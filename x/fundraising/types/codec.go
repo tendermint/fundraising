@@ -5,16 +5,13 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	// this line is used by starport scaffolding # 1
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 )
 
 func RegisterCodec(cdc *codec.LegacyAmino) {
-	// this line is used by starport scaffolding # 2
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
-	// this line is used by starport scaffolding # 3
 	registry.RegisterImplementations(
 		(*sdk.Msg)(nil),
 		&MsgCreateFixedPriceAuction{},
@@ -24,7 +21,7 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	)
 
 	registry.RegisterInterface(
-		"cosmos.farming.v1beta1.PlanI",
+		"cosmos.fundraising.v1beta1.AuctionI",
 		(*AuctionI)(nil),
 		&FixedPriceAuction{},
 		&EnglishAuction{},

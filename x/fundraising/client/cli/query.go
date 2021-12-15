@@ -150,7 +150,7 @@ $ %s query %s auction 1
 				return err
 			}
 
-			auctionID, err := strconv.ParseUint(args[0], 10, 64)
+			auctionId, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
 				return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "auction-id %s is not valid", args[0])
 			}
@@ -158,7 +158,7 @@ $ %s query %s auction 1
 			queryClient := types.NewQueryClient(clientCtx)
 
 			resp, err := queryClient.Auction(cmd.Context(), &types.QueryAuctionRequest{
-				AuctionId: auctionID,
+				AuctionId: auctionId,
 			})
 			if err != nil {
 				return err
@@ -199,9 +199,9 @@ $ %s query %s bids 1 --winner
 			}
 
 			bidderAddr, _ := cmd.Flags().GetString(FlagBidderAddr)
-			isWinner, _ := cmd.Flags().GetString(FlagWinner)
+			eligible, _ := cmd.Flags().GetString(FlagEligible)
 
-			auctionID, err := strconv.ParseUint(args[0], 10, 64)
+			auctionId, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
 				return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "auction-id %s is not valid", args[0])
 			}
@@ -213,9 +213,9 @@ $ %s query %s bids 1 --winner
 			}
 
 			req := &types.QueryBidsRequest{
-				AuctionId:  auctionID,
+				AuctionId:  auctionId,
 				Bidder:     bidderAddr,
-				IsWinner:   isWinner,
+				Eligible:   eligible,
 				Pagination: pageReq,
 			}
 
@@ -253,7 +253,7 @@ $ %s query %s vestings 1
 				return err
 			}
 
-			auctionID, err := strconv.ParseUint(args[0], 10, 64)
+			auctionId, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
 				return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "auction-id %s is not valid", args[0])
 			}
@@ -261,7 +261,7 @@ $ %s query %s vestings 1
 			queryClient := types.NewQueryClient(clientCtx)
 
 			req := &types.QueryVestingsRequest{
-				AuctionId: auctionID,
+				AuctionId: auctionId,
 			}
 
 			resp, err := queryClient.Vestings(cmd.Context(), req)
