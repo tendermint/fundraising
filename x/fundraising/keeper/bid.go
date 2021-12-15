@@ -155,6 +155,9 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 		}
 
 		k.SetAuction(ctx, auction)
+	} else {
+		// TODO: implement English auction type
+		return sdkerrors.Wrap(types.ErrInvalidAuctionType, "not supported auction type in this version")
 	}
 
 	sequenceId := k.GetNextSequenceWithUpdate(ctx)
