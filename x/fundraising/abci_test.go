@@ -49,7 +49,7 @@ func (suite *ModuleTestSuite) TestEndBlockerStartedStatus() {
 		suite.Require().NoError(err)
 		suite.keeper.SetBid(suite.ctx, bid.AuctionId, bid.Sequence, bidderAcc, bid)
 
-		err = suite.keeper.ReservePayingCoin(suite.ctx, auction.GetId(), bidderAcc, bid.Coin)
+		err = suite.keeper.ReservePayingCoin(suite.ctx, bid.GetAuctionId(), bidderAcc, bid.Coin)
 		suite.Require().NoError(err)
 
 		totalBidCoin = totalBidCoin.Add(bid.Coin)
@@ -100,7 +100,7 @@ func (suite *ModuleTestSuite) TestEndBlockerVestingStatus() {
 		suite.Require().NoError(err)
 		suite.keeper.SetBid(suite.ctx, bid.AuctionId, bid.Sequence, bidderAcc, bid)
 
-		err = suite.keeper.ReservePayingCoin(suite.ctx, auction.GetId(), bidderAcc, bid.Coin)
+		err = suite.keeper.ReservePayingCoin(suite.ctx, bid.GetAuctionId(), bidderAcc, bid.Coin)
 		suite.Require().NoError(err)
 
 		totalBidCoin = totalBidCoin.Add(bid.Coin)

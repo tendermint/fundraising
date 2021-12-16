@@ -1,44 +1,57 @@
 package fundraising_test
 
 import (
-	"testing"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/tendermint/fundraising/app"
+	"github.com/tendermint/fundraising/testutil/simapp"
 	"github.com/tendermint/fundraising/x/fundraising"
 	"github.com/tendermint/fundraising/x/fundraising/types"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	_ "github.com/stretchr/testify/suite"
 )
 
-func TestGenesis(t *testing.T) {
-	// genesisState := types.GenesisState{
-	// this line is used by starport scaffolding # genesis/test/state
-	// }
+func (suite *ModuleTestSuite) TestGenesis() {
+	for _, auction := range suite.sampleFixedPriceAuctions {
+		suite.keeper.SetAuction(suite.ctx, auction)
+	}
+	suite.Require().Len(suite.keeper.GetAuctions(suite.ctx), 2)
 
-	// ctx, k := keepertest.Fundraising(t)
-	// fundraising.InitGenesis(ctx, *k, genesisState)
-	// got := fundraising.ExportGenesis(ctx, *k)
-	// require.NotNil(t, got)
+	for _, bid := range suite.sampleFixedPriceBids {
+		bidderAcc, err := sdk.AccAddressFromBech32(bid.Bidder)
+		suite.Require().NoError(err)
+		suite.keeper.SetBid(suite.ctx, bid.AuctionId, bid.Sequence, bidderAcc, bid)
+	}
+	suite.Require().Len(suite.keeper.GetBids(suite.ctx), 4)
 
-	// this line is used by starport scaffolding # genesis/test/assert
-}
+	var genState *types.GenesisState
+	suite.Require().NotPanics(func() {
+		genState = fundraising.ExportGenesis(suite.ctx, suite.keeper)
+	})
+	suite.Require().NoError(genState.Validate())
 
-func (suite *ModuleTestSuite) TestInitGenesis() {
-
+	suite.Require().NotPanics(func() {
+		fundraising.InitGenesis(suite.ctx, suite.keeper, *genState)
+	})
+	suite.Require().Equal(genState, fundraising.ExportGenesis(suite.ctx, suite.keeper))
 }
 
 func (suite *ModuleTestSuite) TestExportGenesis() {
 	for _, auction := range suite.sampleFixedPriceAuctions {
 		suite.keeper.SetAuction(suite.ctx, auction)
 	}
+	suite.Require().Len(suite.keeper.GetAuctions(suite.ctx), 2)
 
-	auction, found := suite.keeper.GetAuction(suite.ctx, 2)
-	suite.Require().True(found)
-	suite.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+	for _, bid := range suite.sampleFixedPriceBids {
+		bidderAcc, err := sdk.AccAddressFromBech32(bid.Bidder)
+		suite.Require().NoError(err)
+		suite.keeper.SetBid(suite.ctx, bid.AuctionId, bid.Sequence, bidderAcc, bid)
 
-	// for _, bid := range suite.sampleFixedPriceBids {
-	// 	err := suite.keeper.PlaceBid(suite.ctx, bid)
-	// 	suite.Require().NoError(err)
-	// }
+		err = suite.keeper.ReservePayingCoin(suite.ctx, bid.GetAuctionId(), bidderAcc, bid.Coin)
+		suite.Require().NoError(err)
+	}
+	suite.Require().Len(suite.keeper.GetBids(suite.ctx), 4)
 
 	genState := fundraising.ExportGenesis(suite.ctx, suite.keeper)
 	bz, err := suite.app.AppCodec().MarshalJSON(genState)
@@ -47,4 +60,22 @@ func (suite *ModuleTestSuite) TestExportGenesis() {
 	*genState = types.GenesisState{}
 	err = suite.app.AppCodec().UnmarshalJSON(bz, genState)
 	suite.Require().NoError(err)
+}
+
+func (suite *ModuleTestSuite) TestMarshalUnmarshalDefaultGenesis() {
+	genState := fundraising.ExportGenesis(suite.ctx, suite.keeper)
+	bz, err := suite.app.AppCodec().MarshalJSON(genState)
+	suite.Require().NoError(err)
+
+	genState2 := types.GenesisState{}
+	err = suite.app.AppCodec().UnmarshalJSON(bz, &genState2)
+	suite.Require().NoError(err)
+	suite.Require().Equal(*genState, genState2)
+
+	app2 := simapp.New(app.DefaultNodeHome)
+	ctx2 := app2.BaseApp.NewContext(false, tmproto.Header{})
+	fundraising.InitGenesis(ctx2, app2.FundraisingKeeper, genState2)
+
+	genState3 := fundraising.ExportGenesis(ctx2, app2.FundraisingKeeper)
+	suite.Require().Equal(genState2, *genState3)
 }
