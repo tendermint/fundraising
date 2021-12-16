@@ -17,7 +17,7 @@ func (suite *ModuleTestSuite) TestEndBlockerStandByStatus() {
 	suite.Require().True(found)
 	suite.Require().Equal(types.AuctionStatusStandBy, auction.GetStatus())
 
-	// Modify start time and block time
+	// modify start time and block time
 	t := types.ParseTime("2021-12-27T00:00:01Z")
 	_ = auction.SetStartTime(t)
 	suite.keeper.SetAuction(suite.ctx, auction)
@@ -44,10 +44,11 @@ func (suite *ModuleTestSuite) TestEndBlockerStartedStatus() {
 
 		totalBidCoin = totalBidCoin.Add(bid.Coin)
 	}
+
 	bidAmt := totalBidCoin.Amount.ToDec().Quo(auction.GetStartPrice()).TruncateInt()
 	receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidAmt)
 
-	// Bids with 30_000_000denom2 and 50_000_000denom2
+	// bids with 30_000_000denom2 and 50_000_000denom2
 	payingReserve := suite.app.BankKeeper.GetBalance(
 		suite.ctx,
 		types.PayingReserveAcc(auction.GetId()),
@@ -58,7 +59,7 @@ func (suite *ModuleTestSuite) TestEndBlockerStartedStatus() {
 	suite.ctx = suite.ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, -1))
 	fundraising.EndBlocker(suite.ctx, suite.keeper)
 
-	// Remaining selling coin should have returned to the auctioneer
+	// remaining selling coin should have returned to the auctioneer
 	auctioneerBalance := suite.app.BankKeeper.GetBalance(
 		suite.ctx,
 		suite.addrs[5],
@@ -101,7 +102,7 @@ func (suite *ModuleTestSuite) TestEndBlockerVestingStatus() {
 	suite.Require().True(queues[0].Vested)
 	suite.Require().True(queues[1].Vested)
 
-	// Auctioneer should have received two vested amounts
+	// auctioneer should have received two vested amounts
 	auctioneerBalance := suite.app.BankKeeper.GetBalance(
 		suite.ctx,
 		suite.addrs[5],

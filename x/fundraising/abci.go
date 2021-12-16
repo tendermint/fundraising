@@ -19,10 +19,10 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	// look up the release time of each vesting queue to see if the module needs to distribute
 	// the paying coin to the auctioneer.
 	//
-	// For AuctionStatusStandBy, it compares the current time and the start time of the auction and
-	// updte the status if necessary.
+	// For AuctionStatusStandBy, it compares the current and start time of the auction and
+	// update the status if the auction status is ready to be updated.
 	//
-	// For AuctionStatusStarted, distribute the allocated paying coin for bidders for the auction and
+	// For AuctionStatusStarted, distribute the allocated paying coin to bidders for the auction and
 	// set vesting schedules if they are defined.
 	for _, auction := range k.GetAuctions(ctx) {
 		if auction.GetType() == types.AuctionTypeFixedPrice {
@@ -34,13 +34,15 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 				}
 
 			case types.AuctionStatusStarted:
-				if types.IsAuctionFinished(auction.GetEndTimes()[0], ctx.BlockTime()) {
-					if err := k.DistributeSellingCoin(ctx, auction); err != nil {
-						panic(err)
-					}
+				if auction.GetType() == types.AuctionTypeFixedPrice {
+					if types.IsAuctionFinished(auction.GetEndTimes()[0], ctx.BlockTime()) {
+						if err := k.DistributeSellingCoin(ctx, auction); err != nil {
+							panic(err)
+						}
 
-					if err := k.SetVestingSchedules(ctx, auction); err != nil {
-						panic(err)
+						if err := k.SetVestingSchedules(ctx, auction); err != nil {
+							panic(err)
+						}
 					}
 				}
 

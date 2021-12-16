@@ -131,6 +131,17 @@ func (suite *KeeperTestSuite) TestGRPCBids() {
 		suite.Require().NoError(err)
 	}
 
+	nextSeq := suite.keeper.GetNextSequenceWithUpdate(suite.ctx)
+	suite.keeper.SetBid(suite.ctx, 2, nextSeq, suite.addrs[0], types.Bid{
+		AuctionId: 2,
+		Sequence:  nextSeq,
+		Bidder:    suite.addrs[0].String(),
+		Price:     sdk.MustNewDecFromStr("0.5"),
+		Coin:      sdk.NewInt64Coin(denom4, 60_000_000),
+		Height:    uint64(suite.ctx.BlockHeader().Height),
+		Eligible:  true,
+	})
+
 	for _, tc := range []struct {
 		name      string
 		req       *types.QueryBidsRequest
@@ -148,9 +159,10 @@ func (suite *KeeperTestSuite) TestGRPCBids() {
 			&types.QueryBidsRequest{AuctionId: 2},
 			false,
 			func(resp *types.QueryBidsResponse) {
-				suite.Require().Len(resp.Bids, 2)
+				suite.Require().Len(resp.Bids, 3)
 				suite.Require().True(coinEq(sdk.NewInt64Coin(denom4, 50_000_000), resp.Bids[0].Coin))
 				suite.Require().True(coinEq(sdk.NewInt64Coin(denom4, 100_000_000), resp.Bids[1].Coin))
+				suite.Require().True(coinEq(sdk.NewInt64Coin(denom4, 60_000_000), resp.Bids[2].Coin))
 			},
 		},
 		{
@@ -158,7 +170,10 @@ func (suite *KeeperTestSuite) TestGRPCBids() {
 			&types.QueryBidsRequest{AuctionId: 2, Bidder: suite.addrs[0].String()},
 			false,
 			func(resp *types.QueryBidsResponse) {
-				suite.Require().Len(resp.Bids, 1)
+				suite.Require().Len(resp.Bids, 2)
+				for _, bid := range resp.GetBids() {
+					suite.Require().Equal(suite.addrs[0].String(), bid.Bidder)
+				}
 			},
 		},
 		{
@@ -166,7 +181,23 @@ func (suite *KeeperTestSuite) TestGRPCBids() {
 			&types.QueryBidsRequest{AuctionId: 2, Eligible: "true"},
 			false,
 			func(resp *types.QueryBidsResponse) {
-				suite.Require().Len(resp.Bids, 0)
+				suite.Require().Len(resp.Bids, 1)
+			},
+		},
+		{
+			"query by eligible",
+			&types.QueryBidsRequest{AuctionId: 2, Eligible: "false"},
+			false,
+			func(resp *types.QueryBidsResponse) {
+				suite.Require().Len(resp.Bids, 2)
+			},
+		},
+		{
+			"query by eligible and bidder address",
+			&types.QueryBidsRequest{AuctionId: 2, Bidder: suite.addrs[0].String(), Eligible: "false"},
+			false,
+			func(resp *types.QueryBidsResponse) {
+				suite.Require().Len(resp.Bids, 1)
 			},
 		},
 	} {
