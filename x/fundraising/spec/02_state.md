@@ -71,7 +71,7 @@ type BaseAuction struct {
 	PayingPoolAddress  string            // an escrow account to collect paying tokens for the auction
 	StartPrice         sdk.Dec           // starting price of the auction
 	SellingCoin        sdk.Coin          // selling coin for the auction
-	PayingCoinDenom    string            // the paying coin denom that bidders use to bid for
+	PayingCoinDenom    string            // the paying coin denom that bidders use to bid with
 	VestingPoolAddress string            // the vesting account that releases the paying amount of coins based on the schedules
 	VestingSchedules   []VestingSchedule // vesting schedules for the auction
 	WinningPrice       sdk.Dec           // the winning price of the auction
