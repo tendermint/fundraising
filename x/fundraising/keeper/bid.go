@@ -59,8 +59,7 @@ func (k Keeper) GetBidsByBidder(ctx sdk.Context, bidderAcc sdk.AccAddress) []typ
 	return bids
 }
 
-// IterateBids iterates through all bids stored in the store
-// and invokes callback function for each item.
+// IterateBids iterates through all bids stored in the store and invokes callback function for each item.
 // Stops the iteration when the callback function returns true.
 func (k Keeper) IterateBids(ctx sdk.Context, cb func(bid types.Bid) (stop bool)) {
 	store := ctx.KVStore(k.storeKey)

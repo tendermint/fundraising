@@ -159,6 +159,20 @@ func (suite *KeeperTestSuite) VestingSchedules() []types.VestingSchedule {
 	}
 }
 
+// VestingSchedules2 is a convenient method to test
+func (suite *KeeperTestSuite) VestingSchedules2() []types.VestingSchedule {
+	return []types.VestingSchedule{
+		{
+			ReleaseTime: types.ParseTime("2022-01-01T22:00:00+00:00"),
+			Weight:      sdk.MustNewDecFromStr("0.5"),
+		},
+		{
+			ReleaseTime: types.ParseTime("2022-04-01T22:00:00+00:00"),
+			Weight:      sdk.MustNewDecFromStr("0.5"),
+		},
+	}
+}
+
 func coinEq(exp, got sdk.Coin) (bool, string, string, string) {
 	return exp.IsEqual(got), "expected:\t%v\ngot:\t\t%v", exp.String(), got.String()
 }
