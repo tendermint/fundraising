@@ -115,51 +115,21 @@ func (k Querier) Bids(c context.Context, req *types.QueryBidsRequest) (*types.Qu
 		return nil, status.Errorf(codes.NotFound, "auction %d not found", req.AuctionId)
 	}
 
-	if req.Bidder != "" {
-		if _, err := sdk.AccAddressFromBech32(req.Bidder); err != nil {
-			return nil, err
-		}
-	}
-
-	var eligible bool
-	if req.Eligible != "" {
-		var err error
-		eligible, err = strconv.ParseBool(req.Eligible)
-		if err != nil {
-			return nil, err
-		}
-	}
+	var bids []types.Bid
+	var pageRes *query.PageResponse
+	var err error
 
 	store := ctx.KVStore(k.storeKey)
-	bidStore := prefix.NewStore(store, types.BidKeyPrefix)
-
-	var bids []types.Bid
-	pageRes, err := query.FilteredPaginate(bidStore, req.Pagination, func(key, value []byte, accumulate bool) (bool, error) {
-		bid, err := types.UnmarshalBid(k.cdc, value)
-		if err != nil {
-			return false, nil
-		}
-
-		if bid.AuctionId != req.AuctionId {
-			return false, nil
-		}
-
-		if req.Bidder != "" && bid.GetBidder() != req.Bidder {
-			return false, nil
-		}
-
-		if req.Eligible != "" {
-			if bid.Eligible != eligible {
-				return false, nil
-			}
-		}
-
-		if accumulate {
-			bids = append(bids, bid)
-		}
-
-		return true, nil
-	})
+	switch {
+	case req.Bidder != "" && req.Eligible == "":
+		bids, pageRes, err = queryBidsByBidder(ctx, k, store, req, false)
+	case req.Bidder == "" && req.Eligible != "":
+		bids, pageRes, err = queryBidsByEligible(ctx, k, store, req)
+	case req.Bidder != "" && req.Eligible != "":
+		bids, pageRes, err = queryBidsByBidder(ctx, k, store, req, true)
+	default:
+		bids, pageRes, err = queryAllBids(ctx, k, store, req)
+	}
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -182,4 +152,95 @@ func (k Querier) Vestings(c context.Context, req *types.QueryVestingsRequest) (*
 	queues := k.Keeper.GetVestingQueuesByAuctionId(ctx, auction.GetId())
 
 	return &types.QueryVestingsResponse{Vestings: queues}, nil
+}
+
+func queryAllBids(ctx sdk.Context, k Querier, store sdk.KVStore, req *types.QueryBidsRequest) (bids []types.Bid, pageRes *query.PageResponse, err error) {
+	bidStore := prefix.NewStore(store, types.BidKeyPrefix)
+
+	pageRes, err = query.FilteredPaginate(bidStore, req.Pagination, func(key, value []byte, accumulate bool) (bool, error) {
+		bid, err := types.UnmarshalBid(k.cdc, value)
+		if err != nil {
+			return false, nil
+		}
+
+		if bid.AuctionId != req.AuctionId {
+			return false, nil
+		}
+
+		if accumulate {
+			bids = append(bids, bid)
+		}
+
+		return true, nil
+	})
+	if err != nil {
+		return nil, nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return bids, pageRes, err
+}
+
+func queryBidsByBidder(ctx sdk.Context, k Querier, store sdk.KVStore, req *types.QueryBidsRequest, eligible bool) (bids []types.Bid, pageRes *query.PageResponse, err error) {
+	bidderAcc, err := sdk.AccAddressFromBech32(req.Bidder)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	bidStore := prefix.NewStore(store, types.GetBidIndexByBidderPrefix(bidderAcc))
+
+	pageRes, err = query.FilteredPaginate(bidStore, req.Pagination, func(key, value []byte, accumulate bool) (bool, error) {
+		auctionId, sequence := types.SplitAuctionIdSequenceKey(key)
+		bid, _ := k.GetBid(ctx, auctionId, sequence)
+
+		if eligible && bid.Eligible != eligible {
+			return false, nil
+		}
+
+		if accumulate {
+			bids = append(bids, bid)
+		}
+
+		return true, nil
+	})
+
+	if err != nil {
+		return nil, nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return bids, pageRes, err
+}
+
+func queryBidsByEligible(ctx sdk.Context, k Querier, store sdk.KVStore, req *types.QueryBidsRequest) (bids []types.Bid, pageRes *query.PageResponse, err error) {
+	eligible, err := strconv.ParseBool(req.Eligible)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	bidStore := prefix.NewStore(store, types.BidKeyPrefix)
+
+	pageRes, err = query.FilteredPaginate(bidStore, req.Pagination, func(key, value []byte, accumulate bool) (bool, error) {
+		bid, err := types.UnmarshalBid(k.cdc, value)
+		if err != nil {
+			return false, nil
+		}
+
+		if bid.AuctionId != req.AuctionId {
+			return false, nil
+		}
+
+		if bid.Eligible != eligible {
+			return false, nil
+		}
+
+		if accumulate {
+			bids = append(bids, bid)
+		}
+
+		return true, nil
+	})
+	if err != nil {
+		return nil, nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return bids, pageRes, err
 }

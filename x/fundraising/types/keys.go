@@ -86,3 +86,11 @@ func ParseBidIndexKey(key []byte) (auctionId, sequence uint64) {
 	sequence = sdk.BigEndianToUint64(key[2+addrLen+byte(bytesLen):])
 	return
 }
+
+// SplitAuctionIdSequenceKey splits the auction id and sequence.
+func SplitAuctionIdSequenceKey(key []byte) (auctionId, sequence uint64) {
+	bytesLen := 8
+	auctionId = sdk.BigEndianToUint64(key)
+	sequence = sdk.BigEndianToUint64(key[byte(bytesLen):])
+	return
+}

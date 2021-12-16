@@ -8,6 +8,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
@@ -149,25 +150,36 @@ func (k Keeper) UnmarshalAuction(bz []byte) (auction types.AuctionI, err error) 
 func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) error {
 	sellingReserveAcc := types.SellingReserveAcc(auction.GetId())
 
-	// distribute coin to all bidders who bid for the auction
+	var inputs []banktypes.Input
+	var outputs []banktypes.Output
+
+	totalBidCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, sdk.ZeroInt())
+
+	// distribute coins to all bidders from the selling reserve module account
 	for _, bid := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
 		bidAmt := bid.Coin.Amount.ToDec().Quo(bid.Price).TruncateInt()
-		bidCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidAmt)
+		receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidAmt)
 
 		bidderAcc, err := sdk.AccAddressFromBech32(bid.GetBidder())
 		if err != nil {
 			return err
 		}
 
-		if err := k.bankKeeper.SendCoins(ctx, sellingReserveAcc, bidderAcc, sdk.NewCoins(bidCoin)); err != nil {
-			return err
-		}
+		inputs = append(inputs, banktypes.NewInput(sellingReserveAcc, sdk.NewCoins(receiveCoin)))
+		outputs = append(outputs, banktypes.NewOutput(bidderAcc, sdk.NewCoins(receiveCoin)))
+
+		totalBidCoin = totalBidCoin.Add(receiveCoin)
 	}
 
 	reserveBalance := k.bankKeeper.GetBalance(ctx, sellingReserveAcc, auction.GetSellingCoin().Denom)
+	remainingCoin := reserveBalance.Sub(totalBidCoin)
 
-	// Send remaining selling coin to the auctioneer
-	if err := k.bankKeeper.SendCoins(ctx, sellingReserveAcc, auction.GetAuctioneer(), sdk.NewCoins(reserveBalance)); err != nil {
+	// send remaining coin to the auctioneer
+	inputs = append(inputs, banktypes.NewInput(sellingReserveAcc, sdk.NewCoins(remainingCoin)))
+	outputs = append(outputs, banktypes.NewOutput(auction.GetAuctioneer(), sdk.NewCoins(remainingCoin)))
+
+	// send all at once
+	if err := k.bankKeeper.InputOutputCoins(ctx, inputs, outputs); err != nil {
 		return err
 	}
 
@@ -264,7 +276,6 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 			sdk.NewAttribute(types.AttributeKeyVestingPoolAddress, vestingReserveAcc.String()),
 			sdk.NewAttribute(types.AttributeKeySellingCoin, msg.SellingCoin.String()),
 			sdk.NewAttribute(types.AttributeKeyPayingCoinDenom, msg.PayingCoinDenom),
-			// sdk.NewAttribute(types.AttributeKeyVestingSchedules, msg.VestingSchedules), // TODO: stringtify
 			sdk.NewAttribute(types.AttributeKeyStartTime, msg.StartTime.String()),
 			sdk.NewAttribute(types.AttributeKeyEndTime, msg.EndTime.String()),
 			sdk.NewAttribute(types.AttributeKeyAuctionStatus, types.AuctionStatusStandBy.String()),
