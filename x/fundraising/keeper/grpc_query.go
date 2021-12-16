@@ -122,9 +122,11 @@ func (k Querier) Bids(c context.Context, req *types.QueryBidsRequest) (*types.Qu
 	store := ctx.KVStore(k.storeKey)
 	switch {
 	case req.Bidder != "" && req.Eligible == "":
-		bids, pageRes, err = queryBidsByBidder(ctx, k, store, req)
+		bids, pageRes, err = queryBidsByBidder(ctx, k, store, req, false)
 	case req.Bidder == "" && req.Eligible != "":
 		bids, pageRes, err = queryBidsByEligible(ctx, k, store, req)
+	case req.Bidder != "" && req.Eligible != "":
+		bids, pageRes, err = queryBidsByBidder(ctx, k, store, req, true)
 	default:
 		bids, pageRes, err = queryAllBids(ctx, k, store, req)
 	}
@@ -178,7 +180,7 @@ func queryAllBids(ctx sdk.Context, k Querier, store sdk.KVStore, req *types.Quer
 	return bids, pageRes, err
 }
 
-func queryBidsByBidder(ctx sdk.Context, k Querier, store sdk.KVStore, req *types.QueryBidsRequest) (bids []types.Bid, pageRes *query.PageResponse, err error) {
+func queryBidsByBidder(ctx sdk.Context, k Querier, store sdk.KVStore, req *types.QueryBidsRequest, eligible bool) (bids []types.Bid, pageRes *query.PageResponse, err error) {
 	bidderAcc, err := sdk.AccAddressFromBech32(req.Bidder)
 	if err != nil {
 		return nil, nil, err
@@ -186,13 +188,21 @@ func queryBidsByBidder(ctx sdk.Context, k Querier, store sdk.KVStore, req *types
 
 	bidStore := prefix.NewStore(store, types.GetBidIndexByBidderPrefix(bidderAcc))
 
-	pageRes, err = query.Paginate(bidStore, req.Pagination, func(key []byte, value []byte) error {
+	pageRes, err = query.FilteredPaginate(bidStore, req.Pagination, func(key, value []byte, accumulate bool) (bool, error) {
 		auctionId, sequence := types.SplitAuctionIdSequenceKey(key)
 		bid, _ := k.GetBid(ctx, auctionId, sequence)
-		bids = append(bids, bid)
 
-		return nil
+		if eligible && bid.Eligible != eligible {
+			return false, nil
+		}
+
+		if accumulate {
+			bids = append(bids, bid)
+		}
+
+		return true, nil
 	})
+
 	if err != nil {
 		return nil, nil, status.Error(codes.Internal, err.Error())
 	}

@@ -146,6 +146,8 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 			return err
 		}
 
+		k.SetAuction(ctx, auction)
+
 		if err := k.bankKeeper.SendCoins(
 			ctx, msg.GetBidder(),
 			types.PayingReserveAcc(auction.GetId()),
@@ -154,7 +156,6 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 			return err
 		}
 
-		k.SetAuction(ctx, auction)
 	} else {
 		// TODO: implement English auction type
 		return sdkerrors.Wrap(types.ErrInvalidAuctionType, "not supported auction type in this version")
