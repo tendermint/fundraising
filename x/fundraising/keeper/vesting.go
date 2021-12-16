@@ -77,6 +77,16 @@ func (k Keeper) SetVestingQueue(ctx sdk.Context, auctionId uint64, releaseTime t
 	store.Set(types.GetVestingQueueKey(auctionId, releaseTime), bz)
 }
 
+// GetVestingQueues returns all vesting queues registered in the store.
+func (k Keeper) GetVestingQueues(ctx sdk.Context) []types.VestingQueue {
+	queues := []types.VestingQueue{}
+	k.IterateVestingQueues(ctx, func(queue types.VestingQueue) (stop bool) {
+		queues = append(queues, queue)
+		return false
+	})
+	return queues
+}
+
 // GetVestingQueuesByAuctionId returns all vesting queues associated with the auction id that are registered in the store.
 func (k Keeper) GetVestingQueuesByAuctionId(ctx sdk.Context, auctionId uint64) []types.VestingQueue {
 	queues := []types.VestingQueue{}
@@ -85,6 +95,21 @@ func (k Keeper) GetVestingQueuesByAuctionId(ctx sdk.Context, auctionId uint64) [
 		return false
 	})
 	return queues
+}
+
+// IterateVestingQueues iterates through all VestingQueues and invokes callback function for each item.
+// Stops the iteration when the callback function returns true.
+func (k Keeper) IterateVestingQueues(ctx sdk.Context, cb func(queue types.VestingQueue) (stop bool)) {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, types.VestingQueueKeyPrefix)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var queue types.VestingQueue
+		k.cdc.MustUnmarshal(iter.Value(), &queue)
+		if cb(queue) {
+			break
+		}
+	}
 }
 
 // IterateVestingQueuesByAuctionId iterates through all VestingQueues associated with the auction id stored in the store
