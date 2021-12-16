@@ -24,7 +24,7 @@ func (suite *KeeperTestSuite) TestMsgCreateFixedPriceAuction() {
 				sdk.OneDec(),
 				sdk.NewInt64Coin(denom1, 1_000_000_000_000),
 				denom2,
-				suite.VestingSchedules(),
+				suite.sampleVestingSchedules2,
 				types.ParseTime("2030-01-01T00:00:00Z"),
 				types.ParseTime("2030-01-10T00:00:00Z"),
 			),

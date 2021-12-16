@@ -27,8 +27,10 @@ message Params {
   uint32 extended_period = 2
       [ (gogoproto.moretags) = "yaml:\"extended_period\"" ];
 
-  // auction_fee_collector is the module account address to collect fees within the module
-  string auction_fee_collector = 3 [(gogoproto.moretags) = "yaml:\"auction_fee_collector\""];
+  // auction_fee_collector is the module account address to collect fees within
+  // the module
+  string auction_fee_collector = 3
+      [ (gogoproto.moretags) = "yaml:\"auction_fee_collector\"" ];
 }
 
 // BaseAuction defines a base auction type. It contains all the necessary fields
@@ -73,8 +75,8 @@ message BaseAuction {
   // for
   string paying_coin_denom = 8;
 
-  // vesting_pool_address specifies the bech32-encoded vesting address that holds
-  // vesting amounts of coin
+  // vesting_pool_address specifies the bech32-encoded vesting address that
+  // holds vesting amounts of coin
   string vesting_pool_address = 9;
 
   // vesting_schedules specifies the vesting schedules for the auction

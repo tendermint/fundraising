@@ -205,6 +205,14 @@ func (k Keeper) DistributePayingCoin(ctx sdk.Context, auction types.AuctionI) er
 	return nil
 }
 
+// ReserveSellingCoin reserves the selling coin to the selling reserve account.
+func (k Keeper) ReserveSellingCoin(ctx sdk.Context, auctionId uint64, auctioneerAcc sdk.AccAddress, sellingCoin sdk.Coin) error {
+	if err := k.bankKeeper.SendCoins(ctx, auctioneerAcc, types.SellingReserveAcc(auctionId), sdk.NewCoins(sellingCoin)); err != nil {
+		return sdkerrors.Wrap(err, "failed to reserve selling coin")
+	}
+	return nil
+}
+
 // CreateFixedPriceAuction sets fixed price auction.
 func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFixedPriceAuction) error {
 	nextId := k.GetNextAuctionIdWithUpdate(ctx)
@@ -228,14 +236,13 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		return sdkerrors.Wrap(err, "failed to pay auction creation fee")
 	}
 
+	if err := k.ReserveSellingCoin(ctx, nextId, auctioneerAcc, msg.SellingCoin); err != nil {
+		return err
+	}
+
 	sellingReserveAcc := types.SellingReserveAcc(nextId)
 	payingReserveAcc := types.PayingReserveAcc(nextId)
 	vestingReserveAcc := types.VestingReserveAcc(nextId)
-
-	// reserve the selling coin to the selling reserve account
-	if err := k.bankKeeper.SendCoins(ctx, auctioneerAcc, sellingReserveAcc, sdk.NewCoins(msg.SellingCoin)); err != nil {
-		return sdkerrors.Wrap(err, "failed to escrow selling coin to selling reserve account")
-	}
 
 	baseAuction := types.NewBaseAuction(
 		nextId,

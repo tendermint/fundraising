@@ -29,8 +29,8 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 type GenesisState struct {
 	// params defines all the parameters for the module
 	Params Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
-	// auctions define the auction interface for genesis state; the module supports
-	// FixedPriceAuction or EnglishAuction
+	// auctions define the auction interface for genesis state; the module
+	// supports FixedPriceAuction or EnglishAuction
 	Auctions []*types.Any `protobuf:"bytes,2,rep,name=auctions,proto3" json:"auctions,omitempty"`
 	// bids defines the bid records used for genesis state
 	Bids []Bid `protobuf:"bytes,3,rep,name=bids,proto3" json:"bids"`

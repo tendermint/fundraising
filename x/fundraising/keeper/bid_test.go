@@ -7,25 +7,24 @@ import (
 )
 
 func (suite *KeeperTestSuite) TestBidIterators() {
-	ctx := sdk.WrapSDKContext(suite.ctx)
-
-	// Create a fixed price auction with already started status
+	// create a fixed price auction with already started status
 	suite.keeper.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[1])
 
 	auction, found := suite.keeper.GetAuction(suite.ctx, 2)
 	suite.Require().True(found)
 
 	for _, bid := range suite.sampleFixedPriceBids {
-		_, err := suite.srv.PlaceBid(ctx, bid)
+		bidderAcc, err := sdk.AccAddressFromBech32(bid.Bidder)
 		suite.Require().NoError(err)
+		suite.keeper.SetBid(suite.ctx, bid.AuctionId, bid.Sequence, bidderAcc, bid)
 	}
 
 	bids := suite.keeper.GetBids(suite.ctx)
-	suite.Require().Len(bids, 2)
+	suite.Require().Len(bids, 4)
 
 	bidsById := suite.keeper.GetBidsByAuctionId(suite.ctx, auction.GetId())
-	suite.Require().Len(bidsById, 2)
+	suite.Require().Len(bidsById, 4)
 
 	bidsByBidder := suite.keeper.GetBidsByBidder(suite.ctx, suite.addrs[0])
-	suite.Require().Len(bidsByBidder, 1)
+	suite.Require().Len(bidsByBidder, 2)
 }

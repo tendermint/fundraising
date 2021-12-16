@@ -127,20 +127,10 @@ func (suite *KeeperTestSuite) TestGRPCBids() {
 	}
 
 	for _, bid := range suite.sampleFixedPriceBids {
-		err := suite.keeper.PlaceBid(suite.ctx, bid)
+		bidderAcc, err := sdk.AccAddressFromBech32(bid.Bidder)
 		suite.Require().NoError(err)
+		suite.keeper.SetBid(suite.ctx, bid.AuctionId, bid.Sequence, bidderAcc, bid)
 	}
-
-	nextSeq := suite.keeper.GetNextSequenceWithUpdate(suite.ctx)
-	suite.keeper.SetBid(suite.ctx, 2, nextSeq, suite.addrs[0], types.Bid{
-		AuctionId: 2,
-		Sequence:  nextSeq,
-		Bidder:    suite.addrs[0].String(),
-		Price:     sdk.MustNewDecFromStr("0.5"),
-		Coin:      sdk.NewInt64Coin(denom4, 60_000_000),
-		Height:    uint64(suite.ctx.BlockHeader().Height),
-		Eligible:  true,
-	})
 
 	for _, tc := range []struct {
 		name      string
@@ -159,10 +149,11 @@ func (suite *KeeperTestSuite) TestGRPCBids() {
 			&types.QueryBidsRequest{AuctionId: 2},
 			false,
 			func(resp *types.QueryBidsResponse) {
-				suite.Require().Len(resp.Bids, 3)
-				suite.Require().True(coinEq(sdk.NewInt64Coin(denom4, 50_000_000), resp.Bids[0].Coin))
-				suite.Require().True(coinEq(sdk.NewInt64Coin(denom4, 100_000_000), resp.Bids[1].Coin))
-				suite.Require().True(coinEq(sdk.NewInt64Coin(denom4, 60_000_000), resp.Bids[2].Coin))
+				suite.Require().Len(resp.Bids, 4)
+				suite.Require().True(coinEq(sdk.NewInt64Coin(denom4, 20_000_000), resp.Bids[0].Coin))
+				suite.Require().True(coinEq(sdk.NewInt64Coin(denom4, 30_000_000), resp.Bids[1].Coin))
+				suite.Require().True(coinEq(sdk.NewInt64Coin(denom4, 50_000_000), resp.Bids[2].Coin))
+				suite.Require().True(coinEq(sdk.NewInt64Coin(denom4, 50_000_000), resp.Bids[3].Coin))
 			},
 		},
 		{
@@ -189,12 +180,20 @@ func (suite *KeeperTestSuite) TestGRPCBids() {
 			&types.QueryBidsRequest{AuctionId: 2, Eligible: "false"},
 			false,
 			func(resp *types.QueryBidsResponse) {
+				suite.Require().Len(resp.Bids, 3)
+			},
+		},
+		{
+			"query by both bidder address and eligible #1",
+			&types.QueryBidsRequest{AuctionId: 2, Bidder: suite.addrs[0].String(), Eligible: "false"},
+			false,
+			func(resp *types.QueryBidsResponse) {
 				suite.Require().Len(resp.Bids, 2)
 			},
 		},
 		{
-			"query by eligible and bidder address",
-			&types.QueryBidsRequest{AuctionId: 2, Bidder: suite.addrs[0].String(), Eligible: "false"},
+			"query by both bidder address and eligible #2",
+			&types.QueryBidsRequest{AuctionId: 2, Bidder: suite.addrs[1].String(), Eligible: "true"},
 			false,
 			func(resp *types.QueryBidsResponse) {
 				suite.Require().Len(resp.Bids, 1)

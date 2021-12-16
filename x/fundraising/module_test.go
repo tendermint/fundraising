@@ -41,8 +41,10 @@ type ModuleTestSuite struct {
 	querier                  keeper.Querier
 	srv                      types.MsgServer
 	addrs                    []sdk.AccAddress
-	sampleFixedPriceAuctions []*types.MsgCreateFixedPriceAuction
-	sampleFixedPriceBids     []*types.MsgPlaceBid
+	sampleVestingSchedules1  []types.VestingSchedule
+	sampleVestingSchedules2  []types.VestingSchedule
+	sampleFixedPriceAuctions []types.AuctionI
+	sampleFixedPriceBids     []types.Bid
 }
 
 func TestModuleTestSuite(t *testing.T) {
@@ -55,7 +57,7 @@ func (suite *ModuleTestSuite) SetupTest() {
 
 	suite.app = app
 	suite.ctx = ctx
-	suite.ctx = suite.ctx.WithBlockTime(time.Now()) // set to current time
+	suite.ctx = suite.ctx.WithBlockTime(types.ParseTime("2021-12-15T00:00:00Z"))
 	suite.keeper = suite.app.FundraisingKeeper
 	suite.querier = keeper.Querier{Keeper: suite.keeper}
 	suite.srv = keeper.NewMsgServerImpl(suite.keeper)
@@ -64,55 +66,115 @@ func (suite *ModuleTestSuite) SetupTest() {
 		err := simapp.FundAccount(suite.app.BankKeeper, suite.ctx, addr, initialBalances)
 		suite.Require().NoError(err)
 	}
-	suite.sampleFixedPriceAuctions = []*types.MsgCreateFixedPriceAuction{
+	suite.sampleVestingSchedules1 = []types.VestingSchedule{
 		{
-			Auctioneer:       suite.addrs[4].String(),
-			StartPrice:       sdk.OneDec(),
-			SellingCoin:      sdk.NewInt64Coin(denom1, 1_000_000_000_000),
-			PayingCoinDenom:  denom2,
-			VestingSchedules: []types.VestingSchedule{}, // no vesting schedules
-			StartTime:        types.ParseTime("2030-01-01T00:00:00Z"),
-			EndTime:          types.ParseTime("2030-01-10T00:00:00Z"),
+			ReleaseTime: types.ParseTime("2030-01-31T22:00:00+00:00"),
+			Weight:      sdk.MustNewDecFromStr("0.5"),
 		},
 		{
-			Auctioneer:      suite.addrs[5].String(),
-			StartPrice:      sdk.MustNewDecFromStr("0.5"),
-			SellingCoin:     sdk.NewInt64Coin(denom3, 1_000_000_000_000),
-			PayingCoinDenom: denom4,
-			VestingSchedules: []types.VestingSchedule{
-				{
-					ReleaseTime: types.ParseTime("2022-01-01T00:00:00Z"),
-					Weight:      sdk.MustNewDecFromStr("0.25"),
-				},
-				{
-					ReleaseTime: types.ParseTime("2022-04-01T00:00:00Z"),
-					Weight:      sdk.MustNewDecFromStr("0.25"),
-				},
-				{
-					ReleaseTime: types.ParseTime("2022-08-01T00:00:00Z"),
-					Weight:      sdk.MustNewDecFromStr("0.25"),
-				},
-				{
-					ReleaseTime: types.ParseTime("2022-12-01T00:00:00Z"),
-					Weight:      sdk.MustNewDecFromStr("0.25"),
-				},
-			},
-			StartTime: types.ParseTime("2021-12-10T00:00:00Z"),
-			EndTime:   types.ParseTime("2021-12-20T00:00:00Z"),
+			ReleaseTime: types.ParseTime("2030-12-01T22:00:00+00:00"),
+			Weight:      sdk.MustNewDecFromStr("0.5"),
 		},
 	}
-	suite.sampleFixedPriceBids = []*types.MsgPlaceBid{
+	suite.sampleVestingSchedules2 = []types.VestingSchedule{
 		{
-			AuctionId: 1,
+			ReleaseTime: types.ParseTime("2022-01-01T22:00:00+00:00"),
+			Weight:      sdk.MustNewDecFromStr("0.25"),
+		},
+		{
+			ReleaseTime: types.ParseTime("2022-04-01T22:00:00+00:00"),
+			Weight:      sdk.MustNewDecFromStr("0.25"),
+		},
+		{
+			ReleaseTime: types.ParseTime("2022-08-01T22:00:00+00:00"),
+			Weight:      sdk.MustNewDecFromStr("0.25"),
+		},
+		{
+			ReleaseTime: types.ParseTime("2022-12-01T22:00:00+00:00"),
+			Weight:      sdk.MustNewDecFromStr("0.25"),
+		},
+	}
+	suite.sampleFixedPriceAuctions = []types.AuctionI{
+		types.NewFixedPriceAuction(
+			&types.BaseAuction{
+				Id:                 1,
+				Type:               types.AuctionTypeFixedPrice,
+				Auctioneer:         suite.addrs[4].String(),
+				SellingPoolAddress: types.SellingReserveAcc(1).String(),
+				PayingPoolAddress:  types.PayingReserveAcc(1).String(),
+				StartPrice:         sdk.OneDec(), // start price corresponds to the ratio of the paying coin
+				SellingCoin:        sdk.NewInt64Coin(denom1, 1_000_000_000_000),
+				PayingCoinDenom:    denom2,
+				VestingPoolAddress: types.VestingReserveAcc(1).String(),
+				VestingSchedules:   suite.sampleVestingSchedules1,
+				WinningPrice:       sdk.ZeroDec(),
+				RemainingCoin:      sdk.NewInt64Coin(denom1, 1_000_000_000_000),
+				StartTime:          types.ParseTime("2022-01-01T00:00:00Z"),
+				EndTimes:           []time.Time{types.ParseTime("2022-01-10T00:00:00Z")},
+				Status:             types.AuctionStatusStandBy,
+			},
+		),
+		types.NewFixedPriceAuction(
+			&types.BaseAuction{
+				Id:                 2,
+				Type:               types.AuctionTypeFixedPrice,
+				Auctioneer:         suite.addrs[5].String(),
+				SellingPoolAddress: types.SellingReserveAcc(1).String(),
+				PayingPoolAddress:  types.PayingReserveAcc(1).String(),
+				StartPrice:         sdk.MustNewDecFromStr("0.5"),
+				SellingCoin:        sdk.NewInt64Coin(denom3, 1_000_000_000_000),
+				PayingCoinDenom:    denom4,
+				VestingPoolAddress: types.VestingReserveAcc(1).String(),
+				VestingSchedules:   suite.sampleVestingSchedules2,
+				WinningPrice:       sdk.ZeroDec(),
+				RemainingCoin:      sdk.NewInt64Coin(denom3, 1_000_000_000_000),
+				StartTime:          types.ParseTime("2021-12-10T00:00:00Z"),
+				EndTimes:           []time.Time{types.ParseTime("2022-12-20T00:00:00Z")},
+				Status:             types.AuctionStatusStarted,
+			},
+		),
+	}
+	suite.sampleFixedPriceBids = []types.Bid{
+		{
+			AuctionId: 2,
+			Sequence:  1,
+			Bidder:    suite.addrs[0].String(),
+			Price:     sdk.MustNewDecFromStr("0.5"),
+			Coin:      sdk.NewInt64Coin(denom4, 20_000_000),
+			Height:    uint64(suite.ctx.BlockHeight()),
+			Eligible:  false,
+		},
+		{
+			AuctionId: 2,
+			Sequence:  2,
 			Bidder:    suite.addrs[0].String(),
 			Price:     sdk.MustNewDecFromStr("0.5"),
 			Coin:      sdk.NewInt64Coin(denom4, 30_000_000),
+			Height:    uint64(suite.ctx.BlockHeight()),
+			Eligible:  false,
 		},
 		{
-			AuctionId: 1,
+			AuctionId: 2,
+			Sequence:  3,
 			Bidder:    suite.addrs[1].String(),
 			Price:     sdk.MustNewDecFromStr("0.5"),
 			Coin:      sdk.NewInt64Coin(denom4, 50_000_000),
+			Height:    uint64(suite.ctx.BlockHeight()),
+			Eligible:  false,
+		},
+		{
+			AuctionId: 2,
+			Sequence:  4,
+			Bidder:    suite.addrs[1].String(),
+			Price:     sdk.MustNewDecFromStr("0.5"),
+			Coin:      sdk.NewInt64Coin(denom4, 50_000_000),
+			Height:    uint64(suite.ctx.BlockHeight()),
+			Eligible:  true,
 		},
 	}
+}
+
+// coinEq is a convenient method to test expected and got values of sdk.Coin.
+func coinEq(exp, got sdk.Coin) (bool, string, string, string) {
+	return exp.IsEqual(got), "expected:\t%v\ngot:\t\t%v", exp.String(), got.String()
 }

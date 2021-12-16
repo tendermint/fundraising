@@ -13,8 +13,8 @@ func (suite *KeeperTestSuite) TestVestingQueues() {
 	payingCoinDenom := denom1
 	reserveBalance := suite.app.BankKeeper.GetBalance(suite.ctx, payingReserveAcc, denom1)
 
-	// vesting schedule contains 4 vesting queues
-	for _, vs := range suite.VestingSchedules() {
+	// vesting schedule contains 2 vesting queues
+	for _, vs := range suite.sampleVestingSchedules1 {
 		payingAmt := reserveBalance.Amount.ToDec().Mul(vs.Weight).TruncateInt()
 
 		suite.keeper.SetVestingQueue(suite.ctx, uint64(1), vs.ReleaseTime, types.VestingQueue{
@@ -26,8 +26,8 @@ func (suite *KeeperTestSuite) TestVestingQueues() {
 		})
 	}
 
-	// vesting schedule contains 2 vesting queues
-	for _, vs := range suite.VestingSchedules2() {
+	// vesting schedule contains 4 vesting queues
+	for _, vs := range suite.sampleVestingSchedules2 {
 		payingAmt := reserveBalance.Amount.ToDec().Mul(vs.Weight).TruncateInt()
 
 		suite.keeper.SetVestingQueue(suite.ctx, uint64(2), vs.ReleaseTime, types.VestingQueue{
@@ -39,12 +39,12 @@ func (suite *KeeperTestSuite) TestVestingQueues() {
 		})
 	}
 
-	suite.Require().Len(suite.keeper.GetVestingQueuesByAuctionId(suite.ctx, uint64(1)), 4)
-	suite.Require().Len(suite.keeper.GetVestingQueuesByAuctionId(suite.ctx, uint64(2)), 2)
+	suite.Require().Len(suite.keeper.GetVestingQueuesByAuctionId(suite.ctx, uint64(1)), 2)
+	suite.Require().Len(suite.keeper.GetVestingQueuesByAuctionId(suite.ctx, uint64(2)), 4)
 	suite.Require().Len(suite.keeper.GetVestingQueues(suite.ctx), 6)
 
 	totalPayingCoin := sdk.NewInt64Coin(denom1, 0)
-	for _, vq := range suite.keeper.GetVestingQueuesByAuctionId(suite.ctx, uint64(1)) {
+	for _, vq := range suite.keeper.GetVestingQueuesByAuctionId(suite.ctx, uint64(2)) {
 		totalPayingCoin = totalPayingCoin.Add(vq.PayingCoin)
 	}
 	suite.Require().Equal(reserveBalance, totalPayingCoin)

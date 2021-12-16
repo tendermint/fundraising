@@ -126,7 +126,14 @@ func (k Querier) Bids(c context.Context, req *types.QueryBidsRequest) (*types.Qu
 	case req.Bidder == "" && req.Eligible != "":
 		bids, pageRes, err = queryBidsByEligible(ctx, k, store, req)
 	case req.Bidder != "" && req.Eligible != "":
-		bids, pageRes, err = queryBidsByBidder(ctx, k, store, req, true)
+		var eligible bool
+		if req.Eligible != "" {
+			eligible, err = strconv.ParseBool(req.Eligible)
+			if err != nil {
+				return nil, err
+			}
+		}
+		bids, pageRes, err = queryBidsByBidder(ctx, k, store, req, eligible)
 	default:
 		bids, pageRes, err = queryAllBids(ctx, k, store, req)
 	}
@@ -192,7 +199,7 @@ func queryBidsByBidder(ctx sdk.Context, k Querier, store sdk.KVStore, req *types
 		auctionId, sequence := types.SplitAuctionIdSequenceKey(key)
 		bid, _ := k.GetBid(ctx, auctionId, sequence)
 
-		if eligible && bid.Eligible != eligible {
+		if bid.Eligible != eligible {
 			return false, nil
 		}
 

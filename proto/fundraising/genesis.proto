@@ -18,15 +18,15 @@ message GenesisState {
   // params defines all the parameters for the module
   Params params = 1 [ (gogoproto.nullable) = false ];
 
-  // auctions define the auction interface for genesis state; the module supports
-  // FixedPriceAuction or EnglishAuction
-  repeated google.protobuf.Any auctions = 2 [(cosmos_proto.accepts_interface) = "AuctionI"];
+  // auctions define the auction interface for genesis state; the module
+  // supports FixedPriceAuction or EnglishAuction
+  repeated google.protobuf.Any auctions = 2
+      [ (cosmos_proto.accepts_interface) = "AuctionI" ];
 
   // bids defines the bid records used for genesis state
   repeated Bid bids = 3 [ (gogoproto.nullable) = false ];
 
   // vesting_queues defines the vesting queue records used for genesis
   // state
-  repeated VestingQueue vesting_queues = 4
-      [ (gogoproto.nullable) = false ];
+  repeated VestingQueue vesting_queues = 4 [ (gogoproto.nullable) = false ];
 }

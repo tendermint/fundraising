@@ -143,7 +143,8 @@ type Params struct {
 	// extended_period specifies the extended period that determines how long
 	// the extended auction round lasts.
 	ExtendedPeriod uint32 `protobuf:"varint,2,opt,name=extended_period,json=extendedPeriod,proto3" json:"extended_period,omitempty" yaml:"extended_period"`
-	// auction_fee_collector is the module account address to collect fees within the module
+	// auction_fee_collector is the module account address to collect fees within
+	// the module
 	AuctionFeeCollector string `protobuf:"bytes,3,opt,name=auction_fee_collector,json=auctionFeeCollector,proto3" json:"auction_fee_collector,omitempty" yaml:"auction_fee_collector"`
 }
 
@@ -203,8 +204,8 @@ type BaseAuction struct {
 	// paying_coin_denom specifies the paying coin denom that bidders use to bid
 	// for
 	PayingCoinDenom string `protobuf:"bytes,8,opt,name=paying_coin_denom,json=payingCoinDenom,proto3" json:"paying_coin_denom,omitempty"`
-	// vesting_pool_address specifies the bech32-encoded vesting address that holds
-	// vesting amounts of coin
+	// vesting_pool_address specifies the bech32-encoded vesting address that
+	// holds vesting amounts of coin
 	VestingPoolAddress string `protobuf:"bytes,9,opt,name=vesting_pool_address,json=vestingPoolAddress,proto3" json:"vesting_pool_address,omitempty"`
 	// vesting_schedules specifies the vesting schedules for the auction
 	VestingSchedules []VestingSchedule `protobuf:"bytes,10,rep,name=vesting_schedules,json=vestingSchedules,proto3" json:"vesting_schedules"`

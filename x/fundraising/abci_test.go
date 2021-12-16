@@ -10,15 +10,15 @@ import (
 )
 
 func (suite *ModuleTestSuite) TestEndBlockerStandByStatus() {
-	err := suite.keeper.CreateFixedPriceAuction(suite.ctx, suite.sampleFixedPriceAuctions[0])
-	suite.Require().NoError(err)
+	suite.keeper.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[0])
 
 	auction, found := suite.keeper.GetAuction(suite.ctx, 1)
 	suite.Require().True(found)
 	suite.Require().Equal(types.AuctionStatusStandBy, auction.GetStatus())
 
-	// modify start time and block time
 	t := types.ParseTime("2021-12-27T00:00:01Z")
+
+	// modify start time and block time
 	_ = auction.SetStartTime(t)
 	suite.keeper.SetAuction(suite.ctx, auction)
 	suite.ctx = suite.ctx.WithBlockTime(t)
@@ -30,31 +30,43 @@ func (suite *ModuleTestSuite) TestEndBlockerStandByStatus() {
 }
 
 func (suite *ModuleTestSuite) TestEndBlockerStartedStatus() {
-	err := suite.keeper.CreateFixedPriceAuction(suite.ctx, suite.sampleFixedPriceAuctions[1])
+	suite.keeper.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[1])
+	err := suite.keeper.ReserveSellingCoin(
+		suite.ctx,
+		suite.sampleFixedPriceAuctions[1].GetId(),
+		suite.sampleFixedPriceAuctions[1].GetAuctioneer(),
+		suite.sampleFixedPriceAuctions[1].GetSellingCoin(),
+	)
 	suite.Require().NoError(err)
 
-	auction, found := suite.keeper.GetAuction(suite.ctx, 1)
+	auction, found := suite.keeper.GetAuction(suite.ctx, 2)
 	suite.Require().True(found)
 	suite.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	totalBidCoin := sdk.NewInt64Coin(denom4, 0)
+	totalBidCoin := sdk.NewInt64Coin(suite.sampleFixedPriceAuctions[1].GetPayingCoinDenom(), 0)
 	for _, bid := range suite.sampleFixedPriceBids {
-		err := suite.keeper.PlaceBid(suite.ctx, bid)
+		bidderAcc, err := sdk.AccAddressFromBech32(bid.Bidder)
+		suite.Require().NoError(err)
+		suite.keeper.SetBid(suite.ctx, bid.AuctionId, bid.Sequence, bidderAcc, bid)
+
+		err = suite.keeper.ReservePayingCoin(suite.ctx, auction.GetId(), bidderAcc, bid.Coin)
 		suite.Require().NoError(err)
 
 		totalBidCoin = totalBidCoin.Add(bid.Coin)
 	}
 
-	bidAmt := totalBidCoin.Amount.ToDec().Quo(auction.GetStartPrice()).TruncateInt()
-	receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidAmt)
+	receiveCoin := sdk.NewCoin(
+		auction.GetSellingCoin().Denom,
+		totalBidCoin.Amount.ToDec().Quo(auction.GetStartPrice()).TruncateInt(),
+	)
 
-	// bids with 30_000_000denom2 and 50_000_000denom2
+	// total bid amounts must be 150_000_000denom4
 	payingReserve := suite.app.BankKeeper.GetBalance(
 		suite.ctx,
 		types.PayingReserveAcc(auction.GetId()),
 		auction.GetPayingCoinDenom(),
 	)
-	suite.Require().Equal(totalBidCoin, payingReserve)
+	suite.Require().True(coinEq(totalBidCoin, payingReserve))
 
 	suite.ctx = suite.ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, -1))
 	fundraising.EndBlocker(suite.ctx, suite.keeper)
@@ -69,19 +81,29 @@ func (suite *ModuleTestSuite) TestEndBlockerStartedStatus() {
 }
 
 func (suite *ModuleTestSuite) TestEndBlockerVestingStatus() {
-	err := suite.keeper.CreateFixedPriceAuction(suite.ctx, suite.sampleFixedPriceAuctions[1])
+	suite.keeper.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[1])
+	err := suite.keeper.ReserveSellingCoin(
+		suite.ctx,
+		suite.sampleFixedPriceAuctions[1].GetId(),
+		suite.sampleFixedPriceAuctions[1].GetAuctioneer(),
+		suite.sampleFixedPriceAuctions[1].GetSellingCoin(),
+	)
 	suite.Require().NoError(err)
 
-	auction, found := suite.keeper.GetAuction(suite.ctx, 1)
+	auction, found := suite.keeper.GetAuction(suite.ctx, 2)
 	suite.Require().True(found)
 	suite.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	totalBidCoin := sdk.NewInt64Coin(denom4, 0)
+	totalBidCoin := sdk.NewInt64Coin(suite.sampleFixedPriceAuctions[1].GetPayingCoinDenom(), 0)
 	for _, bid := range suite.sampleFixedPriceBids {
-		totalBidCoin = totalBidCoin.Add(bid.Coin)
-
-		err := suite.keeper.PlaceBid(suite.ctx, bid)
+		bidderAcc, err := sdk.AccAddressFromBech32(bid.Bidder)
 		suite.Require().NoError(err)
+		suite.keeper.SetBid(suite.ctx, bid.AuctionId, bid.Sequence, bidderAcc, bid)
+
+		err = suite.keeper.ReservePayingCoin(suite.ctx, auction.GetId(), bidderAcc, bid.Coin)
+		suite.Require().NoError(err)
+
+		totalBidCoin = totalBidCoin.Add(bid.Coin)
 	}
 
 	suite.ctx = suite.ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, -1))
