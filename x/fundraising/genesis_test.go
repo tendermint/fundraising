@@ -2,12 +2,12 @@ package fundraising_test
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/tendermint/fundraising/app"
 	"github.com/tendermint/fundraising/testutil/simapp"
 	"github.com/tendermint/fundraising/x/fundraising"
 	"github.com/tendermint/fundraising/x/fundraising/types"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	_ "github.com/stretchr/testify/suite"
 )
