@@ -2,16 +2,15 @@ package types
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
-	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 )
 
 func RegisterCodec(cdc *codec.LegacyAmino) {
 }
 
-func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
+func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 	registry.RegisterImplementations(
 		(*sdk.Msg)(nil),
 		&MsgCreateFixedPriceAuction{},
@@ -32,5 +31,5 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 
 var (
 	Amino     = codec.NewLegacyAmino()
-	ModuleCdc = codec.NewProtoCodec(cdctypes.NewInterfaceRegistry())
+	ModuleCdc = codec.NewProtoCodec(codectypes.NewInterfaceRegistry())
 )

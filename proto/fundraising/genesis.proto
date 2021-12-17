@@ -2,10 +2,31 @@ syntax = "proto3";
 package tendermint.fundraising.fundraising;
 
 // this line is used by starport scaffolding # genesis/proto/import
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "google/protobuf/any.proto";
+import "fundraising/fundraising.proto";
 
 option go_package = "github.com/tendermint/fundraising/x/fundraising/types";
 
 // GenesisState defines the fundraising module's genesis state.
 message GenesisState {
   // this line is used by starport scaffolding # genesis/proto/state
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // params defines all the parameters for the module
+  Params params = 1 [ (gogoproto.nullable) = false ];
+
+  // auctions define the auction interface for genesis state; the module
+  // supports FixedPriceAuction or EnglishAuction
+  repeated google.protobuf.Any auctions = 2
+      [ (cosmos_proto.accepts_interface) = "AuctionI" ];
+
+  // bids defines the bid records used for genesis state
+  repeated Bid bids = 3 [ (gogoproto.nullable) = false ];
+
+  // vesting_queues defines the vesting queue records used for genesis
+  // state
+  repeated VestingQueue vesting_queues = 4 [ (gogoproto.nullable) = false ];
 }

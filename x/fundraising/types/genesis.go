@@ -1,23 +1,79 @@
 package types
 
 import (
-// this line is used by starport scaffolding # genesis/types/import
+	"fmt"
+
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// DefaultIndex is the default capability global index
-const DefaultIndex uint64 = 1
-
-// DefaultGenesis returns the default Capability genesis state
-func DefaultGenesis() *GenesisState {
+// DefaultGenesisState returns the default fundraising genesis state
+func DefaultGenesisState() *GenesisState {
 	return &GenesisState{
-		// this line is used by starport scaffolding # genesis/types/default
+		Params:        DefaultParams(),
+		Auctions:      []*codectypes.Any{},
+		Bids:          []Bid{},
+		VestingQueues: []VestingQueue{},
 	}
 }
 
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
 func (gs GenesisState) Validate() error {
-	// this line is used by starport scaffolding # genesis/types/validate
+	if err := gs.Params.Validate(); err != nil {
+		return err
+	}
 
+	for _, a := range gs.Auctions {
+		auction, err := UnpackAuction(a)
+		if err != nil {
+			return err
+		}
+
+		if err := auction.Validate(); err != nil {
+			return err
+		}
+	}
+
+	for _, b := range gs.Bids {
+		if err := b.Validate(); err != nil {
+			return err
+		}
+	}
+
+	for _, q := range gs.VestingQueues {
+		if err := q.Validate(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// Validate validates Bid.
+func (b Bid) Validate() error {
+	if _, err := sdk.AccAddressFromBech32(b.Bidder); err != nil {
+		return err
+	}
+	if !b.Price.IsPositive() {
+		return fmt.Errorf("bid price must be positve value: %s", b.Price.String())
+	}
+	if err := b.Coin.Validate(); err != nil {
+		return err
+	}
+	if !b.Coin.Amount.IsPositive() {
+		return fmt.Errorf("coin amount must be positive: %s", b.Coin.Amount.String())
+	}
+	return nil
+}
+
+// Validate validates VestingQueue.
+func (q VestingQueue) Validate() error {
+	if _, err := sdk.AccAddressFromBech32(q.Auctioneer); err != nil {
+		return err
+	}
+	if err := q.PayingCoin.Validate(); err != nil {
+		return fmt.Errorf("paying coin is invalid: %v", err)
+	}
 	return nil
 }

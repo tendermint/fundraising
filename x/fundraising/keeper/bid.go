@@ -59,8 +59,7 @@ func (k Keeper) GetBidsByBidder(ctx sdk.Context, bidderAcc sdk.AccAddress) []typ
 	return bids
 }
 
-// IterateBids iterates through all bids stored in the store
-// and invokes callback function for each item.
+// IterateBids iterates through all bids stored in the store and invokes callback function for each item.
 // Stops the iteration when the callback function returns true.
 func (k Keeper) IterateBids(ctx sdk.Context, cb func(bid types.Bid) (stop bool)) {
 	store := ctx.KVStore(k.storeKey)
@@ -107,6 +106,14 @@ func (k Keeper) IterateBidsByBidder(ctx sdk.Context, bidderAcc sdk.AccAddress, c
 	}
 }
 
+// ReservePayingCoin reserves paying coin to the paying reserve account.
+func (k Keeper) ReservePayingCoin(ctx sdk.Context, auctionId uint64, bidderAcc sdk.AccAddress, payingCoin sdk.Coin) error {
+	if err := k.bankKeeper.SendCoins(ctx, bidderAcc, types.PayingReserveAcc(auctionId), sdk.NewCoins(payingCoin)); err != nil {
+		return sdkerrors.Wrap(err, "failed to reserve paying coin")
+	}
+	return nil
+}
+
 // PlaceBid places a bid for the auction.
 func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 	auction, found := k.GetAuction(ctx, msg.AuctionId)
@@ -148,11 +155,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 
 		k.SetAuction(ctx, auction)
 
-		if err := k.bankKeeper.SendCoins(
-			ctx, msg.GetBidder(),
-			types.PayingReserveAcc(auction.GetId()),
-			sdk.NewCoins(msg.Coin),
-		); err != nil {
+		if err := k.ReservePayingCoin(ctx, auction.GetId(), msg.GetBidder(), msg.Coin); err != nil {
 			return err
 		}
 

@@ -10,20 +10,27 @@ option go_package = "github.com/tendermint/fundraising/x/fundraising/types";
 
 // Params defines the set of params for the fundraising module.
 message Params {
-  option (gogoproto.equal) = true;
+  option (gogoproto.goproto_getters) = false;
   option (gogoproto.goproto_stringer) = false;
 
-  // auction_creation_fee specifies the fee for fundraisin creation fee.
+  // auction_creation_fee specifies the fee for fundraising creation fee.
   // this prevents from spamming attack and it is collected in the community
   // pool
   repeated cosmos.base.v1beta1.Coin auction_creation_fee = 1 [
+    (gogoproto.moretags) = "yaml:\"auction_creation_fee\"",
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
     (gogoproto.nullable) = false
   ];
 
   // extended_period specifies the extended period that determines how long
   // the extended auction round lasts.
-  uint32 extended_period = 2;
+  uint32 extended_period = 2
+      [ (gogoproto.moretags) = "yaml:\"extended_period\"" ];
+
+  // auction_fee_collector is the module account address to collect fees within
+  // the module
+  string auction_fee_collector = 3
+      [ (gogoproto.moretags) = "yaml:\"auction_fee_collector\"" ];
 }
 
 // BaseAuction defines a base auction type. It contains all the necessary fields
@@ -68,8 +75,8 @@ message BaseAuction {
   // for
   string paying_coin_denom = 8;
 
-  // vesting_pool_address specifies the bech32-encoded vesting address that holds
-  // vesting amounts of coin
+  // vesting_pool_address specifies the bech32-encoded vesting address that
+  // holds vesting amounts of coin
   string vesting_pool_address = 9;
 
   // vesting_schedules specifies the vesting schedules for the auction

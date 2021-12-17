@@ -1,6 +1,7 @@
 package simapp
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -46,12 +47,20 @@ func New(dir string) *app.App {
 		logger, db, nil, true, map[int64]bool{}, dir, 0, encCdc, simapp.EmptyAppOptions{},
 	)
 
+	genesisState := app.NewDefaultGenesisState(encCdc.Marshaler)
+
+	// init chain must be called to stop deliverState from being nil
+	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
+	if err != nil {
+		panic(err)
+	}
+
 	// InitChain updates deliverState which is required when app.NewContext is called
 	a.InitChain(
 		abci.RequestInitChain{
 			Validators:      []abci.ValidatorUpdate{},
 			ConsensusParams: defaultConsensusParams,
-			AppStateBytes:   []byte("{}"),
+			AppStateBytes:   stateBytes,
 		},
 	)
 
