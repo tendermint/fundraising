@@ -86,7 +86,7 @@ fundraisingd tx fundraising create-fixed-price-auction auction.json \
 
 Result:
 
-```result
+```json
 {
   "@type": "/cosmos.tx.v1beta1.Tx",
   "body": {
@@ -157,7 +157,7 @@ TODO: IT IS BEING DEVELOPED
 
 Result:
 
-```result
+```json
 
 ```
 
@@ -180,7 +180,7 @@ fundraisingd tx fundraising cancel 1 \
 
 Result:
 
-```result
+```json
 {
   "@type": "/cosmos.tx.v1beta1.Tx",
   "body": {
@@ -240,7 +240,7 @@ fundraisingd tx fundraising bid 1 1.0 5000000denom2 \
 
 Result:
 
-```result
+```json
 {
   "@type": "/cosmos.tx.v1beta1.Tx",
   "body": {
@@ -301,7 +301,7 @@ Result:
 fundraisingd q fundraising params --output json | jq
 ```
 
-```result
+```json
 {
   "auction_creation_fee": [
     {
@@ -338,7 +338,7 @@ fundraisingd q fundraising auctions \
 
 Result:
 
-```result
+```json
 {
   "auctions": [
     {
@@ -397,7 +397,7 @@ fundraisingd q fundraising auction 1 -o json | jq
 
 Result:
 
-```result
+```json
 {
   "auction": {
     "@type": "/tendermint.fundraising.FixedPriceAuction",
@@ -451,7 +451,7 @@ fundraisingd q fundraising bids 1 \
 
 Result:
 
-```result
+```json
 {
   "bids": [
     {
@@ -488,7 +488,7 @@ fundraisingd q fundraising vestings 1 \
 
 Result:
 
-```result
+```json
 {
   "vesting_queues": [
     {
