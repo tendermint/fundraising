@@ -218,5 +218,22 @@ http://localhost:1317/cosmos/fundraising/v1beta1/auctions/1/vestings
 Result:
 
 ```json
-
+{
+  "vesting_queues": [
+    {
+      "auction_id": 1,
+      "auctioneer": "cosmos1m4ys0e222x45657hrg9y2gadfxtcqja270rdkg",
+      "paying_coin": "denom2",
+      "release_time": "2022-01-01T00:00:00Z",
+      "vested": false
+    },
+    {
+      "auction_id": 1,
+      "auctioneer": "cosmos1m4ys0e222x45657hrg9y2gadfxtcqja270rdkg",
+      "paying_coin": "denom2",
+      "release_time": "2022-12-01T00:00:00Z",
+      "vested": false
+    }
+  ]
+}
 ```
