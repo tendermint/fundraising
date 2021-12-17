@@ -127,11 +127,9 @@ func (k Querier) Bids(c context.Context, req *types.QueryBidsRequest) (*types.Qu
 		bids, pageRes, err = queryBidsByEligible(ctx, k, store, req)
 	case req.Bidder != "" && req.Eligible != "":
 		var eligible bool
-		if req.Eligible != "" {
-			eligible, err = strconv.ParseBool(req.Eligible)
-			if err != nil {
-				return nil, err
-			}
+		eligible, err = strconv.ParseBool(req.Eligible)
+		if err != nil {
+			return nil, err
 		}
 		bids, pageRes, err = queryBidsByBidder(ctx, k, store, req, eligible)
 	default:
