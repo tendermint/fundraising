@@ -12,18 +12,42 @@ import (
 	_ "github.com/stretchr/testify/suite"
 )
 
-func (suite *ModuleTestSuite) TestGenesis() {
+func (suite *ModuleTestSuite) TestGenesisState() {
+	// create auctions and reserve selling coin to reserve account
 	for _, auction := range suite.sampleFixedPriceAuctions {
 		suite.keeper.SetAuction(suite.ctx, auction)
+
+		err := suite.keeper.ReserveSellingCoin(
+			suite.ctx,
+			auction.GetId(),
+			auction.GetAuctioneer(),
+			auction.GetSellingCoin(),
+		)
+		suite.Require().NoError(err)
 	}
 	suite.Require().Len(suite.keeper.GetAuctions(suite.ctx), 2)
 
+	// make bids and reserve paying coin to reserve account
 	for _, bid := range suite.sampleFixedPriceBids {
 		bidderAcc, err := sdk.AccAddressFromBech32(bid.Bidder)
 		suite.Require().NoError(err)
 		suite.keeper.SetBid(suite.ctx, bid.AuctionId, bid.Sequence, bidderAcc, bid)
+
+		err = suite.keeper.ReservePayingCoin(suite.ctx, bid.GetAuctionId(), bidderAcc, bid.Coin)
+		suite.Require().NoError(err)
 	}
 	suite.Require().Len(suite.keeper.GetBids(suite.ctx), 4)
+
+	// set the current block time a day before second auction so that it gets finished
+	suite.ctx = suite.ctx.WithBlockTime(suite.sampleFixedPriceAuctions[1].GetEndTimes()[0].AddDate(0, 0, -1))
+	fundraising.EndBlocker(suite.ctx, suite.keeper)
+
+	// make first and second vesting queues over
+	suite.ctx = suite.ctx.WithBlockTime(types.ParseTime("2022-04-02T00:00:00Z"))
+	fundraising.EndBlocker(suite.ctx, suite.keeper)
+
+	queues := suite.keeper.GetVestingQueuesByAuctionId(suite.ctx, 2)
+	suite.Require().Len(queues, 4)
 
 	var genState *types.GenesisState
 	suite.Require().NotPanics(func() {
@@ -35,31 +59,6 @@ func (suite *ModuleTestSuite) TestGenesis() {
 		fundraising.InitGenesis(suite.ctx, suite.keeper, *genState)
 	})
 	suite.Require().Equal(genState, fundraising.ExportGenesis(suite.ctx, suite.keeper))
-}
-
-func (suite *ModuleTestSuite) TestExportGenesis() {
-	for _, auction := range suite.sampleFixedPriceAuctions {
-		suite.keeper.SetAuction(suite.ctx, auction)
-	}
-	suite.Require().Len(suite.keeper.GetAuctions(suite.ctx), 2)
-
-	for _, bid := range suite.sampleFixedPriceBids {
-		bidderAcc, err := sdk.AccAddressFromBech32(bid.Bidder)
-		suite.Require().NoError(err)
-		suite.keeper.SetBid(suite.ctx, bid.AuctionId, bid.Sequence, bidderAcc, bid)
-
-		err = suite.keeper.ReservePayingCoin(suite.ctx, bid.GetAuctionId(), bidderAcc, bid.Coin)
-		suite.Require().NoError(err)
-	}
-	suite.Require().Len(suite.keeper.GetBids(suite.ctx), 4)
-
-	genState := fundraising.ExportGenesis(suite.ctx, suite.keeper)
-	bz, err := suite.app.AppCodec().MarshalJSON(genState)
-	suite.Require().NoError(err)
-
-	*genState = types.GenesisState{}
-	err = suite.app.AppCodec().UnmarshalJSON(bz, genState)
-	suite.Require().NoError(err)
 }
 
 func (suite *ModuleTestSuite) TestMarshalUnmarshalDefaultGenesis() {

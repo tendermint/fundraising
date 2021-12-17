@@ -16,8 +16,6 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 		panic(err)
 	}
 
-	ctx, writeCache := ctx.CacheContext()
-
 	k.SetParams(ctx, genState.Params)
 
 	for i, auction := range genState.Auctions {
@@ -54,8 +52,6 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 		k.SetVestingQueue(ctx, queue.AuctionId, queue.ReleaseTime, queue)
 	}
-
-	writeCache()
 }
 
 // ExportGenesis returns the module's exported genesis state.
