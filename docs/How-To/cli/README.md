@@ -9,7 +9,7 @@ This document provides a high-level overview of how the command line (CLI) inter
 
 ## Command Line Interface
 
-To test out the following command line interface, you must set up a local network. By simply running `make localnet` under the root project directory, you can start the local network. It requires [Starport](https://starport.com/), but if you don't have Starport set up in your local machine, reference this [install Starport guide](https://docs.starport.network/) to install it.  
+To test out the following command line interface, you must set up a local network. By simply running `make localnet` under the root project directory, you can start the local network. It requires [Starport](https://starport.com/), but if you don't have Starport set up in your local machine, see this [install Starport guide](https://docs.starport.network/) to install it.  
 
 - [Transaction](#Transaction)
     * [CreateFixedPriceAuction](#CreateFixedPriceAuction)
@@ -29,9 +29,12 @@ To test out the following command line interface, you must set up a local networ
 
 ### CreateFixedPriceAuction
 
+This command is one way for an auctioneer to create an auction to raise funds for their project. It is the most basic and simple type of an auction that has first come first served characteristic.
+When an auctioneer creates a fixed price auction type, they must determine the fixed starting price. It is proportional to the paying coin denom that they want to get funded for. Once it is created, bidders start to bid with the same starting price and amount of coin. See the [spec](https://github.com/tendermint/fundraising/blob/main/x/fundraising/spec/01_concepts.md#auction-types) for a detailed information about the fixed price auction type.
+
 JSON example:
 
-In this JSON example, an auctioneer plans to create a fixed price auction that sells `denom1` coin with an amount of `1000000000000`, and the starting price is `1.0` that is proportional to the paying coin denom `denom2`. The auction starts at `2021-12-10T00:00:00Z` and ends at `2021-12-10T00:00:00Z`. As soon as the auction starts, bidders can bid for the auction with price and coin. When it ends, the paying amount of coin that is reserved for all bids will release based on the vesting schedules. 
+In this JSON example, an auctioneer plans to create a fixed price auction that sells `denom1` coin with an amount of `1000000000000`, and the starting price is `1.0` that is proportional to the paying coin denom `denom2`. It means that the fixed starting price of `denom1` is the same as `denom2` price. The auction starts at `2021-12-10T00:00:00Z` and ends at `2021-12-10T00:00:00Z`. As soon as the auction starts, bidders can bid for the auction with the fixed start price and amount of coin that they are willing to bid. When it ends, the paying amount of coin that is reserved for all bids is expected to be released based on the vesting schedules. 
 
 ```json
 {
@@ -71,6 +74,7 @@ Reference the description of each field:
 Example command:
 
 ```bash
+# Create a fixed price auction
 fundraisingd tx fundraising create-fixed-price-auction auction.json \
 --chain-id fundraising \
 --from bob \
@@ -148,7 +152,7 @@ Result:
 Example command:
 
 ```bash
-NOT IMPLEMENTED YET
+TODO: IT IS BEING DEVELOPED
 ```
 
 Result:
@@ -159,11 +163,12 @@ Result:
 
 ### CancelAuction
 
-This command is useful for an auctioneer who either made mistake(s) on some values of the auction and they want to cancel and recreate it. It can only be cancelled when the auction has not started.
+This command is useful for an auctioneer when the auctioneer made mistake(s) on some values of the auction. The module doesn't support update functionality. Instead, the module allows them to cancel an auction and recreate it with correct values. Note that it can only be cancelled when the auction has not started yet.
 
 Example command:
 
 ```bash
+# Cancel the auction
 fundraisingd tx fundraising cancel 1 \
 --chain-id fundraising \
 --from bob \
@@ -319,15 +324,13 @@ fundraisingd q fundraising auctions \
 -o json | jq
 
 # Query for all auctions with the given auction status
-# Reference statuses
-# https://github.com/tendermint/fundraising/blob/main/x/fundraising/spec/02_state.md#auction-status
+# Ref: https://github.com/tendermint/fundraising/blob/main/x/fundraising/spec/02_state.md#auction-status
 fundraisingd q fundraising auctions \
 --status AUCTION_STATUS_STANDBY \
 -o json | jq
 
 # Query for all auctions with the given auctino type
-# Reference types
-# https://github.com/tendermint/fundraising/blob/main/x/fundraising/spec/02_state.md#auction-type
+# Ref: https://github.com/tendermint/fundraising/blob/main/x/fundraising/spec/02_state.md#auction-type
 fundraisingd q fundraising auctions \
 --type AUCTION_TYPE_FIXED_PRICE \
 -o json | jq
@@ -475,8 +478,33 @@ Result:
 
 This command is used by an auctioneer to query vesting information. It only returns results when the auction is in vesting status
 
+Example command:
+
 ```bash
 # Query for all vesting queues 
 fundraisingd q fundraising vestings 1 \
 -o json | jq
+```
+
+Result:
+
+```result
+{
+  "vesting_queues": [
+    {
+      "auction_id": 1,
+      "auctioneer": "cosmos1m4ys0e222x45657hrg9y2gadfxtcqja270rdkg",
+      "paying_coin": "denom2",
+      "release_time": "2022-01-01T00:00:00Z",
+      "vested": false
+    },
+    {
+      "auction_id": 1,
+      "auctioneer": "cosmos1m4ys0e222x45657hrg9y2gadfxtcqja270rdkg",
+      "paying_coin": "denom2",
+      "release_time": "2022-12-01T00:00:00Z",
+      "vested": false
+    }
+  ]
+}
 ```
