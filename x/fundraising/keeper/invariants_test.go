@@ -1,8 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/tendermint/fundraising/x/fundraising"
@@ -86,8 +84,6 @@ func (suite *KeeperTestSuite) TestVestingPoolReserveAmountInvariant() {
 	ctx = ctx.WithBlockTime(types.ParseTime("2022-04-02T00:00:00Z"))
 	fundraising.EndBlocker(ctx, k)
 
-	msg, broken := keeper.VestingPoolReserveAmountInvariant(k)(ctx)
-	fmt.Println("msg: ", msg)
-	fmt.Println("broken: ", broken)
+	_, broken := keeper.VestingPoolReserveAmountInvariant(k)(ctx)
 	suite.Require().False(broken)
 }
