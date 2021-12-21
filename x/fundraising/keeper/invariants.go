@@ -74,29 +74,49 @@ func PayingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 
 			payingPoolAcc := auction.GetPayingPoolAddress()
 			payingReserve := k.bankKeeper.GetBalance(ctx, payingPoolAcc, auction.GetPayingCoinDenom())
-			fmt.Println("payingReserve: ", payingReserve)
-			fmt.Println("totalBidCoin: ", totalBidCoin)
 			if !payingReserve.Equal(totalBidCoin) {
 				msg += fmt.Sprintf("\tpaying reserve account %s\n"+
 					"\tpaying pool reserve: %v\n"+
-					"\ttotal paying coin: %v",
+					"\ttotal bid coin: %v",
 					payingPoolAcc.String(), payingReserve, totalBidCoin)
 				count++
 			}
 		}
 		broken := count != 0
 
-		return sdk.FormatInvariant(types.ModuleName, "paying pool reserve amount and all bids amount", msg), broken
+		return sdk.FormatInvariant(types.ModuleName, "paying pool reserve amount and total bids amount", msg), broken
 	}
 }
 
+// VestingPoolReserveAmountInvariant checks an invariant
 func VestingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
-		var (
-			msg    string
-			broken bool
-		)
-		// TODO: not implemented yet
-		return sdk.FormatInvariant(types.ModuleName, "paying pool reserve amount and selling coin amount", msg), broken
+		msg := ""
+		count := 0
+
+		for _, auction := range k.GetAuctions(ctx) {
+			totalPayingCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), sdk.ZeroInt())
+
+			if auction.GetStatus() == types.AuctionStatusVesting {
+				for _, queue := range k.GetVestingQueuesByAuctionId(ctx, auction.GetId()) {
+					if !queue.Vested {
+						totalPayingCoin = totalPayingCoin.Add(queue.PayingCoin)
+					}
+				}
+			}
+
+			vestingPoolAcc := auction.GetVestingPoolAddress()
+			vestingReserve := k.bankKeeper.GetBalance(ctx, vestingPoolAcc, auction.GetPayingCoinDenom())
+			if !vestingReserve.Equal(totalPayingCoin) {
+				msg += fmt.Sprintf("\tvesting reserve account %s\n"+
+					"\tvesting pool reserve: %v\n"+
+					"\ttotal paying coin: %v",
+					vestingPoolAcc.String(), vestingReserve, totalPayingCoin)
+				count++
+			}
+		}
+		broken := count != 0
+
+		return sdk.FormatInvariant(types.ModuleName, "vesting pool reserve amount and total paying amount", msg), broken
 	}
 }
