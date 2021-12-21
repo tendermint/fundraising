@@ -12,7 +12,7 @@ type MsgCreateFixedPriceAuction struct {
 	Auctioneer       string            // account that creates the auction
 	StartPrice       sdk.Dec           // starting price of the selling coin proportional to the paying coin
 	SellingCoin      sdk.Coin          // selling amount of coin for the auction
-	PayingCoinDenom  string            // paying coin denom that bidders need to bid for
+	PayingCoinDenom  string            // paying coin denom that bidders need to bid with
 	VestingSchedules []VestingSchedule // vesting schedules that release the paying amount of coins to the autioneer
 	StartTime        time.Time         // start time of the auction
 	EndTime          time.Time         // end time of the auction
@@ -26,7 +26,7 @@ type MsgCreateEnglishAuction struct {
 	Auctioneer       string            // account that creates the auction
 	StartPrice       sdk.Dec           // starting price of the selling coin proportional to the paying coin
 	SellingCoin      sdk.Coin          // selling amount of coin for the auction
-	PayingCoinDenom  string            // paying coin denom that bidders need to bid for
+	PayingCoinDenom  string            // paying coin denom that bidders need to bid with
 	VestingSchedules []VestingSchedule // vesting schedules that release the paying amount of coins to the autioneer
 	MaximumBidPrice  sdk.Dec           // maximum bid price that bidders can bid for the auction
 	ExtendRate       sdk.Dec           // rate that determines if the auction needs an another round
