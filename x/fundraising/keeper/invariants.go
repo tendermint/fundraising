@@ -20,7 +20,11 @@ func RegisterInvariants(ir sdk.InvariantRegistry, k Keeper) {
 // AllInvariants runs all invariants of the fundraising module.
 func AllInvariants(k Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
-		for _, inv := range []func(Keeper) sdk.Invariant{} {
+		for _, inv := range []func(Keeper) sdk.Invariant{
+			SellingPoolReserveAmountInvariant,
+			PayingPoolReserveAmountInvariant,
+			VestingPoolReserveAmountInvariant,
+		} {
 			res, stop := inv(k)(ctx)
 			if stop {
 				return res, stop
@@ -42,7 +46,7 @@ func SellingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 				sellingPoolAcc := auction.GetSellingPoolAddress()
 				sellingReserve := k.bankKeeper.GetBalance(ctx, sellingPoolAcc, auction.GetSellingCoin().Denom)
 				if !sellingReserve.Equal(auction.GetSellingCoin()) {
-					msg += fmt.Sprintf("\tselling reserve account %s\n"+
+					msg += fmt.Sprintf("\tselling reserve balance %s\n"+
 						"\tselling pool reserve: %v\n"+
 						"\ttotal selling coin: %v",
 						sellingPoolAcc.String(), sellingReserve, auction.GetSellingCoin())
@@ -75,7 +79,7 @@ func PayingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 			payingPoolAcc := auction.GetPayingPoolAddress()
 			payingReserve := k.bankKeeper.GetBalance(ctx, payingPoolAcc, auction.GetPayingCoinDenom())
 			if !payingReserve.Equal(totalBidCoin) {
-				msg += fmt.Sprintf("\tpaying reserve account %s\n"+
+				msg += fmt.Sprintf("\tpaying reserve balance %s\n"+
 					"\tpaying pool reserve: %v\n"+
 					"\ttotal bid coin: %v",
 					payingPoolAcc.String(), payingReserve, totalBidCoin)
@@ -108,7 +112,7 @@ func VestingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 			vestingPoolAcc := auction.GetVestingPoolAddress()
 			vestingReserve := k.bankKeeper.GetBalance(ctx, vestingPoolAcc, auction.GetPayingCoinDenom())
 			if !vestingReserve.Equal(totalPayingCoin) {
-				msg += fmt.Sprintf("\tvesting reserve account %s\n"+
+				msg += fmt.Sprintf("\tvesting reserve balance %s\n"+
 					"\tvesting pool reserve: %v\n"+
 					"\ttotal paying coin: %v",
 					vestingPoolAcc.String(), vestingReserve, totalPayingCoin)
