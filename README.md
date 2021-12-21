@@ -6,56 +6,34 @@ The fundraising module is built using Cosmos SDK and Tendermint and created with
 
 ⚠ **The fundraising module PoC is in active development - see "main" branch for the latest version** ⚠
 
-## Get started
+## Dependencies
 
-```
-starport chain serve
-```
+If you haven't already, install Golang by following the [official docs](https://golang.org/doc/install). Make sure that your `GOPATH` and `GOBIN` environment variables are properly set up.
 
-`serve` command installs dependencies, builds, initializes, and starts your blockchain in development.
+Requirement | Notes
+----------- | -----------------
+Go version  | Go1.16 or higher
+Cosmos SDK  | v0.44.0 or higher
 
-### Configure
+## Installation
 
-Your blockchain in development can be configured with `config.yml`. To learn more, see the [Starport docs](https://docs.starport.network).
-
-### Launch
-
-To launch your blockchain live on multiple nodes, use `starport network` commands. Learn more about [Starport Network](https://github.com/tendermint/spn).
-
-### Web Frontend
-
-Starport has scaffolded a Vue.js-based web app in the `vue` directory. Run the following commands to install dependencies and start the app:
-
-```
-cd vue
-npm install
-npm run serve
+```bash
+# Use git to clone the source code and install `fundraisingd`
+git clone https://github.com/tendermint/fundraising.git
+cd fundraising
+make install
 ```
 
-The frontend app is built using the `@starport/vue` and `@starport/vuex` packages. For details, see the [monorepo for Starport front-end development](https://github.com/tendermint/vue).
+## Getting Started
 
-## Release
-To release a new version of your blockchain, create and push a new tag with `v` prefix. A new draft release with the configured targets will be created.
+To get started to the project, visit the [TECHNICAL-SETUP.md](./TECHNICAL-SETUP.md) docs.
 
-```
-git tag v0.1
-git push origin v0.1
-```
+## Documentation
 
-After a draft release is created, make your final changes from the release page and publish it.
+The fundraising module documentation is available in [docs](./docs) folder and technical specification is available in [specs](https://github.com/tendermint/fundraising/blob/main/x/fundraising/spec/README.md) folder. 
 
-### Install
-To install the latest version of your blockchain node's binary, execute the following command on your machine:
+These are some of the documents that help you to quickly get you on board with the fundraising module.
 
-```
-curl https://get.starport.network/tendermint/fundraising@latest! | sudo bash
-```
-`tendermint/fundraising` should match the `username` and `repo_name` of the Github repository to which the source code was pushed. Learn more about [the install process](https://github.com/allinbits/starport-installer).
+## Contributing
 
-## Learn more
-
-- [Starport](https://github.com/tendermint/starport)
-- [Starport Docs](https://docs.starport.network)
-- [Cosmos SDK documentation](https://docs.cosmos.network)
-- [Cosmos SDK Tutorials](https://tutorials.cosmos.network)
-- [Discord](https://discord.gg/cosmosnetwork)
+We welcome contributions from everyone. The [main](https://github.com/tendermint/fundraising/tree/main) branch contains the development version of the code. You can branch of from main and create a pull request, or maintain your own fork and submit a cross-repository pull request. If you're not sure where to start check out [CONTRIBUTING.md](./CONTRIBUTING.md) for our guidelines & policies for how we develop fundraising module. Thank you to all those who have contributed to fundraising module!
