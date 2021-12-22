@@ -28,6 +28,20 @@ func (suite *KeeperTestSuite) TestSellingPoolReserveAmountInvariant() {
 
 	_, broken = keeper.SellingPoolReserveAmountInvariant(k)(ctx)
 	suite.Require().False(broken)
+
+	// in reality, although it is not possible for an exploiter to have the same token denom
+	// but it is safe to test the case anyway
+	exploiterAcc := suite.addrs[2]
+	sendingCoins := sdk.NewCoins(
+		sdk.NewInt64Coin(denom1, 500_000_000),
+		sdk.NewInt64Coin(denom2, 500_000_000),
+		sdk.NewInt64Coin(denom3, 500_000_000),
+		sdk.NewInt64Coin(denom4, 500_000_000),
+	)
+	suite.app.BankKeeper.SendCoins(ctx, exploiterAcc, auction.GetSellingPoolAddress(), sendingCoins)
+
+	_, broken = keeper.SellingPoolReserveAmountInvariant(k)(ctx)
+	suite.Require().False(broken)
 }
 
 func (suite *KeeperTestSuite) TestPayingPoolReserveAmountInvariant() {
@@ -52,6 +66,20 @@ func (suite *KeeperTestSuite) TestPayingPoolReserveAmountInvariant() {
 	}
 
 	_, broken := keeper.PayingPoolReserveAmountInvariant(k)(ctx)
+	suite.Require().False(broken)
+
+	// in reality, although it is not possible for an exploiter to have the same token denom
+	// but it is safe to test the case anyway
+	exploiterAcc := suite.addrs[2]
+	sendingCoins := sdk.NewCoins(
+		sdk.NewInt64Coin(denom1, 500_000_000),
+		sdk.NewInt64Coin(denom2, 500_000_000),
+		sdk.NewInt64Coin(denom3, 500_000_000),
+		sdk.NewInt64Coin(denom4, 500_000_000),
+	)
+	suite.app.BankKeeper.SendCoins(ctx, exploiterAcc, auction.GetPayingPoolAddress(), sendingCoins)
+
+	_, broken = keeper.PayingPoolReserveAmountInvariant(k)(ctx)
 	suite.Require().False(broken)
 }
 
@@ -85,5 +113,19 @@ func (suite *KeeperTestSuite) TestVestingPoolReserveAmountInvariant() {
 	fundraising.EndBlocker(ctx, k)
 
 	_, broken := keeper.VestingPoolReserveAmountInvariant(k)(ctx)
+	suite.Require().False(broken)
+
+	// in reality, although it is not possible for an exploiter to have the same token denom
+	// but it is safe to test the case anyway
+	exploiterAcc := suite.addrs[2]
+	sendingCoins := sdk.NewCoins(
+		sdk.NewInt64Coin(denom1, 500_000_000),
+		sdk.NewInt64Coin(denom2, 500_000_000),
+		sdk.NewInt64Coin(denom3, 500_000_000),
+		sdk.NewInt64Coin(denom4, 500_000_000),
+	)
+	suite.app.BankKeeper.SendCoins(ctx, exploiterAcc, auction.GetVestingPoolAddress(), sendingCoins)
+
+	_, broken = keeper.PayingPoolReserveAmountInvariant(k)(ctx)
 	suite.Require().False(broken)
 }
