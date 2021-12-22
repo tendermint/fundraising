@@ -29,8 +29,12 @@ func (k Keeper) SetVestingSchedules(ctx sdk.Context, auction types.AuctionI) err
 		k.SetAuction(ctx, auction)
 
 	} else {
+		if err := k.bankKeeper.SendCoins(ctx, payingReserveAcc, vestingReserveAcc, reserveCoins); err != nil {
+			return err
+		}
+
 		for _, vs := range auction.GetVestingSchedules() {
-			payingAmt := reserveBalance.Amount.ToDec().Mul(vs.Weight).TruncateInt()
+			payingAmt := reserveBalance.Amount.ToDec().MulTruncate(vs.Weight).TruncateInt()
 
 			k.SetVestingQueue(ctx, auction.GetId(), vs.ReleaseTime, types.VestingQueue{
 				AuctionId:   auction.GetId(),
@@ -39,10 +43,6 @@ func (k Keeper) SetVestingSchedules(ctx sdk.Context, auction types.AuctionI) err
 				ReleaseTime: vs.ReleaseTime,
 				Vested:      false,
 			})
-		}
-
-		if err := k.bankKeeper.SendCoins(ctx, payingReserveAcc, vestingReserveAcc, reserveCoins); err != nil {
-			return err
 		}
 
 		if err := auction.SetStatus(types.AuctionStatusVesting); err != nil {

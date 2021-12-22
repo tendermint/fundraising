@@ -129,14 +129,12 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "coin denom must match with the paying coin denom")
 	}
 
-	bidAmt := msg.Coin.Amount.ToDec().Quo(msg.Price).TruncateInt()
-	receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidAmt)
-	balanceAmt := k.bankKeeper.GetBalance(ctx, msg.GetBidder(), auction.GetPayingCoinDenom()).Amount
-
-	// the bidder must have greater than or equal to the bid amount
-	if balanceAmt.Sub(bidAmt).IsNegative() {
-		return sdkerrors.ErrInsufficientFunds
+	if err := k.ReservePayingCoin(ctx, auction.GetId(), msg.GetBidder(), msg.Coin); err != nil {
+		return err
 	}
+
+	receiveAmt := msg.Coin.Amount.ToDec().QuoTruncate(msg.Price).TruncateInt()
+	receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, receiveAmt)
 
 	// the bidder cannot bid more than the remaining coin
 	remaining := auction.GetRemainingCoin().Sub(receiveCoin)
@@ -154,10 +152,6 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 		}
 
 		k.SetAuction(ctx, auction)
-
-		if err := k.ReservePayingCoin(ctx, auction.GetId(), msg.GetBidder(), msg.Coin); err != nil {
-			return err
-		}
 
 	} else {
 		// TODO: implement English auction type

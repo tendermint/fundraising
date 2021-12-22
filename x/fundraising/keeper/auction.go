@@ -157,8 +157,8 @@ func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) e
 
 	// distribute coins to all bidders from the selling reserve module account
 	for _, bid := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
-		bidAmt := bid.Coin.Amount.ToDec().Quo(bid.Price).TruncateInt()
-		receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidAmt)
+		receiveAmt := bid.Coin.Amount.ToDec().QuoTruncate(bid.Price).TruncateInt()
+		receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, receiveAmt)
 
 		bidderAcc, err := sdk.AccAddressFromBech32(bid.GetBidder())
 		if err != nil {
@@ -190,7 +190,7 @@ func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) e
 func (k Keeper) DistributePayingCoin(ctx sdk.Context, auction types.AuctionI) error {
 	for _, vq := range k.GetVestingQueuesByAuctionId(ctx, auction.GetId()) {
 		if types.IsVested(vq.GetReleaseTime(), ctx.BlockTime()) {
-			vestingReserveAcc := types.VestingReserveAcc(auction.GetId())
+			vestingReserveAcc := auction.GetVestingPoolAddress()
 
 			if err := k.bankKeeper.SendCoins(ctx, vestingReserveAcc, auction.GetAuctioneer(), sdk.NewCoins(vq.PayingCoin)); err != nil {
 				return sdkerrors.Wrap(err, "failed to release paying coin to the auctioneer")
