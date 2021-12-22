@@ -106,12 +106,13 @@ func (suite *ModuleTestSuite) TestEndBlockerVestingStatus() {
 		totalBidCoin = totalBidCoin.Add(bid.Coin)
 	}
 
+	// set the current block time a day before so that it gets finished
 	suite.ctx = suite.ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, -1))
 	fundraising.EndBlocker(suite.ctx, suite.keeper)
 
 	vestingReserve := suite.app.BankKeeper.GetBalance(
 		suite.ctx,
-		types.VestingReserveAcc(auction.GetId()),
+		auction.GetVestingPoolAddress(),
 		auction.GetPayingCoinDenom(),
 	)
 	suite.Require().Equal(totalBidCoin, vestingReserve)
@@ -123,6 +124,8 @@ func (suite *ModuleTestSuite) TestEndBlockerVestingStatus() {
 	suite.Require().Len(queues, 4)
 	suite.Require().True(queues[0].Vested)
 	suite.Require().True(queues[1].Vested)
+	suite.Require().False(queues[2].Vested)
+	suite.Require().False(queues[3].Vested)
 
 	// auctioneer should have received two vested amounts
 	auctioneerBalance := suite.app.BankKeeper.GetBalance(
@@ -130,5 +133,8 @@ func (suite *ModuleTestSuite) TestEndBlockerVestingStatus() {
 		suite.addrs[5],
 		auction.GetPayingCoinDenom(),
 	)
-	suite.Require().Equal(totalBidCoin.Amount, auctioneerBalance.Amount.Sub(initialBalances.AmountOf(denom4)))
+	suite.Require().Equal(
+		totalBidCoin.Amount.Quo(sdk.NewInt(2)),
+		auctioneerBalance.Amount.Sub(initialBalances.AmountOf(denom4)),
+	)
 }

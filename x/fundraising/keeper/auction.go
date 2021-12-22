@@ -191,10 +191,9 @@ func (k Keeper) DistributePayingCoin(ctx sdk.Context, auction types.AuctionI) er
 	for _, vq := range k.GetVestingQueuesByAuctionId(ctx, auction.GetId()) {
 		if types.IsVested(vq.GetReleaseTime(), ctx.BlockTime()) {
 			vestingReserveAcc := types.VestingReserveAcc(auction.GetId())
-			reserveBalance := k.bankKeeper.GetBalance(ctx, vestingReserveAcc, auction.GetPayingCoinDenom())
 
-			if err := k.bankKeeper.SendCoins(ctx, vestingReserveAcc, auction.GetAuctioneer(), sdk.NewCoins(reserveBalance)); err != nil {
-				return err
+			if err := k.bankKeeper.SendCoins(ctx, vestingReserveAcc, auction.GetAuctioneer(), sdk.NewCoins(vq.PayingCoin)); err != nil {
+				return sdkerrors.Wrap(err, "failed to release paying coin to the auctioneer")
 			}
 
 			vq.Vested = true
