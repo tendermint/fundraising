@@ -38,7 +38,8 @@ func (suite *KeeperTestSuite) TestSellingPoolReserveAmountInvariant() {
 		sdk.NewInt64Coin(denom3, 500_000_000),
 		sdk.NewInt64Coin(denom4, 500_000_000),
 	)
-	suite.app.BankKeeper.SendCoins(ctx, exploiterAcc, auction.GetSellingPoolAddress(), sendingCoins)
+	err = suite.app.BankKeeper.SendCoins(ctx, exploiterAcc, auction.GetSellingPoolAddress(), sendingCoins)
+	suite.Require().NoError(err)
 
 	_, broken = keeper.SellingPoolReserveAmountInvariant(k)(ctx)
 	suite.Require().False(broken)
@@ -77,7 +78,8 @@ func (suite *KeeperTestSuite) TestPayingPoolReserveAmountInvariant() {
 		sdk.NewInt64Coin(denom3, 500_000_000),
 		sdk.NewInt64Coin(denom4, 500_000_000),
 	)
-	suite.app.BankKeeper.SendCoins(ctx, exploiterAcc, auction.GetPayingPoolAddress(), sendingCoins)
+	err = suite.app.BankKeeper.SendCoins(ctx, exploiterAcc, auction.GetPayingPoolAddress(), sendingCoins)
+	suite.Require().NoError(err)
 
 	_, broken = keeper.PayingPoolReserveAmountInvariant(k)(ctx)
 	suite.Require().False(broken)
@@ -124,7 +126,8 @@ func (suite *KeeperTestSuite) TestVestingPoolReserveAmountInvariant() {
 		sdk.NewInt64Coin(denom3, 500_000_000),
 		sdk.NewInt64Coin(denom4, 500_000_000),
 	)
-	suite.app.BankKeeper.SendCoins(ctx, exploiterAcc, auction.GetVestingPoolAddress(), sendingCoins)
+	err = suite.app.BankKeeper.SendCoins(ctx, exploiterAcc, auction.GetVestingPoolAddress(), sendingCoins)
+	suite.Require().NoError(err)
 
 	_, broken = keeper.PayingPoolReserveAmountInvariant(k)(ctx)
 	suite.Require().False(broken)
