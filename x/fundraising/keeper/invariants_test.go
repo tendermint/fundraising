@@ -129,6 +129,6 @@ func (suite *KeeperTestSuite) TestVestingPoolReserveAmountInvariant() {
 	err = suite.app.BankKeeper.SendCoins(ctx, exploiterAcc, auction.GetVestingPoolAddress(), sendingCoins)
 	suite.Require().NoError(err)
 
-	_, broken = keeper.PayingPoolReserveAmountInvariant(k)(ctx)
+	_, broken = keeper.VestingPoolReserveAmountInvariant(k)(ctx)
 	suite.Require().False(broken)
 }
