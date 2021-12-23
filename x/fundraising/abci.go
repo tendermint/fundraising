@@ -35,6 +35,8 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		case types.AuctionStatusStarted:
 			if auction.GetType() == types.AuctionTypeFixedPrice {
 				if types.IsAuctionFinished(auction.GetEndTimes()[0], ctx.BlockTime()) {
+					ctx, writeCache := ctx.CacheContext()
+
 					if err := k.DistributeSellingCoin(ctx, auction); err != nil {
 						panic(err)
 					}
@@ -42,6 +44,8 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 					if err := k.SetVestingSchedules(ctx, auction); err != nil {
 						panic(err)
 					}
+
+					writeCache()
 				}
 			}
 
