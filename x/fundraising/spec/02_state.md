@@ -64,21 +64,21 @@ A base auction is the simplest and most common auction type that just stores all
 // for basic auction functionality. Any custom auction type should extend this
 // type for additional functionality (e.g. english auction, fixed price auction).
 type BaseAuction struct {
-	Id                 uint64            // id of the auction
-	Type               AuctionType       // supporting auction types are english and fixed price
-	Auctioneer         string            // the account that is in charge of the action
+	Id                    uint64            // id of the auction
+	Type                  AuctionType       // supporting auction types are english and fixed price
+	Auctioneer            string            // the account that is in charge of the action
 	SellingReserveAddress string            // an escrow account to collect selling tokens for the auction
 	PayingReserveAddress  string            // an escrow account to collect paying tokens for the auction
-	StartPrice         sdk.Dec           // starting price of the auction
-	SellingCoin        sdk.Coin          // selling coin for the auction
-	PayingCoinDenom    string            // the paying coin denom that bidders use to bid with
+	StartPrice            sdk.Dec           // starting price of the auction
+	SellingCoin           sdk.Coin          // selling coin for the auction
+	PayingCoinDenom       string            // the paying coin denom that bidders use to bid with
 	VestingReserveAddress string            // the vesting account that releases the paying amount of coins based on the schedules
-	VestingSchedules   []VestingSchedule // vesting schedules for the auction
-	WinningPrice       sdk.Dec           // the winning price of the auction
-	RemainingCoin      sdk.Coin          // the remaining amount of coin to sell
-	StartTime          time.Time         // start time of the auction
-	EndTime            []time.Time       // end times of the auction since extended round(s) can occur
-	Status             AuctionStatus     // the auction status
+	VestingSchedules      []VestingSchedule // vesting schedules for the auction
+	WinningPrice          sdk.Dec           // the winning price of the auction
+	RemainingCoin         sdk.Coin          // the remaining amount of coin to sell
+	StartTime             time.Time         // start time of the auction
+	EndTime               []time.Time       // end times of the auction since extended round(s) can occur
+	Status                AuctionStatus     // the auction status
 }
 ```
 
