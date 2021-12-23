@@ -92,9 +92,10 @@ func (suite *KeeperTestSuite) TestMsgCancelAuction() {
 		auction.GetId(),
 	))
 	suite.Require().NoError(err)
-	suite.Require().Equal(
-		sdk.NewCoin(auction.GetSellingCoin().Denom, sdk.ZeroInt()),
-		suite.app.BankKeeper.GetBalance(suite.ctx, auction.GetSellingReserveAddress(), auction.GetSellingCoin().Denom),
+	suite.Require().True(
+		suite.app.BankKeeper.GetBalance(
+			suite.ctx, auction.GetSellingReserveAddress(),
+			auction.GetSellingCoin().Denom).IsZero(),
 	)
 }
 

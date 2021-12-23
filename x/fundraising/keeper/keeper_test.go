@@ -202,6 +202,36 @@ func (suite *KeeperTestSuite) PlaceBid(ctx sdk.Context, bid types.Bid) {
 	suite.Require().NoError(err)
 }
 
+// PlaceBidWithCustom is a convenient method to bid with custom fields and
+// reserve paying coin to the paying reserve account.
+func (suite *KeeperTestSuite) PlaceBidWithCustom(
+	ctx sdk.Context,
+	auctionId uint64,
+	sequence uint64,
+	bidder string,
+	price sdk.Dec,
+	coin sdk.Coin,
+) {
+	bidderAcc, err := sdk.AccAddressFromBech32(bidder)
+	suite.Require().NoError(err)
+
+	suite.keeper.SetBid(suite.ctx, auctionId, sequence, bidderAcc, types.Bid{
+		AuctionId: auctionId,
+		Sequence:  sequence,
+		Bidder:    bidderAcc.String(),
+		Price:     price,
+		Coin:      coin,
+	})
+
+	err = suite.keeper.ReservePayingCoin(
+		suite.ctx,
+		auctionId,
+		bidderAcc,
+		coin,
+	)
+	suite.Require().NoError(err)
+}
+
 // coinEq is a convenient method to test expected and got values of sdk.Coin.
 func coinEq(exp, got sdk.Coin) (bool, string, string, string) {
 	return exp.IsEqual(got), "expected:\t%v\ngot:\t\t%v", exp.String(), got.String()
