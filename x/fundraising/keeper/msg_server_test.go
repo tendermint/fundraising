@@ -58,40 +58,44 @@ func (suite *KeeperTestSuite) TestMsgCancelAuction() {
 	))
 	suite.Require().ErrorIs(err, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", uint64(1)))
 
-	// Create a fixed price auction that is started status
-	suite.keeper.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[1])
+	// create a fixed price auction that is started status
+	suite.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[1])
 
 	auction, found := suite.keeper.GetAuction(suite.ctx, uint64(2))
 	suite.Require().True(found)
 	suite.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	// Try to cancel with an incorrect auctioneer
+	// try to cancel with an incorrect auctioneer
 	_, err = suite.srv.CancelAuction(ctx, types.NewMsgCancelAuction(
 		suite.addrs[0].String(),
 		uint64(2),
 	))
 	suite.Require().ErrorIs(err, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "failed to verify ownership of the auction"))
 
-	// Try to cancel with the auction that is already started
+	// try to cancel with the auction that is already started
 	_, err = suite.srv.CancelAuction(ctx, types.NewMsgCancelAuction(
 		auction.GetAuctioneer().String(),
 		auction.GetId(),
 	))
 	suite.Require().ErrorIs(err, sdkerrors.Wrap(types.ErrInvalidAuctionStatus, "auction cannot be canceled due to current status"))
 
-	// Create another fixed price auction that is stand by status
-	suite.keeper.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[0])
+	// create another fixed price auction that is stand by status
+	suite.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[0])
 
 	auction, found = suite.keeper.GetAuction(suite.ctx, uint64(1))
 	suite.Require().True(found)
 	suite.Require().Equal(types.AuctionStatusStandBy, auction.GetStatus())
 
-	// Success
+	// success and the selling coin must be released to the auctioneer
 	_, err = suite.srv.CancelAuction(ctx, types.NewMsgCancelAuction(
 		auction.GetAuctioneer().String(),
 		auction.GetId(),
 	))
 	suite.Require().NoError(err)
+	suite.Require().Equal(
+		sdk.NewCoin(auction.GetSellingCoin().Denom, sdk.ZeroInt()),
+		suite.app.BankKeeper.GetBalance(suite.ctx, auction.GetSellingReserveAddress(), auction.GetSellingCoin().Denom),
+	)
 }
 
 func (suite *KeeperTestSuite) TestMsgPlaceBid() {
@@ -99,7 +103,7 @@ func (suite *KeeperTestSuite) TestMsgPlaceBid() {
 
 	// Create a fixed price auction that should start right away
 	auction := suite.sampleFixedPriceAuctions[1]
-	suite.keeper.SetAuction(suite.ctx, auction)
+	suite.SetAuction(suite.ctx, auction)
 
 	for _, tc := range []struct {
 		name string

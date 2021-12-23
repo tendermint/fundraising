@@ -312,6 +312,13 @@ func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) erro
 		return sdkerrors.Wrap(types.ErrInvalidAuctionStatus, "auction cannot be canceled due to current status")
 	}
 
+	sellingReserveAcc := auction.GetSellingReserveAddress()
+	reserveBalance := k.bankKeeper.GetBalance(ctx, sellingReserveAcc, auction.GetSellingCoin().Denom)
+
+	if err := k.bankKeeper.SendCoins(ctx, sellingReserveAcc, auction.GetAuctioneer(), sdk.NewCoins(reserveBalance)); err != nil {
+		return sdkerrors.Wrap(err, "failed to release selling coin")
+	}
+
 	if err := auction.SetStatus(types.AuctionStatusCancelled); err != nil {
 		return err
 	}

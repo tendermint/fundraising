@@ -174,6 +174,34 @@ func (suite *ModuleTestSuite) SetupTest() {
 	}
 }
 
+// SetAuction is a convenient method to set an auction and reserve selling coin to the selling reserve account.
+func (suite *ModuleTestSuite) SetAuction(ctx sdk.Context, auction types.AuctionI) {
+	suite.keeper.SetAuction(suite.ctx, auction)
+	err := suite.keeper.ReserveSellingCoin(
+		ctx,
+		auction.GetId(),
+		auction.GetAuctioneer(),
+		auction.GetSellingCoin(),
+	)
+	suite.Require().NoError(err)
+}
+
+// PlaceBid is a convenient method to bid and reserve paying coin to the paying reserve account.
+func (suite *ModuleTestSuite) PlaceBid(ctx sdk.Context, bid types.Bid) {
+	bidderAcc, err := sdk.AccAddressFromBech32(bid.Bidder)
+	suite.Require().NoError(err)
+
+	suite.keeper.SetBid(suite.ctx, bid.AuctionId, bid.Sequence, bidderAcc, bid)
+
+	err = suite.keeper.ReservePayingCoin(
+		suite.ctx,
+		bid.GetAuctionId(),
+		bidderAcc,
+		bid.Coin,
+	)
+	suite.Require().NoError(err)
+}
+
 // coinEq is a convenient method to test expected and got values of sdk.Coin.
 func coinEq(exp, got sdk.Coin) (bool, string, string, string) {
 	return exp.IsEqual(got), "expected:\t%v\ngot:\t\t%v", exp.String(), got.String()

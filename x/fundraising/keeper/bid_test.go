@@ -1,8 +1,6 @@
 package keeper_test
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	_ "github.com/stretchr/testify/suite"
 )
 
@@ -14,9 +12,7 @@ func (suite *KeeperTestSuite) TestBidIterators() {
 	suite.Require().True(found)
 
 	for _, bid := range suite.sampleFixedPriceBids {
-		bidderAcc, err := sdk.AccAddressFromBech32(bid.Bidder)
-		suite.Require().NoError(err)
-		suite.keeper.SetBid(suite.ctx, bid.AuctionId, bid.Sequence, bidderAcc, bid)
+		suite.PlaceBid(suite.ctx, bid)
 	}
 
 	bids := suite.keeper.GetBids(suite.ctx)
