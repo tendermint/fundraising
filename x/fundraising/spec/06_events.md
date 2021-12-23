@@ -18,9 +18,9 @@ The `fundraising` module emits the following events:
 | -------------------------- | --------------------- | -------------------------- |
 | create_fixed_price_auction | auction_id            | {auctionId}                |
 | create_fixed_price_auction | auctioneer_address    | {auctioneerAddress}        |
-| create_fixed_price_auction | selling_pool_address  | {sellingPoolAddress}       |
-| create_fixed_price_auction | paying_pool_address   | {payingPoolAddress}        |
-| create_fixed_price_auction | vesting_pool_address  | {vestingPoolAddress}       |
+| create_fixed_price_auction | selling_pool_address  | {SellingReserveAddress}       |
+| create_fixed_price_auction | paying_pool_address   | {PayingReserveAddress}        |
+| create_fixed_price_auction | vesting_pool_address  | {VestingReserveAddress}       |
 | create_fixed_price_auction | start_price           | {startPrice}               |
 | create_fixed_price_auction | selling_coin          | {sellingCoin}              |
 | create_fixed_price_auction | vesting_schedules     | {vestingSchedules}         |

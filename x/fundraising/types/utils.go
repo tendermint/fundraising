@@ -19,7 +19,7 @@ func ParseTime(s string) time.Time {
 }
 
 // DeriveAddress derives an address with the given address length type, module name, and
-// address derivation name. It is used to derive private plan farming pool address, and staking reserve address.
+// address derivation name. It is used to derive reserve account addresses for selling, paying, and vesting.
 func DeriveAddress(addressType AddressType, moduleName, name string) sdk.AccAddress {
 	switch addressType {
 	case AddressType32Bytes:

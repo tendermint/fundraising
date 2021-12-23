@@ -11,8 +11,8 @@ import (
 // SetVestingSchedules stores vesting queues based on the vesting schedules of the auction and
 // sets status to vesting.
 func (k Keeper) SetVestingSchedules(ctx sdk.Context, auction types.AuctionI) error {
-	payingReserveAcc := auction.GetPayingPoolAddress()
-	vestingReserveAcc := auction.GetVestingPoolAddress()
+	payingReserveAcc := auction.GetPayingReserveAddress()
+	vestingReserveAcc := auction.GetVestingReserveAddress()
 
 	reserveBalance := k.bankKeeper.GetBalance(ctx, payingReserveAcc, auction.GetPayingCoinDenom())
 	reserveCoins := sdk.NewCoins(reserveBalance)

@@ -190,7 +190,7 @@ func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) e
 func (k Keeper) DistributePayingCoin(ctx sdk.Context, auction types.AuctionI) error {
 	for _, vq := range k.GetVestingQueuesByAuctionId(ctx, auction.GetId()) {
 		if types.IsVested(vq.GetReleaseTime(), ctx.BlockTime()) {
-			vestingReserveAcc := auction.GetVestingPoolAddress()
+			vestingReserveAcc := auction.GetVestingReserveAddress()
 
 			if err := k.bankKeeper.SendCoins(ctx, vestingReserveAcc, auction.GetAuctioneer(), sdk.NewCoins(vq.PayingCoin)); err != nil {
 				return sdkerrors.Wrap(err, "failed to release paying coin to the auctioneer")
@@ -276,9 +276,9 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 			sdk.NewAttribute(types.AttributeKeyAuctionId, strconv.FormatUint(nextId, 10)),
 			sdk.NewAttribute(types.AttributeKeyAuctioneerAddress, auctioneerAcc.String()),
 			sdk.NewAttribute(types.AttributeKeyStartPrice, msg.StartPrice.String()),
-			sdk.NewAttribute(types.AttributeKeySellingPoolAddress, sellingReserveAcc.String()),
-			sdk.NewAttribute(types.AttributeKeyPayingPoolAddress, payingReserveAcc.String()),
-			sdk.NewAttribute(types.AttributeKeyVestingPoolAddress, vestingReserveAcc.String()),
+			sdk.NewAttribute(types.AttributeKeySellingReserveAddress, sellingReserveAcc.String()),
+			sdk.NewAttribute(types.AttributeKeyPayingReserveAddress, payingReserveAcc.String()),
+			sdk.NewAttribute(types.AttributeKeyVestingReserveAddress, vestingReserveAcc.String()),
 			sdk.NewAttribute(types.AttributeKeySellingCoin, msg.SellingCoin.String()),
 			sdk.NewAttribute(types.AttributeKeyPayingCoinDenom, msg.PayingCoinDenom),
 			sdk.NewAttribute(types.AttributeKeyStartTime, msg.StartTime.String()),

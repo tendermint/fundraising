@@ -23,11 +23,11 @@ type AuctionI interface {
 	GetAuctioneer() string
 	SetAuctioneer(string) error
 
-	GetSellingPoolAddress() string
-	SetSellingPoolAddress(string) error
+	GetSellingReserveAddress() string
+	SetSellingReserveAddress(string) error
 
-	GetPayingPoolAddress() string
-	SetPayingPoolAddress(string) error
+	GetPayingReserveAddress() string
+	SetPayingReserveAddress(string) error
 
 	GetStartPrice() sdk.Dec
 	SetStartPrice(sdk.Dec) error
@@ -38,8 +38,8 @@ type AuctionI interface {
 	GetPayingCoinDenom() string
 	SetPayingCoinDenom(string) error
 
-	GetVestingPoolAddress() string
-	SetVestingPoolAddress(string) error
+	GetVestingReserveAddress() string
+	SetVestingReserveAddress(string) error
 
 	GetVestingSchedules() []VestingSchedule
 	SetVestingSchedules([]VestingSchedule) error
@@ -67,12 +67,12 @@ type BaseAuction struct {
 	Id                 uint64            // id of the auction
 	Type               AuctionType       // supporting auction types are english and fixed price
 	Auctioneer         string            // the account that is in charge of the action
-	SellingPoolAddress string            // an escrow account to collect selling tokens for the auction
-	PayingPoolAddress  string            // an escrow account to collect paying tokens for the auction
+	SellingReserveAddress string            // an escrow account to collect selling tokens for the auction
+	PayingReserveAddress  string            // an escrow account to collect paying tokens for the auction
 	StartPrice         sdk.Dec           // starting price of the auction
 	SellingCoin        sdk.Coin          // selling coin for the auction
 	PayingCoinDenom    string            // the paying coin denom that bidders use to bid with
-	VestingPoolAddress string            // the vesting account that releases the paying amount of coins based on the schedules
+	VestingReserveAddress string            // the vesting account that releases the paying amount of coins based on the schedules
 	VestingSchedules   []VestingSchedule // vesting schedules for the auction
 	WinningPrice       sdk.Dec           // the winning price of the auction
 	RemainingCoin      sdk.Coin          // the remaining amount of coin to sell

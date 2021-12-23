@@ -112,7 +112,7 @@ func (suite *ModuleTestSuite) TestEndBlockerVestingStatus() {
 
 	vestingReserve := suite.app.BankKeeper.GetBalance(
 		suite.ctx,
-		auction.GetVestingPoolAddress(),
+		auction.GetVestingReserveAddress(),
 		auction.GetPayingCoinDenom(),
 	)
 	suite.Require().Equal(totalBidCoin, vestingReserve)
