@@ -55,7 +55,7 @@ func TestGenesisState_Validate(t *testing.T) {
 		Auctioneer:  validAcc.String(),
 		PayingCoin:  sdk.NewInt64Coin("denom2", 100_000_000),
 		ReleaseTime: types.ParseTime("2022-12-20T00:00:00Z"),
-		Vested:      false,
+		Released:    false,
 	}
 
 	for _, tc := range []struct {

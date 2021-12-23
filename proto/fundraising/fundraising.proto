@@ -212,8 +212,8 @@ message VestingQueue {
   google.protobuf.Timestamp release_time = 4
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
-  // vested specifies the status of distribution
-  bool vested = 5;
+  // released specifies the status of distribution
+  bool released = 5;
 }
 
 // Bid defines a standard bid for an auction.

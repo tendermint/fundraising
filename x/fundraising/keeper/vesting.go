@@ -41,7 +41,7 @@ func (k Keeper) SetVestingSchedules(ctx sdk.Context, auction types.AuctionI) err
 				Auctioneer:  auction.GetAuctioneer().String(),
 				PayingCoin:  sdk.NewCoin(auction.GetPayingCoinDenom(), payingAmt),
 				ReleaseTime: vs.ReleaseTime,
-				Vested:      false,
+				Released:    false,
 			})
 		}
 

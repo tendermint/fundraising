@@ -97,7 +97,7 @@ type VestingQueue struct {
 	Auctioneer  string    // account that creates the auction
 	PayingCoin  sdk.Coin  // paying amount of coin 
 	ReleaseTime time.Time // release time of the vesting coin
-	Vested      bool      // status of distribution
+	Released      bool    // status of distribution
 }
 ```
 

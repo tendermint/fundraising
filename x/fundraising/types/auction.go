@@ -382,7 +382,7 @@ func IsAuctionFinished(endTime time.Time, t time.Time) bool {
 	return !endTime.Before(t)
 }
 
-// IsVested returns true is the release time is equal or ahead of the given time t.
-func IsVested(releaseTime time.Time, t time.Time) bool {
+// IsReleased returns true is the release time is equal or ahead of the given time t.
+func IsReleased(releaseTime time.Time, t time.Time) bool {
 	return !releaseTime.After(t)
 }

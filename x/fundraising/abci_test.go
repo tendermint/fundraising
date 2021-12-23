@@ -99,12 +99,12 @@ func (suite *ModuleTestSuite) TestEndBlockerVestingStatus() {
 
 	queues := suite.keeper.GetVestingQueuesByAuctionId(suite.ctx, auction.GetId())
 	suite.Require().Len(queues, 4)
-	suite.Require().True(queues[0].Vested)
-	suite.Require().True(queues[1].Vested)
-	suite.Require().False(queues[2].Vested)
-	suite.Require().False(queues[3].Vested)
+	suite.Require().True(queues[0].Released)
+	suite.Require().True(queues[1].Released)
+	suite.Require().False(queues[2].Released)
+	suite.Require().False(queues[3].Released)
 
-	// auctioneer should have received two vested amounts
+	// auctioneer should have received two released amounts
 	auctioneerBalance := suite.app.BankKeeper.GetBalance(
 		suite.ctx,
 		suite.addrs[5],

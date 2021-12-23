@@ -44,7 +44,7 @@ func TestIsAuctionFinished(t *testing.T) {
 	}
 }
 
-func TestIsVested(t *testing.T) {
+func TestIsReleased(t *testing.T) {
 	now := types.ParseTime("2021-12-10T00:00:00Z")
 
 	for _, tc := range []struct {
@@ -58,6 +58,6 @@ func TestIsVested(t *testing.T) {
 		{"2021-12-10T00:00:01Z", false},
 		{"2021-12-30T00:00:00Z", false},
 	} {
-		require.Equal(t, tc.active, types.IsVested(types.ParseTime(tc.releaseTimeStr), now))
+		require.Equal(t, tc.active, types.IsReleased(types.ParseTime(tc.releaseTimeStr), now))
 	}
 }

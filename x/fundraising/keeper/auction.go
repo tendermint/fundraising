@@ -146,7 +146,7 @@ func (k Keeper) UnmarshalAuction(bz []byte) (auction types.AuctionI, err error) 
 	return auction, k.cdc.UnmarshalInterface(bz, &auction)
 }
 
-// DistributeSellingCoin releases designated selling coin from the selling reserve module account.
+// DistributeSellingCoin releases designated selling coin from the selling reserve account.
 func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) error {
 	sellingReserveAcc := types.SellingReserveAcc(auction.GetId())
 
@@ -155,7 +155,7 @@ func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) e
 
 	totalBidCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, sdk.ZeroInt())
 
-	// distribute coins to all bidders from the selling reserve module account
+	// distribute coins to all bidders from the selling reserve account
 	for _, bid := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
 		receiveAmt := bid.Coin.Amount.ToDec().QuoTruncate(bid.Price).TruncateInt()
 		receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, receiveAmt)
@@ -186,17 +186,17 @@ func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) e
 	return nil
 }
 
-// DistributePayingCoin releases vested selling coin from the vesting reserve module account.
+// DistributePayingCoin releases the selling coin from the vesting reserve account.
 func (k Keeper) DistributePayingCoin(ctx sdk.Context, auction types.AuctionI) error {
 	for _, vq := range k.GetVestingQueuesByAuctionId(ctx, auction.GetId()) {
-		if types.IsVested(vq.GetReleaseTime(), ctx.BlockTime()) {
+		if types.IsReleased(vq.GetReleaseTime(), ctx.BlockTime()) {
 			vestingReserveAcc := auction.GetVestingReserveAddress()
 
 			if err := k.bankKeeper.SendCoins(ctx, vestingReserveAcc, auction.GetAuctioneer(), sdk.NewCoins(vq.PayingCoin)); err != nil {
 				return sdkerrors.Wrap(err, "failed to release paying coin to the auctioneer")
 			}
 
-			vq.Vested = true
+			vq.Released = true
 			k.SetVestingQueue(ctx, auction.GetId(), vq.ReleaseTime, vq)
 		}
 	}

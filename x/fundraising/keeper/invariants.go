@@ -103,7 +103,7 @@ func VestingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 
 			if auction.GetStatus() == types.AuctionStatusVesting {
 				for _, queue := range k.GetVestingQueuesByAuctionId(ctx, auction.GetId()) {
-					if !queue.Vested {
+					if !queue.Released {
 						totalPayingCoin = totalPayingCoin.Add(queue.PayingCoin)
 					}
 				}

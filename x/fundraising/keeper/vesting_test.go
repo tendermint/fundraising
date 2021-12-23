@@ -22,7 +22,7 @@ func (suite *KeeperTestSuite) TestVestingQueues() {
 			Auctioneer:  suite.addrs[0].String(),
 			PayingCoin:  sdk.NewCoin(payingCoinDenom, payingAmt),
 			ReleaseTime: vs.ReleaseTime,
-			Vested:      false,
+			Released:    false,
 		})
 	}
 
@@ -35,7 +35,7 @@ func (suite *KeeperTestSuite) TestVestingQueues() {
 			Auctioneer:  suite.addrs[1].String(),
 			PayingCoin:  sdk.NewCoin(payingCoinDenom, payingAmt),
 			ReleaseTime: vs.ReleaseTime,
-			Vested:      false,
+			Released:    false,
 		})
 	}
 
