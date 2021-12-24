@@ -381,8 +381,3 @@ func IsAuctionStarted(startTime time.Time, t time.Time) bool {
 func IsAuctionFinished(endTime time.Time, t time.Time) bool {
 	return !endTime.Before(t)
 }
-
-// IsReleased returns true is the release time is equal or ahead of the given time t.
-func IsReleased(releaseTime time.Time, t time.Time) bool {
-	return !releaseTime.After(t)
-}

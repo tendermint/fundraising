@@ -74,7 +74,7 @@ func (suite *KeeperTestSuite) TestVestingQueueIterator() {
 
 	// vesting schedule contains 2 vesting queues
 	for _, vs := range suite.sampleVestingSchedules1 {
-		payingAmt := reserveCoin.Amount.ToDec().Mul(vs.Weight).TruncateInt()
+		payingAmt := reserveCoin.Amount.ToDec().MulTruncate(vs.Weight).TruncateInt()
 
 		suite.keeper.SetVestingQueue(suite.ctx, uint64(1), vs.ReleaseTime, types.VestingQueue{
 			AuctionId:   uint64(1),
@@ -87,7 +87,7 @@ func (suite *KeeperTestSuite) TestVestingQueueIterator() {
 
 	// vesting schedule contains 4 vesting queues
 	for _, vs := range suite.sampleVestingSchedules2 {
-		payingAmt := reserveCoin.Amount.ToDec().Mul(vs.Weight).TruncateInt()
+		payingAmt := reserveCoin.Amount.ToDec().MulTruncate(vs.Weight).TruncateInt()
 
 		suite.keeper.SetVestingQueue(suite.ctx, uint64(2), vs.ReleaseTime, types.VestingQueue{
 			AuctionId:   uint64(2),

@@ -189,7 +189,7 @@ func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) e
 // DistributePayingCoin releases the selling coin from the vesting reserve account.
 func (k Keeper) DistributePayingCoin(ctx sdk.Context, auction types.AuctionI) error {
 	for _, vq := range k.GetVestingQueuesByAuctionId(ctx, auction.GetId()) {
-		if types.IsReleased(vq.GetReleaseTime(), ctx.BlockTime()) {
+		if vq.IsVestingReleasable(ctx.BlockTime()) {
 			vestingReserveAcc := auction.GetVestingReserveAddress()
 
 			if err := k.bankKeeper.SendCoins(ctx, vestingReserveAcc, auction.GetAuctioneer(), sdk.NewCoins(vq.PayingCoin)); err != nil {

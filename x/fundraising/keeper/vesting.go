@@ -17,7 +17,9 @@ func (k Keeper) SetVestingSchedules(ctx sdk.Context, auction types.AuctionI) err
 	reserveCoin := k.bankKeeper.GetBalance(ctx, payingReserveAcc, auction.GetPayingCoinDenom())
 	reserveCoins := sdk.NewCoins(reserveCoin)
 
-	if len(auction.GetVestingSchedules()) == 0 {
+	lenVestingSchedules := len(auction.GetVestingSchedules())
+
+	if lenVestingSchedules == 0 {
 		if err := k.bankKeeper.SendCoins(ctx, payingReserveAcc, auction.GetAuctioneer(), reserveCoins); err != nil {
 			return err
 		}
@@ -34,11 +36,12 @@ func (k Keeper) SetVestingSchedules(ctx sdk.Context, auction types.AuctionI) err
 		}
 
 		remaining := reserveCoin
+
 		for i, vs := range auction.GetVestingSchedules() {
 			payingAmt := reserveCoin.Amount.ToDec().MulTruncate(vs.Weight).TruncateInt()
 
 			// store remaining to the paying coin in the last queue
-			if i == len(auction.GetVestingSchedules())-1 {
+			if i == lenVestingSchedules-1 {
 				payingAmt = remaining.Amount
 			}
 

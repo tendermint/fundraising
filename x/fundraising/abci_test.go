@@ -43,7 +43,7 @@ func (suite *ModuleTestSuite) TestEndBlockerStartedStatus() {
 		totalBidCoin = totalBidCoin.Add(bid.Coin)
 	}
 
-	receiveAmt := totalBidCoin.Amount.ToDec().Quo(auction.GetStartPrice()).TruncateInt()
+	receiveAmt := totalBidCoin.Amount.ToDec().QuoTruncate(auction.GetStartPrice()).TruncateInt()
 	receiveCoin := sdk.NewCoin(
 		auction.GetSellingCoin().Denom,
 		receiveAmt,
