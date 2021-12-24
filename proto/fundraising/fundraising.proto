@@ -51,13 +51,13 @@ message BaseAuction {
   // auctioneer specifies the bech32-encoded address that creates the auction
   string auctioneer = 3;
 
-  // selling_pool_address specifies the bech32-encoded address that has all the
-  // selling coin
-  string selling_pool_address = 4;
+  // selling_reserve_address specifies the bech32-encoded address that has all
+  // the selling coin
+  string selling_reserve_address = 4;
 
-  // paying_pool_address specifies the bech32-encoded address that has all the
-  // paying coin
-  string paying_pool_address = 5;
+  // paying_reserve_address specifies the bech32-encoded address that has all
+  // the paying coin
+  string paying_reserve_address = 5;
 
   // start_price specifies the starting price of the auction
   string start_price = 6 [
@@ -75,9 +75,9 @@ message BaseAuction {
   // for
   string paying_coin_denom = 8;
 
-  // vesting_pool_address specifies the bech32-encoded vesting address that
+  // vesting_reserve_address specifies the bech32-encoded vesting address that
   // holds vesting amounts of coin
-  string vesting_pool_address = 9;
+  string vesting_reserve_address = 9;
 
   // vesting_schedules specifies the vesting schedules for the auction
   repeated VestingSchedule vesting_schedules = 10
@@ -212,8 +212,8 @@ message VestingQueue {
   google.protobuf.Timestamp release_time = 4
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
-  // vested specifies the status of distribution
-  bool vested = 5;
+  // released specifies the status of distribution
+  bool released = 5;
 }
 
 // Bid defines a standard bid for an auction.

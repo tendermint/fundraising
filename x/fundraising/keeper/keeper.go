@@ -32,7 +32,7 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	blockedAddrs map[string]bool,
 ) *Keeper {
-	// ensure farming module account is set
+	// ensure fundraising module account is set
 	if addr := accountKeeper.GetModuleAddress(types.ModuleName); addr == nil {
 		panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
 	}

@@ -25,35 +25,37 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	// For AuctionStatusStarted, distribute the allocated paying coin to bidders for the auction and
 	// set vesting schedules if they are defined.
 	for _, auction := range k.GetAuctions(ctx) {
-		if auction.GetType() == types.AuctionTypeFixedPrice {
-			switch auction.GetStatus() {
-			case types.AuctionStatusStandBy:
-				if types.IsAuctionStarted(auction.GetStartTime(), ctx.BlockTime()) {
-					_ = auction.SetStatus(types.AuctionStatusStarted)
-					k.SetAuction(ctx, auction)
-				}
-
-			case types.AuctionStatusStarted:
-				if auction.GetType() == types.AuctionTypeFixedPrice {
-					if types.IsAuctionFinished(auction.GetEndTimes()[0], ctx.BlockTime()) {
-						if err := k.DistributeSellingCoin(ctx, auction); err != nil {
-							panic(err)
-						}
-
-						if err := k.SetVestingSchedules(ctx, auction); err != nil {
-							panic(err)
-						}
-					}
-				}
-
-			case types.AuctionStatusVesting:
-				if err := k.DistributePayingCoin(ctx, auction); err != nil {
-					panic(err)
-				}
-
-			default:
-				continue
+		switch auction.GetStatus() {
+		case types.AuctionStatusStandBy:
+			if types.IsAuctionStarted(auction.GetStartTime(), ctx.BlockTime()) {
+				_ = auction.SetStatus(types.AuctionStatusStarted)
+				k.SetAuction(ctx, auction)
 			}
+
+		case types.AuctionStatusStarted:
+			if auction.GetType() == types.AuctionTypeFixedPrice {
+				if types.IsAuctionFinished(auction.GetEndTimes()[0], ctx.BlockTime()) {
+					ctx, writeCache := ctx.CacheContext()
+
+					if err := k.DistributeSellingCoin(ctx, auction); err != nil {
+						panic(err)
+					}
+
+					if err := k.SetVestingSchedules(ctx, auction); err != nil {
+						panic(err)
+					}
+
+					writeCache()
+				}
+			}
+
+		case types.AuctionStatusVesting:
+			if err := k.DistributePayingCoin(ctx, auction); err != nil {
+				panic(err)
+			}
+
+		default:
+			continue
 		}
 	}
 }

@@ -11,13 +11,15 @@ import (
 // SetVestingSchedules stores vesting queues based on the vesting schedules of the auction and
 // sets status to vesting.
 func (k Keeper) SetVestingSchedules(ctx sdk.Context, auction types.AuctionI) error {
-	payingReserveAcc := auction.GetPayingPoolAddress()
-	vestingReserveAcc := auction.GetVestingPoolAddress()
+	payingReserveAcc := auction.GetPayingReserveAddress()
+	vestingReserveAcc := auction.GetVestingReserveAddress()
 
-	reserveBalance := k.bankKeeper.GetBalance(ctx, payingReserveAcc, auction.GetPayingCoinDenom())
-	reserveCoins := sdk.NewCoins(reserveBalance)
+	reserveCoin := k.bankKeeper.GetBalance(ctx, payingReserveAcc, auction.GetPayingCoinDenom())
+	reserveCoins := sdk.NewCoins(reserveCoin)
 
-	if len(auction.GetVestingSchedules()) == 0 {
+	lenVestingSchedules := len(auction.GetVestingSchedules())
+
+	if lenVestingSchedules == 0 {
 		if err := k.bankKeeper.SendCoins(ctx, payingReserveAcc, auction.GetAuctioneer(), reserveCoins); err != nil {
 			return err
 		}
@@ -29,20 +31,29 @@ func (k Keeper) SetVestingSchedules(ctx sdk.Context, auction types.AuctionI) err
 		k.SetAuction(ctx, auction)
 
 	} else {
-		for _, vs := range auction.GetVestingSchedules() {
-			payingAmt := reserveBalance.Amount.ToDec().Mul(vs.Weight).TruncateInt()
+		if err := k.bankKeeper.SendCoins(ctx, payingReserveAcc, vestingReserveAcc, reserveCoins); err != nil {
+			return err
+		}
+
+		remaining := reserveCoin
+
+		for i, vs := range auction.GetVestingSchedules() {
+			payingAmt := reserveCoin.Amount.ToDec().MulTruncate(vs.Weight).TruncateInt()
+
+			// store remaining to the paying coin in the last queue
+			if i == lenVestingSchedules-1 {
+				payingAmt = remaining.Amount
+			}
 
 			k.SetVestingQueue(ctx, auction.GetId(), vs.ReleaseTime, types.VestingQueue{
 				AuctionId:   auction.GetId(),
 				Auctioneer:  auction.GetAuctioneer().String(),
 				PayingCoin:  sdk.NewCoin(auction.GetPayingCoinDenom(), payingAmt),
 				ReleaseTime: vs.ReleaseTime,
-				Vested:      false,
+				Released:    false,
 			})
-		}
 
-		if err := k.bankKeeper.SendCoins(ctx, payingReserveAcc, vestingReserveAcc, reserveCoins); err != nil {
-			return err
+			remaining = remaining.SubAmount(payingAmt)
 		}
 
 		if err := auction.SetStatus(types.AuctionStatusVesting); err != nil {
