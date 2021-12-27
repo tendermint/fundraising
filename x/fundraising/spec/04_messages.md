@@ -9,13 +9,13 @@ Messages (Msg) are objects that trigger state transitions. Msgs are wrapped in t
 ```go
 // MsgCreateFixedPriceAuction defines a SDK message for creating a fixed price type auction
 type MsgCreateFixedPriceAuction struct {
-	Auctioneer       string            // account that creates the auction
-	StartPrice       sdk.Dec           // starting price of the selling coin proportional to the paying coin
-	SellingCoin      sdk.Coin          // selling amount of coin for the auction
-	PayingCoinDenom  string            // paying coin denom that bidders need to bid with
-	VestingSchedules []VestingSchedule // vesting schedules that release the paying amount of coins to the autioneer
-	StartTime        time.Time         // start time of the auction
-	EndTime          time.Time         // end time of the auction
+	Auctioneer       string            // the owner of the auction
+	StartPrice       sdk.Dec           // the starting price for the auction; it is proportional to the price of paying coin denom
+	SellingCoin      sdk.Coin          // the selling coin for the auction
+	PayingCoinDenom  string            // the denom that the auctioneer receives to raise funds
+	VestingSchedules []VestingSchedule // the vesting schedules for the auction
+	StartTime        time.Time         // the start time of the auction
+	EndTime          time.Time         // the end time of the auction
 }
 ```
 ## MsgCreateEnglishAuction
@@ -23,15 +23,15 @@ type MsgCreateFixedPriceAuction struct {
 ```go
 // MsgCreateEnglishAuction defines a SDK message for creating a English type auction
 type MsgCreateEnglishAuction struct {
-	Auctioneer       string            // account that creates the auction
-	StartPrice       sdk.Dec           // starting price of the selling coin proportional to the paying coin
-	SellingCoin      sdk.Coin          // selling amount of coin for the auction
-	PayingCoinDenom  string            // paying coin denom that bidders need to bid with
-	VestingSchedules []VestingSchedule // vesting schedules that release the paying amount of coins to the autioneer
-	MaximumBidPrice  sdk.Dec           // maximum bid price that bidders can bid for the auction
-	ExtendRate       sdk.Dec           // rate that determines if the auction needs an another round
-	StartTime        time.Time         // start time of the auction
-	EndTime          time.Time         // end time of the auction
+	Auctioneer       string            // the owner of the auction
+	StartPrice       sdk.Dec           // the starting price for the auction
+	SellingCoin      sdk.Coin          // the selling coin for the auction
+	PayingCoinDenom  string            // the denom that the auctioneer receives to raise funds
+	VestingSchedules []VestingSchedule // the vesting schedules for the auction
+	MaximumBidPrice  sdk.Dec           // the maximum bid price that bidders can bid for the auction
+	ExtendRate       sdk.Dec           // the rate that determines if the auction needs an another round
+	StartTime        time.Time         // the start time of the auction
+	EndTime          time.Time         // the end time of the auction
 }
 ```
 
@@ -40,7 +40,7 @@ type MsgCreateEnglishAuction struct {
 ```go
 // MsgCancelAuction defines a SDK message for cancelling an auction
 type MsgCancelAuction struct {
-	Auctioneer string // account that creates the auction
+	Auctioneer string // the owner of the auction
 	AuctionId  uint64 // id of the auction
 }
 ```
