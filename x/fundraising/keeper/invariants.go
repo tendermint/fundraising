@@ -35,7 +35,7 @@ func AllInvariants(k Keeper) sdk.Invariant {
 }
 
 // SellingPoolReserveAmountInvariant checks an invariant that the total amount of selling coin for an auction
-// must equal to the selling reserve account balance.
+// must equal or greater than the selling reserve account balance.
 func SellingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
 		msg := ""
@@ -61,7 +61,7 @@ func SellingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 }
 
 // PayingPoolReserveAmountInvariant checks an invariant that the total bid amount
-// must equal to the paying reserve account balance.
+// must equal or greater than the paying reserve account balance.
 func PayingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
 		msg := ""
@@ -92,7 +92,8 @@ func PayingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 	}
 }
 
-// VestingPoolReserveAmountInvariant checks an invariant
+// VestingPoolReserveAmountInvariant checks an invariant that the total vesting amount
+// must be equal or greater than the vesting reserve account balance.
 func VestingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
 		msg := ""
@@ -121,6 +122,21 @@ func VestingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 		}
 		broken := count != 0
 
+		return sdk.FormatInvariant(types.ModuleName, "vesting pool reserve amount and total paying amount", msg), broken
+	}
+}
+
+// AuctionStatusInvariant checks an invariant
+func AuctionStatusInvariant(k Keeper) sdk.Invariant {
+	return func(ctx sdk.Context) (string, bool) {
+
+		// TODO: depending on auction status, reserve account must not have any balance (they can have some balances due to transfer)
+		// for _, auction := range k.GetAuctions(ctx) {
+
+		// }
+
+		msg := ""
+		broken := false
 		return sdk.FormatInvariant(types.ModuleName, "vesting pool reserve amount and total paying amount", msg), broken
 	}
 }
