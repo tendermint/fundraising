@@ -24,7 +24,7 @@ type MsgCreateFixedPriceAuction struct {
 // MsgCreateEnglishAuction defines a SDK message for creating a English type auction
 type MsgCreateEnglishAuction struct {
 	Auctioneer       string            // account that creates the auction
-	StartPrice       sdk.Dec           // starting price of the selling coin proportional to the paying coin
+	StartPrice       sdk.Dec           // starting price of the selling coin; it is proportional to the price of paying coin denom
 	SellingCoin      sdk.Coin          // selling amount of coin for the auction
 	PayingCoinDenom  string            // paying coin denom that bidders need to bid with
 	VestingSchedules []VestingSchedule // vesting schedules that release the paying amount of coins to the autioneer

@@ -29,8 +29,7 @@ To test out the following command line interface, you must set up a local networ
 
 ### CreateFixedPriceAuction
 
-This command is one way for an auctioneer to create an auction to raise funds for their project. It is the most basic and simple type of an auction that has first come first served characteristic.
-When an auctioneer creates a fixed price auction type, they must determine the fixed starting price. It is proportional to the paying coin denom that they want to get funded for. Once it is created, bidders start to bid with the same starting price and amount of coin. See the [spec](https://github.com/tendermint/fundraising/blob/main/x/fundraising/spec/01_concepts.md#auction-types) for a detailed information about the fixed price auction type.
+This command provides an opportunity for an auctioneer to create an auction to raise funds for their project. It is the most basic and simple type of an auction that has first come first served basis. When an auctioneer creates a fixed price auction, they must determine the fixed starting price. It is proportional to the paying coin denom. To give you an example, an auctioneer sells X coin and plans to receive Y coin for the auction. The price of X coin is determined by the proportion of Y coin. Let's assume that the price of Y coin is currently $30 and the auctioneer wants to sell their X coin for $15, then they must provide 0.5 as the fixed start price. Once the auction is successfully created, bidders can now start to bid. The bidders must provide the same starting price when they bid. See the [spec](https://github.com/tendermint/fundraising/blob/main/x/fundraising/spec/01_concepts.md#auction-types) for a detailed and technical information about the fixed price auction type.
 
 JSON example:
 
