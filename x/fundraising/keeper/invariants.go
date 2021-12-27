@@ -130,7 +130,10 @@ func VestingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 func AuctionStatusInvariant(k Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
 
-		// TODO: depending on auction status, reserve account must not have any balance (they can have some balances due to transfer)
+		// TODO: depending on auction status, check an invariant that states are properly updated.
+		// For AuctionStatusStandby,
+		// For AuctionStatusStarted, the start time must be already passed the block time
+		// For AuctionStatusVesting, there must be a correct number of VestingQueues
 		// for _, auction := range k.GetAuctions(ctx) {
 
 		// }
