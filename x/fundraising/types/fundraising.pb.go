@@ -198,6 +198,7 @@ type BaseAuction struct {
 	// the paying coin
 	PayingReserveAddress string `protobuf:"bytes,5,opt,name=paying_reserve_address,json=payingReserveAddress,proto3" json:"paying_reserve_address,omitempty"`
 	// start_price specifies the starting price of the auction
+	// it is determined by the proportion of the price of paying coin denom
 	StartPrice github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,6,opt,name=start_price,json=startPrice,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"start_price"`
 	// selling_coin specifies the selling coin for the auction
 	SellingCoin types.Coin `protobuf:"bytes,7,opt,name=selling_coin,json=sellingCoin,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coin" json:"selling_coin"`
