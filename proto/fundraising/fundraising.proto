@@ -60,6 +60,7 @@ message BaseAuction {
   string paying_reserve_address = 5;
 
   // start_price specifies the starting price of the auction
+  // it is determined by the proportion of the price of paying coin denom
   string start_price = 6 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
