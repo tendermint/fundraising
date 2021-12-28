@@ -277,7 +277,9 @@ func (ba BaseAuction) Validate() error {
 	if err := sdk.ValidateDenom(ba.PayingCoinDenom); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid paying coin denom: %v", err)
 	}
-	if err := ValidateVestingSchedules(ba.VestingSchedules); err != nil {
+	// TODO: reconsider if there's any case that using [0] becomes an issue
+	// English auction always has end time
+	if err := ValidateVestingSchedules(ba.VestingSchedules, ba.EndTimes[0]); err != nil {
 		return err
 	}
 	return nil

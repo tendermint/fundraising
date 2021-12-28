@@ -93,6 +93,23 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 			),
 		},
 		{
+			"release time must be after the end time: invalid vesting schedules",
+			types.NewMsgCreateFixedPriceAuction(
+				auctioneerAcc.String(),
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom1",
+				[]types.VestingSchedule{
+					{
+						types.ParseTime("2022-06-01T22:08:41+00:00"),
+						sdk.MustNewDecFromStr("1.0"),
+					},
+				},
+				startTime,
+				types.ParseTime("2022-06-05T22:08:41+00:00"),
+			),
+		},
+		{
 			"total vesting weight must be equal to 1: invalid vesting schedules",
 			types.NewMsgCreateFixedPriceAuction(
 				auctioneerAcc.String(),
