@@ -156,7 +156,9 @@ func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) e
 
 // DistributePayingCoin releases the selling coin from the vesting reserve account.
 func (k Keeper) DistributePayingCoin(ctx sdk.Context, auction types.AuctionI) error {
-	for _, vq := range k.GetVestingQueuesByAuctionId(ctx, auction.GetId()) {
+	lenVestingQueue := len(k.GetVestingQueuesByAuctionId(ctx, auction.GetId()))
+
+	for i, vq := range k.GetVestingQueuesByAuctionId(ctx, auction.GetId()) {
 		if vq.IsVestingReleasable(ctx.BlockTime()) {
 			vestingReserveAcc := auction.GetVestingReserveAddress()
 
@@ -166,6 +168,15 @@ func (k Keeper) DistributePayingCoin(ctx sdk.Context, auction types.AuctionI) er
 
 			vq.Released = true
 			k.SetVestingQueue(ctx, auction.GetId(), vq.ReleaseTime, vq)
+
+			// set finished status when vesting schedule is ended
+			if i == lenVestingQueue-1 {
+				if err := auction.SetStatus(types.AuctionStatusFinished); err != nil {
+					return err
+				}
+
+				k.SetAuction(ctx, auction)
+			}
 		}
 	}
 
@@ -230,7 +241,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 	)
 
 	// updates status if the start time is already passed over the current time
-	if types.IsAuctionStarted(baseAuction.GetStartTime(), ctx.BlockTime()) {
+	if baseAuction.IsAuctionStarted(ctx.BlockTime()) {
 		baseAuction.Status = types.AuctionStatusStarted
 	}
 
@@ -287,9 +298,8 @@ func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) erro
 		return sdkerrors.Wrap(err, "failed to release selling coin")
 	}
 
-	if err := auction.SetStatus(types.AuctionStatusCancelled); err != nil {
-		return err
-	}
+	_ = auction.SetRemainingCoin(sdk.NewCoin(auction.GetSellingCoin().Denom, sdk.ZeroInt()))
+	_ = auction.SetStatus(types.AuctionStatusCancelled)
 
 	k.SetAuction(ctx, auction)
 

@@ -78,6 +78,9 @@ type AuctionI interface {
 	GetStatus() AuctionStatus
 	SetStatus(AuctionStatus) error
 
+	IsAuctionStarted(t time.Time) bool
+	IsAuctionFinished(t time.Time) bool
+
 	Validate() error
 }
 
@@ -283,6 +286,17 @@ func (ba BaseAuction) Validate() error {
 	return nil
 }
 
+// IsAuctionStarted returns true if the start time of the auction is equal or before the given time t.
+func (ba BaseAuction) IsAuctionStarted(t time.Time) bool {
+	return !ba.GetStartTime().After(t)
+}
+
+// IsAuctionFinished returns true if the end time of the auction is equal or before the given time t.
+func (ba BaseAuction) IsAuctionFinished(t time.Time) bool {
+	endTimes := ba.GetEndTimes()
+	return !endTimes[len(endTimes)-1].After(t)
+}
+
 // NewFixedPriceAuction returns a new fixed price ba.
 func NewFixedPriceAuction(baseAuction *BaseAuction) *FixedPriceAuction {
 	return &FixedPriceAuction{
@@ -370,14 +384,4 @@ func PayingReserveAcc(auctionId uint64) sdk.AccAddress {
 // VestingReserveAcc returns an account for the vesting reserve account with the given auction id.
 func VestingReserveAcc(auctionId uint64) sdk.AccAddress {
 	return DeriveAddress(ReserveAddressType, ModuleName, VestingReserveAccPrefix+AccNameSplitter+fmt.Sprint(auctionId))
-}
-
-// IsAuctionStarted returns true if the start time of the auction is equal or ahead of the given time t.
-func IsAuctionStarted(startTime time.Time, t time.Time) bool {
-	return !startTime.After(t)
-}
-
-// IsAuctionFinished returns true if the end time of the auction is equal or ahead of the given time t.
-func IsAuctionFinished(endTime time.Time, t time.Time) bool {
-	return !endTime.Before(t)
 }
