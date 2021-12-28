@@ -14,13 +14,13 @@ import (
 func (suite *ModuleTestSuite) TestGenesisState() {
 	// create auctions and reserve selling coin to reserve account
 	for _, auction := range suite.sampleFixedPriceAuctions {
-		suite.SetAuction(suite.ctx, auction)
+		suite.SetAuction(auction)
 	}
 	suite.Require().Len(suite.keeper.GetAuctions(suite.ctx), 2)
 
 	// make bids and reserve paying coin to reserve account
 	for _, bid := range suite.sampleFixedPriceBids {
-		suite.PlaceBid(suite.ctx, bid)
+		suite.PlaceBid(bid)
 	}
 	suite.Require().Len(suite.keeper.GetBids(suite.ctx), 4)
 

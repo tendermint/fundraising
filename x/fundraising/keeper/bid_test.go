@@ -5,14 +5,13 @@ import (
 )
 
 func (suite *KeeperTestSuite) TestBidIterators() {
-	// create a fixed price auction with already started status
 	suite.keeper.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[1])
 
-	auction, found := suite.keeper.GetAuction(suite.ctx, 2)
+	auction, found := suite.keeper.GetAuction(suite.ctx, suite.sampleFixedPriceAuctions[1].GetId())
 	suite.Require().True(found)
 
 	for _, bid := range suite.sampleFixedPriceBids {
-		suite.PlaceBid(suite.ctx, bid)
+		suite.PlaceBid(bid)
 	}
 
 	bids := suite.keeper.GetBids(suite.ctx)

@@ -34,58 +34,100 @@ func (suite *KeeperTestSuite) TestAuctionId() {
 	suite.Require().Len(auctions, 2)
 }
 
-func (suite *KeeperTestSuite) TestCreateAuctionStatus() {
-	suite.ctx = suite.ctx.WithBlockTime(types.ParseTime("2021-12-01T00:00:00Z"))
+func (suite *KeeperTestSuite) TestAuctionStatus() {
+	standByAuction := suite.sampleFixedPriceAuctions[0]
+	startedAuction := suite.sampleFixedPriceAuctions[1]
 
-	// create a fixed price auction with the future start time
-	err := suite.keeper.CreateFixedPriceAuction(suite.ctx, types.NewMsgCreateFixedPriceAuction(
-		suite.addrs[0].String(),
-		sdk.MustNewDecFromStr("0.5"),
-		sdk.NewInt64Coin(denom2, 100_000_000_000),
-		denom1,
-		[]types.VestingSchedule{},
-		types.ParseTime("2022-12-10T00:00:00Z"),
-		types.ParseTime("2022-12-20T00:00:00Z"),
-	))
-	suite.Require().NoError(err)
+	suite.SetAuction(standByAuction)
 
-	auction, found := suite.keeper.GetAuction(suite.ctx, 1)
+	auction, found := suite.keeper.GetAuction(suite.ctx, standByAuction.GetId())
 	suite.Require().True(found)
 	suite.Require().Equal(types.AuctionStatusStandBy, auction.GetStatus())
 
-	// create a fixed price auction with the past start time
-	err = suite.keeper.CreateFixedPriceAuction(suite.ctx, types.NewMsgCreateFixedPriceAuction(
-		suite.addrs[0].String(),
-		sdk.MustNewDecFromStr("0.5"),
-		sdk.NewInt64Coin(denom2, 100_000_000_000),
-		denom1,
-		[]types.VestingSchedule{},
-		types.ParseTime("2021-11-01T00:00:00Z"),
-		types.ParseTime("2021-12-10T00:00:00Z"),
-	))
-	suite.Require().NoError(err)
+	suite.SetAuction(startedAuction)
 
-	auction, found = suite.keeper.GetAuction(suite.ctx, 2)
+	auction, found = suite.keeper.GetAuction(suite.ctx, startedAuction.GetId())
 	suite.Require().True(found)
 	suite.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 }
 
+func (suite *KeeperTestSuite) TestDistributeSellingCoin() {
+	suite.SetAuction(suite.sampleFixedPriceAuctions[1])
+
+	auction, found := suite.keeper.GetAuction(suite.ctx, suite.sampleFixedPriceAuctions[1].GetId())
+	suite.Require().True(found)
+
+	bidderAcc1 := suite.addrs[0]
+	bidderAcc2 := suite.addrs[1]
+	bidderAcc3 := suite.addrs[2]
+
+	bids := []types.Bid{
+		{
+			AuctionId: auction.GetId(),
+			Sequence:  1,
+			Bidder:    bidderAcc1.String(),
+			Price:     auction.GetStartPrice(),
+			Coin:      sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 100_000_000),
+			Height:    uint64(suite.ctx.BlockHeight()),
+			Eligible:  false,
+		},
+		{
+			AuctionId: auction.GetId(),
+			Sequence:  2,
+			Bidder:    bidderAcc2.String(),
+			Price:     auction.GetStartPrice(),
+			Coin:      sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 200_000_000),
+			Height:    uint64(suite.ctx.BlockHeight()),
+			Eligible:  false,
+		},
+		{
+			AuctionId: auction.GetId(),
+			Sequence:  3,
+			Bidder:    bidderAcc3.String(),
+			Price:     auction.GetStartPrice(),
+			Coin:      sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 300_000_000),
+			Height:    uint64(suite.ctx.BlockHeight()),
+			Eligible:  false,
+		},
+	}
+
+	for _, bid := range bids {
+		suite.PlaceBid(bid)
+	}
+
+	// selling reserve account must be empty
+	err := suite.keeper.DistributeSellingCoin(suite.ctx, auction)
+	suite.Require().NoError(err)
+	suite.Require().Equal(
+		sdk.NewCoin(auction.GetSellingCoin().Denom, sdk.ZeroInt()),
+		suite.app.BankKeeper.GetBalance(suite.ctx, auction.GetSellingReserveAddress(), auction.GetSellingCoin().Denom),
+	)
+
+	bal1 := suite.app.BankKeeper.GetBalance(suite.ctx, bidderAcc1, auction.GetSellingCoin().Denom)
+	bal2 := suite.app.BankKeeper.GetBalance(suite.ctx, bidderAcc2, auction.GetSellingCoin().Denom)
+	bal3 := suite.app.BankKeeper.GetBalance(suite.ctx, bidderAcc3, auction.GetSellingCoin().Denom)
+	suite.Require().True(bal1.Amount.GT(initialBalances.AmountOf(denom3)))
+	suite.Require().True(bal2.Amount.GT(initialBalances.AmountOf(denom3)))
+	suite.Require().True(bal3.Amount.GT(initialBalances.AmountOf(denom3)))
+}
+
 func (suite *KeeperTestSuite) TestDistributePayingCoin() {
-	ctx, k, auction := suite.ctx, suite.keeper, suite.sampleFixedPriceAuctions[1]
+	suite.SetAuction(suite.sampleFixedPriceAuctions[1])
 
-	suite.SetAuction(ctx, auction)
-
-	auction, found := k.GetAuction(ctx, auction.GetId())
+	auction, found := suite.keeper.GetAuction(suite.ctx, suite.sampleFixedPriceAuctions[1].GetId())
 	suite.Require().True(found)
 
 	for _, bid := range suite.sampleFixedPriceBids {
-		suite.PlaceBid(ctx, bid)
+		suite.PlaceBid(bid)
 	}
 
-	suite.Require().NoError(k.DistributeSellingCoin(ctx, auction))
-	suite.Require().NoError(k.SetVestingSchedules(ctx, auction))
+	err := suite.keeper.DistributeSellingCoin(suite.ctx, auction)
+	suite.Require().NoError(err)
 
-	vqs := k.GetVestingQueuesByAuctionId(ctx, auction.GetId())
+	err = suite.keeper.SetVestingSchedules(suite.ctx, auction)
+	suite.Require().NoError(err)
+
+	vqs := suite.keeper.GetVestingQueuesByAuctionId(suite.ctx, auction.GetId())
 	suite.Require().Equal(4, len(vqs))
 
 	// all of the vesting queues must not be released yet
@@ -93,12 +135,12 @@ func (suite *KeeperTestSuite) TestDistributePayingCoin() {
 		suite.Require().False(vq.Released)
 	}
 
-	ctx = ctx.WithBlockTime(vqs[0].GetReleaseTime().AddDate(0, 4, 1))
-	fundraising.EndBlocker(ctx, k)
-	suite.Require().NoError(k.DistributePayingCoin(ctx, auction))
+	suite.ctx = suite.ctx.WithBlockTime(vqs[0].GetReleaseTime().AddDate(0, 4, 1))
+	fundraising.EndBlocker(suite.ctx, suite.keeper)
+	suite.Require().NoError(suite.keeper.DistributePayingCoin(suite.ctx, auction))
 
 	// first two vesting queues must be released
-	for i, vq := range k.GetVestingQueuesByAuctionId(ctx, auction.GetId()) {
+	for i, vq := range suite.keeper.GetVestingQueuesByAuctionId(suite.ctx, auction.GetId()) {
 		if i == 0 || i == 1 {
 			suite.Require().True(vq.Released)
 		} else {
@@ -106,16 +148,35 @@ func (suite *KeeperTestSuite) TestDistributePayingCoin() {
 		}
 	}
 
-	ctx = ctx.WithBlockTime(vqs[3].GetReleaseTime().AddDate(0, 0, 1))
-	fundraising.EndBlocker(ctx, k)
-	suite.Require().NoError(k.DistributePayingCoin(ctx, auction))
+	suite.ctx = suite.ctx.WithBlockTime(vqs[3].GetReleaseTime().AddDate(0, 0, 1))
+	fundraising.EndBlocker(suite.ctx, suite.keeper)
+	suite.Require().NoError(suite.keeper.DistributePayingCoin(suite.ctx, auction))
 
 	// all of the vesting queues must be released
-	for _, vq := range k.GetVestingQueuesByAuctionId(ctx, auction.GetId()) {
+	for _, vq := range suite.keeper.GetVestingQueuesByAuctionId(suite.ctx, auction.GetId()) {
 		suite.Require().True(vq.Released)
 	}
 
-	auction, found = k.GetAuction(ctx, auction.GetId())
+	auction, found = suite.keeper.GetAuction(suite.ctx, auction.GetId())
 	suite.Require().True(found)
 	suite.Require().Equal(types.AuctionStatusFinished, auction.GetStatus())
+}
+
+func (suite *KeeperTestSuite) TestCancelAuction() {
+	standByAuction := suite.sampleFixedPriceAuctions[0]
+
+	suite.SetAuction(standByAuction)
+
+	auction, found := suite.keeper.GetAuction(suite.ctx, standByAuction.GetId())
+	suite.Require().True(found)
+	suite.Require().Equal(types.AuctionStatusStandBy, auction.GetStatus())
+
+	suite.CancelAuction(auction)
+
+	auction, found = suite.keeper.GetAuction(suite.ctx, standByAuction.GetId())
+	suite.Require().True(found)
+	suite.Require().Equal(types.AuctionStatusCancelled, auction.GetStatus())
+
+	sellingReserve := suite.app.BankKeeper.GetBalance(suite.ctx, auction.GetSellingReserveAddress(), auction.GetSellingCoin().Denom)
+	suite.Require().Equal(sdk.NewCoin(auction.GetSellingCoin().Denom, sdk.ZeroInt()), sellingReserve)
 }
