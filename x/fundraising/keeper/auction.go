@@ -273,7 +273,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 	)
 
 	// updates status if the start time is already passed over the current time
-	if types.IsAuctionStarted(baseAuction.GetStartTime(), ctx.BlockTime()) {
+	if baseAuction.IsAuctionStarted(ctx.BlockTime()) {
 		baseAuction.Status = types.AuctionStatusStarted
 	}
 
