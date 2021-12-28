@@ -1,7 +1,6 @@
 package fundraising_test
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/tendermint/fundraising/app"
@@ -15,26 +14,13 @@ import (
 func (suite *ModuleTestSuite) TestGenesisState() {
 	// create auctions and reserve selling coin to reserve account
 	for _, auction := range suite.sampleFixedPriceAuctions {
-		suite.keeper.SetAuction(suite.ctx, auction)
-
-		err := suite.keeper.ReserveSellingCoin(
-			suite.ctx,
-			auction.GetId(),
-			auction.GetAuctioneer(),
-			auction.GetSellingCoin(),
-		)
-		suite.Require().NoError(err)
+		suite.SetAuction(suite.ctx, auction)
 	}
 	suite.Require().Len(suite.keeper.GetAuctions(suite.ctx), 2)
 
 	// make bids and reserve paying coin to reserve account
 	for _, bid := range suite.sampleFixedPriceBids {
-		bidderAcc, err := sdk.AccAddressFromBech32(bid.Bidder)
-		suite.Require().NoError(err)
-		suite.keeper.SetBid(suite.ctx, bid.AuctionId, bid.Sequence, bidderAcc, bid)
-
-		err = suite.keeper.ReservePayingCoin(suite.ctx, bid.GetAuctionId(), bidderAcc, bid.Coin)
-		suite.Require().NoError(err)
+		suite.PlaceBid(suite.ctx, bid)
 	}
 	suite.Require().Len(suite.keeper.GetBids(suite.ctx), 4)
 

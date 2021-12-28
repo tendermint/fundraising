@@ -73,15 +73,15 @@ Result:
         "id": "1",
         "type": "AUCTION_TYPE_FIXED_PRICE",
         "auctioneer": "cosmos1k64etk30a60sv9hqla4qctwur65acq9zjdd8jt",
-        "selling_pool_address": "cosmos18xzvtd72y9j8xyf8a36z5jjhth7qgtcwhh8lz7yee3tvxqn6ll5quh78zq",
-        "paying_pool_address": "cosmos18permjyqvk5flft8ey9egr7hd4ry8tauqt4f9mg9knn4vvtkry9sujucrl",
+        "selling_reserve_address": "cosmos18xzvtd72y9j8xyf8a36z5jjhth7qgtcwhh8lz7yee3tvxqn6ll5quh78zq",
+        "paying_reserve_address": "cosmos18permjyqvk5flft8ey9egr7hd4ry8tauqt4f9mg9knn4vvtkry9sujucrl",
         "start_price": "1.000000000000000000",
         "selling_coin": {
           "denom": "denom1",
           "amount": "10000000000"
         },
         "paying_coin_denom": "denom2",
-        "vesting_pool_address": "cosmos1gukaqt783nhz79uhcqklsty7lc7jfyy8scn5ke4x7v0m3rkpt4dst7y4l3",
+        "vesting_reserve_address": "cosmos1gukaqt783nhz79uhcqklsty7lc7jfyy8scn5ke4x7v0m3rkpt4dst7y4l3",
         "vesting_schedules": [
           {
             "release_time": "2022-01-01T00:00:00Z",
@@ -131,15 +131,15 @@ Result:
       "id": "1",
       "type": "AUCTION_TYPE_FIXED_PRICE",
       "auctioneer": "cosmos1k64etk30a60sv9hqla4qctwur65acq9zjdd8jt",
-      "selling_pool_address": "cosmos18xzvtd72y9j8xyf8a36z5jjhth7qgtcwhh8lz7yee3tvxqn6ll5quh78zq",
-      "paying_pool_address": "cosmos18permjyqvk5flft8ey9egr7hd4ry8tauqt4f9mg9knn4vvtkry9sujucrl",
+      "selling_reserve_address": "cosmos18xzvtd72y9j8xyf8a36z5jjhth7qgtcwhh8lz7yee3tvxqn6ll5quh78zq",
+      "paying_reserve_address": "cosmos18permjyqvk5flft8ey9egr7hd4ry8tauqt4f9mg9knn4vvtkry9sujucrl",
       "start_price": "1.000000000000000000",
       "selling_coin": {
         "denom": "denom1",
         "amount": "10000000000"
       },
       "paying_coin_denom": "denom2",
-      "vesting_pool_address": "cosmos1gukaqt783nhz79uhcqklsty7lc7jfyy8scn5ke4x7v0m3rkpt4dst7y4l3",
+      "vesting_reserve_address": "cosmos1gukaqt783nhz79uhcqklsty7lc7jfyy8scn5ke4x7v0m3rkpt4dst7y4l3",
       "vesting_schedules": [
         {
           "release_time": "2022-01-01T00:00:00Z",
@@ -225,14 +225,14 @@ Result:
       "auctioneer": "cosmos1m4ys0e222x45657hrg9y2gadfxtcqja270rdkg",
       "paying_coin": "denom2",
       "release_time": "2022-01-01T00:00:00Z",
-      "vested": false
+      "released": false
     },
     {
       "auction_id": 1,
       "auctioneer": "cosmos1m4ys0e222x45657hrg9y2gadfxtcqja270rdkg",
       "paying_coin": "denom2",
       "release_time": "2022-12-01T00:00:00Z",
-      "vested": false
+      "released": false
     }
   ]
 }

@@ -97,40 +97,40 @@ func (suite *ModuleTestSuite) SetupTest() {
 	suite.sampleFixedPriceAuctions = []types.AuctionI{
 		types.NewFixedPriceAuction(
 			&types.BaseAuction{
-				Id:                 1,
-				Type:               types.AuctionTypeFixedPrice,
-				Auctioneer:         suite.addrs[4].String(),
-				SellingPoolAddress: types.SellingReserveAcc(1).String(),
-				PayingPoolAddress:  types.PayingReserveAcc(1).String(),
-				StartPrice:         sdk.OneDec(), // start price corresponds to the ratio of the paying coin
-				SellingCoin:        sdk.NewInt64Coin(denom1, 1_000_000_000_000),
-				PayingCoinDenom:    denom2,
-				VestingPoolAddress: types.VestingReserveAcc(1).String(),
-				VestingSchedules:   suite.sampleVestingSchedules1,
-				WinningPrice:       sdk.ZeroDec(),
-				RemainingCoin:      sdk.NewInt64Coin(denom1, 1_000_000_000_000),
-				StartTime:          types.ParseTime("2022-01-01T00:00:00Z"),
-				EndTimes:           []time.Time{types.ParseTime("2022-01-10T00:00:00Z")},
-				Status:             types.AuctionStatusStandBy,
+				Id:                    1,
+				Type:                  types.AuctionTypeFixedPrice,
+				Auctioneer:            suite.addrs[4].String(),
+				SellingReserveAddress: types.SellingReserveAcc(1).String(),
+				PayingReserveAddress:  types.PayingReserveAcc(1).String(),
+				StartPrice:            sdk.OneDec(), // start price corresponds to the ratio of the paying coin
+				SellingCoin:           sdk.NewInt64Coin(denom1, 1_000_000_000_000),
+				PayingCoinDenom:       denom2,
+				VestingReserveAddress: types.VestingReserveAcc(1).String(),
+				VestingSchedules:      suite.sampleVestingSchedules1,
+				WinningPrice:          sdk.ZeroDec(),
+				RemainingCoin:         sdk.NewInt64Coin(denom1, 1_000_000_000_000),
+				StartTime:             types.ParseTime("2022-01-01T00:00:00Z"),
+				EndTimes:              []time.Time{types.ParseTime("2022-01-10T00:00:00Z")},
+				Status:                types.AuctionStatusStandBy,
 			},
 		),
 		types.NewFixedPriceAuction(
 			&types.BaseAuction{
-				Id:                 2,
-				Type:               types.AuctionTypeFixedPrice,
-				Auctioneer:         suite.addrs[5].String(),
-				SellingPoolAddress: types.SellingReserveAcc(1).String(),
-				PayingPoolAddress:  types.PayingReserveAcc(1).String(),
-				StartPrice:         sdk.MustNewDecFromStr("0.5"),
-				SellingCoin:        sdk.NewInt64Coin(denom3, 1_000_000_000_000),
-				PayingCoinDenom:    denom4,
-				VestingPoolAddress: types.VestingReserveAcc(1).String(),
-				VestingSchedules:   suite.sampleVestingSchedules2,
-				WinningPrice:       sdk.ZeroDec(),
-				RemainingCoin:      sdk.NewInt64Coin(denom3, 1_000_000_000_000),
-				StartTime:          types.ParseTime("2021-12-10T00:00:00Z"),
-				EndTimes:           []time.Time{types.ParseTime("2021-12-20T00:00:00Z")},
-				Status:             types.AuctionStatusStarted,
+				Id:                    2,
+				Type:                  types.AuctionTypeFixedPrice,
+				Auctioneer:            suite.addrs[5].String(),
+				SellingReserveAddress: types.SellingReserveAcc(2).String(),
+				PayingReserveAddress:  types.PayingReserveAcc(2).String(),
+				StartPrice:            sdk.MustNewDecFromStr("0.5"),
+				SellingCoin:           sdk.NewInt64Coin(denom3, 1_000_000_000_000),
+				PayingCoinDenom:       denom4,
+				VestingReserveAddress: types.VestingReserveAcc(2).String(),
+				VestingSchedules:      suite.sampleVestingSchedules2,
+				WinningPrice:          sdk.ZeroDec(),
+				RemainingCoin:         sdk.NewInt64Coin(denom3, 1_000_000_000_000),
+				StartTime:             types.ParseTime("2021-12-10T00:00:00Z"),
+				EndTimes:              []time.Time{types.ParseTime("2021-12-20T00:00:00Z")},
+				Status:                types.AuctionStatusStarted,
 			},
 		),
 	}
@@ -172,6 +172,34 @@ func (suite *ModuleTestSuite) SetupTest() {
 			Eligible:  true,
 		},
 	}
+}
+
+// SetAuction is a convenient method to set an auction and reserve selling coin to the selling reserve account.
+func (suite *ModuleTestSuite) SetAuction(ctx sdk.Context, auction types.AuctionI) {
+	suite.keeper.SetAuction(suite.ctx, auction)
+	err := suite.keeper.ReserveSellingCoin(
+		ctx,
+		auction.GetId(),
+		auction.GetAuctioneer(),
+		auction.GetSellingCoin(),
+	)
+	suite.Require().NoError(err)
+}
+
+// PlaceBid is a convenient method to bid and reserve paying coin to the paying reserve account.
+func (suite *ModuleTestSuite) PlaceBid(ctx sdk.Context, bid types.Bid) {
+	bidderAcc, err := sdk.AccAddressFromBech32(bid.Bidder)
+	suite.Require().NoError(err)
+
+	suite.keeper.SetBid(suite.ctx, bid.AuctionId, bid.Sequence, bidderAcc, bid)
+
+	err = suite.keeper.ReservePayingCoin(
+		suite.ctx,
+		bid.GetAuctionId(),
+		bidderAcc,
+		bid.Coin,
+	)
+	suite.Require().NoError(err)
 }
 
 // coinEq is a convenient method to test expected and got values of sdk.Coin.

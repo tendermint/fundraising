@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
 
@@ -40,23 +41,5 @@ func TestIsAuctionFinished(t *testing.T) {
 		{"2021-12-30T00:00:00Z", true},
 	} {
 		require.Equal(t, tc.active, types.IsAuctionFinished(types.ParseTime(tc.endTimeStr), now))
-	}
-}
-
-func TestIsVested(t *testing.T) {
-	now := types.ParseTime("2021-12-10T00:00:00Z")
-
-	for _, tc := range []struct {
-		releaseTimeStr string
-		active         bool
-	}{
-		{"2021-11-01T00:00:00Z", true},
-		{"2021-11-15T23:59:59Z", true},
-		{"2021-11-20T00:00:00Z", true},
-		{"2021-12-10T00:00:00Z", true},
-		{"2021-12-10T00:00:01Z", false},
-		{"2021-12-30T00:00:00Z", false},
-	} {
-		require.Equal(t, tc.active, types.IsVested(types.ParseTime(tc.releaseTimeStr), now))
 	}
 }

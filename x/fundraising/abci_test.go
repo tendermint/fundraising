@@ -10,7 +10,7 @@ import (
 )
 
 func (suite *ModuleTestSuite) TestEndBlockerStandByStatus() {
-	suite.keeper.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[0])
+	suite.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[0])
 
 	auction, found := suite.keeper.GetAuction(suite.ctx, 1)
 	suite.Require().True(found)
@@ -30,14 +30,7 @@ func (suite *ModuleTestSuite) TestEndBlockerStandByStatus() {
 }
 
 func (suite *ModuleTestSuite) TestEndBlockerStartedStatus() {
-	suite.keeper.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[1])
-	err := suite.keeper.ReserveSellingCoin(
-		suite.ctx,
-		suite.sampleFixedPriceAuctions[1].GetId(),
-		suite.sampleFixedPriceAuctions[1].GetAuctioneer(),
-		suite.sampleFixedPriceAuctions[1].GetSellingCoin(),
-	)
-	suite.Require().NoError(err)
+	suite.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[1])
 
 	auction, found := suite.keeper.GetAuction(suite.ctx, 2)
 	suite.Require().True(found)
@@ -45,19 +38,15 @@ func (suite *ModuleTestSuite) TestEndBlockerStartedStatus() {
 
 	totalBidCoin := sdk.NewInt64Coin(suite.sampleFixedPriceAuctions[1].GetPayingCoinDenom(), 0)
 	for _, bid := range suite.sampleFixedPriceBids {
-		bidderAcc, err := sdk.AccAddressFromBech32(bid.Bidder)
-		suite.Require().NoError(err)
-		suite.keeper.SetBid(suite.ctx, bid.AuctionId, bid.Sequence, bidderAcc, bid)
-
-		err = suite.keeper.ReservePayingCoin(suite.ctx, bid.GetAuctionId(), bidderAcc, bid.Coin)
-		suite.Require().NoError(err)
+		suite.PlaceBid(suite.ctx, bid)
 
 		totalBidCoin = totalBidCoin.Add(bid.Coin)
 	}
 
+	receiveAmt := totalBidCoin.Amount.ToDec().QuoTruncate(auction.GetStartPrice()).TruncateInt()
 	receiveCoin := sdk.NewCoin(
 		auction.GetSellingCoin().Denom,
-		totalBidCoin.Amount.ToDec().Quo(auction.GetStartPrice()).TruncateInt(),
+		receiveAmt,
 	)
 
 	// total bid amounts must be 150_000_000denom4
@@ -81,14 +70,7 @@ func (suite *ModuleTestSuite) TestEndBlockerStartedStatus() {
 }
 
 func (suite *ModuleTestSuite) TestEndBlockerVestingStatus() {
-	suite.keeper.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[1])
-	err := suite.keeper.ReserveSellingCoin(
-		suite.ctx,
-		suite.sampleFixedPriceAuctions[1].GetId(),
-		suite.sampleFixedPriceAuctions[1].GetAuctioneer(),
-		suite.sampleFixedPriceAuctions[1].GetSellingCoin(),
-	)
-	suite.Require().NoError(err)
+	suite.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[1])
 
 	auction, found := suite.keeper.GetAuction(suite.ctx, 2)
 	suite.Require().True(found)
@@ -96,22 +78,18 @@ func (suite *ModuleTestSuite) TestEndBlockerVestingStatus() {
 
 	totalBidCoin := sdk.NewInt64Coin(suite.sampleFixedPriceAuctions[1].GetPayingCoinDenom(), 0)
 	for _, bid := range suite.sampleFixedPriceBids {
-		bidderAcc, err := sdk.AccAddressFromBech32(bid.Bidder)
-		suite.Require().NoError(err)
-		suite.keeper.SetBid(suite.ctx, bid.AuctionId, bid.Sequence, bidderAcc, bid)
-
-		err = suite.keeper.ReservePayingCoin(suite.ctx, bid.GetAuctionId(), bidderAcc, bid.Coin)
-		suite.Require().NoError(err)
+		suite.PlaceBid(suite.ctx, bid)
 
 		totalBidCoin = totalBidCoin.Add(bid.Coin)
 	}
 
+	// set the current block time a day before so that it gets finished
 	suite.ctx = suite.ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, -1))
 	fundraising.EndBlocker(suite.ctx, suite.keeper)
 
 	vestingReserve := suite.app.BankKeeper.GetBalance(
 		suite.ctx,
-		types.VestingReserveAcc(auction.GetId()),
+		auction.GetVestingReserveAddress(),
 		auction.GetPayingCoinDenom(),
 	)
 	suite.Require().Equal(totalBidCoin, vestingReserve)
@@ -121,14 +99,19 @@ func (suite *ModuleTestSuite) TestEndBlockerVestingStatus() {
 
 	queues := suite.keeper.GetVestingQueuesByAuctionId(suite.ctx, auction.GetId())
 	suite.Require().Len(queues, 4)
-	suite.Require().True(queues[0].Vested)
-	suite.Require().True(queues[1].Vested)
+	suite.Require().True(queues[0].Released)
+	suite.Require().True(queues[1].Released)
+	suite.Require().False(queues[2].Released)
+	suite.Require().False(queues[3].Released)
 
-	// auctioneer should have received two vested amounts
+	// auctioneer should have received two released amounts
 	auctioneerBalance := suite.app.BankKeeper.GetBalance(
 		suite.ctx,
 		suite.addrs[5],
 		auction.GetPayingCoinDenom(),
 	)
-	suite.Require().Equal(totalBidCoin.Amount, auctioneerBalance.Amount.Sub(initialBalances.AmountOf(denom4)))
+	suite.Require().Equal(
+		totalBidCoin.Amount.Quo(sdk.NewInt(2)),
+		auctioneerBalance.Amount.Sub(initialBalances.AmountOf(denom4)),
+	)
 }

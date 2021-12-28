@@ -17,15 +17,15 @@ func TestGenesisState_Validate(t *testing.T) {
 	validAcc := sdk.AccAddress(crypto.AddressHash([]byte("validAcc")))
 	validAuction := types.NewFixedPriceAuction(
 		&types.BaseAuction{
-			Id:                 1,
-			Type:               types.AuctionTypeFixedPrice,
-			Auctioneer:         validAcc.String(),
-			SellingPoolAddress: types.SellingReserveAcc(1).String(),
-			PayingPoolAddress:  types.PayingReserveAcc(1).String(),
-			StartPrice:         sdk.MustNewDecFromStr("0.5"),
-			SellingCoin:        sdk.NewInt64Coin("denom1", 1_000_000_000_000),
-			PayingCoinDenom:    "denom2",
-			VestingPoolAddress: types.VestingReserveAcc(1).String(),
+			Id:                    1,
+			Type:                  types.AuctionTypeFixedPrice,
+			Auctioneer:            validAcc.String(),
+			SellingReserveAddress: types.SellingReserveAcc(1).String(),
+			PayingReserveAddress:  types.PayingReserveAcc(1).String(),
+			StartPrice:            sdk.MustNewDecFromStr("0.5"),
+			SellingCoin:           sdk.NewInt64Coin("denom1", 1_000_000_000_000),
+			PayingCoinDenom:       "denom2",
+			VestingReserveAddress: types.VestingReserveAcc(1).String(),
 			VestingSchedules: []types.VestingSchedule{
 				{
 					ReleaseTime: types.ParseTime("2022-06-01T00:00:00Z"),
@@ -55,7 +55,7 @@ func TestGenesisState_Validate(t *testing.T) {
 		Auctioneer:  validAcc.String(),
 		PayingCoin:  sdk.NewInt64Coin("denom2", 100_000_000),
 		ReleaseTime: types.ParseTime("2022-12-20T00:00:00Z"),
-		Vested:      false,
+		Released:    false,
 	}
 
 	for _, tc := range []struct {
@@ -89,15 +89,15 @@ func TestGenesisState_Validate(t *testing.T) {
 			configure: func(genState *types.GenesisState) {
 				auctionAny, _ := types.PackAuction(types.NewFixedPriceAuction(
 					&types.BaseAuction{
-						Id:                 1,
-						Type:               types.AuctionTypeNil,
-						Auctioneer:         validAcc.String(),
-						SellingPoolAddress: types.SellingReserveAcc(1).String(),
-						PayingPoolAddress:  types.PayingReserveAcc(1).String(),
-						StartPrice:         sdk.MustNewDecFromStr("0.5"),
-						SellingCoin:        sdk.NewInt64Coin("denom1", 1_000_000_000_000),
-						PayingCoinDenom:    "denom2",
-						VestingPoolAddress: types.VestingReserveAcc(1).String(),
+						Id:                    1,
+						Type:                  types.AuctionTypeNil,
+						Auctioneer:            validAcc.String(),
+						SellingReserveAddress: types.SellingReserveAcc(1).String(),
+						PayingReserveAddress:  types.PayingReserveAcc(1).String(),
+						StartPrice:            sdk.MustNewDecFromStr("0.5"),
+						SellingCoin:           sdk.NewInt64Coin("denom1", 1_000_000_000_000),
+						PayingCoinDenom:       "denom2",
+						VestingReserveAddress: types.VestingReserveAcc(1).String(),
 						VestingSchedules: []types.VestingSchedule{
 							{
 								ReleaseTime: types.ParseTime("2022-06-01T00:00:00Z"),
@@ -125,15 +125,15 @@ func TestGenesisState_Validate(t *testing.T) {
 			configure: func(genState *types.GenesisState) {
 				auctionAny, _ := types.PackAuction(types.NewFixedPriceAuction(
 					&types.BaseAuction{
-						Id:                 1,
-						Type:               types.AuctionTypeFixedPrice,
-						Auctioneer:         validAcc.String(),
-						SellingPoolAddress: types.SellingReserveAcc(1).String(),
-						PayingPoolAddress:  types.PayingReserveAcc(1).String(),
-						StartPrice:         sdk.MustNewDecFromStr("0.5"),
-						SellingCoin:        sdk.NewInt64Coin("denom1", 1_000_000_000_000),
-						PayingCoinDenom:    "denom1",
-						VestingPoolAddress: types.VestingReserveAcc(1).String(),
+						Id:                    1,
+						Type:                  types.AuctionTypeFixedPrice,
+						Auctioneer:            validAcc.String(),
+						SellingReserveAddress: types.SellingReserveAcc(1).String(),
+						PayingReserveAddress:  types.PayingReserveAcc(1).String(),
+						StartPrice:            sdk.MustNewDecFromStr("0.5"),
+						SellingCoin:           sdk.NewInt64Coin("denom1", 1_000_000_000_000),
+						PayingCoinDenom:       "denom1",
+						VestingReserveAddress: types.VestingReserveAcc(1).String(),
 						VestingSchedules: []types.VestingSchedule{
 							{
 								ReleaseTime: types.ParseTime("2022-06-01T00:00:00Z"),
@@ -161,15 +161,15 @@ func TestGenesisState_Validate(t *testing.T) {
 			configure: func(genState *types.GenesisState) {
 				auctionAny, _ := types.PackAuction(types.NewFixedPriceAuction(
 					&types.BaseAuction{
-						Id:                 1,
-						Type:               types.AuctionTypeFixedPrice,
-						Auctioneer:         validAcc.String(),
-						SellingPoolAddress: types.SellingReserveAcc(1).String(),
-						PayingPoolAddress:  types.PayingReserveAcc(1).String(),
-						StartPrice:         sdk.MustNewDecFromStr("0.5"),
-						SellingCoin:        sdk.NewInt64Coin("denom1", 1_000_000_000_000),
-						PayingCoinDenom:    "denom1",
-						VestingPoolAddress: types.VestingReserveAcc(1).String(),
+						Id:                    1,
+						Type:                  types.AuctionTypeFixedPrice,
+						Auctioneer:            validAcc.String(),
+						SellingReserveAddress: types.SellingReserveAcc(1).String(),
+						PayingReserveAddress:  types.PayingReserveAcc(1).String(),
+						StartPrice:            sdk.MustNewDecFromStr("0.5"),
+						SellingCoin:           sdk.NewInt64Coin("denom1", 1_000_000_000_000),
+						PayingCoinDenom:       "denom1",
+						VestingReserveAddress: types.VestingReserveAcc(1).String(),
 						VestingSchedules: []types.VestingSchedule{
 							{
 								ReleaseTime: types.ParseTime("2022-06-01T00:00:00Z"),
@@ -197,15 +197,15 @@ func TestGenesisState_Validate(t *testing.T) {
 			configure: func(genState *types.GenesisState) {
 				auctionAny, _ := types.PackAuction(types.NewFixedPriceAuction(
 					&types.BaseAuction{
-						Id:                 1,
-						Type:               types.AuctionTypeFixedPrice,
-						Auctioneer:         "invalid",
-						SellingPoolAddress: types.SellingReserveAcc(1).String(),
-						PayingPoolAddress:  types.PayingReserveAcc(1).String(),
-						StartPrice:         sdk.MustNewDecFromStr("0.5"),
-						SellingCoin:        sdk.NewInt64Coin("denom1", 1_000_000_000_000),
-						PayingCoinDenom:    "denom1",
-						VestingPoolAddress: types.VestingReserveAcc(1).String(),
+						Id:                    1,
+						Type:                  types.AuctionTypeFixedPrice,
+						Auctioneer:            "invalid",
+						SellingReserveAddress: types.SellingReserveAcc(1).String(),
+						PayingReserveAddress:  types.PayingReserveAcc(1).String(),
+						StartPrice:            sdk.MustNewDecFromStr("0.5"),
+						SellingCoin:           sdk.NewInt64Coin("denom1", 1_000_000_000_000),
+						PayingCoinDenom:       "denom1",
+						VestingReserveAddress: types.VestingReserveAcc(1).String(),
 						VestingSchedules: []types.VestingSchedule{
 							{
 								ReleaseTime: types.ParseTime("2022-06-01T00:00:00Z"),

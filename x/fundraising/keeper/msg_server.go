@@ -53,7 +53,7 @@ func (k msgServer) CancelAuction(goCtx context.Context, msg *types.MsgCancelAuct
 	return &types.MsgCancelAuctionResponse{}, nil
 }
 
-// PlaceBid defines a method to cancel fundraising.
+// PlaceBid defines a method to place bid for the auction.
 func (k msgServer) PlaceBid(goCtx context.Context, msg *types.MsgPlaceBid) (*types.MsgPlaceBidResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 

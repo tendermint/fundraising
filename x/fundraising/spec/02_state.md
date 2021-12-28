@@ -23,11 +23,11 @@ type AuctionI interface {
 	GetAuctioneer() string
 	SetAuctioneer(string) error
 
-	GetSellingPoolAddress() string
-	SetSellingPoolAddress(string) error
+	GetSellingReserveAddress() string
+	SetSellingReserveAddress(string) error
 
-	GetPayingPoolAddress() string
-	SetPayingPoolAddress(string) error
+	GetPayingReserveAddress() string
+	SetPayingReserveAddress(string) error
 
 	GetStartPrice() sdk.Dec
 	SetStartPrice(sdk.Dec) error
@@ -38,8 +38,8 @@ type AuctionI interface {
 	GetPayingCoinDenom() string
 	SetPayingCoinDenom(string) error
 
-	GetVestingPoolAddress() string
-	SetVestingPoolAddress(string) error
+	GetVestingReserveAddress() string
+	SetVestingReserveAddress(string) error
 
 	GetVestingSchedules() []VestingSchedule
 	SetVestingSchedules([]VestingSchedule) error
@@ -64,21 +64,21 @@ A base auction is the simplest and most common auction type that just stores all
 // for basic auction functionality. Any custom auction type should extend this
 // type for additional functionality (e.g. english auction, fixed price auction).
 type BaseAuction struct {
-	Id                 uint64            // id of the auction
-	Type               AuctionType       // supporting auction types are english and fixed price
-	Auctioneer         string            // the account that is in charge of the action
-	SellingPoolAddress string            // an escrow account to collect selling tokens for the auction
-	PayingPoolAddress  string            // an escrow account to collect paying tokens for the auction
-	StartPrice         sdk.Dec           // starting price of the auction
-	SellingCoin        sdk.Coin          // selling coin for the auction
-	PayingCoinDenom    string            // the paying coin denom that bidders use to bid with
-	VestingPoolAddress string            // the vesting account that releases the paying amount of coins based on the schedules
-	VestingSchedules   []VestingSchedule // vesting schedules for the auction
-	WinningPrice       sdk.Dec           // the winning price of the auction
-	RemainingCoin      sdk.Coin          // the remaining amount of coin to sell
-	StartTime          time.Time         // start time of the auction
-	EndTime            []time.Time       // end times of the auction since extended round(s) can occur
-	Status             AuctionStatus     // the auction status
+	Id                    uint64            // id of the auction
+	Type                  AuctionType       // the auction type; currently FixedPrice and English are supported
+	Auctioneer            string            // the owner of the auction
+	SellingReserveAddress string            // the reserve account to collect selling coins for the auction
+	PayingReserveAddress  string            // the reserve account to collect paying coins for the auction
+	StartPrice            sdk.Dec           // the starting price for the auction
+	SellingCoin           sdk.Coin          // the selling coin for the auction
+	PayingCoinDenom       string            // the denom that the auctioneer receives to raise funds
+	VestingReserveAddress string            // the reserve account that releases the accumulated paying coins based on the schedules
+	VestingSchedules      []VestingSchedule // the vesting schedules for the auction
+	WinningPrice          sdk.Dec           // the winning price of the auction
+	RemainingCoin         sdk.Coin          // the remaining amount of coin to sell
+	StartTime             time.Time         // the start time of the auction
+	EndTime               []time.Time       // the end times of the auction; it is an array since extended round(s) can occur
+	Status                AuctionStatus     // the auction status
 }
 ```
 
@@ -87,17 +87,17 @@ type BaseAuction struct {
 ```go
 // VestingSchedule defines the vesting schedule for the owner of an auction.
 type VestingSchedule struct {
-	ReleaseTime time.Time // release time for distribution of the vesting coin
-	Weight      sdk.Dec   // vesting weight for the schedule
+	ReleaseTime time.Time // the release time for vesting coin distribution
+	Weight      sdk.Dec   // the vesting weight for the schedule
 }
 
 // VestingQueue defines the vesting queue.
 type VestingQueue struct {
 	AuctionId   uint64    // id of the auction
-	Auctioneer  string    // account that creates the auction
-	PayingCoin  sdk.Coin  // paying amount of coin 
-	ReleaseTime time.Time // release time of the vesting coin
-	Vested      bool      // status of distribution
+	Auctioneer  string    // the owner of the auction
+	PayingCoin  sdk.Coin  // the paying amount of coin
+	ReleaseTime time.Time // the release time of the vesting coin
+	Released      bool    // the distribution status 
 }
 ```
 

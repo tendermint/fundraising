@@ -1,6 +1,8 @@
 package types
 
 import (
+	time "time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -38,4 +40,10 @@ func ValidateVestingSchedules(schedules []VestingSchedule) error {
 	}
 
 	return nil
+}
+
+// IsVestingReleasable returns true when the vesting queue is ready to release the paying coin.
+// It checks if the release time is equal or before the given time t and released value is false.
+func (vq VestingQueue) IsVestingReleasable(t time.Time) bool {
+	return !vq.GetReleaseTime().After(t) && !vq.Released
 }
