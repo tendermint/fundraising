@@ -82,11 +82,11 @@ func (suite *KeeperTestSuite) SetupTest() {
 			Weight:      sdk.MustNewDecFromStr("0.25"),
 		},
 		{
-			ReleaseTime: types.ParseTime("2022-04-01T22:00:00+00:00"),
+			ReleaseTime: types.ParseTime("2022-05-01T22:00:00+00:00"),
 			Weight:      sdk.MustNewDecFromStr("0.25"),
 		},
 		{
-			ReleaseTime: types.ParseTime("2022-08-01T22:00:00+00:00"),
+			ReleaseTime: types.ParseTime("2022-09-01T22:00:00+00:00"),
 			Weight:      sdk.MustNewDecFromStr("0.25"),
 		},
 		{
