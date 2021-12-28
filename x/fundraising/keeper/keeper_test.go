@@ -191,7 +191,8 @@ func (suite *KeeperTestSuite) PlaceBid(bid types.Bid) {
 	bidderAcc, err := sdk.AccAddressFromBech32(bid.Bidder)
 	suite.Require().NoError(err)
 
-	suite.keeper.SetBid(suite.ctx, bid.AuctionId, bid.Sequence, bidderAcc, bid)
+	nextSeq := suite.keeper.GetNextSequenceWithUpdate(suite.ctx, bid.AuctionId)
+	suite.keeper.SetBid(suite.ctx, bid.AuctionId, nextSeq, bidderAcc, bid)
 
 	err = suite.keeper.ReservePayingCoin(
 		suite.ctx,

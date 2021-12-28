@@ -5,9 +5,42 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	gogotypes "github.com/gogo/protobuf/types"
 
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
+
+// GetSequence returns the last sequence number of the bid.
+func (k Keeper) GetSequence(ctx sdk.Context, auctionId uint64) uint64 {
+	var seq uint64
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.GetSequenceKey(auctionId))
+	if bz == nil {
+		seq = 0 // initialize the sequence
+	} else {
+		val := gogotypes.UInt64Value{}
+		err := k.cdc.Unmarshal(bz, &val)
+		if err != nil {
+			panic(err)
+		}
+		seq = val.GetValue()
+	}
+	return seq
+}
+
+// GetNextSequence increments sequence number by one and set it.
+func (k Keeper) GetNextSequenceWithUpdate(ctx sdk.Context, auctionId uint64) uint64 {
+	seq := k.GetSequence(ctx, auctionId) + 1
+	k.SetSequence(ctx, auctionId, seq)
+	return seq
+}
+
+// SetSequence sets the sequence number for the auction.
+func (k Keeper) SetSequence(ctx sdk.Context, auctionId uint64, seq uint64) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshal(&gogotypes.UInt64Value{Value: seq})
+	store.Set(types.GetSequenceKey(auctionId), bz)
+}
 
 // GetBid returns a bid for the given auction id and sequence number.
 // A bidder can have as many bids as they want, so sequence is required to get the bid.
@@ -158,7 +191,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 		return sdkerrors.Wrap(types.ErrInvalidAuctionType, "not supported auction type in this version")
 	}
 
-	sequenceId := k.GetNextSequenceWithUpdate(ctx)
+	sequenceId := k.GetNextSequenceWithUpdate(ctx, auction.GetId())
 
 	bid := types.Bid{
 		AuctionId: auction.GetId(),

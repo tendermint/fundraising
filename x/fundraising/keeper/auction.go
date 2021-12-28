@@ -45,38 +45,6 @@ func (k Keeper) SetAuctionId(ctx sdk.Context, id uint64) {
 	store.Set(types.AuctionIdKey, bz)
 }
 
-// GetSequence returns the last sequence number of the bid.
-func (k Keeper) GetSequence(ctx sdk.Context) uint64 {
-	var seq uint64
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.SequenceKey)
-	if bz == nil {
-		seq = 0 // initialize the sequence
-	} else {
-		val := gogotypes.UInt64Value{}
-		err := k.cdc.Unmarshal(bz, &val)
-		if err != nil {
-			panic(err)
-		}
-		seq = val.GetValue()
-	}
-	return seq
-}
-
-// GetNextSequence increments sequence number by one and set it.
-func (k Keeper) GetNextSequenceWithUpdate(ctx sdk.Context) uint64 {
-	seq := k.GetSequence(ctx) + 1
-	k.SetSequence(ctx, seq)
-	return seq
-}
-
-// SetSequence sets the sequence number of the bid.
-func (k Keeper) SetSequence(ctx sdk.Context, seq uint64) {
-	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshal(&gogotypes.UInt64Value{Value: seq})
-	store.Set(types.SequenceKey, bz)
-}
-
 // GetAuction returns an auction for a given auction id.
 func (k Keeper) GetAuction(ctx sdk.Context, id uint64) (auction types.AuctionI, found bool) {
 	store := ctx.KVStore(k.storeKey)
@@ -286,7 +254,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 	)
 
 	// updates status if the start time is already passed over the current time
-	if types.IsAuctionStarted(baseAuction.GetStartTime(), ctx.BlockTime()) {
+	if baseAuction.IsAuctionStarted(ctx.BlockTime()) {
 		baseAuction.Status = types.AuctionStatusStarted
 	}
 
