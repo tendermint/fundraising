@@ -372,12 +372,12 @@ func VestingReserveAcc(auctionId uint64) sdk.AccAddress {
 	return DeriveAddress(ReserveAddressType, ModuleName, VestingReserveAccPrefix+AccNameSplitter+fmt.Sprint(auctionId))
 }
 
-// IsAuctionStarted returns true if the given time t is equal or ahead of the start time.
+// IsAuctionStarted returns true if the start time of the auction is equal or before the given time t.
 func IsAuctionStarted(startTime time.Time, t time.Time) bool {
-	return !t.Before(startTime)
+	return !startTime.After(t)
 }
 
-// IsAuctionFinished returns true if the given time t is equal of ahead of the end time.
+// IsAuctionFinished returns true if the end time of the auction is equal or before the given time t.
 func IsAuctionFinished(endTime time.Time, t time.Time) bool {
-	return !t.After(endTime)
+	return !endTime.After(t)
 }

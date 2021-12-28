@@ -33,12 +33,12 @@ func TestIsAuctionFinished(t *testing.T) {
 		endTimeStr string
 		active     bool
 	}{
-		{"2021-11-01T00:00:00Z", false},
-		{"2021-11-15T23:59:59Z", false},
-		{"2021-11-20T00:00:00Z", false},
+		{"2021-11-01T00:00:00Z", true},
+		{"2021-11-15T23:59:59Z", true},
+		{"2021-11-20T00:00:00Z", true},
 		{"2021-12-10T00:00:00Z", true},
-		{"2021-12-11T00:00:00Z", true},
-		{"2021-12-30T00:00:00Z", true},
+		{"2021-12-11T00:00:00Z", false},
+		{"2021-12-30T00:00:00Z", false},
 	} {
 		require.Equal(t, tc.active, types.IsAuctionFinished(types.ParseTime(tc.endTimeStr), now))
 	}

@@ -132,12 +132,14 @@ func (suite *KeeperTestSuite) TestAuctionStatusStatesInvariant() {
 	_, broken = keeper.AuctionStatusStatesInvariant(k)(ctx)
 	suite.Require().False(broken)
 
-	ctx = ctx.WithBlockTime(suite.sampleFixedPriceAuctions[1].GetEndTimes()[0].AddDate(0, 0, -1))
+	// set the current block time a day after so that it gets finished
+	ctx = ctx.WithBlockTime(suite.sampleFixedPriceAuctions[1].GetEndTimes()[0].AddDate(0, 0, 1))
 	fundraising.EndBlocker(ctx, k)
 
 	_, broken = keeper.AuctionStatusStatesInvariant(k)(ctx)
 	suite.Require().False(broken)
 
+	// set the current block time a day after so that all vesting queues get released
 	ctx = ctx.WithBlockTime(suite.sampleFixedPriceAuctions[1].GetVestingSchedules()[3].GetReleaseTime().AddDate(0, 0, 1))
 	fundraising.EndBlocker(ctx, k)
 
