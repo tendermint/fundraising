@@ -15,6 +15,8 @@ func RegisterInvariants(ir sdk.InvariantRegistry, k Keeper) {
 		PayingPoolReserveAmountInvariant(k))
 	ir.RegisterRoute(types.ModuleName, "vesting-pool-reserve-amount",
 		VestingPoolReserveAmountInvariant(k))
+	ir.RegisterRoute(types.ModuleName, "auction-status-states",
+		AuctionStatusStatesInvariant(k))
 }
 
 // AllInvariants runs all invariants of the fundraising module.
@@ -24,6 +26,7 @@ func AllInvariants(k Keeper) sdk.Invariant {
 			SellingPoolReserveAmountInvariant,
 			PayingPoolReserveAmountInvariant,
 			VestingPoolReserveAmountInvariant,
+			AuctionStatusStatesInvariant,
 		} {
 			res, stop := inv(k)(ctx)
 			if stop {
@@ -35,7 +38,7 @@ func AllInvariants(k Keeper) sdk.Invariant {
 }
 
 // SellingPoolReserveAmountInvariant checks an invariant that the total amount of selling coin for an auction
-// must equal to the selling reserve account balance.
+// must equal or greater than the selling reserve account balance.
 func SellingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
 		msg := ""
@@ -61,7 +64,7 @@ func SellingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 }
 
 // PayingPoolReserveAmountInvariant checks an invariant that the total bid amount
-// must equal to the paying reserve account balance.
+// must equal or greater than the paying reserve account balance.
 func PayingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
 		msg := ""
@@ -92,7 +95,8 @@ func PayingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 	}
 }
 
-// VestingPoolReserveAmountInvariant checks an invariant
+// VestingPoolReserveAmountInvariant checks an invariant that the total vesting amount
+// must be equal or greater than the vesting reserve account balance.
 func VestingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
 		msg := ""
@@ -122,5 +126,59 @@ func VestingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 		broken := count != 0
 
 		return sdk.FormatInvariant(types.ModuleName, "vesting pool reserve amount and total paying amount", msg), broken
+	}
+}
+
+// AuctionStatusStatesInvariant checks an invariant that states are properly set depending on the auction status.
+func AuctionStatusStatesInvariant(k Keeper) sdk.Invariant {
+	return func(ctx sdk.Context) (string, bool) {
+		msg := ""
+		count := 0
+
+		for _, auction := range k.GetAuctions(ctx) {
+			_, found := k.GetAuction(ctx, auction.GetId())
+			if !found {
+				msg += fmt.Sprintf("auction %d not found", auction.GetId())
+				count++
+			}
+
+			switch auction.GetStatus() {
+			case types.AuctionStatusStandBy:
+				if !ctx.BlockTime().Before(auction.GetStartTime()) {
+					msg += fmt.Sprintf("expected auction status is %s", types.AuctionStatusStandBy)
+					count++
+				}
+			case types.AuctionStatusStarted:
+				if !types.IsAuctionStarted(auction.GetStartTime(), ctx.BlockTime()) {
+					msg += fmt.Sprintf("expected auction status is %s", types.AuctionStatusStarted)
+					count++
+				}
+			case types.AuctionStatusVesting:
+				lenVestingSchedules := len(auction.GetVestingSchedules())
+				lenVestingQueues := len(k.GetVestingQueuesByAuctionId(ctx, auction.GetId()))
+
+				if lenVestingSchedules != lenVestingQueues {
+					msg += fmt.Sprintf("expected vesting queue length %d but got %d", lenVestingSchedules, lenVestingQueues)
+					count++
+				}
+			case types.AuctionStatusFinished:
+				if auction.GetType() == types.AuctionTypeFixedPrice {
+					if !types.IsAuctionFinished(auction.GetEndTimes()[0], ctx.BlockTime()) {
+						msg += fmt.Sprintf("expected auction status is %s", types.AuctionStatusFinished)
+						count++
+					}
+				}
+			case types.AuctionStatusCancelled:
+				if !auction.GetRemainingCoin().IsZero() {
+					msg += fmt.Sprintf("expected remaining coin is 0 but got %v", auction.GetRemainingCoin())
+					count++
+				}
+			default:
+				panic("invalid auction status")
+			}
+		}
+
+		broken := count != 0
+		return sdk.FormatInvariant(types.ModuleName, "auction status states", msg), broken
 	}
 }

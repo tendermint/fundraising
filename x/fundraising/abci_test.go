@@ -57,7 +57,8 @@ func (suite *ModuleTestSuite) TestEndBlockerStartedStatus() {
 	)
 	suite.Require().True(coinEq(totalBidCoin, payingReserve))
 
-	suite.ctx = suite.ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, -1))
+	// set the current block time a day after so that it gets finished
+	suite.ctx = suite.ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, 1))
 	fundraising.EndBlocker(suite.ctx, suite.keeper)
 
 	// remaining selling coin should have returned to the auctioneer
@@ -83,8 +84,8 @@ func (suite *ModuleTestSuite) TestEndBlockerVestingStatus() {
 		totalBidCoin = totalBidCoin.Add(bid.Coin)
 	}
 
-	// set the current block time a day before so that it gets finished
-	suite.ctx = suite.ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, -1))
+	// set the current block time a day after so that it gets finished
+	suite.ctx = suite.ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, 1))
 	fundraising.EndBlocker(suite.ctx, suite.keeper)
 
 	vestingReserve := suite.app.BankKeeper.GetBalance(

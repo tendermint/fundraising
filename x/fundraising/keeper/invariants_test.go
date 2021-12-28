@@ -48,14 +48,7 @@ func (suite *KeeperTestSuite) TestSellingPoolReserveAmountInvariant() {
 func (suite *KeeperTestSuite) TestPayingPoolReserveAmountInvariant() {
 	k, ctx, auction := suite.keeper, suite.ctx, suite.sampleFixedPriceAuctions[1]
 
-	k.SetAuction(suite.ctx, auction)
-	err := k.ReserveSellingCoin(
-		ctx,
-		auction.GetId(),
-		auction.GetAuctioneer(),
-		auction.GetSellingCoin(),
-	)
-	suite.Require().NoError(err)
+	suite.SetAuction(ctx, auction)
 
 	for _, bid := range suite.sampleFixedPriceBids {
 		bidderAcc, err := sdk.AccAddressFromBech32(bid.Bidder)
@@ -78,7 +71,7 @@ func (suite *KeeperTestSuite) TestPayingPoolReserveAmountInvariant() {
 		sdk.NewInt64Coin(denom3, 500_000_000),
 		sdk.NewInt64Coin(denom4, 500_000_000),
 	)
-	err = suite.app.BankKeeper.SendCoins(ctx, exploiterAcc, auction.GetPayingReserveAddress(), sendingCoins)
+	err := suite.app.BankKeeper.SendCoins(ctx, exploiterAcc, auction.GetPayingReserveAddress(), sendingCoins)
 	suite.Require().NoError(err)
 
 	_, broken = keeper.PayingPoolReserveAmountInvariant(k)(ctx)
@@ -88,14 +81,7 @@ func (suite *KeeperTestSuite) TestPayingPoolReserveAmountInvariant() {
 func (suite *KeeperTestSuite) TestVestingPoolReserveAmountInvariant() {
 	k, ctx, auction := suite.keeper, suite.ctx, suite.sampleFixedPriceAuctions[1]
 
-	k.SetAuction(suite.ctx, auction)
-	err := k.ReserveSellingCoin(
-		ctx,
-		auction.GetId(),
-		auction.GetAuctioneer(),
-		auction.GetSellingCoin(),
-	)
-	suite.Require().NoError(err)
+	suite.SetAuction(ctx, auction)
 
 	for _, bid := range suite.sampleFixedPriceBids {
 		bidderAcc, err := sdk.AccAddressFromBech32(bid.Bidder)
@@ -126,9 +112,37 @@ func (suite *KeeperTestSuite) TestVestingPoolReserveAmountInvariant() {
 		sdk.NewInt64Coin(denom3, 500_000_000),
 		sdk.NewInt64Coin(denom4, 500_000_000),
 	)
-	err = suite.app.BankKeeper.SendCoins(ctx, exploiterAcc, auction.GetVestingReserveAddress(), sendingCoins)
+	err := suite.app.BankKeeper.SendCoins(ctx, exploiterAcc, auction.GetVestingReserveAddress(), sendingCoins)
 	suite.Require().NoError(err)
 
 	_, broken = keeper.VestingPoolReserveAmountInvariant(k)(ctx)
+	suite.Require().False(broken)
+}
+
+func (suite *KeeperTestSuite) TestAuctionStatusStatesInvariant() {
+	k, ctx := suite.keeper, suite.ctx
+
+	suite.SetAuction(ctx, suite.sampleFixedPriceAuctions[0])
+
+	_, broken := keeper.AuctionStatusStatesInvariant(k)(ctx)
+	suite.Require().False(broken)
+
+	suite.SetAuction(ctx, suite.sampleFixedPriceAuctions[1])
+
+	_, broken = keeper.AuctionStatusStatesInvariant(k)(ctx)
+	suite.Require().False(broken)
+
+	// set the current block time a day after so that it gets finished
+	ctx = ctx.WithBlockTime(suite.sampleFixedPriceAuctions[1].GetEndTimes()[0].AddDate(0, 0, 1))
+	fundraising.EndBlocker(ctx, k)
+
+	_, broken = keeper.AuctionStatusStatesInvariant(k)(ctx)
+	suite.Require().False(broken)
+
+	// set the current block time a day after so that all vesting queues get released
+	ctx = ctx.WithBlockTime(suite.sampleFixedPriceAuctions[1].GetVestingSchedules()[3].GetReleaseTime().AddDate(0, 0, 1))
+	fundraising.EndBlocker(ctx, k)
+
+	_, broken = keeper.AuctionStatusStatesInvariant(k)(ctx)
 	suite.Require().False(broken)
 }
