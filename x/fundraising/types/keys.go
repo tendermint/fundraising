@@ -37,6 +37,11 @@ var (
 	VestingQueueKeyPrefix = []byte{0x41} // prefix to retrieve the vesting queues from the auction id and vesting release time
 )
 
+// GetSequenceKey returns the store key to retrieve the latest sequence from the index fields.
+func GetSequenceKey(auctionId uint64) []byte {
+	return append(SequenceKey, sdk.Uint64ToBigEndian(auctionId)...)
+}
+
 // GetAuctionKey returns the store key to retrieve the auction from the index field.
 func GetAuctionKey(auctionId uint64) []byte {
 	return append(AuctionKeyPrefix, sdk.Uint64ToBigEndian(auctionId)...)
