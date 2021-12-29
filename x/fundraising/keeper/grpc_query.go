@@ -122,16 +122,11 @@ func (k Querier) Bids(c context.Context, req *types.QueryBidsRequest) (*types.Qu
 	store := ctx.KVStore(k.storeKey)
 	switch {
 	case req.Bidder != "" && req.Eligible == "":
-		bids, pageRes, err = queryBidsByBidder(ctx, k, store, req, false)
+		bids, pageRes, err = queryBidsByBidder(ctx, k, store, req)
+	case req.Bidder != "" && req.Eligible != "":
+		bids, pageRes, err = queryBidsByBidder(ctx, k, store, req)
 	case req.Bidder == "" && req.Eligible != "":
 		bids, pageRes, err = queryBidsByEligible(ctx, k, store, req)
-	case req.Bidder != "" && req.Eligible != "":
-		var eligible bool
-		eligible, err = strconv.ParseBool(req.Eligible)
-		if err != nil {
-			return nil, err
-		}
-		bids, pageRes, err = queryBidsByBidder(ctx, k, store, req, eligible)
 	default:
 		bids, pageRes, err = queryAllBids(ctx, k, store, req)
 	}
@@ -140,6 +135,21 @@ func (k Querier) Bids(c context.Context, req *types.QueryBidsRequest) (*types.Qu
 	}
 
 	return &types.QueryBidsResponse{Bids: bids, Pagination: pageRes}, nil
+}
+
+// Bid queries the specific bid from the auction id and sequence number.
+func (k Querier) Bid(c context.Context, req *types.QueryBidRequest) (*types.QueryBidResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+	bid, found := k.Keeper.GetBid(ctx, req.AuctionId, req.Sequence)
+	if !found {
+		return nil, status.Errorf(codes.NotFound, "bid from auction id %d and sequence %d not found", req.AuctionId, req.Sequence)
+	}
+
+	return &types.QueryBidResponse{Bid: bid}, nil
 }
 
 // Vestings queries all vesting queues for the auction.
@@ -185,7 +195,7 @@ func queryAllBids(ctx sdk.Context, k Querier, store sdk.KVStore, req *types.Quer
 	return bids, pageRes, err
 }
 
-func queryBidsByBidder(ctx sdk.Context, k Querier, store sdk.KVStore, req *types.QueryBidsRequest, eligible bool) (bids []types.Bid, pageRes *query.PageResponse, err error) {
+func queryBidsByBidder(ctx sdk.Context, k Querier, store sdk.KVStore, req *types.QueryBidsRequest) (bids []types.Bid, pageRes *query.PageResponse, err error) {
 	bidderAcc, err := sdk.AccAddressFromBech32(req.Bidder)
 	if err != nil {
 		return nil, nil, err
@@ -197,8 +207,15 @@ func queryBidsByBidder(ctx sdk.Context, k Querier, store sdk.KVStore, req *types
 		auctionId, sequence := types.SplitAuctionIdSequenceKey(key)
 		bid, _ := k.GetBid(ctx, auctionId, sequence)
 
-		if bid.Eligible != eligible {
-			return false, nil
+		if req.Eligible != "" {
+			eligible, err := strconv.ParseBool(req.Eligible)
+			if err != nil {
+				return false, err
+			}
+
+			if bid.Eligible != eligible {
+				return false, nil
+			}
 		}
 
 		if accumulate {

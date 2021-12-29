@@ -230,7 +230,7 @@ Example command:
 ```bash
 fundraisingd tx fundraising bid 1 1.0 5000000denom2 \
 --chain-id fundraising \
---from alice \
+--from steve \
 --keyring-backend test \
 --broadcast-mode block \
 --yes \
@@ -247,7 +247,7 @@ Result:
       {
         "@type": "/tendermint.fundraising.fundraising.MsgPlaceBid",
         "auction_id": "1",
-        "bidder": "cosmos15ghqvkhllee5uvy400pw2fuh4d45ayykuzm2ts",
+        "bidder": "cosmos1ah7esxq240an2qdupqxfckvfdv4cqd7pdze9gz",
         "price": "1.000000000000000000",
         "coin": {
           "denom": "denom2",
@@ -265,14 +265,14 @@ Result:
       {
         "public_key": {
           "@type": "/cosmos.crypto.secp256k1.PubKey",
-          "key": "Asinw4aW3b+D81bkY2ALm5K2RlFxQTRdfPOrs36CnkLF"
+          "key": "AojmMLw7J/vhjZzuQP6D5NyuLzwGuLh+iIKGENjpOiKW"
         },
         "mode_info": {
           "single": {
             "mode": "SIGN_MODE_DIRECT"
           }
         },
-        "sequence": "6"
+        "sequence": "0"
       }
     ],
     "fee": {
@@ -283,7 +283,7 @@ Result:
     }
   },
   "signatures": [
-    "YqPjBdxyeP5ufw+XGw37dZzEjI/UPqiBz7JMMzxUJ9EA9oRfVsTKFl4BZ9vsaRztJw4a2O6SyE00ACamjYqECg=="
+    "cmuyvzr58LJ31/QEBVAwJlSi25z8XS1Du3HdVjbwCAs+U4ypAt68y1O+sj4+NtjoSy6MOywEoQ+O/8NUPRCzWg=="
   ]
 }
 ```
