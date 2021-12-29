@@ -2,7 +2,7 @@ accounts:
   - name: alice
     coins: ["2000000000000stake","1000000000000000denom1","1000000000000000denom2"]
   - name: bob # auctioneer
-    coins: ["1000000000000000denom1"]
+    coins: ["2000000000000stake","1000000000000000denom1"]
   - name: steve # bidder
     coins: ["1000000000000000denom2"]
 validator:
