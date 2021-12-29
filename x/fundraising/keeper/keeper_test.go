@@ -151,7 +151,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 			Price:     sdk.MustNewDecFromStr("0.5"),
 			Coin:      sdk.NewInt64Coin(denom4, 30_000_000),
 			Height:    uint64(suite.ctx.BlockHeight()),
-			Eligible:  true,
+			Eligible:  false,
 		},
 		{
 			AuctionId: 2,
@@ -169,7 +169,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 			Price:     sdk.MustNewDecFromStr("0.5"),
 			Coin:      sdk.NewInt64Coin(denom4, 50_000_000),
 			Height:    uint64(suite.ctx.BlockHeight()),
-			Eligible:  true,
+			Eligible:  false,
 		},
 	}
 }

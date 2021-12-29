@@ -123,7 +123,9 @@ func (suite *KeeperTestSuite) TestGRPCAuction() {
 }
 
 func (suite *KeeperTestSuite) TestGRPCBids() {
-	suite.SetAuction(suite.sampleFixedPriceAuctions[1])
+	for _, auction := range suite.sampleFixedPriceAuctions {
+		suite.SetAuction(auction)
+	}
 
 	for _, bid := range suite.sampleFixedPriceBids {
 		suite.PlaceBid(bid)
@@ -169,7 +171,7 @@ func (suite *KeeperTestSuite) TestGRPCBids() {
 			&types.QueryBidsRequest{AuctionId: 2, Eligible: "true"},
 			false,
 			func(resp *types.QueryBidsResponse) {
-				suite.Require().Len(resp.Bids, 1)
+				suite.Require().Len(resp.Bids, 2)
 			},
 		},
 		{
@@ -177,7 +179,7 @@ func (suite *KeeperTestSuite) TestGRPCBids() {
 			&types.QueryBidsRequest{AuctionId: 2, Eligible: "false"},
 			false,
 			func(resp *types.QueryBidsResponse) {
-				suite.Require().Len(resp.Bids, 3)
+				suite.Require().Len(resp.Bids, 2)
 			},
 		},
 		{
@@ -185,7 +187,7 @@ func (suite *KeeperTestSuite) TestGRPCBids() {
 			&types.QueryBidsRequest{AuctionId: 2, Bidder: suite.addrs[0].String(), Eligible: "false"},
 			false,
 			func(resp *types.QueryBidsResponse) {
-				suite.Require().Len(resp.Bids, 2)
+				suite.Require().Len(resp.Bids, 1)
 			},
 		},
 		{

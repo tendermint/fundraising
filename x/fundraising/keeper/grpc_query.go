@@ -122,16 +122,11 @@ func (k Querier) Bids(c context.Context, req *types.QueryBidsRequest) (*types.Qu
 	store := ctx.KVStore(k.storeKey)
 	switch {
 	case req.Bidder != "" && req.Eligible == "":
-		bids, pageRes, err = queryBidsByBidder(ctx, k, store, req, false)
+		bids, pageRes, err = queryBidsByBidder(ctx, k, store, req)
+	case req.Bidder != "" && req.Eligible != "":
+		bids, pageRes, err = queryBidsByBidder(ctx, k, store, req)
 	case req.Bidder == "" && req.Eligible != "":
 		bids, pageRes, err = queryBidsByEligible(ctx, k, store, req)
-	case req.Bidder != "" && req.Eligible != "":
-		var eligible bool
-		eligible, err = strconv.ParseBool(req.Eligible)
-		if err != nil {
-			return nil, err
-		}
-		bids, pageRes, err = queryBidsByBidder(ctx, k, store, req, eligible)
 	default:
 		bids, pageRes, err = queryAllBids(ctx, k, store, req)
 	}
@@ -200,7 +195,7 @@ func queryAllBids(ctx sdk.Context, k Querier, store sdk.KVStore, req *types.Quer
 	return bids, pageRes, err
 }
 
-func queryBidsByBidder(ctx sdk.Context, k Querier, store sdk.KVStore, req *types.QueryBidsRequest, eligible bool) (bids []types.Bid, pageRes *query.PageResponse, err error) {
+func queryBidsByBidder(ctx sdk.Context, k Querier, store sdk.KVStore, req *types.QueryBidsRequest) (bids []types.Bid, pageRes *query.PageResponse, err error) {
 	bidderAcc, err := sdk.AccAddressFromBech32(req.Bidder)
 	if err != nil {
 		return nil, nil, err
@@ -212,8 +207,15 @@ func queryBidsByBidder(ctx sdk.Context, k Querier, store sdk.KVStore, req *types
 		auctionId, sequence := types.SplitAuctionIdSequenceKey(key)
 		bid, _ := k.GetBid(ctx, auctionId, sequence)
 
-		if bid.Eligible != eligible {
-			return false, nil
+		if req.Eligible != "" {
+			eligible, err := strconv.ParseBool(req.Eligible)
+			if err != nil {
+				return false, err
+			}
+
+			if bid.Eligible != eligible {
+				return false, nil
+			}
 		}
 
 		if accumulate {
