@@ -10,7 +10,7 @@ import (
 )
 
 func (suite *ModuleTestSuite) TestEndBlockerStandByStatus() {
-	suite.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[0])
+	suite.SetAuction(suite.sampleFixedPriceAuctions[0])
 
 	auction, found := suite.keeper.GetAuction(suite.ctx, 1)
 	suite.Require().True(found)
@@ -30,7 +30,7 @@ func (suite *ModuleTestSuite) TestEndBlockerStandByStatus() {
 }
 
 func (suite *ModuleTestSuite) TestEndBlockerStartedStatus() {
-	suite.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[1])
+	suite.SetAuction(suite.sampleFixedPriceAuctions[1])
 
 	auction, found := suite.keeper.GetAuction(suite.ctx, 2)
 	suite.Require().True(found)
@@ -38,7 +38,7 @@ func (suite *ModuleTestSuite) TestEndBlockerStartedStatus() {
 
 	totalBidCoin := sdk.NewInt64Coin(suite.sampleFixedPriceAuctions[1].GetPayingCoinDenom(), 0)
 	for _, bid := range suite.sampleFixedPriceBids {
-		suite.PlaceBid(suite.ctx, bid)
+		suite.PlaceBid(bid)
 
 		totalBidCoin = totalBidCoin.Add(bid.Coin)
 	}
@@ -57,7 +57,8 @@ func (suite *ModuleTestSuite) TestEndBlockerStartedStatus() {
 	)
 	suite.Require().True(coinEq(totalBidCoin, payingReserve))
 
-	suite.ctx = suite.ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, -1))
+	// set the current block time a day after so that it gets finished
+	suite.ctx = suite.ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, 1))
 	fundraising.EndBlocker(suite.ctx, suite.keeper)
 
 	// remaining selling coin should have returned to the auctioneer
@@ -70,7 +71,7 @@ func (suite *ModuleTestSuite) TestEndBlockerStartedStatus() {
 }
 
 func (suite *ModuleTestSuite) TestEndBlockerVestingStatus() {
-	suite.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[1])
+	suite.SetAuction(suite.sampleFixedPriceAuctions[1])
 
 	auction, found := suite.keeper.GetAuction(suite.ctx, 2)
 	suite.Require().True(found)
@@ -78,13 +79,13 @@ func (suite *ModuleTestSuite) TestEndBlockerVestingStatus() {
 
 	totalBidCoin := sdk.NewInt64Coin(suite.sampleFixedPriceAuctions[1].GetPayingCoinDenom(), 0)
 	for _, bid := range suite.sampleFixedPriceBids {
-		suite.PlaceBid(suite.ctx, bid)
+		suite.PlaceBid(bid)
 
 		totalBidCoin = totalBidCoin.Add(bid.Coin)
 	}
 
-	// set the current block time a day before so that it gets finished
-	suite.ctx = suite.ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, -1))
+	// set the current block time a day after so that it gets finished
+	suite.ctx = suite.ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, 1))
 	fundraising.EndBlocker(suite.ctx, suite.keeper)
 
 	vestingReserve := suite.app.BankKeeper.GetBalance(

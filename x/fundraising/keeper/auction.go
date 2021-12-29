@@ -45,38 +45,6 @@ func (k Keeper) SetAuctionId(ctx sdk.Context, id uint64) {
 	store.Set(types.AuctionIdKey, bz)
 }
 
-// GetSequence returns the last sequence number of the bid.
-func (k Keeper) GetSequence(ctx sdk.Context) uint64 {
-	var seq uint64
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.SequenceKey)
-	if bz == nil {
-		seq = 0 // initialize the sequence
-	} else {
-		val := gogotypes.UInt64Value{}
-		err := k.cdc.Unmarshal(bz, &val)
-		if err != nil {
-			panic(err)
-		}
-		seq = val.GetValue()
-	}
-	return seq
-}
-
-// GetNextSequence increments sequence number by one and set it.
-func (k Keeper) GetNextSequenceWithUpdate(ctx sdk.Context) uint64 {
-	seq := k.GetSequence(ctx) + 1
-	k.SetSequence(ctx, seq)
-	return seq
-}
-
-// SetSequence sets the sequence number of the bid.
-func (k Keeper) SetSequence(ctx sdk.Context, seq uint64) {
-	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshal(&gogotypes.UInt64Value{Value: seq})
-	store.Set(types.SequenceKey, bz)
-}
-
 // GetAuction returns an auction for a given auction id.
 func (k Keeper) GetAuction(ctx sdk.Context, id uint64) (auction types.AuctionI, found bool) {
 	store := ctx.KVStore(k.storeKey)
@@ -148,7 +116,7 @@ func (k Keeper) UnmarshalAuction(bz []byte) (auction types.AuctionI, err error) 
 
 // DistributeSellingCoin releases designated selling coin from the selling reserve account.
 func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) error {
-	sellingReserveAcc := types.SellingReserveAcc(auction.GetId())
+	sellingReserveAcc := auction.GetSellingReserveAddress()
 
 	var inputs []banktypes.Input
 	var outputs []banktypes.Output
@@ -188,7 +156,9 @@ func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) e
 
 // DistributePayingCoin releases the selling coin from the vesting reserve account.
 func (k Keeper) DistributePayingCoin(ctx sdk.Context, auction types.AuctionI) error {
-	for _, vq := range k.GetVestingQueuesByAuctionId(ctx, auction.GetId()) {
+	lenVestingQueue := len(k.GetVestingQueuesByAuctionId(ctx, auction.GetId()))
+
+	for i, vq := range k.GetVestingQueuesByAuctionId(ctx, auction.GetId()) {
 		if vq.IsVestingReleasable(ctx.BlockTime()) {
 			vestingReserveAcc := auction.GetVestingReserveAddress()
 
@@ -198,6 +168,15 @@ func (k Keeper) DistributePayingCoin(ctx sdk.Context, auction types.AuctionI) er
 
 			vq.Released = true
 			k.SetVestingQueue(ctx, auction.GetId(), vq.ReleaseTime, vq)
+
+			// set finished status when vesting schedule is ended
+			if i == lenVestingQueue-1 {
+				if err := auction.SetStatus(types.AuctionStatusFinished); err != nil {
+					return err
+				}
+
+				k.SetAuction(ctx, auction)
+			}
 		}
 	}
 
@@ -208,6 +187,19 @@ func (k Keeper) DistributePayingCoin(ctx sdk.Context, auction types.AuctionI) er
 func (k Keeper) ReserveSellingCoin(ctx sdk.Context, auctionId uint64, auctioneerAcc sdk.AccAddress, sellingCoin sdk.Coin) error {
 	if err := k.bankKeeper.SendCoins(ctx, auctioneerAcc, types.SellingReserveAcc(auctionId), sdk.NewCoins(sellingCoin)); err != nil {
 		return sdkerrors.Wrap(err, "failed to reserve selling coin")
+	}
+	return nil
+}
+
+// ReleaseSellingCoin releases the selling coin to the auctioneer.
+func (k Keeper) ReleaseSellingCoin(ctx sdk.Context, auction types.AuctionI) error {
+	sellingReserveAcc := auction.GetSellingReserveAddress()
+	auctioneerAcc := auction.GetAuctioneer()
+
+	reserveBalance := k.bankKeeper.GetBalance(ctx, sellingReserveAcc, auction.GetSellingCoin().Denom)
+
+	if err := k.bankKeeper.SendCoins(ctx, sellingReserveAcc, auctioneerAcc, sdk.NewCoins(reserveBalance)); err != nil {
+		return sdkerrors.Wrap(err, "failed to release selling coin")
 	}
 	return nil
 }
@@ -262,7 +254,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 	)
 
 	// updates status if the start time is already passed over the current time
-	if types.IsAuctionStarted(baseAuction.GetStartTime(), ctx.BlockTime()) {
+	if baseAuction.IsAuctionStarted(ctx.BlockTime()) {
 		baseAuction.Status = types.AuctionStatusStarted
 	}
 
@@ -312,16 +304,12 @@ func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) erro
 		return sdkerrors.Wrap(types.ErrInvalidAuctionStatus, "auction cannot be canceled due to current status")
 	}
 
-	sellingReserveAcc := auction.GetSellingReserveAddress()
-	reserveBalance := k.bankKeeper.GetBalance(ctx, sellingReserveAcc, auction.GetSellingCoin().Denom)
-
-	if err := k.bankKeeper.SendCoins(ctx, sellingReserveAcc, auction.GetAuctioneer(), sdk.NewCoins(reserveBalance)); err != nil {
-		return sdkerrors.Wrap(err, "failed to release selling coin")
-	}
-
-	if err := auction.SetStatus(types.AuctionStatusCancelled); err != nil {
+	if err := k.ReleaseSellingCoin(ctx, auction); err != nil {
 		return err
 	}
+
+	_ = auction.SetRemainingCoin(sdk.NewCoin(auction.GetSellingCoin().Denom, sdk.ZeroInt()))
+	_ = auction.SetStatus(types.AuctionStatusCancelled)
 
 	k.SetAuction(ctx, auction)
 

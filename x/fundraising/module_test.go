@@ -142,7 +142,7 @@ func (suite *ModuleTestSuite) SetupTest() {
 			Price:     sdk.MustNewDecFromStr("0.5"),
 			Coin:      sdk.NewInt64Coin(denom4, 20_000_000),
 			Height:    uint64(suite.ctx.BlockHeight()),
-			Eligible:  false,
+			Eligible:  true,
 		},
 		{
 			AuctionId: 2,
@@ -151,7 +151,7 @@ func (suite *ModuleTestSuite) SetupTest() {
 			Price:     sdk.MustNewDecFromStr("0.5"),
 			Coin:      sdk.NewInt64Coin(denom4, 30_000_000),
 			Height:    uint64(suite.ctx.BlockHeight()),
-			Eligible:  false,
+			Eligible:  true,
 		},
 		{
 			AuctionId: 2,
@@ -160,7 +160,7 @@ func (suite *ModuleTestSuite) SetupTest() {
 			Price:     sdk.MustNewDecFromStr("0.5"),
 			Coin:      sdk.NewInt64Coin(denom4, 50_000_000),
 			Height:    uint64(suite.ctx.BlockHeight()),
-			Eligible:  false,
+			Eligible:  true,
 		},
 		{
 			AuctionId: 2,
@@ -175,10 +175,10 @@ func (suite *ModuleTestSuite) SetupTest() {
 }
 
 // SetAuction is a convenient method to set an auction and reserve selling coin to the selling reserve account.
-func (suite *ModuleTestSuite) SetAuction(ctx sdk.Context, auction types.AuctionI) {
+func (suite *ModuleTestSuite) SetAuction(auction types.AuctionI) {
 	suite.keeper.SetAuction(suite.ctx, auction)
 	err := suite.keeper.ReserveSellingCoin(
-		ctx,
+		suite.ctx,
 		auction.GetId(),
 		auction.GetAuctioneer(),
 		auction.GetSellingCoin(),
@@ -187,11 +187,12 @@ func (suite *ModuleTestSuite) SetAuction(ctx sdk.Context, auction types.AuctionI
 }
 
 // PlaceBid is a convenient method to bid and reserve paying coin to the paying reserve account.
-func (suite *ModuleTestSuite) PlaceBid(ctx sdk.Context, bid types.Bid) {
+func (suite *ModuleTestSuite) PlaceBid(bid types.Bid) {
 	bidderAcc, err := sdk.AccAddressFromBech32(bid.Bidder)
 	suite.Require().NoError(err)
 
-	suite.keeper.SetBid(suite.ctx, bid.AuctionId, bid.Sequence, bidderAcc, bid)
+	nextSeq := suite.keeper.GetNextSequenceWithUpdate(suite.ctx, bid.AuctionId)
+	suite.keeper.SetBid(suite.ctx, bid.AuctionId, nextSeq, bidderAcc, bid)
 
 	err = suite.keeper.ReservePayingCoin(
 		suite.ctx,
