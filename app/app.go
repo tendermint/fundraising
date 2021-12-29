@@ -86,7 +86,7 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	// this line is used by starport scaffolding # stargate/app/moduleImport
-	fundraisingdocs "github.com/tendermint/fundraising/docs"
+	fundraisingdocs "github.com/tendermint/fundraising/client/docs"
 	fundraising "github.com/tendermint/fundraising/x/fundraising"
 	fundraisingkeeper "github.com/tendermint/fundraising/x/fundraising/keeper"
 	fundraisingtypes "github.com/tendermint/fundraising/x/fundraising/types"
@@ -599,7 +599,7 @@ func (app *App) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIConfig
 	ModuleBasics.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
 	// Register app's OpenAPI routes.
-	if apiConfig.Enable {
+	if apiConfig.Swagger {
 		apiSvr.Router.Handle("/static/openapi.yml", http.FileServer(http.FS(fundraisingdocs.Docs)))
 		apiSvr.Router.HandleFunc("/", openapiconsole.Handler(Name, "/static/openapi.yml"))
 	}
