@@ -116,7 +116,7 @@ func (k Keeper) UnmarshalAuction(bz []byte) (auction types.AuctionI, err error) 
 
 // DistributeSellingCoin releases designated selling coin from the selling reserve account.
 func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) error {
-	sellingReserveAcc := types.SellingReserveAcc(auction.GetId())
+	sellingReserveAcc := auction.GetSellingReserveAddress()
 
 	var inputs []banktypes.Input
 	var outputs []banktypes.Output
@@ -187,6 +187,19 @@ func (k Keeper) DistributePayingCoin(ctx sdk.Context, auction types.AuctionI) er
 func (k Keeper) ReserveSellingCoin(ctx sdk.Context, auctionId uint64, auctioneerAcc sdk.AccAddress, sellingCoin sdk.Coin) error {
 	if err := k.bankKeeper.SendCoins(ctx, auctioneerAcc, types.SellingReserveAcc(auctionId), sdk.NewCoins(sellingCoin)); err != nil {
 		return sdkerrors.Wrap(err, "failed to reserve selling coin")
+	}
+	return nil
+}
+
+// ReleaseSellingCoin releases the selling coin to the auctioneer.
+func (k Keeper) ReleaseSellingCoin(ctx sdk.Context, auction types.AuctionI) error {
+	sellingReserveAcc := auction.GetSellingReserveAddress()
+	auctioneerAcc := auction.GetAuctioneer()
+
+	reserveBalance := k.bankKeeper.GetBalance(ctx, sellingReserveAcc, auction.GetSellingCoin().Denom)
+
+	if err := k.bankKeeper.SendCoins(ctx, sellingReserveAcc, auctioneerAcc, sdk.NewCoins(reserveBalance)); err != nil {
+		return sdkerrors.Wrap(err, "failed to release selling coin")
 	}
 	return nil
 }
@@ -291,11 +304,8 @@ func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) erro
 		return sdkerrors.Wrap(types.ErrInvalidAuctionStatus, "auction cannot be canceled due to current status")
 	}
 
-	sellingReserveAcc := auction.GetSellingReserveAddress()
-	reserveBalance := k.bankKeeper.GetBalance(ctx, sellingReserveAcc, auction.GetSellingCoin().Denom)
-
-	if err := k.bankKeeper.SendCoins(ctx, sellingReserveAcc, auction.GetAuctioneer(), sdk.NewCoins(reserveBalance)); err != nil {
-		return sdkerrors.Wrap(err, "failed to release selling coin")
+	if err := k.ReleaseSellingCoin(ctx, auction); err != nil {
+		return err
 	}
 
 	_ = auction.SetRemainingCoin(sdk.NewCoin(auction.GetSellingCoin().Denom, sdk.ZeroInt()))

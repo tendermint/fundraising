@@ -82,11 +82,11 @@ func (suite *KeeperTestSuite) SetupTest() {
 			Weight:      sdk.MustNewDecFromStr("0.25"),
 		},
 		{
-			ReleaseTime: types.ParseTime("2022-04-01T22:00:00+00:00"),
+			ReleaseTime: types.ParseTime("2022-05-01T22:00:00+00:00"),
 			Weight:      sdk.MustNewDecFromStr("0.25"),
 		},
 		{
-			ReleaseTime: types.ParseTime("2022-08-01T22:00:00+00:00"),
+			ReleaseTime: types.ParseTime("2022-09-01T22:00:00+00:00"),
 			Weight:      sdk.MustNewDecFromStr("0.25"),
 		},
 		{
@@ -175,10 +175,10 @@ func (suite *KeeperTestSuite) SetupTest() {
 }
 
 // SetAuction is a convenient method to set an auction and reserve selling coin to the selling reserve account.
-func (suite *KeeperTestSuite) SetAuction(ctx sdk.Context, auction types.AuctionI) {
+func (suite *KeeperTestSuite) SetAuction(auction types.AuctionI) {
 	suite.keeper.SetAuction(suite.ctx, auction)
 	err := suite.keeper.ReserveSellingCoin(
-		ctx,
+		suite.ctx,
 		auction.GetId(),
 		auction.GetAuctioneer(),
 		auction.GetSellingCoin(),
@@ -187,7 +187,7 @@ func (suite *KeeperTestSuite) SetAuction(ctx sdk.Context, auction types.AuctionI
 }
 
 // PlaceBid is a convenient method to bid and reserve paying coin to the paying reserve account.
-func (suite *KeeperTestSuite) PlaceBid(ctx sdk.Context, bid types.Bid) {
+func (suite *KeeperTestSuite) PlaceBid(bid types.Bid) {
 	bidderAcc, err := sdk.AccAddressFromBech32(bid.Bidder)
 	suite.Require().NoError(err)
 
@@ -206,7 +206,6 @@ func (suite *KeeperTestSuite) PlaceBid(ctx sdk.Context, bid types.Bid) {
 // PlaceBidWithCustom is a convenient method to bid with custom fields and
 // reserve paying coin to the paying reserve account.
 func (suite *KeeperTestSuite) PlaceBidWithCustom(
-	ctx sdk.Context,
 	auctionId uint64,
 	sequence uint64,
 	bidder string,
@@ -231,6 +230,17 @@ func (suite *KeeperTestSuite) PlaceBidWithCustom(
 		coin,
 	)
 	suite.Require().NoError(err)
+}
+
+// CancelAuction is a convenient method to cancel the auction.
+func (suite *KeeperTestSuite) CancelAuction(auction types.AuctionI) {
+	err := suite.keeper.ReleaseSellingCoin(suite.ctx, auction)
+	suite.Require().NoError(err)
+
+	_ = auction.SetRemainingCoin(sdk.NewCoin(auction.GetSellingCoin().Denom, sdk.ZeroInt()))
+	_ = auction.SetStatus(types.AuctionStatusCancelled)
+
+	suite.keeper.SetAuction(suite.ctx, auction)
 }
 
 // coinEq is a convenient method to test expected and got values of sdk.Coin.

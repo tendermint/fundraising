@@ -12,13 +12,13 @@ import (
 
 func (suite *KeeperTestSuite) TestBidIterators() {
 	// create a fixed price auction with already started status
-	suite.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[1])
+	suite.SetAuction(suite.sampleFixedPriceAuctions[1])
 
-	auction, found := suite.keeper.GetAuction(suite.ctx, 2)
+	auction, found := suite.keeper.GetAuction(suite.ctx, suite.sampleFixedPriceAuctions[1].GetId())
 	suite.Require().True(found)
 
 	for _, bid := range suite.sampleFixedPriceBids {
-		suite.PlaceBid(suite.ctx, bid)
+		suite.PlaceBid(bid)
 	}
 
 	bids := suite.keeper.GetBids(suite.ctx)
@@ -32,10 +32,10 @@ func (suite *KeeperTestSuite) TestBidIterators() {
 }
 
 func (suite *KeeperTestSuite) TestBidSequence() {
-	suite.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[1])
+	suite.SetAuction(suite.sampleFixedPriceAuctions[1])
 
 	for _, bid := range suite.sampleFixedPriceBids {
-		suite.PlaceBid(suite.ctx, bid)
+		suite.PlaceBid(bid)
 	}
 
 	auction, found := suite.keeper.GetAuction(suite.ctx, 2)
@@ -46,7 +46,7 @@ func (suite *KeeperTestSuite) TestBidSequence() {
 	suite.Require().Equal(uint64(5), suite.keeper.GetNextSequenceWithUpdate(suite.ctx, auction.GetId()))
 
 	// create a new auction with auction
-	suite.SetAuction(suite.ctx, types.NewFixedPriceAuction(
+	suite.SetAuction(types.NewFixedPriceAuction(
 		&types.BaseAuction{
 			Id:                    3,
 			Type:                  types.AuctionTypeFixedPrice,

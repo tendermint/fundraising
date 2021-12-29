@@ -59,7 +59,7 @@ func (suite *KeeperTestSuite) TestMsgCancelAuction() {
 	suite.Require().ErrorIs(err, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", uint64(1)))
 
 	// create a fixed price auction that is started status
-	suite.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[1])
+	suite.SetAuction(suite.sampleFixedPriceAuctions[1])
 
 	auction, found := suite.keeper.GetAuction(suite.ctx, uint64(2))
 	suite.Require().True(found)
@@ -80,7 +80,7 @@ func (suite *KeeperTestSuite) TestMsgCancelAuction() {
 	suite.Require().ErrorIs(err, sdkerrors.Wrap(types.ErrInvalidAuctionStatus, "auction cannot be canceled due to current status"))
 
 	// create another fixed price auction that is stand by status
-	suite.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[0])
+	suite.SetAuction(suite.sampleFixedPriceAuctions[0])
 
 	auction, found = suite.keeper.GetAuction(suite.ctx, uint64(1))
 	suite.Require().True(found)
@@ -104,7 +104,7 @@ func (suite *KeeperTestSuite) TestMsgPlaceBid() {
 
 	// Create a fixed price auction that should start right away
 	auction := suite.sampleFixedPriceAuctions[1]
-	suite.SetAuction(suite.ctx, auction)
+	suite.SetAuction(auction)
 
 	for _, tc := range []struct {
 		name string
