@@ -2,7 +2,6 @@ package types_test
 
 import (
 	"testing"
-	time "time"
 
 	"github.com/stretchr/testify/require"
 
@@ -15,7 +14,7 @@ import (
 
 func TestMsgCreateFixedPriceAuction(t *testing.T) {
 	auctioneerAcc := sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer")))
-	startTime, _ := time.Parse(time.RFC3339, "2021-11-01T22:00:00+00:00")
+	startTime := types.ParseTime("2021-12-10T00:00:00Z")
 	endTime := startTime.AddDate(0, 1, 0) // add 1 month
 
 	testCases := []struct {
@@ -56,6 +55,30 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 				[]types.VestingSchedule{},
 				startTime,
 				endTime,
+			),
+		},
+		{
+			"selling coin denom must not be the same as paying coin denom: invalid request",
+			types.NewMsgCreateFixedPriceAuction(
+				auctioneerAcc.String(),
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom2",
+				[]types.VestingSchedule{},
+				startTime,
+				endTime,
+			),
+		},
+		{
+			"end time must be greater than start time: invalid request",
+			types.NewMsgCreateFixedPriceAuction(
+				auctioneerAcc.String(),
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom1",
+				[]types.VestingSchedule{},
+				startTime,
+				startTime.AddDate(-1, 0, 0),
 			),
 		},
 		{
@@ -110,39 +133,6 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 			),
 		},
 		{
-			"total vesting weight must be equal to 1: invalid vesting schedules",
-			types.NewMsgCreateFixedPriceAuction(
-				auctioneerAcc.String(),
-				sdk.MustNewDecFromStr("0.5"),
-				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
-				"denom1",
-				[]types.VestingSchedule{
-					{
-						types.ParseTime("2022-06-01T22:00:00+00:00"),
-						sdk.MustNewDecFromStr("0.5"),
-					},
-					{
-						types.ParseTime("2022-12-01T22:00:00+00:00"),
-						sdk.MustNewDecFromStr("0.3"),
-					},
-				},
-				startTime,
-				endTime,
-			),
-		},
-		{
-			"end time must be greater than start time: invalid request",
-			types.NewMsgCreateFixedPriceAuction(
-				auctioneerAcc.String(),
-				sdk.MustNewDecFromStr("0.5"),
-				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
-				"denom1",
-				[]types.VestingSchedule{},
-				startTime,
-				startTime.AddDate(-1, 0, 0),
-			),
-		},
-		{
 			"release time must be chronological: invalid vesting schedules",
 			types.NewMsgCreateFixedPriceAuction(
 				auctioneerAcc.String(),
@@ -157,6 +147,27 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 					{
 						types.ParseTime("2022-06-01T22:00:00+00:00"),
 						sdk.MustNewDecFromStr("0.5"),
+					},
+				},
+				startTime,
+				endTime,
+			),
+		},
+		{
+			"total vesting weight must be equal to 1: invalid vesting schedules",
+			types.NewMsgCreateFixedPriceAuction(
+				auctioneerAcc.String(),
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom1",
+				[]types.VestingSchedule{
+					{
+						types.ParseTime("2022-06-01T22:00:00+00:00"),
+						sdk.MustNewDecFromStr("0.5"),
+					},
+					{
+						types.ParseTime("2022-12-01T22:00:00+00:00"),
+						sdk.MustNewDecFromStr("0.3"),
 					},
 				},
 				startTime,
@@ -245,11 +256,11 @@ func TestMsgPlaceBid(t *testing.T) {
 			),
 		},
 		{
-			"bid price must be positve value: invalid request",
+			"invalid coin amount: 0: invalid request",
 			types.NewMsgPlaceBid(
 				uint64(1),
 				bidderAcc.String(),
-				sdk.ZeroDec(),
+				sdk.OneDec(),
 				sdk.NewInt64Coin("denom2", 0),
 			),
 		},
