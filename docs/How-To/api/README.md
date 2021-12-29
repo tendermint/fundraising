@@ -9,6 +9,8 @@ This document provides a high-level overview of what gRPC-gateway REST routes ar
 
 ## Swagger Documentation
 
+- Swagger Cosmos SDK Fundraising Module [REST and gRPC Gateway docs](https://app.swaggerhub.com/apis-docs/gravity-devs/fundraising/v0.1.0)
+
 ## gRPC-gateway REST Routes
 
 To test out the following command line interface, you must set up a local network. By simply running `make localnet` under the root project directory, you can start the local network. It requires [Starport](https://starport.com/), but if you don't have Starport set up in your local machine, see this [install Starport guide](https://docs.starport.network/) to install it.  

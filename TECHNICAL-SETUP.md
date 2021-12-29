@@ -65,3 +65,18 @@ To install the node client on your machine, run `make install` command from the 
 Run `make test-all` command to run tests.
 
 > 💡 you can also use the default `go` command to build the project, check the content of the [Makefile](https://github.com/tendermint/fundraising/blob/main/Makefile#L128) for reference
+
+## Localnet
+
+To start a local blockchain, you can simply run the following command. The command uses [Starport](https://starport.com/) to start a local blockchain node with automatic reloading. If you don't have Starport set up in your local machine, see this [install guide](https://docs.starport.network/) to install it.  
+
+```bash
+make localnet
+```
+
+## Swagger
+
+A [Swagger](https://swagger.io/) specification file is exposed under the `/` route on the API server (port using 1317). Swagger is an open specification describing the API endpoints a server serves, including description, input arguments, return types and much more about each endpoint. 
+
+Enabling the `/` endpoint is configurable inside `~/.fundraisingd/config/app.toml` through the `api.swagger` field, which is set to `true` by default.
+
