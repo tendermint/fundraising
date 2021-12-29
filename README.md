@@ -4,7 +4,8 @@ The fundraising module is a Cosmos SDK module that that serves fundraising featu
 
 The fundraising module is built using Cosmos SDK and Tendermint and created with [Starport](https://github.com/tendermint/starport).
 
-⚠ **The fundraising module PoC is in active development - see "main" branch for the latest version** ⚠
+- see the [main](https://github.com/tendermint/fundraising/tree/main) branch for the latest 
+- see [releases](https://github.com/tendermint/fundraising/releases) for the latest release
 
 ## Dependencies
 
@@ -13,7 +14,7 @@ If you haven't already, install Golang by following the [official docs](https://
 Requirement | Notes
 ----------- | -----------------
 Go version  | Go1.16 or higher
-Cosmos SDK  | v0.44.0 or higher
+Cosmos SDK  | v0.44.0
 
 ## Installation
 
