@@ -142,6 +142,21 @@ func (k Querier) Bids(c context.Context, req *types.QueryBidsRequest) (*types.Qu
 	return &types.QueryBidsResponse{Bids: bids, Pagination: pageRes}, nil
 }
 
+// Bid queries the specific bid from the auction id and sequence number.
+func (k Querier) Bid(c context.Context, req *types.QueryBidRequest) (*types.QueryBidResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+	bid, found := k.Keeper.GetBid(ctx, req.AuctionId, req.Sequence)
+	if !found {
+		return nil, status.Errorf(codes.NotFound, "bid from auction id %d and sequence %d not found", req.AuctionId, req.Sequence)
+	}
+
+	return &types.QueryBidResponse{Bid: bid}, nil
+}
+
 // Vestings queries all vesting queues for the auction.
 func (k Querier) Vestings(c context.Context, req *types.QueryVestingsRequest) (*types.QueryVestingsResponse, error) {
 	if req == nil {

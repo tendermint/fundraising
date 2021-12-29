@@ -34,6 +34,12 @@ service Query {
         "/cosmos/fundraising/v1beta1/auctions/{auction_id}/bids";
   }
 
+  // Bid returns the specific bid from the auction id and sequence.
+  rpc Bid(QueryBidRequest) returns (QueryBidResponse) {
+    option (google.api.http).get =
+        "/cosmos/fundraising/v1beta1/auctions/{auction_id}/bids/{sequence}";
+  }
+
   // Vestings returns all vestings for the auction.
   rpc Vestings(QueryVestingsRequest) returns (QueryVestingsResponse) {
     option (google.api.http).get =
@@ -91,6 +97,18 @@ message QueryBidsResponse {
 
   // pagination defines the pagination in the response
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryBidRequest is the request type for the Query/Sequence RPC method.
+message QueryBidRequest {  
+  uint64 auction_id = 1;
+  uint64 sequence = 2;
+}
+
+// QueryBidResponse is response type for the Query/Sequence RPC method.
+message QueryBidResponse {
+  // bid specifies specific bid
+  Bid bid = 1 [ (gogoproto.nullable) = false ];
 }
 
 // QueryVestingsRequest is request type for the Query/Vestings RPC method.

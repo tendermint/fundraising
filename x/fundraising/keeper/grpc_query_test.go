@@ -3,6 +3,7 @@ package keeper_test
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/tendermint/fundraising/x/fundraising"
 	"github.com/tendermint/fundraising/x/fundraising/types"
 
 	_ "github.com/stretchr/testify/suite"
@@ -17,7 +18,7 @@ func (suite *KeeperTestSuite) TestGRPCParams() {
 
 func (suite *KeeperTestSuite) TestGRPCAuctions() {
 	for _, auction := range suite.sampleFixedPriceAuctions {
-		suite.keeper.SetAuction(suite.ctx, auction)
+		suite.SetAuction(auction)
 	}
 
 	for _, tc := range []struct {
@@ -77,7 +78,7 @@ func (suite *KeeperTestSuite) TestGRPCAuctions() {
 
 func (suite *KeeperTestSuite) TestGRPCAuction() {
 	for _, auction := range suite.sampleFixedPriceAuctions {
-		suite.keeper.SetAuction(suite.ctx, auction)
+		suite.SetAuction(auction)
 	}
 
 	for _, tc := range []struct {
@@ -122,14 +123,10 @@ func (suite *KeeperTestSuite) TestGRPCAuction() {
 }
 
 func (suite *KeeperTestSuite) TestGRPCBids() {
-	for _, auction := range suite.sampleFixedPriceAuctions {
-		suite.keeper.SetAuction(suite.ctx, auction)
-	}
+	suite.SetAuction(suite.sampleFixedPriceAuctions[1])
 
 	for _, bid := range suite.sampleFixedPriceBids {
-		bidderAcc, err := sdk.AccAddressFromBech32(bid.Bidder)
-		suite.Require().NoError(err)
-		suite.keeper.SetBid(suite.ctx, bid.AuctionId, bid.Sequence, bidderAcc, bid)
+		suite.PlaceBid(bid)
 	}
 
 	for _, tc := range []struct {
@@ -212,6 +209,113 @@ func (suite *KeeperTestSuite) TestGRPCBids() {
 	}
 }
 
+func (suite *KeeperTestSuite) TestGRPCBid() {
+	suite.SetAuction(suite.sampleFixedPriceAuctions[1])
+
+	for _, bid := range suite.sampleFixedPriceBids {
+		suite.PlaceBid(bid)
+	}
+
+	for _, tc := range []struct {
+		name      string
+		req       *types.QueryBidRequest
+		expectErr bool
+		postRun   func(*types.QueryBidResponse)
+	}{
+		{
+			"nil request",
+			nil,
+			true,
+			nil,
+		},
+		{
+			"query by id and sequence",
+			&types.QueryBidRequest{
+				AuctionId: 2,
+				Sequence:  1,
+			},
+			false,
+			func(resp *types.QueryBidResponse) {
+				suite.Require().Equal(uint64(2), resp.Bid.GetAuctionId())
+				suite.Require().Equal(uint64(1), resp.Bid.GetSequence())
+			},
+		},
+		{
+			"id not found",
+			&types.QueryBidRequest{
+				AuctionId: 5,
+			},
+			true,
+			nil,
+		},
+		{
+			"sequence not found",
+			&types.QueryBidRequest{
+				AuctionId: 2,
+				Sequence:  5,
+			},
+			true,
+			nil,
+		},
+	} {
+		suite.Run(tc.name, func() {
+			resp, err := suite.querier.Bid(sdk.WrapSDKContext(suite.ctx), tc.req)
+			if tc.expectErr {
+				suite.Require().Error(err)
+			} else {
+				suite.Require().NoError(err)
+				tc.postRun(resp)
+			}
+		})
+	}
+}
+
 func (suite *KeeperTestSuite) TestGRPCVestings() {
-	// TODO: not implemented yet
+	suite.SetAuction(suite.sampleFixedPriceAuctions[1])
+
+	auction, found := suite.keeper.GetAuction(suite.ctx, 2)
+	suite.Require().True(found)
+	suite.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	for _, bid := range suite.sampleFixedPriceBids {
+		suite.PlaceBid(bid)
+	}
+
+	// set the current block time a day after so that it gets finished
+	suite.ctx = suite.ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, 1))
+	fundraising.EndBlocker(suite.ctx, suite.keeper)
+
+	for _, tc := range []struct {
+		name      string
+		req       *types.QueryVestingsRequest
+		expectErr bool
+		postRun   func(*types.QueryVestingsResponse)
+	}{
+		{
+			"nil request",
+			nil,
+			true,
+			nil,
+		},
+		{
+			"query by id",
+			&types.QueryVestingsRequest{
+				AuctionId: 2,
+			},
+			false,
+			func(resp *types.QueryVestingsResponse) {
+				suite.Require().Len(resp.Vestings, 4)
+			},
+		},
+	} {
+		suite.Run(tc.name, func() {
+			resp, err := suite.querier.Vestings(sdk.WrapSDKContext(suite.ctx), tc.req)
+			if tc.expectErr {
+				suite.Require().Error(err)
+			} else {
+				suite.Require().NoError(err)
+				tc.postRun(resp)
+			}
+		})
+	}
 }
