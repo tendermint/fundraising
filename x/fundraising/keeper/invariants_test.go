@@ -48,7 +48,7 @@ func (suite *KeeperTestSuite) TestSellingPoolReserveAmountInvariant() {
 func (suite *KeeperTestSuite) TestPayingPoolReserveAmountInvariant() {
 	k, ctx, auction := suite.keeper, suite.ctx, suite.sampleFixedPriceAuctions[1]
 
-	suite.SetAuction(ctx, auction)
+	suite.SetAuction(auction)
 
 	for _, bid := range suite.sampleFixedPriceBids {
 		bidderAcc, err := sdk.AccAddressFromBech32(bid.Bidder)
@@ -81,7 +81,7 @@ func (suite *KeeperTestSuite) TestPayingPoolReserveAmountInvariant() {
 func (suite *KeeperTestSuite) TestVestingPoolReserveAmountInvariant() {
 	k, ctx, auction := suite.keeper, suite.ctx, suite.sampleFixedPriceAuctions[1]
 
-	suite.SetAuction(ctx, auction)
+	suite.SetAuction(auction)
 
 	for _, bid := range suite.sampleFixedPriceBids {
 		bidderAcc, err := sdk.AccAddressFromBech32(bid.Bidder)
@@ -122,12 +122,12 @@ func (suite *KeeperTestSuite) TestVestingPoolReserveAmountInvariant() {
 func (suite *KeeperTestSuite) TestAuctionStatusStatesInvariant() {
 	k, ctx := suite.keeper, suite.ctx
 
-	suite.SetAuction(ctx, suite.sampleFixedPriceAuctions[0])
+	suite.SetAuction(suite.sampleFixedPriceAuctions[0])
 
 	_, broken := keeper.AuctionStatusStatesInvariant(k)(ctx)
 	suite.Require().False(broken)
 
-	suite.SetAuction(ctx, suite.sampleFixedPriceAuctions[1])
+	suite.SetAuction(suite.sampleFixedPriceAuctions[1])
 
 	_, broken = keeper.AuctionStatusStatesInvariant(k)(ctx)
 	suite.Require().False(broken)

@@ -10,7 +10,7 @@ import (
 )
 
 func (suite *ModuleTestSuite) TestEndBlockerStandByStatus() {
-	suite.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[0])
+	suite.SetAuction(suite.sampleFixedPriceAuctions[0])
 
 	auction, found := suite.keeper.GetAuction(suite.ctx, 1)
 	suite.Require().True(found)
@@ -30,7 +30,7 @@ func (suite *ModuleTestSuite) TestEndBlockerStandByStatus() {
 }
 
 func (suite *ModuleTestSuite) TestEndBlockerStartedStatus() {
-	suite.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[1])
+	suite.SetAuction(suite.sampleFixedPriceAuctions[1])
 
 	auction, found := suite.keeper.GetAuction(suite.ctx, 2)
 	suite.Require().True(found)
@@ -38,7 +38,7 @@ func (suite *ModuleTestSuite) TestEndBlockerStartedStatus() {
 
 	totalBidCoin := sdk.NewInt64Coin(suite.sampleFixedPriceAuctions[1].GetPayingCoinDenom(), 0)
 	for _, bid := range suite.sampleFixedPriceBids {
-		suite.PlaceBid(suite.ctx, bid)
+		suite.PlaceBid(bid)
 
 		totalBidCoin = totalBidCoin.Add(bid.Coin)
 	}
@@ -71,7 +71,7 @@ func (suite *ModuleTestSuite) TestEndBlockerStartedStatus() {
 }
 
 func (suite *ModuleTestSuite) TestEndBlockerVestingStatus() {
-	suite.SetAuction(suite.ctx, suite.sampleFixedPriceAuctions[1])
+	suite.SetAuction(suite.sampleFixedPriceAuctions[1])
 
 	auction, found := suite.keeper.GetAuction(suite.ctx, 2)
 	suite.Require().True(found)
@@ -79,7 +79,7 @@ func (suite *ModuleTestSuite) TestEndBlockerVestingStatus() {
 
 	totalBidCoin := sdk.NewInt64Coin(suite.sampleFixedPriceAuctions[1].GetPayingCoinDenom(), 0)
 	for _, bid := range suite.sampleFixedPriceBids {
-		suite.PlaceBid(suite.ctx, bid)
+		suite.PlaceBid(bid)
 
 		totalBidCoin = totalBidCoin.Add(bid.Coin)
 	}

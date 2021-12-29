@@ -41,7 +41,8 @@ func (suite *KeeperTestSuite) TestVestingQueueRemainingCoin() {
 		EndTimes:      []time.Time{types.ParseTime("2022-12-20T00:00:00Z")},
 		Status:        types.AuctionStatusStarted,
 	}
-	suite.SetAuction(suite.ctx, auction)
+
+	suite.SetAuction(auction)
 
 	bids := []types.Bid{
 		{
@@ -54,7 +55,7 @@ func (suite *KeeperTestSuite) TestVestingQueueRemainingCoin() {
 	}
 
 	for _, bid := range bids {
-		suite.PlaceBidWithCustom(suite.ctx, bid.AuctionId, bid.Sequence, bid.Bidder, bid.Price, bid.Coin)
+		suite.PlaceBidWithCustom(bid.AuctionId, bid.Sequence, bid.Bidder, bid.Price, bid.Coin)
 	}
 
 	err := suite.keeper.SetVestingSchedules(suite.ctx, auction)
