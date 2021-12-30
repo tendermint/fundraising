@@ -195,7 +195,187 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 }
 
 func TestMsgCreateEnglishAuction(t *testing.T) {
-	// TODO: not implemented yet
+	auctioneerAcc := sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer")))
+	startTime := types.ParseTime("2021-12-10T00:00:00Z")
+	endTime := startTime.AddDate(0, 1, 0) // add 1 month
+
+	testCases := []struct {
+		expectedErr string
+		msg         *types.MsgCreateEnglishAuction
+	}{
+		{
+			"", // empty means no error expected
+			types.NewMsgCreateEnglishAuction(
+				auctioneerAcc.String(),
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom1",
+				[]types.VestingSchedule{},
+				sdk.MustNewDecFromStr("1.0"),
+				sdk.MustNewDecFromStr("0.1"),
+				startTime,
+				endTime,
+			),
+		},
+		// {
+		// 	"start price must be positve: invalid request",
+		// 	types.NewMsgCreateEnglishAuction(
+		// 		auctioneerAcc.String(),
+		// 		sdk.MustNewDecFromStr("0"),
+		// 		sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+		// 		"denom1",
+		// 		[]types.VestingSchedule{},
+		// 		startTime,
+		// 		endTime,
+		// 	),
+		// },
+		// {
+		// 	"selling coin amount must be positive: invalid request",
+		// 	types.NewMsgCreateEnglishAuction(
+		// 		auctioneerAcc.String(),
+		// 		sdk.MustNewDecFromStr("0.5"),
+		// 		sdk.NewInt64Coin("denom2", 0),
+		// 		"denom1",
+		// 		[]types.VestingSchedule{},
+		// 		startTime,
+		// 		endTime,
+		// 	),
+		// },
+		// {
+		// 	"selling coin denom must not be the same as paying coin denom: invalid request",
+		// 	types.NewMsgCreateEnglishAuction(
+		// 		auctioneerAcc.String(),
+		// 		sdk.MustNewDecFromStr("0.5"),
+		// 		sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+		// 		"denom2",
+		// 		[]types.VestingSchedule{},
+		// 		startTime,
+		// 		endTime,
+		// 	),
+		// },
+		// {
+		// 	"end time must be greater than start time: invalid request",
+		// 	types.NewMsgCreateEnglishAuction(
+		// 		auctioneerAcc.String(),
+		// 		sdk.MustNewDecFromStr("0.5"),
+		// 		sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+		// 		"denom1",
+		// 		[]types.VestingSchedule{},
+		// 		startTime,
+		// 		startTime.AddDate(-1, 0, 0),
+		// 	),
+		// },
+		// {
+		// 	"vesting weight must be positive: invalid vesting schedules",
+		// 	types.NewMsgCreateEnglishAuction(
+		// 		auctioneerAcc.String(),
+		// 		sdk.MustNewDecFromStr("0.5"),
+		// 		sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+		// 		"denom1",
+		// 		[]types.VestingSchedule{
+		// 			{
+		// 				types.ParseTime("2022-06-01T22:08:41+00:00"),
+		// 				sdk.ZeroDec(),
+		// 			},
+		// 		},
+		// 		startTime,
+		// 		endTime,
+		// 	),
+		// },
+		// {
+		// 	"each vesting weight must not be greater than 1: invalid vesting schedules",
+		// 	types.NewMsgCreateEnglishAuction(
+		// 		auctioneerAcc.String(),
+		// 		sdk.MustNewDecFromStr("0.5"),
+		// 		sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+		// 		"denom1",
+		// 		[]types.VestingSchedule{
+		// 			{
+		// 				types.ParseTime("2022-06-01T22:08:41+00:00"),
+		// 				sdk.MustNewDecFromStr("1.1"),
+		// 			},
+		// 		},
+		// 		startTime,
+		// 		endTime,
+		// 	),
+		// },
+		// {
+		// 	"release time must be after the end time: invalid vesting schedules",
+		// 	types.NewMsgCreateEnglishAuction(
+		// 		auctioneerAcc.String(),
+		// 		sdk.MustNewDecFromStr("0.5"),
+		// 		sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+		// 		"denom1",
+		// 		[]types.VestingSchedule{
+		// 			{
+		// 				types.ParseTime("2022-06-01T22:08:41+00:00"),
+		// 				sdk.MustNewDecFromStr("1.0"),
+		// 			},
+		// 		},
+		// 		startTime,
+		// 		types.ParseTime("2022-06-05T22:08:41+00:00"),
+		// 	),
+		// },
+		// {
+		// 	"release time must be chronological: invalid vesting schedules",
+		// 	types.NewMsgCreateEnglishAuction(
+		// 		auctioneerAcc.String(),
+		// 		sdk.MustNewDecFromStr("0.5"),
+		// 		sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+		// 		"denom1",
+		// 		[]types.VestingSchedule{
+		// 			{
+		// 				types.ParseTime("2022-12-01T22:00:00+00:00"),
+		// 				sdk.MustNewDecFromStr("0.5"),
+		// 			},
+		// 			{
+		// 				types.ParseTime("2022-06-01T22:00:00+00:00"),
+		// 				sdk.MustNewDecFromStr("0.5"),
+		// 			},
+		// 		},
+		// 		startTime,
+		// 		endTime,
+		// 	),
+		// },
+		// {
+		// 	"total vesting weight must be equal to 1: invalid vesting schedules",
+		// 	types.NewMsgCreateEnglishAuction(
+		// 		auctioneerAcc.String(),
+		// 		sdk.MustNewDecFromStr("0.5"),
+		// 		sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+		// 		"denom1",
+		// 		[]types.VestingSchedule{
+		// 			{
+		// 				types.ParseTime("2022-06-01T22:00:00+00:00"),
+		// 				sdk.MustNewDecFromStr("0.5"),
+		// 			},
+		// 			{
+		// 				types.ParseTime("2022-12-01T22:00:00+00:00"),
+		// 				sdk.MustNewDecFromStr("0.3"),
+		// 			},
+		// 		},
+		// 		startTime,
+		// 		endTime,
+		// 	),
+		// },
+	}
+
+	for _, tc := range testCases {
+		require.IsType(t, &types.MsgCreateEnglishAuction{}, tc.msg)
+		require.Equal(t, types.TypeMsgCreateEnglishAuction, tc.msg.Type())
+		require.Equal(t, types.RouterKey, tc.msg.Route())
+		require.Equal(t, sdk.MustSortJSON(legacy.Cdc.MustMarshalJSON(tc.msg)), tc.msg.GetSignBytes())
+
+		err := tc.msg.ValidateBasic()
+		if tc.expectedErr == "" {
+			require.Nil(t, err)
+			signers := tc.msg.GetSigners()
+			require.Len(t, signers, 1)
+			require.Equal(t, tc.msg.GetAuctioneer(), signers[0])
+		} else {
+			require.EqualError(t, err, tc.expectedErr)
+		}
+	}
 }
 
 func TestMsgCancelAuction(t *testing.T) {

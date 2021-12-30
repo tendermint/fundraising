@@ -153,6 +153,9 @@ func (msg MsgCreateEnglishAuction) ValidateBasic() error {
 	if !msg.MaximumBidPrice.IsPositive() {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "maximum bid price must be positve")
 	}
+	if msg.MaximumBidPrice.LT(msg.StartPrice) {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "maximum bid price must be equal or greater than start price")
+	}
 	if !msg.ExtendRate.IsPositive() {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "extend rate must be positve")
 	}
