@@ -44,6 +44,7 @@ type KeeperTestSuite struct {
 	sampleVestingSchedules1  []types.VestingSchedule
 	sampleVestingSchedules2  []types.VestingSchedule
 	sampleFixedPriceAuctions []types.AuctionI
+	sampleEnglishAuctions    []types.AuctionI
 	sampleFixedPriceBids     []types.Bid
 }
 
@@ -61,7 +62,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 	suite.keeper = suite.app.FundraisingKeeper
 	suite.querier = keeper.Querier{Keeper: suite.keeper}
 	suite.srv = keeper.NewMsgServerImpl(suite.keeper)
-	suite.addrs = simapp.AddTestAddrs(suite.app, suite.ctx, 6, sdk.ZeroInt())
+	suite.addrs = simapp.AddTestAddrs(suite.app, suite.ctx, 8, sdk.ZeroInt())
 	for _, addr := range suite.addrs {
 		err := simapp.FundAccount(suite.app.BankKeeper, suite.ctx, addr, initialBalances)
 		suite.Require().NoError(err)
@@ -100,17 +101,17 @@ func (suite *KeeperTestSuite) SetupTest() {
 				Id:                    1,
 				Type:                  types.AuctionTypeFixedPrice,
 				Auctioneer:            suite.addrs[4].String(),
-				SellingReserveAddress: types.SellingReserveAcc(1).String(),
-				PayingReserveAddress:  types.PayingReserveAcc(1).String(),
 				StartPrice:            sdk.OneDec(), // start price corresponds to the ratio of the paying coin
 				SellingCoin:           sdk.NewInt64Coin(denom1, 1_000_000_000_000),
 				PayingCoinDenom:       denom2,
-				VestingReserveAddress: types.VestingReserveAcc(1).String(),
-				VestingSchedules:      suite.sampleVestingSchedules1,
 				WinningPrice:          sdk.ZeroDec(),
 				RemainingCoin:         sdk.NewInt64Coin(denom1, 1_000_000_000_000),
-				StartTime:             types.ParseTime("2022-01-01T00:00:00Z"),
-				EndTimes:              []time.Time{types.ParseTime("2022-01-10T00:00:00Z")},
+				SellingReserveAddress: types.SellingReserveAcc(1).String(),
+				PayingReserveAddress:  types.PayingReserveAcc(1).String(),
+				VestingReserveAddress: types.VestingReserveAcc(1).String(),
+				VestingSchedules:      suite.sampleVestingSchedules1,
+				StartTime:             types.ParseTime("2023-01-01T00:00:00Z"),
+				EndTimes:              []time.Time{types.ParseTime("2032-01-10T00:00:00Z")},
 				Status:                types.AuctionStatusStandBy,
 			},
 		),
@@ -119,20 +120,66 @@ func (suite *KeeperTestSuite) SetupTest() {
 				Id:                    2,
 				Type:                  types.AuctionTypeFixedPrice,
 				Auctioneer:            suite.addrs[5].String(),
-				SellingReserveAddress: types.SellingReserveAcc(2).String(),
-				PayingReserveAddress:  types.PayingReserveAcc(2).String(),
 				StartPrice:            sdk.MustNewDecFromStr("0.5"),
 				SellingCoin:           sdk.NewInt64Coin(denom3, 1_000_000_000_000),
 				PayingCoinDenom:       denom4,
-				VestingReserveAddress: types.VestingReserveAcc(2).String(),
-				VestingSchedules:      suite.sampleVestingSchedules2,
 				WinningPrice:          sdk.ZeroDec(),
 				RemainingCoin:         sdk.NewInt64Coin(denom3, 1_000_000_000_000),
+				SellingReserveAddress: types.SellingReserveAcc(2).String(),
+				PayingReserveAddress:  types.PayingReserveAcc(2).String(),
+				VestingReserveAddress: types.VestingReserveAcc(2).String(),
+				VestingSchedules:      suite.sampleVestingSchedules2,
 				StartTime:             types.ParseTime("2021-12-10T00:00:00Z"),
 				EndTimes:              []time.Time{types.ParseTime("2021-12-24T00:00:00Z")},
 				Status:                types.AuctionStatusStarted,
 			},
 		),
+	}
+	suite.sampleEnglishAuctions = []types.AuctionI{
+		&types.EnglishAuction{
+			BaseAuction: &types.BaseAuction{
+				Id:                    3,
+				Type:                  types.AuctionTypeEnglish,
+				Auctioneer:            suite.addrs[6].String(),
+				StartPrice:            sdk.MustNewDecFromStr("0.1"),
+				SellingCoin:           sdk.NewInt64Coin(denom1, 1_000_000_000_000),
+				PayingCoinDenom:       denom2,
+				WinningPrice:          sdk.ZeroDec(),
+				RemainingCoin:         sdk.NewInt64Coin(denom3, 1_000_000_000_000),
+				SellingReserveAddress: types.SellingReserveAcc(3).String(),
+				PayingReserveAddress:  types.PayingReserveAcc(3).String(),
+				VestingReserveAddress: types.VestingReserveAcc(3).String(),
+				VestingSchedules:      suite.sampleVestingSchedules1,
+				StartTime:             types.ParseTime("2023-01-01T00:00:00Z"),
+				EndTimes:              []time.Time{types.ParseTime("2032-01-10T00:00:00Z")},
+				Status:                types.AuctionStatusStandBy,
+			},
+			MaximumBidPrice: sdk.MustNewDecFromStr("1.0"),
+			Extended:        0,
+			ExtendRate:      sdk.MustNewDecFromStr("0.05"),
+		},
+		&types.EnglishAuction{
+			BaseAuction: &types.BaseAuction{
+				Id:                    4,
+				Type:                  types.AuctionTypeEnglish,
+				Auctioneer:            suite.addrs[7].String(),
+				StartPrice:            sdk.MustNewDecFromStr("2.0"),
+				SellingCoin:           sdk.NewInt64Coin(denom3, 1_000_000_000_000),
+				PayingCoinDenom:       denom4,
+				WinningPrice:          sdk.ZeroDec(),
+				RemainingCoin:         sdk.NewInt64Coin(denom3, 1_000_000_000_000),
+				SellingReserveAddress: types.SellingReserveAcc(4).String(),
+				PayingReserveAddress:  types.PayingReserveAcc(4).String(),
+				VestingReserveAddress: types.VestingReserveAcc(4).String(),
+				VestingSchedules:      suite.sampleVestingSchedules2,
+				StartTime:             types.ParseTime("2021-12-10T00:00:00Z"),
+				EndTimes:              []time.Time{types.ParseTime("2021-12-24T00:00:00Z")},
+				Status:                types.AuctionStatusStarted,
+			},
+			MaximumBidPrice: sdk.MustNewDecFromStr("4.0"),
+			Extended:        5,
+			ExtendRate:      sdk.MustNewDecFromStr("0.05"),
+		},
 	}
 	suite.sampleFixedPriceBids = []types.Bid{
 		{

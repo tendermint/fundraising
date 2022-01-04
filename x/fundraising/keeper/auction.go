@@ -204,6 +204,21 @@ func (k Keeper) ReleaseSellingCoin(ctx sdk.Context, auction types.AuctionI) erro
 	return nil
 }
 
+// ReserveCreationFees reserves the auction creation fee to the fee collector account.
+func (k Keeper) ReserveCreationFees(ctx sdk.Context, auctioneerAcc sdk.AccAddress) error {
+	params := k.GetParams(ctx)
+	auctionFeeCollectorAcc, err := sdk.AccAddressFromBech32(params.AuctionFeeCollector)
+	if err != nil {
+		return err
+	}
+
+	if err := k.bankKeeper.SendCoins(ctx, auctioneerAcc, auctionFeeCollectorAcc, params.AuctionCreationFee); err != nil {
+		return sdkerrors.Wrap(err, "failed to reserve auction creation fee")
+	}
+
+	return nil
+}
+
 // CreateFixedPriceAuction sets fixed price auction.
 func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFixedPriceAuction) error {
 	nextId := k.GetNextAuctionIdWithUpdate(ctx)
@@ -217,14 +232,8 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be prior to current time")
 	}
 
-	params := k.GetParams(ctx)
-	auctionFeeCollectorAcc, err := sdk.AccAddressFromBech32(params.AuctionFeeCollector)
-	if err != nil {
+	if err := k.ReserveCreationFees(ctx, auctioneerAcc); err != nil {
 		return err
-	}
-
-	if err := k.bankKeeper.SendCoins(ctx, msg.GetAuctioneer(), auctionFeeCollectorAcc, params.AuctionCreationFee); err != nil {
-		return sdkerrors.Wrap(err, "failed to pay auction creation fee")
 	}
 
 	if err := k.ReserveSellingCoin(ctx, nextId, auctioneerAcc, msg.SellingCoin); err != nil {
@@ -258,24 +267,24 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		baseAuction.Status = types.AuctionStatusStarted
 	}
 
-	fixedPriceAuction := types.NewFixedPriceAuction(baseAuction)
+	auction := types.NewFixedPriceAuction(baseAuction)
 
-	k.SetAuction(ctx, fixedPriceAuction)
+	k.SetAuction(ctx, auction)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeCreateFixedPriceAuction,
 			sdk.NewAttribute(types.AttributeKeyAuctionId, strconv.FormatUint(nextId, 10)),
-			sdk.NewAttribute(types.AttributeKeyAuctioneerAddress, auctioneerAcc.String()),
-			sdk.NewAttribute(types.AttributeKeyStartPrice, msg.StartPrice.String()),
-			sdk.NewAttribute(types.AttributeKeySellingReserveAddress, sellingReserveAcc.String()),
-			sdk.NewAttribute(types.AttributeKeyPayingReserveAddress, payingReserveAcc.String()),
-			sdk.NewAttribute(types.AttributeKeyVestingReserveAddress, vestingReserveAcc.String()),
-			sdk.NewAttribute(types.AttributeKeySellingCoin, msg.SellingCoin.String()),
-			sdk.NewAttribute(types.AttributeKeyPayingCoinDenom, msg.PayingCoinDenom),
-			sdk.NewAttribute(types.AttributeKeyStartTime, msg.StartTime.String()),
+			sdk.NewAttribute(types.AttributeKeyAuctioneerAddress, auction.GetAuctioneer().String()),
+			sdk.NewAttribute(types.AttributeKeyStartPrice, auction.GetStartPrice().String()),
+			sdk.NewAttribute(types.AttributeKeySellingReserveAddress, auction.GetSellingReserveAddress().String()),
+			sdk.NewAttribute(types.AttributeKeyPayingReserveAddress, auction.GetPayingReserveAddress().String()),
+			sdk.NewAttribute(types.AttributeKeyVestingReserveAddress, auction.GetVestingReserveAddress().String()),
+			sdk.NewAttribute(types.AttributeKeySellingCoin, auction.GetSellingCoin().String()),
+			sdk.NewAttribute(types.AttributeKeyPayingCoinDenom, auction.GetPayingCoinDenom()),
+			sdk.NewAttribute(types.AttributeKeyStartTime, auction.GetStartTime().String()),
 			sdk.NewAttribute(types.AttributeKeyEndTime, msg.EndTime.String()),
-			sdk.NewAttribute(types.AttributeKeyAuctionStatus, types.AuctionStatusStandBy.String()),
+			sdk.NewAttribute(types.AttributeKeyAuctionStatus, auction.GetStatus().String()),
 		),
 	})
 
@@ -284,7 +293,81 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 
 // CreateEnglishAuction sets english auction.
 func (k Keeper) CreateEnglishAuction(ctx sdk.Context, msg *types.MsgCreateEnglishAuction) error {
-	// TODO: not implemented yet
+	nextId := k.GetNextAuctionIdWithUpdate(ctx)
+
+	auctioneerAcc, err := sdk.AccAddressFromBech32(msg.Auctioneer)
+	if err != nil {
+		return err
+	}
+
+	if ctx.BlockTime().After(msg.EndTime) {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be prior to current time")
+	}
+
+	if err := k.ReserveCreationFees(ctx, auctioneerAcc); err != nil {
+		return err
+	}
+
+	if err := k.ReserveSellingCoin(ctx, nextId, auctioneerAcc, msg.SellingCoin); err != nil {
+		return err
+	}
+
+	sellingReserveAcc := types.SellingReserveAcc(nextId)
+	payingReserveAcc := types.PayingReserveAcc(nextId)
+	vestingReserveAcc := types.VestingReserveAcc(nextId)
+
+	baseAuction := types.NewBaseAuction(
+		nextId,
+		types.AuctionTypeEnglish,
+		auctioneerAcc.String(),
+		sellingReserveAcc.String(),
+		payingReserveAcc.String(),
+		msg.StartPrice,
+		msg.SellingCoin,
+		msg.PayingCoinDenom,
+		vestingReserveAcc.String(),
+		msg.VestingSchedules,
+		sdk.ZeroDec(),
+		msg.SellingCoin, // add selling coin to remaining coin
+		msg.StartTime,
+		[]time.Time{msg.EndTime},
+		types.AuctionStatusStandBy,
+	)
+
+	// updates status if the start time is already passed over the current time
+	if baseAuction.IsAuctionStarted(ctx.BlockTime()) {
+		baseAuction.Status = types.AuctionStatusStarted
+	}
+
+	auction := types.NewEnglishAuction(
+		baseAuction,
+		msg.MaximumBidPrice,
+		msg.Extended,
+		msg.ExtendRate,
+	)
+
+	k.SetAuction(ctx, auction)
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCreateFixedPriceAuction,
+			sdk.NewAttribute(types.AttributeKeyAuctionId, strconv.FormatUint(nextId, 10)),
+			sdk.NewAttribute(types.AttributeKeyAuctioneerAddress, auction.GetAuctioneer().String()),
+			sdk.NewAttribute(types.AttributeKeyStartPrice, auction.GetStartPrice().String()),
+			sdk.NewAttribute(types.AttributeKeySellingReserveAddress, auction.GetSellingReserveAddress().String()),
+			sdk.NewAttribute(types.AttributeKeyPayingReserveAddress, auction.GetPayingReserveAddress().String()),
+			sdk.NewAttribute(types.AttributeKeyVestingReserveAddress, auction.GetVestingReserveAddress().String()),
+			sdk.NewAttribute(types.AttributeKeySellingCoin, auction.GetSellingCoin().String()),
+			sdk.NewAttribute(types.AttributeKeyPayingCoinDenom, auction.GetPayingCoinDenom()),
+			sdk.NewAttribute(types.AttributeKeyStartTime, auction.GetStartTime().String()),
+			sdk.NewAttribute(types.AttributeKeyEndTime, msg.EndTime.String()),
+			sdk.NewAttribute(types.AttributeKeyAuctionStatus, auction.GetStatus().String()),
+			sdk.NewAttribute(types.AttributeKeyMaximumBidPrice, msg.MaximumBidPrice.String()),
+			sdk.NewAttribute(types.AttributeKeyExtended, strconv.FormatUint(uint64(msg.Extended), 10)),
+			sdk.NewAttribute(types.AttributeKeyExtendRate, msg.ExtendRate.String()),
+		),
+	})
+
 	return nil
 }
 

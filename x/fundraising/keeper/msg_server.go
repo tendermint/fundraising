@@ -38,7 +38,12 @@ func (k msgServer) CreateFixedPriceAuction(goCtx context.Context, msg *types.Msg
 
 // CreateEnglishAuction defines a method to create english auction.
 func (k msgServer) CreateEnglishAuction(goCtx context.Context, msg *types.MsgCreateEnglishAuction) (*types.MsgCreateEnglishAuctionResponse, error) {
-	// TODO: not implemented yet
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if err := k.Keeper.CreateEnglishAuction(ctx, msg); err != nil {
+		return nil, err
+	}
+
 	return &types.MsgCreateEnglishAuctionResponse{}, nil
 }
 

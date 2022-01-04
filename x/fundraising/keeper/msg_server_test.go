@@ -46,7 +46,41 @@ func (suite *KeeperTestSuite) TestMsgCreateFixedPriceAuction() {
 }
 
 func (suite *KeeperTestSuite) TestMsgCreateEnglishAuction() {
-	// TODO: not implemented yet
+	ctx := sdk.WrapSDKContext(suite.ctx)
+
+	for _, tc := range []struct {
+		name string
+		msg  *types.MsgCreateEnglishAuction
+		err  error
+	}{
+		{
+			"valid message with the future start time",
+			types.NewMsgCreateEnglishAuction(
+				suite.addrs[0].String(),
+				sdk.OneDec(),
+				sdk.NewInt64Coin(denom1, 1_000_000_000_000),
+				denom2,
+				suite.sampleVestingSchedules2,
+				sdk.MustNewDecFromStr("1.0"),
+				sdk.MustNewDecFromStr("0.5"),
+				types.ParseTime("2030-01-01T00:00:00Z"),
+				types.ParseTime("2030-01-10T00:00:00Z"),
+			),
+			nil,
+		},
+	} {
+		suite.Run(tc.name, func() {
+			_, err := suite.srv.CreateEnglishAuction(ctx, tc.msg)
+			if tc.err != nil {
+				suite.Require().ErrorIs(err, tc.err)
+				return
+			}
+			suite.Require().NoError(err)
+
+			_, found := suite.keeper.GetAuction(suite.ctx, 1)
+			suite.Require().True(found)
+		})
+	}
 }
 
 func (suite *KeeperTestSuite) TestMsgCancelAuction() {
