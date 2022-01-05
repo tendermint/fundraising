@@ -172,7 +172,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 	// the bidder cannot bid more than the remaining coin
 	remaining := auction.GetRemainingCoin().Sub(receiveCoin)
 	if remaining.IsNegative() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "request coin must be lower than or equal to the remaining total selling coin")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "request coin must be lower than or equal to the remaining coin")
 	}
 
 	if auction.GetType() == types.AuctionTypeFixedPrice {
@@ -186,9 +186,23 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 
 		k.SetAuction(ctx, auction)
 
-	} else {
-		// TODO: implement English auction type
-		return sdkerrors.Wrap(types.ErrInvalidAuctionType, "not supported auction type in this version")
+	} else if auction.GetType() == types.AuctionTypeEnglish {
+		bids := k.GetBidsByBidder(ctx, msg.GetBidder())
+		bidsLen := len(bids)
+
+		for i, bid := range bids {
+			if i == bidsLen-1 {
+				if msg.Price.LTE(bid.Price) {
+					return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "bid price can only increase for English auction")
+				}
+			}
+		}
+
+		if err := auction.SetRemainingCoin(remaining); err != nil {
+			return err
+		}
+
+		k.SetAuction(ctx, auction)
 	}
 
 	sequenceId := k.GetNextSequenceWithUpdate(ctx, auction.GetId())
