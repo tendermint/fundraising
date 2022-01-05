@@ -121,9 +121,9 @@ const (
 type EnglishAuction struct {
 	*BaseAuction
 
-	MaximumBidPrice sdk.Dec // maximum bid price that bidders can bid for the auction
-	Extended        uint32  // a number of extended rounds
-	ExtendRate      sdk.Dec // rate that determines if the auction needs an another round
+	MaximumBidPrice sdk.Dec // the maximum bid price that bidders can bid for the coin
+	Extended        uint32  // the number of extended rounds
+	ExtendRate      sdk.Dec // the rate that determines if the auction needs another round
 }
 
 // FixedPriceAuction defines the fixed price auction type

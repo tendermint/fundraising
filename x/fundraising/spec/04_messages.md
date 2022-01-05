@@ -28,7 +28,8 @@ type MsgCreateEnglishAuction struct {
 	SellingCoin      sdk.Coin          // the selling coin for the auction
 	PayingCoinDenom  string            // the denom that the auctioneer receives to raise funds
 	VestingSchedules []VestingSchedule // the vesting schedules for the auction
-	MaximumBidPrice  sdk.Dec           // the maximum bid price that bidders can bid for the auction
+	MaximumBidPrice  sdk.Dec           // the maximum bid price that bidders can bid for the coin
+	Extended	     uint32 		   // the number of rounds
 	ExtendRate       sdk.Dec           // the rate that determines if the auction needs an another round
 	StartTime        time.Time         // the start time of the auction
 	EndTime          time.Time         // the end time of the auction

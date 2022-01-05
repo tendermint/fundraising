@@ -4,7 +4,7 @@
 
 ## Fundraising Module
 
-The `x/fundraising` Cosmos SDK module provides an oppotunity for new projects to onboard the ecosystem. It does not only allow projects to raise funds, but also increase their brand awareness before launching their projects.
+The `x/fundraising` Cosmos SDK module provides an oppotunity for new projects to onboard the ecosystem. It allows the projects to raise funds, but also increase their brand awareness before launching their projects.
 
 ## Auction Types
 
@@ -16,6 +16,8 @@ A fixed price auction type is the most basic type of an auction that is first co
 
 ### English Auction
 
-An english auction type is an ascending dynamic auction that an auctioneer decides the starting price of the selling amount of coin and bidders bid to purchase the amounts of the coin. Competition for the price, not how fast bidders can bid.
+An english auction type is an ascending dynamic auction where the bidding starts with the starting price which is set by the auctioneer and increases with the continuous bidding from the different bidders until the end time. During the bidding time, bidders can bid to purchase the amount of coins and they can only increase the bid price. This auction type is not about how fast bidders bid for the coin but it is about price competition.
 
 ## Extended Auction Round(s)
+
+The concept of extended auction round(s) is formed out of auction sniping. It is the technique in a timed online auction where a sniper waits until the last second to bid slightly above the current highest bid to purchase the majority of the selling coin. This gives other bidders no time to outbid the sniper and provides hard feelings among other bidders. Therfore, the extended auction round(s) is there to provent from the auction sniping. There is going to be one or more auction rounds if the extend rate is exceeded the previous winning price. 
