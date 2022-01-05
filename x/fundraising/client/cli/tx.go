@@ -60,11 +60,11 @@ Where auction.json contains:
   "paying_coin_denom": "denom2",
   "vesting_schedules": [
     {
-      "release_time": "2022-01-01T00:00:00Z",
+      "release_time": "2022-06-01T00:00:00Z",
       "weight": "0.500000000000000000"
     },
     {
-      "release_time": "2022-06-01T00:00:00Z",
+      "release_time": "2022-09-01T00:00:00Z",
       "weight": "0.250000000000000000"
     },
     {
@@ -72,8 +72,8 @@ Where auction.json contains:
       "weight": "0.250000000000000000"
     }
   ],
-  "start_time": "2021-11-01T00:00:00Z",
-  "end_time": "2021-12-01T00:00:00Z"
+  "start_time": "2022-01-01T00:00:00Z",
+  "end_time": "2022-01-20T00:00:00Z"
 }
 
 Description of the parameters:
@@ -124,7 +124,7 @@ func NewCreateEnglishAuction() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Short: "Create a english auction",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Create a english auction.
+			fmt.Sprintf(`Create an english auction.
 The auction details must be provided through a JSON file. 
 		
 Example:
@@ -132,7 +132,41 @@ $ %s tx %s create-english-auction <path/to/auction.json> --from mykey
 
 Where auction.json contains:
 
-{}
+{
+  "start_price": "1.000000000000000000",
+  "selling_coin": {
+    "denom": "denom1",
+    "amount": "1000000000000"
+  },
+  "paying_coin_denom": "denom2",
+  "vesting_schedules": [
+    {
+      "release_time": "2022-01-01T00:00:00Z",
+      "weight": "0.500000000000000000"
+    },
+    {
+      "release_time": "2022-12-01T00:00:00Z",
+      "weight": "0.500000000000000000"
+    }
+  ],
+  "maximum_bid_price": "1.000000000000000000",
+  "extended": 1,
+  "extend_rate": "0.050000000000000000",
+  "start_time": "2022-01-01T00:00:00Z",
+  "end_time": "2022-01-20T00:00:00Z"
+}
+
+Description of the parameters:
+
+[start_price]: starting price of the selling coin proportional to the paying coin
+[selling_coin]: selling amount of coin for the auction
+[paying_coin_denom]: paying coin denom that bidders need to bid for
+[vesting_schedules]: vesting schedules that release the paying amount of coins to the autioneer
+[maximum_bid_price]: the maximum bid price that bidders can bid for the coin
+[extended]: the number of extended rounds
+[extend_rate]: the rate that determines if the auction needs another round
+[start_time]: start time of the auction
+[end_time]: end time of the auction
 `,
 				version.AppName, types.ModuleName,
 			),
@@ -142,11 +176,26 @@ Where auction.json contains:
 			if err != nil {
 				return err
 			}
-			fmt.Println(clientCtx)
 
-			// TODO: not implemented yet
+			auction, err := ParseEnglishAuctionRequest(args[0])
+			if err != nil {
+				return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "failed to parse %s file due to %v", args[0], err)
+			}
 
-			return nil
+			msg := types.NewMsgCreateEnglishAuction(
+				clientCtx.GetFromAddress().String(),
+				auction.StartPrice,
+				auction.SellingCoin,
+				auction.PayingCoinDenom,
+				auction.VestingSchedules,
+				auction.MaximumBidPrice,
+				auction.Extended,
+				auction.ExtendRate,
+				auction.StartTime,
+				auction.EndTime,
+			)
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 

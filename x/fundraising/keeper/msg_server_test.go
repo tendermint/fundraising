@@ -30,6 +30,19 @@ func (suite *KeeperTestSuite) TestMsgCreateFixedPriceAuction() {
 			),
 			nil,
 		},
+		{
+			"invalid end time",
+			types.NewMsgCreateFixedPriceAuction(
+				suite.addrs[0].String(),
+				sdk.OneDec(),
+				sdk.NewInt64Coin(denom1, 1_000_000_000_000),
+				denom2,
+				suite.sampleVestingSchedules2,
+				types.ParseTime("2010-01-01T00:00:00Z"),
+				types.ParseTime("2010-01-10T00:00:00Z"),
+			),
+			sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be prior to current time"),
+		},
 	} {
 		suite.Run(tc.name, func() {
 			_, err := suite.srv.CreateFixedPriceAuction(ctx, tc.msg)
@@ -62,11 +75,28 @@ func (suite *KeeperTestSuite) TestMsgCreateEnglishAuction() {
 				denom2,
 				suite.sampleVestingSchedules2,
 				sdk.MustNewDecFromStr("1.0"),
+				uint32(1),
 				sdk.MustNewDecFromStr("0.5"),
 				types.ParseTime("2030-01-01T00:00:00Z"),
 				types.ParseTime("2030-01-10T00:00:00Z"),
 			),
 			nil,
+		},
+		{
+			"valid message with the future start time",
+			types.NewMsgCreateEnglishAuction(
+				suite.addrs[0].String(),
+				sdk.OneDec(),
+				sdk.NewInt64Coin(denom1, 1_000_000_000_000),
+				denom2,
+				suite.sampleVestingSchedules2,
+				sdk.MustNewDecFromStr("1.0"),
+				uint32(1),
+				sdk.MustNewDecFromStr("0.5"),
+				types.ParseTime("2010-01-01T00:00:00Z"),
+				types.ParseTime("2010-01-10T00:00:00Z"),
+			),
+			sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be prior to current time"),
 		},
 	} {
 		suite.Run(tc.name, func() {
