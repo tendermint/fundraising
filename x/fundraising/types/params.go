@@ -18,7 +18,7 @@ var (
 
 	DefaultAuctionCreationFee  = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100_000_000)))
 	DefaultExtendedPeriod      = uint32(1)
-	DefaultAuctionFeeCollector = sdk.AccAddress(address.Module(ModuleName, []byte("AuctionFeeCollector"))).String()
+	DefaultAuctionFeeCollector = sdk.AccAddress(address.Module(ModuleName, []byte("AuctionFeeCollector")))
 )
 
 var _ paramstypes.ParamSet = (*Params)(nil)
@@ -33,7 +33,7 @@ func DefaultParams() Params {
 	return Params{
 		AuctionCreationFee:  DefaultAuctionCreationFee,
 		ExtendedPeriod:      DefaultExtendedPeriod,
-		AuctionFeeCollector: DefaultAuctionFeeCollector,
+		AuctionFeeCollector: DefaultAuctionFeeCollector.String(),
 	}
 }
 
