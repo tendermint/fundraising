@@ -402,6 +402,21 @@ func TestMsgCreateEnglishAuction(t *testing.T) {
 			),
 		},
 		{
+			"extended must be equal or greater than 1: invalid request",
+			types.NewMsgCreateEnglishAuction(
+				auctioneerAcc.String(),
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom1",
+				[]types.VestingSchedule{},
+				sdk.MustNewDecFromStr("1.0"),
+				uint32(0),
+				sdk.MustNewDecFromStr("0.1"),
+				startTime,
+				endTime,
+			),
+		},
+		{
 			"maximum bid price must be equal or greater than start price: invalid request",
 			types.NewMsgCreateEnglishAuction(
 				auctioneerAcc.String(),

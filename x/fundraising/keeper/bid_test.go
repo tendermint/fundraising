@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"fmt"
+	"sort"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -73,4 +75,100 @@ func (suite *KeeperTestSuite) TestBidSequence() {
 	bidsById = suite.keeper.GetBidsByAuctionId(suite.ctx, auction.GetId())
 	suite.Require().Len(bidsById, 0)
 	suite.Require().Equal(uint64(1), suite.keeper.GetNextSequenceWithUpdate(suite.ctx, auction.GetId()))
+}
+
+func (suite *KeeperTestSuite) TestReverseSortBids() {
+	bids := []types.Bid{
+		{
+			AuctionId: 1,
+			Sequence:  1,
+			Bidder:    suite.addrs[0].String(),
+			Price:     sdk.MustNewDecFromStr("0.10"),
+			Coin:      sdk.NewInt64Coin("denom1", 1),
+		},
+		{
+			AuctionId: 1,
+			Sequence:  2,
+			Bidder:    suite.addrs[1].String(),
+			Price:     sdk.MustNewDecFromStr("1.10"),
+			Coin:      sdk.NewInt64Coin("denom1", 1),
+		},
+		{
+			AuctionId: 1,
+			Sequence:  3,
+			Bidder:    suite.addrs[2].String(),
+			Price:     sdk.MustNewDecFromStr("0.35"),
+			Coin:      sdk.NewInt64Coin("denom1", 1),
+		},
+		{
+			AuctionId: 1,
+			Sequence:  4,
+			Bidder:    suite.addrs[3].String(),
+			Price:     sdk.MustNewDecFromStr("0.77"),
+			Coin:      sdk.NewInt64Coin("denom1", 1),
+		},
+	}
+
+	// sort by descending order
+	sort.SliceStable(bids, func(i, j int) bool {
+		return bids[i].Price.GT(bids[j].Price)
+	})
+
+	suite.Require().True(sort.SliceIsSorted(bids, func(i, j int) bool {
+		return bids[i].Price.GT(bids[j].Price)
+	}))
+}
+
+func (suite *KeeperTestSuite) TestCalculateWinners() {
+	sellingCoinDenom := denom2
+	payingCoinDenom := denom1
+	remainingCoin := sdk.NewInt64Coin(sellingCoinDenom, 100_000_000)
+
+	bids := []types.Bid{
+		{
+			AuctionId: 1,
+			Sequence:  1,
+			Bidder:    suite.addrs[0].String(),
+			Price:     sdk.MustNewDecFromStr("0.10"),
+			Coin:      sdk.NewInt64Coin(payingCoinDenom, 1_000_000),
+		},
+		{
+			AuctionId: 1,
+			Sequence:  2,
+			Bidder:    suite.addrs[1].String(),
+			Price:     sdk.MustNewDecFromStr("1.10"),
+			Coin:      sdk.NewInt64Coin(payingCoinDenom, 1_000_000),
+		},
+		{
+			AuctionId: 1,
+			Sequence:  3,
+			Bidder:    suite.addrs[2].String(),
+			Price:     sdk.MustNewDecFromStr("0.5"),
+			Coin:      sdk.NewInt64Coin(payingCoinDenom, 1_000_000),
+		},
+		{
+			AuctionId: 1,
+			Sequence:  4,
+			Bidder:    suite.addrs[2].String(),
+			Price:     sdk.MustNewDecFromStr("0.5"),
+			Coin:      sdk.NewInt64Coin(payingCoinDenom, 1_000_000),
+		},
+	}
+
+	// 동일한 Price도 체크해보기
+	sort.SliceStable(bids, func(i, j int) bool {
+		return bids[i].Price.GTE(bids[j].Price)
+	})
+
+	for _, bid := range bids {
+		receiveAmt := bid.Coin.Amount.ToDec().QuoTruncate(bid.Price).TruncateInt()
+		receiveCoin := sdk.NewCoin(sellingCoinDenom, receiveAmt)
+
+		remainingCoin = remainingCoin.Sub(receiveCoin)
+
+		fmt.Println("price: ", bid.Price)
+		fmt.Println("receiveCoin: ", receiveCoin)
+		fmt.Println("remainingCoin: ", remainingCoin)
+	}
+
 }

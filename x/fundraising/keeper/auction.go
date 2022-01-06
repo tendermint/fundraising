@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"sort"
 	"strconv"
 	"time"
 
@@ -112,6 +113,33 @@ func (k Keeper) MarshalAuction(auction types.AuctionI) ([]byte, error) { // noli
 // bytes of a Proto-based Auction type.
 func (k Keeper) UnmarshalAuction(bz []byte) (auction types.AuctionI, err error) {
 	return auction, k.cdc.UnmarshalInterface(bz, &auction)
+}
+
+// CalculateWinners ...
+// 1. Calculate the winners and if the extend rate is exceeded, extend the end time
+// 2. Distribute allocation to the winners
+// 3. Transfer the paying coin to the auctioneer with the given vesting schedules
+// By default, extended auction round is triggered once for all english auctions
+func (k Keeper) CalculateWinners(ctx sdk.Context, auction types.AuctionI) error {
+	bids := k.GetBidsByAuctionId(ctx, auction.GetId())
+	endTimesLen := len(auction.GetEndTimes())
+
+	// sort by descending order
+	sort.SliceStable(bids, func(i, j int) bool {
+		return bids[i].Price.GT(bids[j].Price)
+	})
+
+	if endTimesLen == 1 {
+		// calculate from the remaining coin
+		auction.GetRemainingCoin()
+
+	} else {
+		// TODO: extended auction round
+	}
+
+	// TODO: distribution and transferring the paying coin to the auctioneer
+
+	return nil
 }
 
 // DistributeSellingCoin releases designated selling coin from the selling reserve account.
