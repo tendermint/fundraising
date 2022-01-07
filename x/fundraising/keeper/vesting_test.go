@@ -23,22 +23,22 @@ func (suite *KeeperTestSuite) TestVestingQueueRemainingCoin() {
 		VestingReserveAddress: types.VestingReserveAcc(1).String(),
 		VestingSchedules: []types.VestingSchedule{
 			{
-				ReleaseTime: types.ParseTime("2022-01-01T22:00:00+00:00"),
+				ReleaseTime: types.MustParseRFC3339("2022-01-01T22:00:00+00:00"),
 				Weight:      sdk.MustNewDecFromStr("0.3"),
 			},
 			{
-				ReleaseTime: types.ParseTime("2022-04-01T22:00:00+00:00"),
+				ReleaseTime: types.MustParseRFC3339("2022-04-01T22:00:00+00:00"),
 				Weight:      sdk.MustNewDecFromStr("0.3"),
 			},
 			{
-				ReleaseTime: types.ParseTime("2022-08-01T22:00:00+00:00"),
+				ReleaseTime: types.MustParseRFC3339("2022-08-01T22:00:00+00:00"),
 				Weight:      sdk.MustNewDecFromStr("0.4"),
 			},
 		},
 		WinningPrice:  sdk.ZeroDec(),
 		RemainingCoin: sdk.NewInt64Coin(denom3, 1_000_000_000_000),
-		StartTime:     types.ParseTime("2021-12-10T00:00:00Z"),
-		EndTimes:      []time.Time{types.ParseTime("2022-12-20T00:00:00Z")},
+		StartTime:     types.MustParseRFC3339("2021-12-10T00:00:00Z"),
+		EndTimes:      []time.Time{types.MustParseRFC3339("2022-12-20T00:00:00Z")},
 		Status:        types.AuctionStatusStarted,
 	}
 

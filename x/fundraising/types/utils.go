@@ -8,9 +8,8 @@ import (
 	"github.com/tendermint/tendermint/crypto"
 )
 
-// ParseTime parses string time to time in RFC3339 format.
-// This is used only for internal testing purpose.
-func ParseTime(s string) time.Time {
+// MustParseRFC3339 parses string time to time in RFC3339 format.
+func MustParseRFC3339(s string) time.Time {
 	t, err := time.Parse(time.RFC3339, s)
 	if err != nil {
 		panic(err)

@@ -97,7 +97,7 @@ func (suite *KeeperTestSuite) TestVestingPoolReserveAmountInvariant() {
 	fundraising.EndBlocker(ctx, k)
 
 	// make first and second vesting queues over
-	ctx = ctx.WithBlockTime(types.ParseTime("2022-04-02T00:00:00Z"))
+	ctx = ctx.WithBlockTime(types.MustParseRFC3339("2022-04-02T00:00:00Z"))
 	fundraising.EndBlocker(ctx, k)
 
 	_, broken := keeper.VestingPoolReserveAmountInvariant(k)(ctx)

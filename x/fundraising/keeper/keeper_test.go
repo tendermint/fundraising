@@ -69,29 +69,29 @@ func (suite *KeeperTestSuite) SetupTest() {
 	}
 	suite.sampleVestingSchedules1 = []types.VestingSchedule{
 		{
-			ReleaseTime: types.ParseTime("2030-01-31T22:00:00+00:00"),
+			ReleaseTime: types.MustParseRFC3339("2030-01-31T22:00:00+00:00"),
 			Weight:      sdk.MustNewDecFromStr("0.5"),
 		},
 		{
-			ReleaseTime: types.ParseTime("2030-12-01T22:00:00+00:00"),
+			ReleaseTime: types.MustParseRFC3339("2030-12-01T22:00:00+00:00"),
 			Weight:      sdk.MustNewDecFromStr("0.5"),
 		},
 	}
 	suite.sampleVestingSchedules2 = []types.VestingSchedule{
 		{
-			ReleaseTime: types.ParseTime("2022-01-01T22:00:00+00:00"),
+			ReleaseTime: types.MustParseRFC3339("2022-01-01T22:00:00+00:00"),
 			Weight:      sdk.MustNewDecFromStr("0.25"),
 		},
 		{
-			ReleaseTime: types.ParseTime("2022-05-01T22:00:00+00:00"),
+			ReleaseTime: types.MustParseRFC3339("2022-05-01T22:00:00+00:00"),
 			Weight:      sdk.MustNewDecFromStr("0.25"),
 		},
 		{
-			ReleaseTime: types.ParseTime("2022-09-01T22:00:00+00:00"),
+			ReleaseTime: types.MustParseRFC3339("2022-09-01T22:00:00+00:00"),
 			Weight:      sdk.MustNewDecFromStr("0.25"),
 		},
 		{
-			ReleaseTime: types.ParseTime("2022-12-01T22:00:00+00:00"),
+			ReleaseTime: types.MustParseRFC3339("2022-12-01T22:00:00+00:00"),
 			Weight:      sdk.MustNewDecFromStr("0.25"),
 		},
 	}
@@ -110,8 +110,8 @@ func (suite *KeeperTestSuite) SetupTest() {
 				PayingReserveAddress:  types.PayingReserveAcc(1).String(),
 				VestingReserveAddress: types.VestingReserveAcc(1).String(),
 				VestingSchedules:      suite.sampleVestingSchedules1,
-				StartTime:             types.ParseTime("2023-01-01T00:00:00Z"),
-				EndTimes:              []time.Time{types.ParseTime("2032-01-10T00:00:00Z")},
+				StartTime:             types.MustParseRFC3339("2023-01-01T00:00:00Z"),
+				EndTimes:              []time.Time{types.MustParseRFC3339("2032-01-10T00:00:00Z")},
 				Status:                types.AuctionStatusStandBy,
 			},
 		),
@@ -129,8 +129,8 @@ func (suite *KeeperTestSuite) SetupTest() {
 				PayingReserveAddress:  types.PayingReserveAcc(2).String(),
 				VestingReserveAddress: types.VestingReserveAcc(2).String(),
 				VestingSchedules:      suite.sampleVestingSchedules2,
-				StartTime:             types.ParseTime("2021-12-10T00:00:00Z"),
-				EndTimes:              []time.Time{types.ParseTime("2021-12-24T00:00:00Z")},
+				StartTime:             types.MustParseRFC3339("2021-12-10T00:00:00Z"),
+				EndTimes:              []time.Time{types.MustParseRFC3339("2021-12-24T00:00:00Z")},
 				Status:                types.AuctionStatusStarted,
 			},
 		),
@@ -150,8 +150,8 @@ func (suite *KeeperTestSuite) SetupTest() {
 				PayingReserveAddress:  types.PayingReserveAcc(3).String(),
 				VestingReserveAddress: types.VestingReserveAcc(3).String(),
 				VestingSchedules:      suite.sampleVestingSchedules1,
-				StartTime:             types.ParseTime("2023-01-01T00:00:00Z"),
-				EndTimes:              []time.Time{types.ParseTime("2032-01-10T00:00:00Z")},
+				StartTime:             types.MustParseRFC3339("2023-01-01T00:00:00Z"),
+				EndTimes:              []time.Time{types.MustParseRFC3339("2032-01-10T00:00:00Z")},
 				Status:                types.AuctionStatusStandBy,
 			},
 			MaximumBidPrice: sdk.MustNewDecFromStr("1.0"),
@@ -172,8 +172,8 @@ func (suite *KeeperTestSuite) SetupTest() {
 				PayingReserveAddress:  types.PayingReserveAcc(4).String(),
 				VestingReserveAddress: types.VestingReserveAcc(4).String(),
 				VestingSchedules:      suite.sampleVestingSchedules2,
-				StartTime:             types.ParseTime("2021-12-10T00:00:00Z"),
-				EndTimes:              []time.Time{types.ParseTime("2021-12-24T00:00:00Z")},
+				StartTime:             types.MustParseRFC3339("2021-12-10T00:00:00Z"),
+				EndTimes:              []time.Time{types.MustParseRFC3339("2021-12-24T00:00:00Z")},
 				Status:                types.AuctionStatusStarted,
 			},
 			MaximumBidPrice: sdk.MustNewDecFromStr("4.0"),

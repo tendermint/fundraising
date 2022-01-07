@@ -14,7 +14,7 @@ import (
 
 func TestMsgCreateFixedPriceAuction(t *testing.T) {
 	auctioneerAcc := sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer")))
-	startTime := types.ParseTime("2021-12-10T00:00:00Z")
+	startTime := types.MustParseRFC3339("2021-12-10T00:00:00Z")
 	endTime := startTime.AddDate(0, 1, 0) // add 1 month
 
 	testCases := []struct {
@@ -90,7 +90,7 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.ParseTime("2022-06-01T22:08:41+00:00"),
+						types.MustParseRFC3339("2022-06-01T22:08:41+00:00"),
 						sdk.ZeroDec(),
 					},
 				},
@@ -107,7 +107,7 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.ParseTime("2022-06-01T22:08:41+00:00"),
+						types.MustParseRFC3339("2022-06-01T22:08:41+00:00"),
 						sdk.MustNewDecFromStr("1.1"),
 					},
 				},
@@ -124,12 +124,12 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.ParseTime("2022-06-01T22:08:41+00:00"),
+						types.MustParseRFC3339("2022-06-01T22:08:41+00:00"),
 						sdk.MustNewDecFromStr("1.0"),
 					},
 				},
 				startTime,
-				types.ParseTime("2022-06-05T22:08:41+00:00"),
+				types.MustParseRFC3339("2022-06-05T22:08:41+00:00"),
 			),
 		},
 		{
@@ -141,11 +141,11 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.ParseTime("2022-12-01T22:00:00+00:00"),
+						types.MustParseRFC3339("2022-12-01T22:00:00+00:00"),
 						sdk.MustNewDecFromStr("0.5"),
 					},
 					{
-						types.ParseTime("2022-06-01T22:00:00+00:00"),
+						types.MustParseRFC3339("2022-06-01T22:00:00+00:00"),
 						sdk.MustNewDecFromStr("0.5"),
 					},
 				},
@@ -162,11 +162,11 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.ParseTime("2022-06-01T22:00:00+00:00"),
+						types.MustParseRFC3339("2022-06-01T22:00:00+00:00"),
 						sdk.MustNewDecFromStr("0.5"),
 					},
 					{
-						types.ParseTime("2022-12-01T22:00:00+00:00"),
+						types.MustParseRFC3339("2022-12-01T22:00:00+00:00"),
 						sdk.MustNewDecFromStr("0.3"),
 					},
 				},
@@ -196,7 +196,7 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 
 func TestMsgCreateEnglishAuction(t *testing.T) {
 	auctioneerAcc := sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer")))
-	startTime := types.ParseTime("2021-12-10T00:00:00Z")
+	startTime := types.MustParseRFC3339("2021-12-10T00:00:00Z")
 	endTime := startTime.AddDate(0, 1, 0) // add 1 month
 
 	testCases := []struct {
@@ -287,7 +287,7 @@ func TestMsgCreateEnglishAuction(t *testing.T) {
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.ParseTime("2022-06-01T22:08:41+00:00"),
+						types.MustParseRFC3339("2022-06-01T22:08:41+00:00"),
 						sdk.ZeroDec(),
 					},
 				},
@@ -307,7 +307,7 @@ func TestMsgCreateEnglishAuction(t *testing.T) {
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.ParseTime("2022-06-01T22:08:41+00:00"),
+						types.MustParseRFC3339("2022-06-01T22:08:41+00:00"),
 						sdk.MustNewDecFromStr("1.1"),
 					},
 				},
@@ -327,7 +327,7 @@ func TestMsgCreateEnglishAuction(t *testing.T) {
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.ParseTime("2022-06-01T22:08:41+00:00"),
+						types.MustParseRFC3339("2022-06-01T22:08:41+00:00"),
 						sdk.MustNewDecFromStr("1.0"),
 					},
 				},
@@ -335,7 +335,7 @@ func TestMsgCreateEnglishAuction(t *testing.T) {
 				uint32(1),
 				sdk.MustNewDecFromStr("0.1"),
 				startTime,
-				types.ParseTime("2022-06-05T22:08:41+00:00"),
+				types.MustParseRFC3339("2022-06-05T22:08:41+00:00"),
 			),
 		},
 		{
@@ -347,11 +347,11 @@ func TestMsgCreateEnglishAuction(t *testing.T) {
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.ParseTime("2022-12-01T22:00:00+00:00"),
+						types.MustParseRFC3339("2022-12-01T22:00:00+00:00"),
 						sdk.MustNewDecFromStr("0.5"),
 					},
 					{
-						types.ParseTime("2022-06-01T22:00:00+00:00"),
+						types.MustParseRFC3339("2022-06-01T22:00:00+00:00"),
 						sdk.MustNewDecFromStr("0.5"),
 					},
 				},
@@ -371,11 +371,11 @@ func TestMsgCreateEnglishAuction(t *testing.T) {
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.ParseTime("2022-06-01T22:00:00+00:00"),
+						types.MustParseRFC3339("2022-06-01T22:00:00+00:00"),
 						sdk.MustNewDecFromStr("0.5"),
 					},
 					{
-						types.ParseTime("2022-12-01T22:00:00+00:00"),
+						types.MustParseRFC3339("2022-12-01T22:00:00+00:00"),
 						sdk.MustNewDecFromStr("0.3"),
 					},
 				},

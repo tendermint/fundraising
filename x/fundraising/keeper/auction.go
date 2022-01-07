@@ -133,15 +133,15 @@ func (k Keeper) CalculateWinners(ctx sdk.Context, auction types.AuctionI) error 
 	// first round needs to calculate the winning price
 	if endTimesLen == 1 {
 		// calculate from the remaining coin
-		// totalSellingAmt := sdk.ZeroDec()
-		// totalCoinAmt := sdk.ZeroDec()
+		totalSellingAmt := sdk.ZeroDec()
+		totalCoinAmt := sdk.ZeroDec()
 
-		// for _, bid := range bids {
-		// 	totalCoinAmt = totalCoinAmt.Add(bid.Coin.Amount.ToDec())
-		// 	totalSellingAmt = totalCoinAmt.QuoTruncate(bid.Price)
-		// }
+		for _, bid := range bids {
+			totalCoinAmt = totalCoinAmt.Add(bid.Coin.Amount.ToDec())
+			totalSellingAmt = totalCoinAmt.QuoTruncate(bid.Price)
+		}
 
-		// remainingCoin = remainingCoin.Sub(sdk.NewCoin(auction.GetSellingCoin().Denom, totalSellingAmt.TruncateInt()))
+		remainingCoin = remainingCoin.Sub(sdk.NewCoin(auction.GetSellingCoin().Denom, totalSellingAmt.TruncateInt()))
 
 	} else {
 		// TODO: extended auction round

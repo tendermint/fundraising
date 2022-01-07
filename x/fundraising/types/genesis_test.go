@@ -28,18 +28,18 @@ func TestGenesisState_Validate(t *testing.T) {
 			VestingReserveAddress: types.VestingReserveAcc(1).String(),
 			VestingSchedules: []types.VestingSchedule{
 				{
-					ReleaseTime: types.ParseTime("2022-06-01T00:00:00Z"),
+					ReleaseTime: types.MustParseRFC3339("2022-06-01T00:00:00Z"),
 					Weight:      sdk.MustNewDecFromStr("0.5"),
 				},
 				{
-					ReleaseTime: types.ParseTime("2022-12-01T00:00:00Z"),
+					ReleaseTime: types.MustParseRFC3339("2022-12-01T00:00:00Z"),
 					Weight:      sdk.MustNewDecFromStr("0.5"),
 				},
 			},
 			WinningPrice:  sdk.ZeroDec(),
 			RemainingCoin: sdk.NewInt64Coin("denom1", 1_000_000_000_000),
-			StartTime:     types.ParseTime("2021-12-10T00:00:00Z"),
-			EndTimes:      []time.Time{types.ParseTime("2021-12-20T00:00:00Z")},
+			StartTime:     types.MustParseRFC3339("2021-12-10T00:00:00Z"),
+			EndTimes:      []time.Time{types.MustParseRFC3339("2021-12-20T00:00:00Z")},
 			Status:        types.AuctionStatusStarted,
 		},
 	)
@@ -54,7 +54,7 @@ func TestGenesisState_Validate(t *testing.T) {
 		AuctionId:   1,
 		Auctioneer:  validAcc.String(),
 		PayingCoin:  sdk.NewInt64Coin("denom2", 100_000_000),
-		ReleaseTime: types.ParseTime("2022-12-20T00:00:00Z"),
+		ReleaseTime: types.MustParseRFC3339("2022-12-20T00:00:00Z"),
 		Released:    false,
 	}
 
@@ -100,18 +100,18 @@ func TestGenesisState_Validate(t *testing.T) {
 						VestingReserveAddress: types.VestingReserveAcc(1).String(),
 						VestingSchedules: []types.VestingSchedule{
 							{
-								ReleaseTime: types.ParseTime("2023-01-01T00:00:00Z"),
+								ReleaseTime: types.MustParseRFC3339("2023-01-01T00:00:00Z"),
 								Weight:      sdk.MustNewDecFromStr("0.5"),
 							},
 							{
-								ReleaseTime: types.ParseTime("2023-06-01T00:00:00Z"),
+								ReleaseTime: types.MustParseRFC3339("2023-06-01T00:00:00Z"),
 								Weight:      sdk.MustNewDecFromStr("0.5"),
 							},
 						},
 						WinningPrice:  sdk.ZeroDec(),
 						RemainingCoin: sdk.NewInt64Coin("denom1", 1_000_000_000_000),
-						StartTime:     types.ParseTime("2021-12-10T00:00:00Z"),
-						EndTimes:      []time.Time{types.ParseTime("2022-12-20T00:00:00Z")},
+						StartTime:     types.MustParseRFC3339("2021-12-10T00:00:00Z"),
+						EndTimes:      []time.Time{types.MustParseRFC3339("2022-12-20T00:00:00Z")},
 						Status:        types.AuctionStatusStarted,
 					},
 				))
@@ -136,18 +136,18 @@ func TestGenesisState_Validate(t *testing.T) {
 						VestingReserveAddress: types.VestingReserveAcc(1).String(),
 						VestingSchedules: []types.VestingSchedule{
 							{
-								ReleaseTime: types.ParseTime("2022-06-01T00:00:00Z"),
+								ReleaseTime: types.MustParseRFC3339("2022-06-01T00:00:00Z"),
 								Weight:      sdk.MustNewDecFromStr("0.5"),
 							},
 							{
-								ReleaseTime: types.ParseTime("2022-12-01T00:00:00Z"),
+								ReleaseTime: types.MustParseRFC3339("2022-12-01T00:00:00Z"),
 								Weight:      sdk.MustNewDecFromStr("0.5"),
 							},
 						},
 						WinningPrice:  sdk.ZeroDec(),
 						RemainingCoin: sdk.NewInt64Coin("denom1", 1_000_000_000_000),
-						StartTime:     types.ParseTime("2021-12-10T00:00:00Z"),
-						EndTimes:      []time.Time{types.ParseTime("2022-12-20T00:00:00Z")},
+						StartTime:     types.MustParseRFC3339("2021-12-10T00:00:00Z"),
+						EndTimes:      []time.Time{types.MustParseRFC3339("2022-12-20T00:00:00Z")},
 						Status:        types.AuctionStatusStarted,
 					},
 				))
@@ -172,18 +172,18 @@ func TestGenesisState_Validate(t *testing.T) {
 						VestingReserveAddress: types.VestingReserveAcc(1).String(),
 						VestingSchedules: []types.VestingSchedule{
 							{
-								ReleaseTime: types.ParseTime("2022-06-01T00:00:00Z"),
+								ReleaseTime: types.MustParseRFC3339("2022-06-01T00:00:00Z"),
 								Weight:      sdk.MustNewDecFromStr("0.9"),
 							},
 							{
-								ReleaseTime: types.ParseTime("2022-12-01T00:00:00Z"),
+								ReleaseTime: types.MustParseRFC3339("2022-12-01T00:00:00Z"),
 								Weight:      sdk.MustNewDecFromStr("0.5"),
 							},
 						},
 						WinningPrice:  sdk.ZeroDec(),
 						RemainingCoin: sdk.NewInt64Coin("denom1", 1_000_000_000_000),
-						StartTime:     types.ParseTime("2021-12-10T00:00:00Z"),
-						EndTimes:      []time.Time{types.ParseTime("2022-12-20T00:00:00Z")},
+						StartTime:     types.MustParseRFC3339("2021-12-10T00:00:00Z"),
+						EndTimes:      []time.Time{types.MustParseRFC3339("2022-12-20T00:00:00Z")},
 						Status:        types.AuctionStatusStarted,
 					},
 				))
@@ -208,18 +208,18 @@ func TestGenesisState_Validate(t *testing.T) {
 						VestingReserveAddress: types.VestingReserveAcc(1).String(),
 						VestingSchedules: []types.VestingSchedule{
 							{
-								ReleaseTime: types.ParseTime("2022-06-01T00:00:00Z"),
+								ReleaseTime: types.MustParseRFC3339("2022-06-01T00:00:00Z"),
 								Weight:      sdk.MustNewDecFromStr("0.9"),
 							},
 							{
-								ReleaseTime: types.ParseTime("2022-12-01T00:00:00Z"),
+								ReleaseTime: types.MustParseRFC3339("2022-12-01T00:00:00Z"),
 								Weight:      sdk.MustNewDecFromStr("0.5"),
 							},
 						},
 						WinningPrice:  sdk.ZeroDec(),
 						RemainingCoin: sdk.NewInt64Coin("denom1", 1_000_000_000_000),
-						StartTime:     types.ParseTime("2021-12-10T00:00:00Z"),
-						EndTimes:      []time.Time{types.ParseTime("2022-12-20T00:00:00Z")},
+						StartTime:     types.MustParseRFC3339("2021-12-10T00:00:00Z"),
+						EndTimes:      []time.Time{types.MustParseRFC3339("2022-12-20T00:00:00Z")},
 						Status:        types.AuctionStatusStarted,
 					},
 				))

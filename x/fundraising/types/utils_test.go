@@ -9,14 +9,14 @@ import (
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
 
-func TestParseTime(t *testing.T) {
+func TestMustParseRFC3339(t *testing.T) {
 	normalCase := "9999-12-31T00:00:00Z"
 	normalRes, err := time.Parse(time.RFC3339, normalCase)
 	require.NoError(t, err)
 	errorCase := "9999-12-31T00:00:00_ErrorCase"
 	_, err = time.Parse(time.RFC3339, errorCase)
-	require.PanicsWithError(t, err.Error(), func() { types.ParseTime(errorCase) })
-	require.Equal(t, normalRes, types.ParseTime(normalCase))
+	require.PanicsWithError(t, err.Error(), func() { types.MustParseRFC3339(errorCase) })
+	require.Equal(t, normalRes, types.MustParseRFC3339(normalCase))
 }
 
 func TestDeriveAddress(t *testing.T) {
