@@ -77,48 +77,6 @@ func (suite *KeeperTestSuite) TestBidSequence() {
 	suite.Require().Equal(uint64(1), suite.keeper.GetNextSequenceWithUpdate(suite.ctx, auction.GetId()))
 }
 
-func (suite *KeeperTestSuite) TestReverseSortBids() {
-	bids := []types.Bid{
-		{
-			AuctionId: 1,
-			Sequence:  1,
-			Bidder:    suite.addrs[0].String(),
-			Price:     sdk.MustNewDecFromStr("0.10"),
-			Coin:      sdk.NewInt64Coin("denom1", 1),
-		},
-		{
-			AuctionId: 1,
-			Sequence:  2,
-			Bidder:    suite.addrs[1].String(),
-			Price:     sdk.MustNewDecFromStr("1.10"),
-			Coin:      sdk.NewInt64Coin("denom1", 1),
-		},
-		{
-			AuctionId: 1,
-			Sequence:  3,
-			Bidder:    suite.addrs[2].String(),
-			Price:     sdk.MustNewDecFromStr("0.35"),
-			Coin:      sdk.NewInt64Coin("denom1", 1),
-		},
-		{
-			AuctionId: 1,
-			Sequence:  4,
-			Bidder:    suite.addrs[3].String(),
-			Price:     sdk.MustNewDecFromStr("0.77"),
-			Coin:      sdk.NewInt64Coin("denom1", 1),
-		},
-	}
-
-	// sort by descending order
-	sort.SliceStable(bids, func(i, j int) bool {
-		return bids[i].Price.GT(bids[j].Price)
-	})
-
-	suite.Require().True(sort.SliceIsSorted(bids, func(i, j int) bool {
-		return bids[i].Price.GT(bids[j].Price)
-	}))
-}
-
 func (suite *KeeperTestSuite) TestCalculateWinners() {
 	sellingCoinDenom := denom2
 	payingCoinDenom := denom1

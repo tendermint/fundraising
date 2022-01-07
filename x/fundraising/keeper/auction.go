@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"sort"
 	"strconv"
 	"time"
 
@@ -122,29 +121,28 @@ func (k Keeper) UnmarshalAuction(bz []byte) (auction types.AuctionI, err error) 
 // By default, extended auction round is triggered once for all english auctions
 func (k Keeper) CalculateWinners(ctx sdk.Context, auction types.AuctionI) error {
 	bids := k.GetBidsByAuctionId(ctx, auction.GetId())
-
-	// sort by descending order
-	sort.SliceStable(bids, func(i, j int) bool {
-		return bids[i].Price.GT(bids[j].Price)
-	})
-
-	endTimesLen := len(auction.GetEndTimes())
+	bids = types.SanitizeReverseBids(bids)
 
 	// first round needs to calculate the winning price
-	if endTimesLen == 1 {
-		// calculate from the remaining coin
+	if len(auction.GetEndTimes()) == 1 {
 		totalSellingAmt := sdk.ZeroDec()
 		totalCoinAmt := sdk.ZeroDec()
+		remainingAmt := auction.GetRemainingCoin().Amount
 
 		for _, bid := range bids {
 			totalCoinAmt = totalCoinAmt.Add(bid.Coin.Amount.ToDec())
 			totalSellingAmt = totalCoinAmt.QuoTruncate(bid.Price)
 		}
 
-		remainingCoin = remainingCoin.Sub(sdk.NewCoin(auction.GetSellingCoin().Denom, totalSellingAmt.TruncateInt()))
+		remainingAmt = remainingAmt.Sub(totalSellingAmt.TruncateInt())
+		remainingCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, remainingAmt)
+
+		auction.SetRemainingCoin(remainingCoin)
+
+		// TODO: fillPrice, store winning bids list, and set second last time (current block time)
 
 	} else {
-		// TODO: extended auction round
+		// TODO
 	}
 
 	// TODO: distribution and transferring the paying coin to the auctioneer
