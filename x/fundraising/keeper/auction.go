@@ -122,16 +122,26 @@ func (k Keeper) UnmarshalAuction(bz []byte) (auction types.AuctionI, err error) 
 // By default, extended auction round is triggered once for all english auctions
 func (k Keeper) CalculateWinners(ctx sdk.Context, auction types.AuctionI) error {
 	bids := k.GetBidsByAuctionId(ctx, auction.GetId())
-	endTimesLen := len(auction.GetEndTimes())
 
 	// sort by descending order
 	sort.SliceStable(bids, func(i, j int) bool {
 		return bids[i].Price.GT(bids[j].Price)
 	})
 
+	endTimesLen := len(auction.GetEndTimes())
+
+	// first round needs to calculate the winning price
 	if endTimesLen == 1 {
 		// calculate from the remaining coin
-		auction.GetRemainingCoin()
+		// totalSellingAmt := sdk.ZeroDec()
+		// totalCoinAmt := sdk.ZeroDec()
+
+		// for _, bid := range bids {
+		// 	totalCoinAmt = totalCoinAmt.Add(bid.Coin.Amount.ToDec())
+		// 	totalSellingAmt = totalCoinAmt.QuoTruncate(bid.Price)
+		// }
+
+		// remainingCoin = remainingCoin.Sub(sdk.NewCoin(auction.GetSellingCoin().Denom, totalSellingAmt.TruncateInt()))
 
 	} else {
 		// TODO: extended auction round

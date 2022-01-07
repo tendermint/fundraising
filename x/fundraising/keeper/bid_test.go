@@ -129,46 +129,50 @@ func (suite *KeeperTestSuite) TestCalculateWinners() {
 			AuctionId: 1,
 			Sequence:  1,
 			Bidder:    suite.addrs[0].String(),
-			Price:     sdk.MustNewDecFromStr("0.10"),
+			Price:     sdk.MustNewDecFromStr("0.85"),
 			Coin:      sdk.NewInt64Coin(payingCoinDenom, 1_000_000),
 		},
 		{
 			AuctionId: 1,
 			Sequence:  2,
 			Bidder:    suite.addrs[1].String(),
-			Price:     sdk.MustNewDecFromStr("1.10"),
+			Price:     sdk.MustNewDecFromStr("1.0"),
 			Coin:      sdk.NewInt64Coin(payingCoinDenom, 1_000_000),
 		},
 		{
 			AuctionId: 1,
 			Sequence:  3,
 			Bidder:    suite.addrs[2].String(),
-			Price:     sdk.MustNewDecFromStr("0.5"),
+			Price:     sdk.MustNewDecFromStr("0.95"),
 			Coin:      sdk.NewInt64Coin(payingCoinDenom, 1_000_000),
 		},
 		{
 			AuctionId: 1,
 			Sequence:  4,
-			Bidder:    suite.addrs[2].String(),
-			Price:     sdk.MustNewDecFromStr("0.5"),
+			Bidder:    suite.addrs[3].String(),
+			Price:     sdk.MustNewDecFromStr("0.7"),
 			Coin:      sdk.NewInt64Coin(payingCoinDenom, 1_000_000),
 		},
 	}
 
-	// 동일한 Price도 체크해보기
+	// Sort in descending order
 	sort.SliceStable(bids, func(i, j int) bool {
 		return bids[i].Price.GTE(bids[j].Price)
 	})
 
+	totalSellingAmt := sdk.ZeroDec()
+	totalCoinAmt := sdk.ZeroDec()
+
 	for _, bid := range bids {
-		receiveAmt := bid.Coin.Amount.ToDec().QuoTruncate(bid.Price).TruncateInt()
-		receiveCoin := sdk.NewCoin(sellingCoinDenom, receiveAmt)
 
-		remainingCoin = remainingCoin.Sub(receiveCoin)
+		totalCoinAmt = totalCoinAmt.Add(bid.Coin.Amount.ToDec())
+		totalSellingAmt = totalCoinAmt.QuoTruncate(bid.Price)
 
-		fmt.Println("price: ", bid.Price)
-		fmt.Println("receiveCoin: ", receiveCoin)
-		fmt.Println("remainingCoin: ", remainingCoin)
+		fmt.Println("Coin Amount: ", totalCoinAmt)
+		fmt.Println("Selling Amount: ", totalSellingAmt)
+		fmt.Println("")
 	}
 
+	remainingCoin = remainingCoin.Sub(sdk.NewCoin(sellingCoinDenom, totalSellingAmt.TruncateInt()))
+	fmt.Println("remainingCoin: ", remainingCoin)
 }
