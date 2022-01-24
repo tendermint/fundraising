@@ -41,7 +41,7 @@ func (k Keeper) CalculateWinners(ctx sdk.Context, auction types.AuctionI) error 
 		remainingAmt = remainingAmt.Sub(totalSellingAmt.TruncateInt())
 		remainingCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, remainingAmt)
 
-		auction.SetRemainingCoin(remainingCoin)
+		_ = auction.SetRemainingCoin(remainingCoin)
 
 		// TODO: fillPrice, store winning bids list, and set second last time (current block time)
 
