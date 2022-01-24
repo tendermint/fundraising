@@ -42,15 +42,15 @@ func TestParseFixedPriceAuction(t *testing.T) {
 
 	expSchedules := []types.VestingSchedule{
 		{
-			ReleaseTime: types.ParseTime("2022-01-01T00:00:00Z"),
+			ReleaseTime: types.MustParseRFC3339("2022-01-01T00:00:00Z"),
 			Weight:      sdk.MustNewDecFromStr("0.50"),
 		},
 		{
-			ReleaseTime: types.ParseTime("2022-06-01T00:00:00Z"),
+			ReleaseTime: types.MustParseRFC3339("2022-06-01T00:00:00Z"),
 			Weight:      sdk.MustNewDecFromStr("0.25"),
 		},
 		{
-			ReleaseTime: types.ParseTime("2022-12-01T00:00:00Z"),
+			ReleaseTime: types.MustParseRFC3339("2022-12-01T00:00:00Z"),
 			Weight:      sdk.MustNewDecFromStr("0.25"),
 		},
 	}

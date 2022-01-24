@@ -32,12 +32,12 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	blockedAddrs map[string]bool,
 ) *Keeper {
-	// ensure fundraising module account is set
+	// Ensure fundraising module account is set
 	if addr := accountKeeper.GetModuleAddress(types.ModuleName); addr == nil {
 		panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
 	}
 
-	// set KeyTable if it has not already been set
+	// Set KeyTable if it has not already been set
 	if !paramSpace.HasKeyTable() {
 		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
 	}

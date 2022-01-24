@@ -27,7 +27,7 @@ func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) e
 
 	totalBidCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, sdk.ZeroInt())
 
-	// distribute coins to all bidders from the selling reserve account
+	// Distribute coins to all bidders from the selling reserve account
 	for _, bid := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
 		receiveAmt := bid.Coin.Amount.ToDec().QuoTruncate(bid.Price).TruncateInt()
 		receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, receiveAmt)
@@ -46,11 +46,11 @@ func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) e
 	reserveBalance := k.bankKeeper.GetBalance(ctx, sellingReserveAcc, auction.GetSellingCoin().Denom)
 	remainingCoin := reserveBalance.Sub(totalBidCoin)
 
-	// send remaining coin to the auctioneer
+	// Send remaining coin to the auctioneer
 	inputs = append(inputs, banktypes.NewInput(sellingReserveAcc, sdk.NewCoins(remainingCoin)))
 	outputs = append(outputs, banktypes.NewOutput(auction.GetAuctioneer(), sdk.NewCoins(remainingCoin)))
 
-	// send all at once
+	// Send all at once
 	if err := k.bankKeeper.InputOutputCoins(ctx, inputs, outputs); err != nil {
 		return err
 	}
@@ -73,7 +73,7 @@ func (k Keeper) DistributePayingCoin(ctx sdk.Context, auction types.AuctionI) er
 			vq.Released = true
 			k.SetVestingQueue(ctx, auction.GetId(), vq.ReleaseTime, vq)
 
-			// set finished status when vesting schedule is ended
+			// Set finished status when vesting schedule is ended
 			if i == lenVestingQueue-1 {
 				if err := auction.SetStatus(types.AuctionStatusFinished); err != nil {
 					return err
@@ -157,7 +157,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		types.AuctionStatusStandBy,
 	)
 
-	// updates status if the start time is already passed over the current time
+	// Update status if the start time is already passed over the current time
 	if baseAuction.IsAuctionStarted(ctx.BlockTime()) {
 		baseAuction.Status = types.AuctionStatusStarted
 	}
