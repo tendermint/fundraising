@@ -16,7 +16,7 @@ func (suite *ModuleTestSuite) TestEndBlockerStandByStatus() {
 	suite.Require().True(found)
 	suite.Require().Equal(types.AuctionStatusStandBy, auction.GetStatus())
 
-	t := types.ParseTime("2021-12-27T00:00:01Z")
+	t := types.MustParseRFC3339("2021-12-27T00:00:01Z")
 
 	// modify start time and block time
 	_ = auction.SetStartTime(t)
@@ -95,7 +95,7 @@ func (suite *ModuleTestSuite) TestEndBlockerVestingStatus() {
 	)
 	suite.Require().Equal(totalBidCoin, vestingReserve)
 
-	suite.ctx = suite.ctx.WithBlockTime(types.ParseTime("2022-04-02T00:00:00Z"))
+	suite.ctx = suite.ctx.WithBlockTime(types.MustParseRFC3339("2022-04-02T00:00:00Z"))
 	fundraising.EndBlocker(suite.ctx, suite.keeper)
 
 	queues := suite.keeper.GetVestingQueuesByAuctionId(suite.ctx, auction.GetId())

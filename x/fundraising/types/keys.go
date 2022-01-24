@@ -26,8 +26,8 @@ const (
 )
 
 var (
-	AuctionIdKey = []byte{0x11} // key to retrieve the latest auction id
-	SequenceKey  = []byte{0x12} // key to retrieve the latest sequence number from the auction id
+	LastAuctionIdKey = []byte{0x11} // key to retrieve the latest auction id
+	LastSequenceKey  = []byte{0x12} // key to retrieve the latest sequence number from the auction id
 
 	AuctionKeyPrefix = []byte{0x21} // prefix to retrieve the auction from an auction id
 
@@ -39,7 +39,7 @@ var (
 
 // GetSequenceKey returns the store key to retrieve the latest sequence from the index fields.
 func GetSequenceKey(auctionId uint64) []byte {
-	return append(SequenceKey, sdk.Uint64ToBigEndian(auctionId)...)
+	return append(LastSequenceKey, sdk.Uint64ToBigEndian(auctionId)...)
 }
 
 // GetAuctionKey returns the store key to retrieve the auction from the index field.

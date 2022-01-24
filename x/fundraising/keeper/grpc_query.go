@@ -52,7 +52,7 @@ func (k Querier) Auctions(c context.Context, req *types.QueryAuctionsRequest) (*
 
 	var auctions []*codectypes.Any
 	pageRes, err := query.FilteredPaginate(auctionStore, req.Pagination, func(key, value []byte, accumulate bool) (bool, error) {
-		auction, err := k.Keeper.UnmarshalAuction(value)
+		auction, err := types.UnmarshalAuction(k.cdc, value)
 		if err != nil {
 			return false, err
 		}

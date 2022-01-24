@@ -17,7 +17,7 @@ func ValidateVestingSchedules(schedules []VestingSchedule, endTime time.Time) er
 	}
 
 	// initialize timestamp with max time and total weight with zero
-	ts := ParseTime("0001-01-01T00:00:00Z")
+	ts := MustParseRFC3339("0001-01-01T00:00:00Z")
 	totalWeight := sdk.ZeroDec()
 
 	for _, s := range schedules {

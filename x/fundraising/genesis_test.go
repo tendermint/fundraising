@@ -29,7 +29,7 @@ func (suite *ModuleTestSuite) TestGenesisState() {
 	fundraising.EndBlocker(suite.ctx, suite.keeper)
 
 	// make first and second vesting queues over
-	suite.ctx = suite.ctx.WithBlockTime(types.ParseTime("2022-04-02T00:00:00Z"))
+	suite.ctx = suite.ctx.WithBlockTime(types.MustParseRFC3339("2022-04-02T00:00:00Z"))
 	fundraising.EndBlocker(suite.ctx, suite.keeper)
 
 	queues := suite.keeper.GetVestingQueuesByAuctionId(suite.ctx, 2)

@@ -40,7 +40,7 @@ func (k Keeper) SetVestingSchedules(ctx sdk.Context, auction types.AuctionI) err
 		for i, vs := range auction.GetVestingSchedules() {
 			payingAmt := reserveCoin.Amount.ToDec().MulTruncate(vs.Weight).TruncateInt()
 
-			// store remaining to the paying coin in the last queue
+			// Store remaining to the paying coin in the last queue
 			if i == lenVestingSchedules-1 {
 				payingAmt = remaining.Amount
 			}

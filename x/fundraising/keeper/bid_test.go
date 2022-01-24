@@ -60,8 +60,8 @@ func (suite *KeeperTestSuite) TestBidSequence() {
 			VestingSchedules:      []types.VestingSchedule{},
 			WinningPrice:          sdk.ZeroDec(),
 			RemainingCoin:         sdk.NewInt64Coin(denom3, 1_000_000_000_000),
-			StartTime:             types.ParseTime("2021-12-10T00:00:00Z"),
-			EndTimes:              []time.Time{types.ParseTime("2022-12-20T00:00:00Z")},
+			StartTime:             types.MustParseRFC3339("2021-12-10T00:00:00Z"),
+			EndTimes:              []time.Time{types.MustParseRFC3339("2022-12-20T00:00:00Z")},
 			Status:                types.AuctionStatusStarted,
 		},
 	))

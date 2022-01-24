@@ -27,8 +27,8 @@ func TestIsAuctionStarted(t *testing.T) {
 			VestingSchedules:      []types.VestingSchedule{},
 			WinningPrice:          sdk.ZeroDec(),
 			RemainingCoin:         sdk.NewInt64Coin("denom3", 1_000_000_000_000),
-			StartTime:             types.ParseTime("2021-12-01T00:00:00Z"),
-			EndTimes:              []time.Time{types.ParseTime("2021-12-15T00:00:00Z")},
+			StartTime:             types.MustParseRFC3339("2021-12-01T00:00:00Z"),
+			EndTimes:              []time.Time{types.MustParseRFC3339("2021-12-15T00:00:00Z")},
 			Status:                types.AuctionStatusStandBy,
 		},
 	)
@@ -45,7 +45,7 @@ func TestIsAuctionStarted(t *testing.T) {
 		{"2021-12-10T00:00:00Z", true},
 		{"2022-01-01T00:00:00Z", true},
 	} {
-		require.Equal(t, tc.expResult, auction.IsAuctionStarted(types.ParseTime(tc.currentTime)))
+		require.Equal(t, tc.expResult, auction.IsAuctionStarted(types.MustParseRFC3339(tc.currentTime)))
 	}
 }
 
@@ -64,8 +64,8 @@ func TestIsAuctionFinished(t *testing.T) {
 			VestingSchedules:      []types.VestingSchedule{},
 			WinningPrice:          sdk.ZeroDec(),
 			RemainingCoin:         sdk.NewInt64Coin("denom3", 1_000_000_000_000),
-			StartTime:             types.ParseTime("2021-12-01T00:00:00Z"),
-			EndTimes:              []time.Time{types.ParseTime("2021-12-15T00:00:00Z")},
+			StartTime:             types.MustParseRFC3339("2021-12-01T00:00:00Z"),
+			EndTimes:              []time.Time{types.MustParseRFC3339("2021-12-15T00:00:00Z")},
 			Status:                types.AuctionStatusStandBy,
 		},
 	)
@@ -82,6 +82,6 @@ func TestIsAuctionFinished(t *testing.T) {
 		{"2021-12-30T00:00:00Z", true},
 		{"2022-01-01T00:00:00Z", true},
 	} {
-		require.Equal(t, tc.expResult, auction.IsAuctionFinished(types.ParseTime(tc.currentTime)))
+		require.Equal(t, tc.expResult, auction.IsAuctionFinished(types.MustParseRFC3339(tc.currentTime)))
 	}
 }

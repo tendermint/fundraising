@@ -12,7 +12,7 @@ import (
 )
 
 func TestIsVestingReleasable(t *testing.T) {
-	now := types.ParseTime("2021-12-10T00:00:00Z")
+	now := types.MustParseRFC3339("2021-12-10T00:00:00Z")
 
 	testCases := []struct {
 		name      string
@@ -25,7 +25,7 @@ func TestIsVestingReleasable(t *testing.T) {
 				AuctionId:   1,
 				Auctioneer:  sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				PayingCoin:  sdk.NewInt64Coin("denom1", 10000000),
-				ReleaseTime: types.ParseTime("2021-11-01T00:00:00Z"),
+				ReleaseTime: types.MustParseRFC3339("2021-11-01T00:00:00Z"),
 				Released:    false,
 			},
 			true,
@@ -47,7 +47,7 @@ func TestIsVestingReleasable(t *testing.T) {
 				AuctionId:   1,
 				Auctioneer:  sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				PayingCoin:  sdk.NewInt64Coin("denom1", 10000000),
-				ReleaseTime: types.ParseTime("2022-01-30T00:00:00Z"),
+				ReleaseTime: types.MustParseRFC3339("2022-01-30T00:00:00Z"),
 				Released:    false,
 			},
 			false,

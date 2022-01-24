@@ -57,7 +57,7 @@ func (suite *ModuleTestSuite) SetupTest() {
 
 	suite.app = app
 	suite.ctx = ctx
-	suite.ctx = suite.ctx.WithBlockTime(types.ParseTime("2021-12-15T00:00:00Z"))
+	suite.ctx = suite.ctx.WithBlockTime(types.MustParseRFC3339("2021-12-15T00:00:00Z"))
 	suite.keeper = suite.app.FundraisingKeeper
 	suite.querier = keeper.Querier{Keeper: suite.keeper}
 	suite.srv = keeper.NewMsgServerImpl(suite.keeper)
@@ -68,29 +68,29 @@ func (suite *ModuleTestSuite) SetupTest() {
 	}
 	suite.sampleVestingSchedules1 = []types.VestingSchedule{
 		{
-			ReleaseTime: types.ParseTime("2030-01-31T22:00:00+00:00"),
+			ReleaseTime: types.MustParseRFC3339("2030-01-31T22:00:00+00:00"),
 			Weight:      sdk.MustNewDecFromStr("0.5"),
 		},
 		{
-			ReleaseTime: types.ParseTime("2030-12-01T22:00:00+00:00"),
+			ReleaseTime: types.MustParseRFC3339("2030-12-01T22:00:00+00:00"),
 			Weight:      sdk.MustNewDecFromStr("0.5"),
 		},
 	}
 	suite.sampleVestingSchedules2 = []types.VestingSchedule{
 		{
-			ReleaseTime: types.ParseTime("2022-01-01T22:00:00+00:00"),
+			ReleaseTime: types.MustParseRFC3339("2022-01-01T22:00:00+00:00"),
 			Weight:      sdk.MustNewDecFromStr("0.25"),
 		},
 		{
-			ReleaseTime: types.ParseTime("2022-04-01T22:00:00+00:00"),
+			ReleaseTime: types.MustParseRFC3339("2022-04-01T22:00:00+00:00"),
 			Weight:      sdk.MustNewDecFromStr("0.25"),
 		},
 		{
-			ReleaseTime: types.ParseTime("2022-08-01T22:00:00+00:00"),
+			ReleaseTime: types.MustParseRFC3339("2022-08-01T22:00:00+00:00"),
 			Weight:      sdk.MustNewDecFromStr("0.25"),
 		},
 		{
-			ReleaseTime: types.ParseTime("2022-12-01T22:00:00+00:00"),
+			ReleaseTime: types.MustParseRFC3339("2022-12-01T22:00:00+00:00"),
 			Weight:      sdk.MustNewDecFromStr("0.25"),
 		},
 	}
@@ -109,8 +109,8 @@ func (suite *ModuleTestSuite) SetupTest() {
 				VestingSchedules:      suite.sampleVestingSchedules1,
 				WinningPrice:          sdk.ZeroDec(),
 				RemainingCoin:         sdk.NewInt64Coin(denom1, 1_000_000_000_000),
-				StartTime:             types.ParseTime("2023-01-01T00:00:00Z"),
-				EndTimes:              []time.Time{types.ParseTime("2023-01-10T00:00:00Z")},
+				StartTime:             types.MustParseRFC3339("2023-01-01T00:00:00Z"),
+				EndTimes:              []time.Time{types.MustParseRFC3339("2023-01-10T00:00:00Z")},
 				Status:                types.AuctionStatusStandBy,
 			},
 		),
@@ -128,8 +128,8 @@ func (suite *ModuleTestSuite) SetupTest() {
 				VestingSchedules:      suite.sampleVestingSchedules2,
 				WinningPrice:          sdk.ZeroDec(),
 				RemainingCoin:         sdk.NewInt64Coin(denom3, 1_000_000_000_000),
-				StartTime:             types.ParseTime("2021-12-10T00:00:00Z"),
-				EndTimes:              []time.Time{types.ParseTime("2021-12-20T00:00:00Z")},
+				StartTime:             types.MustParseRFC3339("2021-12-10T00:00:00Z"),
+				EndTimes:              []time.Time{types.MustParseRFC3339("2021-12-20T00:00:00Z")},
 				Status:                types.AuctionStatusStarted,
 			},
 		),
