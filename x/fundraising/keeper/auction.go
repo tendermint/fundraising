@@ -4,8 +4,6 @@ import (
 	"strconv"
 	"time"
 
-	gogotypes "github.com/gogo/protobuf/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -13,105 +11,11 @@ import (
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
 
-// GetAuctionId returns the global auction ID counter.
-func (k Keeper) GetAuctionId(ctx sdk.Context) uint64 {
-	var id uint64
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.AuctionIdKey)
-	if bz == nil {
-		id = 0 // initialize the auction id
-	} else {
-		val := gogotypes.UInt64Value{}
-		err := k.cdc.Unmarshal(bz, &val)
-		if err != nil {
-			panic(err)
-		}
-		id = val.GetValue()
-	}
-	return id
-}
-
 // GetNextAuctionIdWithUpdate increments auction id by one and set it.
 func (k Keeper) GetNextAuctionIdWithUpdate(ctx sdk.Context) uint64 {
-	id := k.GetAuctionId(ctx) + 1
+	id := k.GetLastAuctionId(ctx) + 1
 	k.SetAuctionId(ctx, id)
 	return id
-}
-
-// SetAuctionId sets the global auction ID counter.
-func (k Keeper) SetAuctionId(ctx sdk.Context, id uint64) {
-	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshal(&gogotypes.UInt64Value{Value: id})
-	store.Set(types.AuctionIdKey, bz)
-}
-
-// GetAuction returns an auction for a given auction id.
-func (k Keeper) GetAuction(ctx sdk.Context, id uint64) (auction types.AuctionI, found bool) {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetAuctionKey(id))
-	if bz == nil {
-		return auction, false
-	}
-	return k.decodeAuction(bz), true
-}
-
-// GetAuctions returns all auctions in the store.
-func (k Keeper) GetAuctions(ctx sdk.Context) (auctions []types.AuctionI) {
-	k.IterateAuctions(ctx, func(auction types.AuctionI) (stop bool) {
-		auctions = append(auctions, auction)
-		return false
-	})
-
-	return auctions
-}
-
-// SetAuction sets an auction with the given auction id.
-func (k Keeper) SetAuction(ctx sdk.Context, auction types.AuctionI) {
-	id := auction.GetId()
-	store := ctx.KVStore(k.storeKey)
-
-	bz, err := k.MarshalAuction(auction)
-	if err != nil {
-		panic(err)
-	}
-
-	store.Set(types.GetAuctionKey(id), bz)
-}
-
-// IterateAuctions iterates over all the stored auctions and performs a callback function.
-// Stops iteration when callback returns true.
-func (k Keeper) IterateAuctions(ctx sdk.Context, cb func(auction types.AuctionI) (stop bool)) {
-	store := ctx.KVStore(k.storeKey)
-	iterator := sdk.KVStorePrefixIterator(store, types.AuctionKeyPrefix)
-
-	defer iterator.Close()
-	for ; iterator.Valid(); iterator.Next() {
-		auction := k.decodeAuction(iterator.Value())
-
-		if cb(auction) {
-			break
-		}
-	}
-}
-
-func (k Keeper) decodeAuction(bz []byte) types.AuctionI {
-	acc, err := k.UnmarshalAuction(bz)
-	if err != nil {
-		panic(err)
-	}
-
-	return acc
-}
-
-// MarshalAuction serializes an auction.
-func (k Keeper) MarshalAuction(auction types.AuctionI) ([]byte, error) { // nolint:interfacer
-	return k.cdc.MarshalInterface(auction)
-}
-
-// UnmarshalAuction returns an auction from raw serialized
-// bytes of a Proto-based Auction type.
-func (k Keeper) UnmarshalAuction(bz []byte) (auction types.AuctionI, err error) {
-	return auction, k.cdc.UnmarshalInterface(bz, &auction)
 }
 
 // CalculateWinners ...
@@ -159,7 +63,7 @@ func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) e
 
 	totalBidCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, sdk.ZeroInt())
 
-	// distribute coins to all bidders from the selling reserve account
+	// Distribute coins to all bidders from the selling reserve account
 	for _, bid := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
 		receiveAmt := bid.Coin.Amount.ToDec().QuoTruncate(bid.Price).TruncateInt()
 		receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, receiveAmt)
@@ -178,11 +82,11 @@ func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) e
 	reserveBalance := k.bankKeeper.GetBalance(ctx, sellingReserveAcc, auction.GetSellingCoin().Denom)
 	remainingCoin := reserveBalance.Sub(totalBidCoin)
 
-	// send remaining coin to the auctioneer
+	// Send remaining coin to the auctioneer
 	inputs = append(inputs, banktypes.NewInput(sellingReserveAcc, sdk.NewCoins(remainingCoin)))
 	outputs = append(outputs, banktypes.NewOutput(auction.GetAuctioneer(), sdk.NewCoins(remainingCoin)))
 
-	// send all at once
+	// Send all at once
 	if err := k.bankKeeper.InputOutputCoins(ctx, inputs, outputs); err != nil {
 		return err
 	}
@@ -205,7 +109,7 @@ func (k Keeper) DistributePayingCoin(ctx sdk.Context, auction types.AuctionI) er
 			vq.Released = true
 			k.SetVestingQueue(ctx, auction.GetId(), vq.ReleaseTime, vq)
 
-			// set finished status when vesting schedule is ended
+			// Set finished status when vesting schedule is ended
 			if i == lenVestingQueue-1 {
 				if err := auction.SetStatus(types.AuctionStatusFinished); err != nil {
 					return err
@@ -298,7 +202,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		types.AuctionStatusStandBy,
 	)
 
-	// updates status if the start time is already passed over the current time
+	// Update status if the start time is already passed over the current time
 	if baseAuction.IsAuctionStarted(ctx.BlockTime()) {
 		baseAuction.Status = types.AuctionStatusStarted
 	}

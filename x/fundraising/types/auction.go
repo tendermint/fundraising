@@ -280,7 +280,7 @@ func (ba BaseAuction) Validate() error {
 	if err := sdk.ValidateDenom(ba.PayingCoinDenom); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid paying coin denom: %v", err)
 	}
-	// TODO: reconsider if there's any case that using [0] becomes an issue
+	// TODO: Reconsider if there's any case that using [0] becomes an issue
 	// English auction always has end time
 	if err := ValidateVestingSchedules(ba.VestingSchedules, ba.EndTimes[0]); err != nil {
 		return err
@@ -314,12 +314,6 @@ func NewEnglishAuction(baseAuction *BaseAuction, maximumBidPrice sdk.Dec, extend
 		Extended:        extended,
 		ExtendRate:      extendRate,
 	}
-}
-
-// UnmarshalBid unmarshals bid from a store value.
-func UnmarshalBid(cdc codec.BinaryCodec, value []byte) (b Bid, err error) {
-	err = cdc.Unmarshal(value, &b)
-	return b, err
 }
 
 // PackAuction converts AuctionI to Any.
@@ -371,6 +365,43 @@ func UnpackAuctions(auctionsAny []*codectypes.Any) ([]AuctionI, error) {
 		auctions[i] = p
 	}
 	return auctions, nil
+}
+
+// MustMarshalAuction returns the marshalled auction bytes.
+// It throws panic if it fails.
+func MustMarshalAuction(cdc codec.BinaryCodec, auction AuctionI) []byte {
+	bz, err := MarshalAuction(cdc, auction)
+	if err != nil {
+		panic(err)
+	}
+	return bz
+}
+
+// MustUnmarshalAuction return the unmarshalled auction from bytes.
+// It throws panic if it fails.
+func MustUnmarshalAuction(cdc codec.BinaryCodec, value []byte) AuctionI {
+	pair, err := UnmarshalAuction(cdc, value)
+	if err != nil {
+		panic(err)
+	}
+	return pair
+}
+
+// MarshalAuction returns bytes from the auction interface.
+func MarshalAuction(cdc codec.BinaryCodec, auction AuctionI) (value []byte, err error) {
+	return cdc.MarshalInterface(auction)
+}
+
+// UnmarshalAuction returns the auction from the bytes.
+func UnmarshalAuction(cdc codec.BinaryCodec, value []byte) (auction AuctionI, err error) {
+	err = cdc.UnmarshalInterface(value, &auction)
+	return auction, err
+}
+
+// UnmarshalBid unmarshals bid from a store value.
+func UnmarshalBid(cdc codec.BinaryCodec, value []byte) (b Bid, err error) {
+	err = cdc.Unmarshal(value, &b)
+	return b, err
 }
 
 // SellingReserveAcc returns an account for the selling reserve account with the given auction id.
