@@ -5,11 +5,11 @@ Description: A high-level overview of how the command-line interface (CLI) works
 
 # CLI Reference
 
-This document provides a high-level overview of how the command line (CLI) interface works for the fundraising module. The executable name is called `fundraisingd`.
+This document provides a high-level overview of how the command line (CLI) interface works for the fundraising module. The executable file name is called `fundraisingd`.
 
 ## Command Line Interface
 
-To test out the following command line interface, you must set up a local network. By simply running `make localnet` under the root project directory, you can start the local network. It requires [Starport](https://starport.com/), but if you don't have Starport set up in your local machine, see this [install Starport guide](https://docs.starport.network/) to install it.  
+To test out the following commands, you must set up a local network. By simply running `make localnet` under the root project directory, you can start the local network. It requires [Starport](https://starport.com/), but if you don't have Starport set up in your local machine, see this [install Starport guide](https://docs.starport.network/) to install it.  
 
 - [Transaction](#Transaction)
     * [CreateFixedPriceAuction](#CreateFixedPriceAuction)
@@ -29,11 +29,11 @@ To test out the following command line interface, you must set up a local networ
 
 ### CreateFixedPriceAuction
 
-This command provides an opportunity for an auctioneer to create an auction to raise funds for their project. It is the most basic and simple type of an auction that has first come first served basis. When an auctioneer creates a fixed price auction, they must determine the fixed starting price. It is proportional to the paying coin denom. To give you an example, an auctioneer sells X coin and plans to receive Y coin for the auction. The price of X coin is determined by the proportion of Y coin. Let's assume that the price of Y coin is currently $30 and the auctioneer wants to sell their X coin for $15, then they must provide 0.5 as the fixed start price. Once the auction is successfully created, bidders can now start to bid. The bidders must provide the same starting price when they bid. See the [spec](https://github.com/tendermint/fundraising/blob/main/x/fundraising/spec/01_concepts.md#auction-types) for a detailed and technical information about the fixed price auction type.
+This command provides an opportunity for an auctioneer to create an auction to raise funds for their project. It is the most basic and simple type of an auction that has first come first served basis. When an auctioneer creates a fixed price auction, they must determine the fixed starting price. It is proportional to the paying coin denom. To give you an example, an auctioneer sells X coin and plans to receive Y coin for the auction. The price of X coin is determined by the proportion of Y coin. Let's assume that the price of Y coin is currently $30 and the auctioneer wants to sell their X coin for $15, then they must set 0.5 as the fixed starting price. Once the auction is successfully created, bidders can now start to bid. The bidders must provide the same start price when they bid. See the [spec](https://github.com/tendermint/fundraising/blob/main/x/fundraising/spec/01_concepts.md#auction-types) for a detailed and technical information about the fixed price auction type.
 
 JSON example:
 
-In this JSON example, an auctioneer plans to create a fixed price auction that sells `denom1` coin with an amount of `1000000000000`, and the starting price is `1.0` that is proportional to the paying coin denom `denom2`. It means that the fixed starting price of `denom1` is the same as `denom2` price. The auction starts at `2021-12-10T00:00:00Z` and ends at `2021-12-10T00:00:00Z`. As soon as the auction starts, bidders can bid for the auction with the fixed start price and amount of coin that they are willing to bid. When it ends, the paying amount of coin that is reserved for all bids is expected to be released based on the vesting schedules. 
+In this JSON example, an auctioneer plans to create a fixed price auction that plans to sell `1000000000000denom1` coin, and the starting price is `1.0` which means that the price of `denom1` is the same as `denom2`. The auction starts at `2022-01-21T00:00:00Z` and ends at `2022-02-21T00:00:00Z`. As soon as the auction starts, bidders can now bid for the auction with any amount of coin they are willing bid with the fixed start price. When it ends, the paying amount of coin that is reserved for all bids is expected to be released based on the vesting schedules and if the selling coin is not entirely sold out, it transfers it back to the auctioneer.
 
 ```json
 {
@@ -45,16 +45,16 @@ In this JSON example, an auctioneer plans to create a fixed price auction that s
   "paying_coin_denom": "denom2",
   "vesting_schedules": [
     {
-      "release_time": "2022-01-01T00:00:00Z",
+      "release_time": "2022-06-21T00:00:00Z",
       "weight": "0.500000000000000000"
     },
     {
-      "release_time": "2022-12-01T00:00:00Z",
+      "release_time": "2022-12-21T00:00:00Z",
       "weight": "0.500000000000000000"
     }
   ],
-  "start_time": "2021-12-10T00:00:00Z",
-  "end_time": "2021-12-10T00:00:00Z"
+  "start_time": "2022-01-21T00:00:00Z",
+  "end_time": "2022-02-21T00:00:00Z"
 }
 ```
 
@@ -68,7 +68,6 @@ Reference the description of each field:
 | vesting_schedules | The vesting schedules that release the paying coins to the autioneer          | 
 | start_time        | The start time of the auction                                                 | 
 | end_time          | The end time of the auction                                                   | 
-|                   |                                                                               | 
 
 Example command:
 
@@ -91,8 +90,8 @@ Result:
   "body": {
     "messages": [
       {
-        "@type": "/tendermint.fundraising.fundraising.MsgCreateFixedPriceAuction",
-        "auctioneer": "cosmos1m4ys0e222x45657hrg9y2gadfxtcqja270rdkg",
+        "@type": "/tendermint.fundraising.MsgCreateFixedPriceAuction",
+        "auctioneer": "cosmos1e9kp752fc6vs3n7enjcfjenfj9s7eehs3m7fdg",
         "start_price": "1.000000000000000000",
         "selling_coin": {
           "denom": "denom1",
@@ -101,16 +100,16 @@ Result:
         "paying_coin_denom": "denom2",
         "vesting_schedules": [
           {
-            "release_time": "2022-01-01T00:00:00Z",
+            "release_time": "2022-06-21T00:00:00Z",
             "weight": "0.500000000000000000"
           },
           {
-            "release_time": "2022-12-01T00:00:00Z",
+            "release_time": "2022-12-21T00:00:00Z",
             "weight": "0.500000000000000000"
           }
         ],
-        "start_time": "2021-12-01T00:00:00Z",
-        "end_time": "2021-12-30T00:00:00Z"
+        "start_time": "2022-01-21T00:00:00Z",
+        "end_time": "2022-02-21T00:00:00Z"
       }
     ],
     "memo": "",
@@ -123,14 +122,14 @@ Result:
       {
         "public_key": {
           "@type": "/cosmos.crypto.secp256k1.PubKey",
-          "key": "A8IlstomF7Z1qDMYBL1rhpWwM47IgJSHkq+e4zzeg2Xw"
+          "key": "Axm3aCxA77M5+SMNX7mQRCrdwWZdzpVtDIcmhfWINHMN"
         },
         "mode_info": {
           "single": {
             "mode": "SIGN_MODE_DIRECT"
           }
         },
-        "sequence": "6"
+        "sequence": "0"
       }
     ],
     "fee": {
@@ -141,7 +140,7 @@ Result:
     }
   },
   "signatures": [
-    "2Vjdw6VhsQ7Laxli8Wm9ESmBqChJMqeerX2HEUmUVC8d/467gDYC4TQSHsRJRMFXm65quWxekwkQgTUoY7+HPA=="
+    "3u2Pxxdmo9ISfYop70OXz353wNYSKgFgG5ug9t9/ECUBi/dBCiHb0WXiAg8IiyyIprQZPqIlly4HzrQSW6SZ0g=="
   ]
 }
 ```
@@ -151,13 +150,13 @@ Result:
 Example command:
 
 ```bash
-TODO: IT IS BEING DEVELOPED
+TODO: It is actively being developed.
 ```
 
 Result:
 
 ```json
-
+TODO: It is actively being developed.
 ```
 
 ### CancelAuction
@@ -185,7 +184,7 @@ Result:
   "body": {
     "messages": [
       {
-        "@type": "/tendermint.fundraising.fundraising.MsgCancelAuction",
+        "@type": "/tendermint.fundraising.MsgCancelAuction",
         "auctioneer": "cosmos1xg6ngnzf9kz9606kx45z2g3eeskre7cm4effpq",
         "auction_id": "1"
       }
@@ -245,9 +244,9 @@ Result:
   "body": {
     "messages": [
       {
-        "@type": "/tendermint.fundraising.fundraising.MsgPlaceBid",
+        "@type": "/tendermint.fundraising.MsgPlaceBid",
         "auction_id": "1",
-        "bidder": "cosmos1ah7esxq240an2qdupqxfckvfdv4cqd7pdze9gz",
+        "bidder": "cosmos1nmd9ata0gl4agdspva84dwmmfe9ve70kjf4net",
         "price": "1.000000000000000000",
         "coin": {
           "denom": "denom2",
@@ -265,7 +264,7 @@ Result:
       {
         "public_key": {
           "@type": "/cosmos.crypto.secp256k1.PubKey",
-          "key": "AojmMLw7J/vhjZzuQP6D5NyuLzwGuLh+iIKGENjpOiKW"
+          "key": "AteB2mOe5DTkDDZAONTDLetQQtRq8csugsYdKpYokoUN"
         },
         "mode_info": {
           "single": {
@@ -283,7 +282,7 @@ Result:
     }
   },
   "signatures": [
-    "cmuyvzr58LJ31/QEBVAwJlSi25z8XS1Du3HdVjbwCAs+U4ypAt68y1O+sj4+NtjoSy6MOywEoQ+O/8NUPRCzWg=="
+    "JVOzqwLIV/GjTwhZag1z+nfwHCFEHpDYLL79lSclhVAjPNBVaJKnbCcTMjxUBESGs1tcyxQuB+mn2GV8ZnrTCQ=="
   ]
 }
 ```
@@ -345,7 +344,7 @@ Result:
       "base_auction": {
         "id": "1",
         "type": "AUCTION_TYPE_FIXED_PRICE",
-        "auctioneer": "cosmos1m4ys0e222x45657hrg9y2gadfxtcqja270rdkg",
+        "auctioneer": "cosmos1e9kp752fc6vs3n7enjcfjenfj9s7eehs3m7fdg",
         "selling_reserve_address": "cosmos18xzvtd72y9j8xyf8a36z5jjhth7qgtcwhh8lz7yee3tvxqn6ll5quh78zq",
         "paying_reserve_address": "cosmos18permjyqvk5flft8ey9egr7hd4ry8tauqt4f9mg9knn4vvtkry9sujucrl",
         "start_price": "1.000000000000000000",
@@ -357,11 +356,11 @@ Result:
         "vesting_reserve_address": "cosmos1gukaqt783nhz79uhcqklsty7lc7jfyy8scn5ke4x7v0m3rkpt4dst7y4l3",
         "vesting_schedules": [
           {
-            "release_time": "2022-01-01T00:00:00Z",
+            "release_time": "2022-06-21T00:00:00Z",
             "weight": "0.500000000000000000"
           },
           {
-            "release_time": "2022-12-01T00:00:00Z",
+            "release_time": "2022-12-21T00:00:00Z",
             "weight": "0.500000000000000000"
           }
         ],
@@ -370,9 +369,9 @@ Result:
           "denom": "denom1",
           "amount": "999995000000"
         },
-        "start_time": "2021-12-01T00:00:00Z",
+        "start_time": "2022-01-21T00:00:00Z",
         "end_times": [
-          "2021-12-30T00:00:00Z"
+          "2022-02-21T00:00:00Z"
         ],
         "status": "AUCTION_STATUS_STARTED"
       }
@@ -403,7 +402,7 @@ Result:
     "base_auction": {
       "id": "1",
       "type": "AUCTION_TYPE_FIXED_PRICE",
-      "auctioneer": "cosmos1m4ys0e222x45657hrg9y2gadfxtcqja270rdkg",
+      "auctioneer": "cosmos1e9kp752fc6vs3n7enjcfjenfj9s7eehs3m7fdg",
       "selling_reserve_address": "cosmos18xzvtd72y9j8xyf8a36z5jjhth7qgtcwhh8lz7yee3tvxqn6ll5quh78zq",
       "paying_reserve_address": "cosmos18permjyqvk5flft8ey9egr7hd4ry8tauqt4f9mg9knn4vvtkry9sujucrl",
       "start_price": "1.000000000000000000",
@@ -415,11 +414,11 @@ Result:
       "vesting_reserve_address": "cosmos1gukaqt783nhz79uhcqklsty7lc7jfyy8scn5ke4x7v0m3rkpt4dst7y4l3",
       "vesting_schedules": [
         {
-          "release_time": "2022-01-01T00:00:00Z",
+          "release_time": "2022-06-21T00:00:00Z",
           "weight": "0.500000000000000000"
         },
         {
-          "release_time": "2022-12-01T00:00:00Z",
+          "release_time": "2022-12-21T00:00:00Z",
           "weight": "0.500000000000000000"
         }
       ],
@@ -428,9 +427,9 @@ Result:
         "denom": "denom1",
         "amount": "999995000000"
       },
-      "start_time": "2021-12-01T00:00:00Z",
+      "start_time": "2022-01-21T00:00:00Z",
       "end_times": [
-        "2021-12-30T00:00:00Z"
+        "2022-02-21T00:00:00Z"
       ],
       "status": "AUCTION_STATUS_STARTED"
     }
@@ -456,14 +455,14 @@ Result:
     {
       "auction_id": "1",
       "sequence": "1",
-      "bidder": "cosmos15ghqvkhllee5uvy400pw2fuh4d45ayykuzm2ts",
+      "bidder": "cosmos1nmd9ata0gl4agdspva84dwmmfe9ve70kjf4net",
       "price": "1.000000000000000000",
       "coin": {
         "denom": "denom2",
         "amount": "5000000"
       },
-      "height": "1457",
-      "eligible": false
+      "height": "50",
+      "eligible": true
     }
   ],
   "pagination": {

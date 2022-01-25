@@ -12504,7 +12504,7 @@ paths:
   /cosmos/fundraising/v1beta1/auctions:
     get:
       summary: Auctions returns all auctions.
-      operationId: TendermintFundraisingFundraisingAuctions
+      operationId: TendermintFundraisingAuctions
       responses:
         '200':
           description: A successful response.
@@ -12970,7 +12970,7 @@ paths:
   '/cosmos/fundraising/v1beta1/auctions/{auctionId}':
     get:
       summary: Auction returns the specific auction.
-      operationId: TendermintFundraisingFundraisingAuction
+      operationId: TendermintFundraisingAuction
       responses:
         '200':
           description: A successful response.
@@ -13345,7 +13345,7 @@ paths:
   '/cosmos/fundraising/v1beta1/auctions/{auctionId}/bids':
     get:
       summary: Bids returns all bids.
-      operationId: TendermintFundraisingFundraisingBids
+      operationId: TendermintFundraisingBids
       responses:
         '200':
           description: A successful response.
@@ -13694,7 +13694,7 @@ paths:
   '/cosmos/fundraising/v1beta1/auctions/{auctionId}/bids/{sequence}':
     get:
       summary: Bid returns the specific bid from the auction id and sequence.
-      operationId: TendermintFundraisingFundraisingBid
+      operationId: TendermintFundraisingBid
       responses:
         '200':
           description: A successful response.
@@ -13957,7 +13957,7 @@ paths:
   '/cosmos/fundraising/v1beta1/auctions/{auctionId}/vestings':
     get:
       summary: Vestings returns all vestings for the auction.
-      operationId: TendermintFundraisingFundraisingVestings
+      operationId: TendermintFundraisingVestings
       responses:
         '200':
           description: A successful response.
@@ -14204,7 +14204,7 @@ paths:
   /cosmos/fundraising/v1beta1/params:
     get:
       summary: Params returns parameters of the fundraising module.
-      operationId: TendermintFundraisingFundraisingParams
+      operationId: TendermintFundraisingParams
       responses:
         '200':
           description: A successful response.
@@ -21759,7 +21759,7 @@ definitions:
       and
 
       freezing clients
-  tendermint.fundraising.fundraising.Bid:
+  tendermint.fundraising.Bid:
     type: object
     properties:
       auctionId:
@@ -21803,25 +21803,25 @@ definitions:
           eligible specifies the bid that is eligible to purchase the selling
           coin
     description: Bid defines a standard bid for an auction.
-  tendermint.fundraising.fundraising.MsgCancelAuctionResponse:
+  tendermint.fundraising.MsgCancelAuctionResponse:
     type: object
     description: |-
       MsgCancelAuctionResponse defines the Msg/MsgCancelAuctionResponse
       response type.
-  tendermint.fundraising.fundraising.MsgCreateEnglishAuctionResponse:
+  tendermint.fundraising.MsgCreateEnglishAuctionResponse:
     type: object
     description: |-
       MsgCreateEnglishAuctionResponse defines the
       Msg/MsgCreateEnglishAuctionResponse response type.
-  tendermint.fundraising.fundraising.MsgCreateFixedPriceAuctionResponse:
+  tendermint.fundraising.MsgCreateFixedPriceAuctionResponse:
     type: object
     description: |-
       MsgCreateFixedPriceAuctionResponse defines the
       Msg/MsgCreateFixedPriceAuctionResponse response type.
-  tendermint.fundraising.fundraising.MsgPlaceBidResponse:
+  tendermint.fundraising.MsgPlaceBidResponse:
     type: object
     description: MsgPlaceBidResponse defines the Msg/MsgPlaceBidResponse response type.
-  tendermint.fundraising.fundraising.Params:
+  tendermint.fundraising.Params:
     type: object
     properties:
       auctionCreationFee:
@@ -21859,7 +21859,7 @@ definitions:
 
           the module
     description: Params defines the set of params for the fundraising module.
-  tendermint.fundraising.fundraising.QueryAuctionResponse:
+  tendermint.fundraising.QueryAuctionResponse:
     type: object
     properties:
       auction:
@@ -22022,7 +22022,7 @@ definitions:
     description: >-
       QueryAuctionResponse is the response type for the Query/Auction RPC
       method.
-  tendermint.fundraising.fundraising.QueryAuctionsResponse:
+  tendermint.fundraising.QueryAuctionsResponse:
     type: object
     properties:
       auctions:
@@ -22215,7 +22215,7 @@ definitions:
                    PageResponse page = 2;
            }
     description: QueryAuctionsResponse is response type for the Query/Auctions RPC method.
-  tendermint.fundraising.fundraising.QueryBidResponse:
+  tendermint.fundraising.QueryBidResponse:
     type: object
     properties:
       bid:
@@ -22269,7 +22269,7 @@ definitions:
         description: Bid defines a standard bid for an auction.
         title: bid specifies specific bid
     description: QueryBidResponse is response type for the Query/Sequence RPC method.
-  tendermint.fundraising.fundraising.QueryBidsResponse:
+  tendermint.fundraising.QueryBidsResponse:
     type: object
     properties:
       bids:
@@ -22351,7 +22351,7 @@ definitions:
                    PageResponse page = 2;
            }
     description: QueryBidsResponse is response type for the Query/Bids RPC method.
-  tendermint.fundraising.fundraising.QueryParamsResponse:
+  tendermint.fundraising.QueryParamsResponse:
     type: object
     properties:
       params:
@@ -22399,7 +22399,7 @@ definitions:
 
               the module
     description: QueryParamsResponse is response type for the Query/Params RPC method.
-  tendermint.fundraising.fundraising.QueryVestingsResponse:
+  tendermint.fundraising.QueryVestingsResponse:
     type: object
     properties:
       vestings:
@@ -22442,7 +22442,7 @@ definitions:
           description: VestingQueue defines the vesting queue.
         title: vestings specifies the existing vestings
     description: QueryVestingsResponse is response type for the Query/Vestings RPC method.
-  tendermint.fundraising.fundraising.VestingQueue:
+  tendermint.fundraising.VestingQueue:
     type: object
     properties:
       auctionId:
@@ -22475,7 +22475,7 @@ definitions:
         type: boolean
         title: released specifies the status of distribution
     description: VestingQueue defines the vesting queue.
-  tendermint.fundraising.fundraising.VestingSchedule:
+  tendermint.fundraising.VestingSchedule:
     type: object
     properties:
       releaseTime:
