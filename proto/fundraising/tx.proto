@@ -1,5 +1,5 @@
 syntax = "proto3";
-package tendermint.fundraising.fundraising;
+package tendermint.fundraising;
 
 // this line is used by starport scaffolding # proto/tx/import
 import "cosmos/base/v1beta1/coin.proto";
