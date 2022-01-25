@@ -10,47 +10,47 @@ import (
 	_ "github.com/stretchr/testify/suite"
 )
 
-func (suite *KeeperTestSuite) TestBidIterators() {
+func (s *KeeperTestSuite) TestBidIterators() {
 	// create a fixed price auction with already started status
-	suite.SetAuction(suite.sampleFixedPriceAuctions[1])
+	s.SetAuction(s.sampleFixedPriceAuctions[1])
 
-	auction, found := suite.keeper.GetAuction(suite.ctx, suite.sampleFixedPriceAuctions[1].GetId())
-	suite.Require().True(found)
+	auction, found := s.keeper.GetAuction(s.ctx, s.sampleFixedPriceAuctions[1].GetId())
+	s.Require().True(found)
 
-	for _, bid := range suite.sampleFixedPriceBids {
-		suite.PlaceBid(bid)
+	for _, bid := range s.sampleFixedPriceBids {
+		s.PlaceBid(bid)
 	}
 
-	bids := suite.keeper.GetBids(suite.ctx)
-	suite.Require().Len(bids, 4)
+	bids := s.keeper.GetBids(s.ctx)
+	s.Require().Len(bids, 4)
 
-	bidsById := suite.keeper.GetBidsByAuctionId(suite.ctx, auction.GetId())
-	suite.Require().Len(bidsById, 4)
+	bidsById := s.keeper.GetBidsByAuctionId(s.ctx, auction.GetId())
+	s.Require().Len(bidsById, 4)
 
-	bidsByBidder := suite.keeper.GetBidsByBidder(suite.ctx, suite.addrs[0])
-	suite.Require().Len(bidsByBidder, 2)
+	bidsByBidder := s.keeper.GetBidsByBidder(s.ctx, s.addrs[0])
+	s.Require().Len(bidsByBidder, 2)
 }
 
-func (suite *KeeperTestSuite) TestBidSequence() {
-	suite.SetAuction(suite.sampleFixedPriceAuctions[1])
+func (s *KeeperTestSuite) TestBidSequence() {
+	s.SetAuction(s.sampleFixedPriceAuctions[1])
 
-	for _, bid := range suite.sampleFixedPriceBids {
-		suite.PlaceBid(bid)
+	for _, bid := range s.sampleFixedPriceBids {
+		s.PlaceBid(bid)
 	}
 
-	auction, found := suite.keeper.GetAuction(suite.ctx, 2)
-	suite.Require().True(found)
+	auction, found := s.keeper.GetAuction(s.ctx, 2)
+	s.Require().True(found)
 
-	bidsById := suite.keeper.GetBidsByAuctionId(suite.ctx, auction.GetId())
-	suite.Require().Len(bidsById, 4)
-	suite.Require().Equal(uint64(5), suite.keeper.GetNextSequenceWithUpdate(suite.ctx, auction.GetId()))
+	bidsById := s.keeper.GetBidsByAuctionId(s.ctx, auction.GetId())
+	s.Require().Len(bidsById, 4)
+	s.Require().Equal(uint64(5), s.keeper.GetNextSequenceWithUpdate(s.ctx, auction.GetId()))
 
 	// create a new auction with auction
-	suite.SetAuction(types.NewFixedPriceAuction(
+	s.SetAuction(types.NewFixedPriceAuction(
 		&types.BaseAuction{
 			Id:                    3,
 			Type:                  types.AuctionTypeFixedPrice,
-			Auctioneer:            suite.addrs[4].String(),
+			Auctioneer:            s.addrs[4].String(),
 			SellingReserveAddress: types.SellingReserveAcc(3).String(),
 			PayingReserveAddress:  types.PayingReserveAcc(3).String(),
 			StartPrice:            sdk.MustNewDecFromStr("0.5"),
@@ -66,11 +66,11 @@ func (suite *KeeperTestSuite) TestBidSequence() {
 		},
 	))
 
-	auction, found = suite.keeper.GetAuction(suite.ctx, 3)
-	suite.Require().True(found)
+	auction, found = s.keeper.GetAuction(s.ctx, 3)
+	s.Require().True(found)
 
 	// sequence must start with 1
-	bidsById = suite.keeper.GetBidsByAuctionId(suite.ctx, auction.GetId())
-	suite.Require().Len(bidsById, 0)
-	suite.Require().Equal(uint64(1), suite.keeper.GetNextSequenceWithUpdate(suite.ctx, auction.GetId()))
+	bidsById = s.keeper.GetBidsByAuctionId(s.ctx, auction.GetId())
+	s.Require().Len(bidsById, 0)
+	s.Require().Equal(uint64(1), s.keeper.GetNextSequenceWithUpdate(s.ctx, auction.GetId()))
 }
