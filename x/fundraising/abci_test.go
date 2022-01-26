@@ -33,8 +33,7 @@ func (s *ModuleTestSuite) TestEndBlockerStandByStatus() {
 
 func (s *ModuleTestSuite) TestEndBlockerStartedStatus() {
 	auctioneer := s.addr(0)
-
-	startedAuction := s.createFixedPriceAuction(
+	auction := s.createFixedPriceAuction(
 		auctioneer,
 		sdk.OneDec(),
 		sdk.NewInt64Coin("denom1", 500_000_000_000),
@@ -53,75 +52,80 @@ func (s *ModuleTestSuite) TestEndBlockerStartedStatus() {
 		types.MustParseRFC3339("2023-05-01T00:00:00Z"),
 		true,
 	)
-	s.Require().Equal(types.AuctionStatusStarted, startedAuction.GetStatus())
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	auctionId := startedAuction.GetId()
-	payingCoinDenom := startedAuction.GetPayingCoinDenom()
-	sellingCoin := startedAuction.GetSellingCoin()
-
-	bid1 := s.placeBid(auctionId, s.addr(1), sdk.OneDec(), sdk.NewInt64Coin(payingCoinDenom, 20_000_000), true)
-	bid2 := s.placeBid(auctionId, s.addr(2), sdk.OneDec(), sdk.NewInt64Coin(payingCoinDenom, 20_000_000), true)
-	bid3 := s.placeBid(auctionId, s.addr(3), sdk.OneDec(), sdk.NewInt64Coin(payingCoinDenom, 20_000_000), true)
+	bid1 := s.placeBid(auction.GetId(), s.addr(1), sdk.OneDec(),
+		sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
+	bid2 := s.placeBid(auction.GetId(), s.addr(2), sdk.OneDec(),
+		sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
+	bid3 := s.placeBid(auction.GetId(), s.addr(3), sdk.OneDec(),
+		sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
 
 	totalBidCoin := bid1.Coin.Add(bid2.Coin).Add(bid3.Coin)
-	receiveAmt := totalBidCoin.Amount.ToDec().QuoTruncate(startedAuction.GetStartPrice()).TruncateInt()
-	receiveCoin := sdk.NewCoin(sellingCoin.Denom, receiveAmt)
+	receiveAmt := totalBidCoin.Amount.ToDec().QuoTruncate(auction.GetStartPrice()).TruncateInt()
+	receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, receiveAmt)
 
-	payingReserve := s.getBalance(startedAuction.GetPayingReserveAddress(), payingCoinDenom)
+	payingReserve := s.getBalance(auction.GetPayingReserveAddress(), auction.GetPayingCoinDenom())
 	s.Require().True(coinEq(totalBidCoin, payingReserve))
 
 	// Modify the current block time a day after the end time
-	s.ctx = s.ctx.WithBlockTime(startedAuction.GetEndTimes()[0].AddDate(0, 0, 1))
+	s.ctx = s.ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, 1))
 	fundraising.EndBlocker(s.ctx, s.keeper)
 
 	// The remaining selling coin must be returned to the auctioneer
-	auctioneerBalance := s.getBalance(auctioneer, sellingCoin.Denom)
-	s.Require().Equal(startedAuction.GetSellingCoin(), auctioneerBalance.Add(receiveCoin))
+	auctioneerBalance := s.getBalance(auctioneer, auction.GetSellingCoin().Denom)
+	s.Require().True(coinEq(auction.GetSellingCoin(), auctioneerBalance.Add(receiveCoin)))
 }
 
 func (s *ModuleTestSuite) TestEndBlockerVestingStatus() {
-	// s.SetAuction(s.sampleFixedPriceAuctions[1])
+	auctioneer := s.addr(0)
+	auction := s.createFixedPriceAuction(
+		auctioneer,
+		sdk.OneDec(),
+		sdk.NewInt64Coin("denom1", 500_000_000_000),
+		"denom2",
+		[]types.VestingSchedule{
+			{
+				ReleaseTime: types.MustParseRFC3339("2024-01-01T00:00:00Z"),
+				Weight:      sdk.MustNewDecFromStr("0.5"),
+			},
+			{
+				ReleaseTime: types.MustParseRFC3339("2024-06-01T00:00:00Z"),
+				Weight:      sdk.MustNewDecFromStr("0.5"),
+			},
+		},
+		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
+		types.MustParseRFC3339("2023-05-01T00:00:00Z"),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	// auction, found := s.keeper.GetAuction(s.ctx, 2)
-	// s.Require().True(found)
-	// s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+	bid1 := s.placeBid(auction.GetId(), s.addr(1), sdk.OneDec(),
+		sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
+	bid2 := s.placeBid(auction.GetId(), s.addr(2), sdk.OneDec(),
+		sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
+	bid3 := s.placeBid(auction.GetId(), s.addr(3), sdk.OneDec(),
+		sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
 
-	// totalBidCoin := sdk.NewInt64Coin(s.sampleFixedPriceAuctions[1].GetPayingCoinDenom(), 0)
-	// for _, bid := range s.sampleFixedPriceBids {
-	// 	s.PlaceBid(bid)
+	totalBidCoin := bid1.Coin.Add(bid2.Coin).Add(bid3.Coin)
 
-	// 	totalBidCoin = totalBidCoin.Add(bid.Coin)
-	// }
+	// Modify the current block time a day after the end time
+	s.ctx = s.ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, 1))
+	fundraising.EndBlocker(s.ctx, s.keeper)
 
-	// // set the current block time a day after so that it gets finished
-	// s.ctx = s.ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, 1))
-	// fundraising.EndBlocker(s.ctx, s.keeper)
+	vestingReserve := s.getBalance(auction.GetVestingReserveAddress(), auction.GetPayingCoinDenom())
+	s.Require().Equal(totalBidCoin, vestingReserve)
 
-	// vestingReserve := s.app.BankKeeper.GetBalance(
-	// 	s.ctx,
-	// 	auction.GetVestingReserveAddress(),
-	// 	auction.GetPayingCoinDenom(),
-	// )
-	// s.Require().Equal(totalBidCoin, vestingReserve)
+	// Modify the current block time a day after the last vesting schedule
+	s.ctx = s.ctx.WithBlockTime(auction.VestingSchedules[len(auction.VestingSchedules)-1].ReleaseTime.AddDate(0, 0, 1))
+	fundraising.EndBlocker(s.ctx, s.keeper)
 
-	// s.ctx = s.ctx.WithBlockTime(types.MustParseRFC3339("2022-04-02T00:00:00Z"))
-	// fundraising.EndBlocker(s.ctx, s.keeper)
+	queues := s.keeper.GetVestingQueuesByAuctionId(s.ctx, auction.GetId())
+	s.Require().Len(queues, 2)
+	s.Require().True(queues[0].Released)
+	s.Require().True(queues[1].Released)
 
-	// queues := s.keeper.GetVestingQueuesByAuctionId(s.ctx, auction.GetId())
-	// s.Require().Len(queues, 4)
-	// s.Require().True(queues[0].Released)
-	// s.Require().True(queues[1].Released)
-	// s.Require().False(queues[2].Released)
-	// s.Require().False(queues[3].Released)
-
-	// // auctioneer should have received two released amounts
-	// auctioneerBalance := s.app.BankKeeper.GetBalance(
-	// 	s.ctx,
-	// 	s.addrs[5],
-	// 	auction.GetPayingCoinDenom(),
-	// )
-	// s.Require().Equal(
-	// 	totalBidCoin.Amount.Quo(sdk.NewInt(2)),
-	// 	auctioneerBalance.Amount.Sub(initialBalances.AmountOf(denom4)),
-	// )
+	// The auctioneer must have released the paying coin
+	auctioneerBalance := s.getBalance(auctioneer, auction.GetPayingCoinDenom())
+	s.Require().True(coinEq(totalBidCoin, auctioneerBalance))
 }
