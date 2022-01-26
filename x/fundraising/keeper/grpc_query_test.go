@@ -9,17 +9,34 @@ import (
 	_ "github.com/stretchr/testify/suite"
 )
 
-func (suite *KeeperTestSuite) TestGRPCParams() {
-	resp, err := suite.querier.Params(sdk.WrapSDKContext(suite.ctx), &types.QueryParamsRequest{})
-	suite.Require().NoError(err)
-
-	suite.Require().Equal(suite.keeper.GetParams(suite.ctx), resp.Params)
+func (s *KeeperTestSuite) TestGRPCParams() {
+	resp, err := s.querier.Params(sdk.WrapSDKContext(s.ctx), &types.QueryParamsRequest{})
+	s.Require().NoError(err)
+	s.Require().Equal(s.keeper.GetParams(s.ctx), resp.Params)
 }
 
-func (suite *KeeperTestSuite) TestGRPCAuctions() {
-	for _, auction := range suite.sampleFixedPriceAuctions {
-		suite.SetAuction(auction)
-	}
+func (s *KeeperTestSuite) TestGRPCAuctions() {
+	s.createFixedPriceAuction(
+		s.addr(0),
+		sdk.MustNewDecFromStr("1.0"),
+		sdk.NewInt64Coin("denom1", 500_000_000_000),
+		"denom2",
+		[]types.VestingSchedule{},
+		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
+		types.MustParseRFC3339("2022-06-10T00:00:00Z"),
+		true,
+	)
+
+	s.createFixedPriceAuction(
+		s.addr(1),
+		sdk.MustNewDecFromStr("0.5"),
+		sdk.NewInt64Coin("denom3", 1_000_000_000_000),
+		"denom4",
+		[]types.VestingSchedule{},
+		types.MustParseRFC3339("2025-01-01T00:00:00Z"),
+		types.MustParseRFC3339("2025-06-10T00:00:00Z"),
+		true,
+	)
 
 	for _, tc := range []struct {
 		name      string
@@ -34,14 +51,6 @@ func (suite *KeeperTestSuite) TestGRPCAuctions() {
 			nil,
 		},
 		{
-			"query all",
-			&types.QueryAuctionsRequest{},
-			false,
-			func(resp *types.QueryAuctionsResponse) {
-				suite.Require().Len(resp.Auctions, 2)
-			},
-		},
-		{
 			"invalid type",
 			&types.QueryAuctionsRequest{
 				Type: "invalid",
@@ -50,36 +59,63 @@ func (suite *KeeperTestSuite) TestGRPCAuctions() {
 			nil,
 		},
 		{
-			"query by type",
-			&types.QueryAuctionsRequest{Type: types.AuctionTypeFixedPrice.String()},
+			"query all auctions",
+			&types.QueryAuctionsRequest{},
+			false,
+			func(resp *types.QueryAuctionsResponse) {
+				s.Require().Len(resp.Auctions, 2)
+			},
+		},
+		{
+			"query all auctions by auction status",
+			&types.QueryAuctionsRequest{
+				Status: types.AuctionStatusStandBy.String(),
+			},
+			false,
+			func(resp *types.QueryAuctionsResponse) {
+				s.Require().Len(resp.Auctions, 1)
+			},
+		},
+		{
+			"query all auction by auction type",
+			&types.QueryAuctionsRequest{
+				Type: types.AuctionTypeFixedPrice.String(),
+			},
 			false,
 			func(resp *types.QueryAuctionsResponse) {
 				auctions, err := types.UnpackAuctions(resp.Auctions)
-				suite.Require().NoError(err)
-				suite.Require().Len(auctions, 2)
+				s.Require().NoError(err)
+				s.Require().Len(auctions, 2)
 
 				for _, auction := range auctions {
-					suite.Require().Equal(types.AuctionTypeFixedPrice, auction.GetType())
+					s.Require().Equal(types.AuctionTypeFixedPrice, auction.GetType())
 				}
 			},
 		},
 	} {
-		suite.Run(tc.name, func() {
-			resp, err := suite.querier.Auctions(sdk.WrapSDKContext(suite.ctx), tc.req)
+		s.Run(tc.name, func() {
+			resp, err := s.querier.Auctions(sdk.WrapSDKContext(s.ctx), tc.req)
 			if tc.expectErr {
-				suite.Require().Error(err)
+				s.Require().Error(err)
 			} else {
-				suite.Require().NoError(err)
+				s.Require().NoError(err)
 				tc.postRun(resp)
 			}
 		})
 	}
 }
 
-func (suite *KeeperTestSuite) TestGRPCAuction() {
-	for _, auction := range suite.sampleFixedPriceAuctions {
-		suite.SetAuction(auction)
-	}
+func (s *KeeperTestSuite) TestGRPCAuction() {
+	auction := s.createFixedPriceAuction(
+		s.addr(0),
+		sdk.MustNewDecFromStr("0.5"),
+		sdk.NewInt64Coin("denom1", 500_000_000_000),
+		"denom2",
+		[]types.VestingSchedule{},
+		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
+		types.MustParseRFC3339("2022-03-01T00:00:00Z"),
+		true,
+	)
 
 	for _, tc := range []struct {
 		name      string
@@ -94,42 +130,68 @@ func (suite *KeeperTestSuite) TestGRPCAuction() {
 			nil,
 		},
 		{
-			"query by id",
-			&types.QueryAuctionRequest{AuctionId: 1},
-			false,
-			func(resp *types.QueryAuctionResponse) {
-				plan, err := types.UnpackAuction(resp.Auction)
-				suite.Require().NoError(err)
-				suite.Require().Equal(plan.GetId(), uint64(1))
-			},
-		},
-		{
 			"id not found",
-			&types.QueryAuctionRequest{AuctionId: 5},
+			&types.QueryAuctionRequest{
+				AuctionId: 5,
+			},
 			true,
 			nil,
 		},
+		{
+			"query by id",
+			&types.QueryAuctionRequest{
+				AuctionId: 1,
+			},
+			false,
+			func(resp *types.QueryAuctionResponse) {
+				a, err := types.UnpackAuction(resp.Auction)
+				s.Require().NoError(err)
+
+				s.Require().Equal(auction.GetId(), a.GetId())
+				s.Require().Equal(auction.GetAuctioneer(), a.GetAuctioneer())
+				s.Require().Equal(auction.GetType(), a.GetType())
+				s.Require().Equal(auction.GetStartPrice(), a.GetStartPrice())
+				s.Require().Equal(auction.GetStartTime(), a.GetStartTime())
+				s.Require().Equal(auction.GetEndTimes(), a.GetEndTimes())
+			},
+		},
 	} {
-		suite.Run(tc.name, func() {
-			resp, err := suite.querier.Auction(sdk.WrapSDKContext(suite.ctx), tc.req)
+		s.Run(tc.name, func() {
+			resp, err := s.querier.Auction(sdk.WrapSDKContext(s.ctx), tc.req)
 			if tc.expectErr {
-				suite.Require().Error(err)
+				s.Require().Error(err)
 			} else {
-				suite.Require().NoError(err)
+				s.Require().NoError(err)
 				tc.postRun(resp)
 			}
 		})
 	}
 }
 
-func (suite *KeeperTestSuite) TestGRPCBids() {
-	for _, auction := range suite.sampleFixedPriceAuctions {
-		suite.SetAuction(auction)
-	}
+func (s *KeeperTestSuite) TestGRPCBids() {
+	auction := s.createFixedPriceAuction(
+		s.addr(0),
+		sdk.MustNewDecFromStr("1.0"),
+		sdk.NewInt64Coin("denom1", 500_000_000_000),
+		"denom2",
+		[]types.VestingSchedule{},
+		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
+		types.MustParseRFC3339("2022-03-01T00:00:00Z"),
+		true,
+	)
 
-	for _, bid := range suite.sampleFixedPriceBids {
-		suite.PlaceBid(bid)
-	}
+	bidder1 := s.addr(1)
+	bidder2 := s.addr(2)
+	bidder3 := s.addr(3)
+
+	bid1 := s.placeBid(auction.GetId(), bidder1, sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
+	bid2 := s.placeBid(auction.GetId(), bidder1, sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
+	bid3 := s.placeBid(auction.GetId(), bidder2, sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 15_000_000), true)
+	bid4 := s.placeBid(auction.GetId(), bidder3, sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 35_000_000), true)
+
+	// Make bid4 not eligible
+	bid4.Eligible = false
+	s.keeper.SetBid(s.ctx, auction.GetId(), bid4.Sequence, bidder3, bid4)
 
 	for _, tc := range []struct {
 		name      string
@@ -145,78 +207,101 @@ func (suite *KeeperTestSuite) TestGRPCBids() {
 		},
 		{
 			"query by id",
-			&types.QueryBidsRequest{AuctionId: 2},
+			&types.QueryBidsRequest{
+				AuctionId: 1,
+			},
 			false,
 			func(resp *types.QueryBidsResponse) {
-				suite.Require().Len(resp.Bids, 4)
-				suite.Require().True(coinEq(sdk.NewInt64Coin(denom4, 20_000_000), resp.Bids[0].Coin))
-				suite.Require().True(coinEq(sdk.NewInt64Coin(denom4, 30_000_000), resp.Bids[1].Coin))
-				suite.Require().True(coinEq(sdk.NewInt64Coin(denom4, 50_000_000), resp.Bids[2].Coin))
-				suite.Require().True(coinEq(sdk.NewInt64Coin(denom4, 50_000_000), resp.Bids[3].Coin))
+				s.Require().Len(resp.Bids, 4)
+				s.Require().True(coinEq(bid1.GetCoin(), resp.Bids[0].Coin))
+				s.Require().True(coinEq(bid2.GetCoin(), resp.Bids[1].Coin))
+				s.Require().True(coinEq(bid3.GetCoin(), resp.Bids[2].Coin))
+				s.Require().True(coinEq(bid4.GetCoin(), resp.Bids[3].Coin))
 			},
 		},
 		{
 			"query by bidder address",
-			&types.QueryBidsRequest{AuctionId: 2, Bidder: suite.addrs[0].String()},
+			&types.QueryBidsRequest{
+				AuctionId: 1,
+				Bidder:    bidder1.String(),
+			},
 			false,
 			func(resp *types.QueryBidsResponse) {
-				suite.Require().Len(resp.Bids, 2)
-				for _, bid := range resp.GetBids() {
-					suite.Require().Equal(suite.addrs[0].String(), bid.Bidder)
-				}
+				s.Require().Len(resp.Bids, 2)
 			},
 		},
 		{
 			"query by eligible",
-			&types.QueryBidsRequest{AuctionId: 2, Eligible: "true"},
+			&types.QueryBidsRequest{
+				AuctionId: 1,
+				Eligible:  "true",
+			},
 			false,
 			func(resp *types.QueryBidsResponse) {
-				suite.Require().Len(resp.Bids, 2)
+				s.Require().Len(resp.Bids, 3)
 			},
 		},
 		{
 			"query by eligible",
-			&types.QueryBidsRequest{AuctionId: 2, Eligible: "false"},
+			&types.QueryBidsRequest{
+				AuctionId: 1,
+				Eligible:  "false",
+			},
 			false,
 			func(resp *types.QueryBidsResponse) {
-				suite.Require().Len(resp.Bids, 2)
+				s.Require().Len(resp.Bids, 1)
 			},
 		},
 		{
 			"query by both bidder address and eligible #1",
-			&types.QueryBidsRequest{AuctionId: 2, Bidder: suite.addrs[0].String(), Eligible: "false"},
+			&types.QueryBidsRequest{
+				AuctionId: 1,
+				Bidder:    bidder3.String(),
+				Eligible:  "false",
+			},
 			false,
 			func(resp *types.QueryBidsResponse) {
-				suite.Require().Len(resp.Bids, 1)
+				s.Require().Len(resp.Bids, 1)
 			},
 		},
 		{
 			"query by both bidder address and eligible #2",
-			&types.QueryBidsRequest{AuctionId: 2, Bidder: suite.addrs[1].String(), Eligible: "true"},
+			&types.QueryBidsRequest{
+				AuctionId: 1,
+				Bidder:    bidder3.String(),
+				Eligible:  "true",
+			},
 			false,
 			func(resp *types.QueryBidsResponse) {
-				suite.Require().Len(resp.Bids, 1)
+				s.Require().Len(resp.Bids, 0)
 			},
 		},
 	} {
-		suite.Run(tc.name, func() {
-			resp, err := suite.querier.Bids(sdk.WrapSDKContext(suite.ctx), tc.req)
+		s.Run(tc.name, func() {
+			resp, err := s.querier.Bids(sdk.WrapSDKContext(s.ctx), tc.req)
 			if tc.expectErr {
-				suite.Require().Error(err)
+				s.Require().Error(err)
 			} else {
-				suite.Require().NoError(err)
+				s.Require().NoError(err)
 				tc.postRun(resp)
 			}
 		})
 	}
 }
 
-func (suite *KeeperTestSuite) TestGRPCBid() {
-	suite.SetAuction(suite.sampleFixedPriceAuctions[1])
+func (s *KeeperTestSuite) TestGRPCBid() {
+	auction := s.createFixedPriceAuction(
+		s.addr(0),
+		sdk.MustNewDecFromStr("1.0"),
+		sdk.NewInt64Coin("denom1", 500_000_000_000),
+		"denom2",
+		[]types.VestingSchedule{},
+		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
+		types.MustParseRFC3339("2022-03-01T00:00:00Z"),
+		true,
+	)
 
-	for _, bid := range suite.sampleFixedPriceBids {
-		suite.PlaceBid(bid)
-	}
+	bid := s.placeBid(auction.GetId(), s.addr(1), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
 
 	for _, tc := range []struct {
 		name      string
@@ -229,18 +314,6 @@ func (suite *KeeperTestSuite) TestGRPCBid() {
 			nil,
 			true,
 			nil,
-		},
-		{
-			"query by id and sequence",
-			&types.QueryBidRequest{
-				AuctionId: 2,
-				Sequence:  1,
-			},
-			false,
-			func(resp *types.QueryBidResponse) {
-				suite.Require().Equal(uint64(2), resp.Bid.GetAuctionId())
-				suite.Require().Equal(uint64(1), resp.Bid.GetSequence())
-			},
 		},
 		{
 			"id not found",
@@ -259,33 +332,58 @@ func (suite *KeeperTestSuite) TestGRPCBid() {
 			true,
 			nil,
 		},
+		{
+			"query by id and sequence",
+			&types.QueryBidRequest{
+				AuctionId: 1,
+				Sequence:  1,
+			},
+			false,
+			func(resp *types.QueryBidResponse) {
+				s.Require().Equal(bid.GetAuctionId(), resp.Bid.GetAuctionId())
+				s.Require().Equal(bid.GetBidder(), resp.Bid.GetBidder())
+				s.Require().Equal(bid.GetSequence(), resp.Bid.GetSequence())
+				s.Require().Equal(bid.GetCoin(), resp.Bid.GetCoin())
+				s.Require().Equal(bid.GetEligible(), resp.Bid.GetEligible())
+			},
+		},
 	} {
-		suite.Run(tc.name, func() {
-			resp, err := suite.querier.Bid(sdk.WrapSDKContext(suite.ctx), tc.req)
+		s.Run(tc.name, func() {
+			resp, err := s.querier.Bid(sdk.WrapSDKContext(s.ctx), tc.req)
 			if tc.expectErr {
-				suite.Require().Error(err)
+				s.Require().Error(err)
 			} else {
-				suite.Require().NoError(err)
+				s.Require().NoError(err)
 				tc.postRun(resp)
 			}
 		})
 	}
 }
 
-func (suite *KeeperTestSuite) TestGRPCVestings() {
-	suite.SetAuction(suite.sampleFixedPriceAuctions[1])
+func (s *KeeperTestSuite) TestGRPCVestings() {
+	auction := s.createFixedPriceAuction(
+		s.addr(0),
+		sdk.OneDec(),
+		sdk.NewInt64Coin("denom1", 1_000_000_000_000),
+		"denom2",
+		[]types.VestingSchedule{
+			{
+				ReleaseTime: types.MustParseRFC3339("2022-06-01T00:00:00Z"),
+				Weight:      sdk.MustNewDecFromStr("0.5"),
+			},
+			{
+				ReleaseTime: types.MustParseRFC3339("2022-12-01T00:00:00Z"),
+				Weight:      sdk.MustNewDecFromStr("0.5"),
+			},
+		},
+		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
+		types.MustParseRFC3339("2022-03-01T00:00:00Z"),
+		true,
+	)
 
-	auction, found := suite.keeper.GetAuction(suite.ctx, 2)
-	suite.Require().True(found)
-	suite.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
-
-	for _, bid := range suite.sampleFixedPriceBids {
-		suite.PlaceBid(bid)
-	}
-
-	// set the current block time a day after so that it gets finished
-	suite.ctx = suite.ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, 1))
-	fundraising.EndBlocker(suite.ctx, suite.keeper)
+	// Set the current block time a day after so that it gets finished
+	s.ctx = s.ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, 1))
+	fundraising.EndBlocker(s.ctx, s.keeper)
 
 	for _, tc := range []struct {
 		name      string
@@ -302,20 +400,20 @@ func (suite *KeeperTestSuite) TestGRPCVestings() {
 		{
 			"query by id",
 			&types.QueryVestingsRequest{
-				AuctionId: 2,
+				AuctionId: 1,
 			},
 			false,
 			func(resp *types.QueryVestingsResponse) {
-				suite.Require().Len(resp.Vestings, 4)
+				s.Require().Len(resp.Vestings, 2)
 			},
 		},
 	} {
-		suite.Run(tc.name, func() {
-			resp, err := suite.querier.Vestings(sdk.WrapSDKContext(suite.ctx), tc.req)
+		s.Run(tc.name, func() {
+			resp, err := s.querier.Vestings(sdk.WrapSDKContext(s.ctx), tc.req)
 			if tc.expectErr {
-				suite.Require().Error(err)
+				s.Require().Error(err)
 			} else {
-				suite.Require().NoError(err)
+				s.Require().NoError(err)
 				tc.postRun(resp)
 			}
 		})

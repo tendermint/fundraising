@@ -1,8 +1,6 @@
 package keeper_test
 
 import (
-	"time"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/tendermint/fundraising/x/fundraising/types"
@@ -10,18 +8,13 @@ import (
 	_ "github.com/stretchr/testify/suite"
 )
 
-func (suite *KeeperTestSuite) TestVestingQueueRemainingCoin() {
-	auction := &types.BaseAuction{
-		Id:                    1,
-		Type:                  types.AuctionTypeFixedPrice,
-		Auctioneer:            suite.addrs[5].String(),
-		SellingReserveAddress: types.SellingReserveAcc(1).String(),
-		PayingReserveAddress:  types.PayingReserveAcc(1).String(),
-		StartPrice:            sdk.MustNewDecFromStr("0.5"),
-		SellingCoin:           sdk.NewInt64Coin(denom3, 1_000_000_000_000),
-		PayingCoinDenom:       denom4,
-		VestingReserveAddress: types.VestingReserveAcc(1).String(),
-		VestingSchedules: []types.VestingSchedule{
+func (s *KeeperTestSuite) TestVestingQueueRemainingCoin() {
+	auction := s.createFixedPriceAuction(
+		s.addr(0),
+		sdk.OneDec(),
+		sdk.NewInt64Coin("denom1", 1_000_000_000_000),
+		"denom2",
+		[]types.VestingSchedule{
 			{
 				ReleaseTime: types.MustParseRFC3339("2022-01-01T22:00:00+00:00"),
 				Weight:      sdk.MustNewDecFromStr("0.3"),
@@ -35,77 +28,92 @@ func (suite *KeeperTestSuite) TestVestingQueueRemainingCoin() {
 				Weight:      sdk.MustNewDecFromStr("0.4"),
 			},
 		},
-		WinningPrice:  sdk.ZeroDec(),
-		RemainingCoin: sdk.NewInt64Coin(denom3, 1_000_000_000_000),
-		StartTime:     types.MustParseRFC3339("2021-12-10T00:00:00Z"),
-		EndTimes:      []time.Time{types.MustParseRFC3339("2022-12-20T00:00:00Z")},
-		Status:        types.AuctionStatusStarted,
+		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
+		types.MustParseRFC3339("2022-03-01T00:00:00Z"),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	s.placeBid(auction.GetId(), s.addr(1), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
+	s.placeBid(auction.GetId(), s.addr(2), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
+	s.placeBid(auction.GetId(), s.addr(2), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 15_000_000), true)
+
+	err := s.keeper.SetVestingSchedules(s.ctx, auction)
+	s.Require().NoError(err)
+
+	vestingReserveAddr := auction.GetVestingReserveAddress()
+	vestingReserveCoin := s.getBalance(vestingReserveAddr, auction.PayingCoinDenom)
+
+	for _, vq := range s.keeper.GetVestingQueuesByAuctionId(s.ctx, auction.GetId()) {
+		vestingReserveCoin = vestingReserveCoin.Sub(vq.PayingCoin)
 	}
-
-	suite.SetAuction(auction)
-
-	bids := []types.Bid{
-		{
-			AuctionId: auction.Id,
-			Sequence:  1,
-			Bidder:    suite.addrs[1].String(),
-			Price:     auction.StartPrice,
-			Coin:      sdk.NewInt64Coin(denom4, 666666),
-		},
-	}
-
-	for _, bid := range bids {
-		suite.PlaceBidWithCustom(bid.AuctionId, bid.Sequence, bid.Bidder, bid.Price, bid.Coin)
-	}
-
-	err := suite.keeper.SetVestingSchedules(suite.ctx, auction)
-	suite.Require().NoError(err)
-
-	reserveCoin := suite.app.BankKeeper.GetBalance(suite.ctx, auction.GetVestingReserveAddress(), denom4)
-
-	for _, vq := range suite.keeper.GetVestingQueuesByAuctionId(suite.ctx, auction.GetId()) {
-		reserveCoin = reserveCoin.Sub(vq.PayingCoin)
-	}
-	suite.Require().True(reserveCoin.IsZero())
+	s.Require().True(vestingReserveCoin.IsZero())
 }
 
-func (suite *KeeperTestSuite) TestVestingQueueIterator() {
-	payingReserveAcc, payingCoinDenom := suite.addrs[5], denom1 // 100_000_000_000_000denom1
-	reserveCoin := suite.app.BankKeeper.GetBalance(suite.ctx, payingReserveAcc, denom1)
+func (s *KeeperTestSuite) TestVestingQueueIterator() {
+	payingReserveAcc := s.addr(0)
+	payingCoinDenom := "denom1"
+	reserveCoin := s.getBalance(payingReserveAcc, payingCoinDenom)
 
-	// vesting schedule contains 2 vesting queues
-	for _, vs := range suite.sampleVestingSchedules1 {
+	// Set vesting schedules with 2 vesting queues
+	for _, vs := range []types.VestingSchedule{
+		{
+			ReleaseTime: types.MustParseRFC3339("2023-01-01T00:00:00Z"),
+			Weight:      sdk.MustNewDecFromStr("0.5"),
+		},
+		{
+			ReleaseTime: types.MustParseRFC3339("2023-06-01T00:00:00Z"),
+			Weight:      sdk.MustNewDecFromStr("0.5"),
+		},
+	} {
 		payingAmt := reserveCoin.Amount.ToDec().MulTruncate(vs.Weight).TruncateInt()
 
-		suite.keeper.SetVestingQueue(suite.ctx, uint64(1), vs.ReleaseTime, types.VestingQueue{
+		s.keeper.SetVestingQueue(s.ctx, uint64(1), vs.ReleaseTime, types.VestingQueue{
 			AuctionId:   uint64(1),
-			Auctioneer:  suite.addrs[0].String(),
+			Auctioneer:  s.addr(1).String(),
 			PayingCoin:  sdk.NewCoin(payingCoinDenom, payingAmt),
 			ReleaseTime: vs.ReleaseTime,
 			Released:    false,
 		})
 	}
 
-	// vesting schedule contains 4 vesting queues
-	for _, vs := range suite.sampleVestingSchedules2 {
+	// Set vesting schedules with 4 vesting queues
+	for _, vs := range []types.VestingSchedule{
+		{
+			ReleaseTime: types.MustParseRFC3339("2023-01-01T00:00:00Z"),
+			Weight:      sdk.MustNewDecFromStr("0.25"),
+		},
+		{
+			ReleaseTime: types.MustParseRFC3339("2023-05-01T00:00:00Z"),
+			Weight:      sdk.MustNewDecFromStr("0.25"),
+		},
+		{
+			ReleaseTime: types.MustParseRFC3339("2023-09-01T00:00:00Z"),
+			Weight:      sdk.MustNewDecFromStr("0.25"),
+		},
+		{
+			ReleaseTime: types.MustParseRFC3339("2023-12-01T00:00:00Z"),
+			Weight:      sdk.MustNewDecFromStr("0.25"),
+		},
+	} {
 		payingAmt := reserveCoin.Amount.ToDec().MulTruncate(vs.Weight).TruncateInt()
 
-		suite.keeper.SetVestingQueue(suite.ctx, uint64(2), vs.ReleaseTime, types.VestingQueue{
+		s.keeper.SetVestingQueue(s.ctx, uint64(2), vs.ReleaseTime, types.VestingQueue{
 			AuctionId:   uint64(2),
-			Auctioneer:  suite.addrs[1].String(),
+			Auctioneer:  s.addr(2).String(),
 			PayingCoin:  sdk.NewCoin(payingCoinDenom, payingAmt),
 			ReleaseTime: vs.ReleaseTime,
 			Released:    false,
 		})
 	}
 
-	suite.Require().Len(suite.keeper.GetVestingQueuesByAuctionId(suite.ctx, uint64(1)), 2)
-	suite.Require().Len(suite.keeper.GetVestingQueuesByAuctionId(suite.ctx, uint64(2)), 4)
-	suite.Require().Len(suite.keeper.GetVestingQueues(suite.ctx), 6)
+	s.Require().Len(s.keeper.GetVestingQueuesByAuctionId(s.ctx, uint64(1)), 2)
+	s.Require().Len(s.keeper.GetVestingQueuesByAuctionId(s.ctx, uint64(2)), 4)
+	s.Require().Len(s.keeper.GetVestingQueues(s.ctx), 6)
 
-	totalPayingCoin := sdk.NewInt64Coin(denom1, 0)
-	for _, vq := range suite.keeper.GetVestingQueuesByAuctionId(suite.ctx, uint64(2)) {
+	totalPayingCoin := sdk.NewInt64Coin(payingCoinDenom, 0)
+	for _, vq := range s.keeper.GetVestingQueuesByAuctionId(s.ctx, uint64(2)) {
 		totalPayingCoin = totalPayingCoin.Add(vq.PayingCoin)
 	}
-	suite.Require().Equal(reserveCoin, totalPayingCoin)
+	s.Require().Equal(reserveCoin, totalPayingCoin)
 }

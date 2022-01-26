@@ -9,8 +9,8 @@ import (
 	_ "github.com/stretchr/testify/suite"
 )
 
-func (suite *KeeperTestSuite) TestMsgCreateFixedPriceAuction() {
-	ctx := sdk.WrapSDKContext(suite.ctx)
+func (s *KeeperTestSuite) TestMsgCreateFixedPriceAuction() {
+	ctx := sdk.WrapSDKContext(s.ctx)
 
 	for _, tc := range []struct {
 		name string
@@ -20,91 +20,138 @@ func (suite *KeeperTestSuite) TestMsgCreateFixedPriceAuction() {
 		{
 			"valid message with the future start time",
 			types.NewMsgCreateFixedPriceAuction(
-				suite.addrs[0].String(),
+				s.addr(0).String(),
 				sdk.OneDec(),
-				sdk.NewInt64Coin(denom1, 1_000_000_000_000),
-				denom2,
-				suite.sampleVestingSchedules2,
-				types.MustParseRFC3339("2030-01-01T00:00:00Z"),
-				types.MustParseRFC3339("2030-01-10T00:00:00Z"),
+				sdk.NewInt64Coin("denom1", 1_000_000_000_000),
+				"denom2",
+				[]types.VestingSchedule{
+					{
+						ReleaseTime: types.MustParseRFC3339("2023-01-01T00:00:00Z"),
+						Weight:      sdk.MustNewDecFromStr("0.25"),
+					},
+					{
+						ReleaseTime: types.MustParseRFC3339("2023-05-01T00:00:00Z"),
+						Weight:      sdk.MustNewDecFromStr("0.25"),
+					},
+					{
+						ReleaseTime: types.MustParseRFC3339("2023-09-01T00:00:00Z"),
+						Weight:      sdk.MustNewDecFromStr("0.25"),
+					},
+					{
+						ReleaseTime: types.MustParseRFC3339("2023-12-01T00:00:00Z"),
+						Weight:      sdk.MustNewDecFromStr("0.25"),
+					},
+				},
+				types.MustParseRFC3339("2022-05-01T00:00:00Z"),
+				types.MustParseRFC3339("2023-06-01T00:00:00Z"),
 			),
 			nil,
 		},
 	} {
-		suite.Run(tc.name, func() {
-			_, err := suite.srv.CreateFixedPriceAuction(ctx, tc.msg)
+		s.Run(tc.name, func() {
+			params := s.keeper.GetParams(s.ctx)
+			s.fundAddr(tc.msg.GetAuctioneer(), params.AuctionCreationFee.Add(tc.msg.SellingCoin))
+
+			_, err := s.msgServer.CreateFixedPriceAuction(ctx, tc.msg)
 			if tc.err != nil {
-				suite.Require().ErrorIs(err, tc.err)
+				s.Require().ErrorIs(err, tc.err)
 				return
 			}
-			suite.Require().NoError(err)
+			s.Require().NoError(err)
 
-			_, found := suite.keeper.GetAuction(suite.ctx, 1)
-			suite.Require().True(found)
+			_, found := s.keeper.GetAuction(s.ctx, 1)
+			s.Require().True(found)
 		})
 	}
 }
 
-func (suite *KeeperTestSuite) TestMsgCreateEnglishAuction() {
+func (s *KeeperTestSuite) TestMsgCreateEnglishAuction() {
 	// TODO: not implemented yet
 }
 
-func (suite *KeeperTestSuite) TestMsgCancelAuction() {
-	ctx := sdk.WrapSDKContext(suite.ctx)
+func (s *KeeperTestSuite) TestMsgCancelAuction() {
+	ctx := sdk.WrapSDKContext(s.ctx)
 
-	_, err := suite.srv.CancelAuction(ctx, types.NewMsgCancelAuction(
-		suite.addrs[4].String(),
+	auctioneer := s.addr(0)
+
+	_, err := s.msgServer.CancelAuction(ctx, types.NewMsgCancelAuction(
+		auctioneer.String(),
 		uint64(1),
 	))
-	suite.Require().ErrorIs(err, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", uint64(1)))
+	s.Require().ErrorIs(err, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", uint64(1)))
 
-	// create a fixed price auction that is started status
-	suite.SetAuction(suite.sampleFixedPriceAuctions[1])
-
-	auction, found := suite.keeper.GetAuction(suite.ctx, uint64(2))
-	suite.Require().True(found)
-	suite.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
-
-	// try to cancel with an incorrect auctioneer
-	_, err = suite.srv.CancelAuction(ctx, types.NewMsgCancelAuction(
-		suite.addrs[0].String(),
-		uint64(2),
-	))
-	suite.Require().ErrorIs(err, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "failed to verify ownership of the auction"))
-
-	// try to cancel with the auction that is already started
-	_, err = suite.srv.CancelAuction(ctx, types.NewMsgCancelAuction(
-		auction.GetAuctioneer().String(),
-		auction.GetId(),
-	))
-	suite.Require().ErrorIs(err, sdkerrors.Wrap(types.ErrInvalidAuctionStatus, "auction cannot be canceled due to current status"))
-
-	// create another fixed price auction that is stand by status
-	suite.SetAuction(suite.sampleFixedPriceAuctions[0])
-
-	auction, found = suite.keeper.GetAuction(suite.ctx, uint64(1))
-	suite.Require().True(found)
-	suite.Require().Equal(types.AuctionStatusStandBy, auction.GetStatus())
-
-	// success and the selling coin must be released to the auctioneer
-	_, err = suite.srv.CancelAuction(ctx, types.NewMsgCancelAuction(
-		auction.GetAuctioneer().String(),
-		auction.GetId(),
-	))
-	suite.Require().NoError(err)
-	suite.Require().True(
-		suite.app.BankKeeper.GetBalance(
-			suite.ctx, auction.GetSellingReserveAddress(),
-			auction.GetSellingCoin().Denom).IsZero(),
+	// Create a fixed price auction that has started status
+	startedAuction := s.createFixedPriceAuction(
+		auctioneer,
+		sdk.MustNewDecFromStr("0.5"),
+		sdk.NewInt64Coin("denom1", 500_000_000_000),
+		"denom2",
+		[]types.VestingSchedule{},
+		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
+		types.MustParseRFC3339("2022-03-01T00:00:00Z"),
+		true,
 	)
+	s.Require().Equal(types.AuctionStatusStarted, startedAuction.GetStatus())
+
+	// Try to cancel with an incorrect auctioneer
+	_, err = s.msgServer.CancelAuction(ctx, types.NewMsgCancelAuction(
+		s.addr(1).String(),
+		startedAuction.GetId(),
+	))
+	s.Require().ErrorIs(err, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "failed to verify ownership of the auction"))
+
+	// Try to cancel with the auction that is already started
+	_, err = s.msgServer.CancelAuction(ctx, types.NewMsgCancelAuction(
+		startedAuction.GetAuctioneer().String(),
+		startedAuction.GetId(),
+	))
+	s.Require().ErrorIs(err, sdkerrors.Wrap(types.ErrInvalidAuctionStatus, "auction cannot be canceled due to current status"))
+
+	// Create another fixed price auction that is stand by status
+	// Create a fixed price auction that has started status
+	standByAuction := s.createFixedPriceAuction(
+		auctioneer,
+		sdk.MustNewDecFromStr("0.5"),
+		sdk.NewInt64Coin("denom3", 500_000_000_000),
+		"denom4",
+		[]types.VestingSchedule{},
+		types.MustParseRFC3339("2030-01-01T00:00:00Z"),
+		types.MustParseRFC3339("2030-03-01T00:00:00Z"),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStandBy, standByAuction.GetStatus())
+
+	// Cancel it successfully
+	_, err = s.msgServer.CancelAuction(ctx, types.NewMsgCancelAuction(
+		standByAuction.GetAuctioneer().String(),
+		standByAuction.GetId(),
+	))
+	s.Require().NoError(err)
+
+	// The selling reserve account must have zero balance
+	sellingReserveAddr := standByAuction.GetSellingReserveAddress()
+	s.Require().True(s.getBalance(sellingReserveAddr, standByAuction.GetSellingCoin().Denom).IsZero())
 }
 
-func (suite *KeeperTestSuite) TestMsgPlaceBid() {
-	ctx := sdk.WrapSDKContext(suite.ctx)
+func (s *KeeperTestSuite) TestMsgPlaceBid() {
+	ctx := sdk.WrapSDKContext(s.ctx)
 
-	// Create a fixed price auction that should start right away
-	auction := suite.sampleFixedPriceAuctions[1]
-	suite.SetAuction(auction)
+	// Create a fixed price auction that has started status
+	auction := s.createFixedPriceAuction(
+		s.addr(0),
+		sdk.MustNewDecFromStr("0.5"),
+		sdk.NewInt64Coin("denom1", 500_000_000_000),
+		"denom2",
+		[]types.VestingSchedule{},
+		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
+		types.MustParseRFC3339("2022-03-01T00:00:00Z"),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	// Fund the bidder
+	bidder := s.addr(1)
+	s.fundAddr(bidder, sdk.NewCoins(sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 5_000_000)))
 
 	for _, tc := range []struct {
 		name string
@@ -115,7 +162,7 @@ func (suite *KeeperTestSuite) TestMsgPlaceBid() {
 			"valid message",
 			types.NewMsgPlaceBid(
 				auction.GetId(),
-				suite.addrs[0].String(),
+				bidder.String(),
 				sdk.MustNewDecFromStr("0.5"),
 				sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 1_000_000),
 			),
@@ -125,7 +172,7 @@ func (suite *KeeperTestSuite) TestMsgPlaceBid() {
 			"invalid start price",
 			types.NewMsgPlaceBid(
 				auction.GetId(),
-				suite.addrs[0].String(),
+				bidder.String(),
 				sdk.MustNewDecFromStr("1.0"),
 				sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 1_000_000),
 			),
@@ -135,7 +182,7 @@ func (suite *KeeperTestSuite) TestMsgPlaceBid() {
 			"invalid coin demo",
 			types.NewMsgPlaceBid(
 				auction.GetId(),
-				suite.addrs[0].String(),
+				bidder.String(),
 				sdk.MustNewDecFromStr("0.5"),
 				sdk.NewInt64Coin(auction.GetSellingCoin().Denom, 1_000_000),
 			),
@@ -145,20 +192,20 @@ func (suite *KeeperTestSuite) TestMsgPlaceBid() {
 			"insufficient funds",
 			types.NewMsgPlaceBid(
 				auction.GetId(),
-				suite.addrs[0].String(),
+				bidder.String(),
 				sdk.MustNewDecFromStr("0.5"),
 				sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 500_000_000_000_000_000),
 			),
 			sdkerrors.ErrInsufficientFunds,
 		},
 	} {
-		suite.Run(tc.name, func() {
-			_, err := suite.srv.PlaceBid(ctx, tc.msg)
+		s.Run(tc.name, func() {
+			_, err := s.msgServer.PlaceBid(ctx, tc.msg)
 			if tc.err != nil {
-				suite.Require().ErrorIs(err, tc.err)
+				s.Require().ErrorIs(err, tc.err)
 				return
 			}
-			suite.Require().NoError(err)
+			s.Require().NoError(err)
 		})
 	}
 }

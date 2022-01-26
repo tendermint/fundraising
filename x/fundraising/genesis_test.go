@@ -1,6 +1,7 @@
 package fundraising_test
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/tendermint/fundraising/app"
@@ -11,56 +12,87 @@ import (
 	_ "github.com/stretchr/testify/suite"
 )
 
-func (suite *ModuleTestSuite) TestGenesisState() {
-	// create auctions and reserve selling coin to reserve account
-	for _, auction := range suite.sampleFixedPriceAuctions {
-		suite.SetAuction(auction)
+func (s *ModuleTestSuite) TestGenesisState() {
+	auction := s.createFixedPriceAuction(
+		s.addr(0),
+		sdk.OneDec(),
+		sdk.NewInt64Coin("denom1", 200_000_000_000),
+		"denom2",
+		[]types.VestingSchedule{
+			{
+				ReleaseTime: types.MustParseRFC3339("2023-01-01T00:00:00Z"),
+				Weight:      sdk.MustNewDecFromStr("0.25"),
+			},
+			{
+				ReleaseTime: types.MustParseRFC3339("2023-06-01T00:00:00Z"),
+				Weight:      sdk.MustNewDecFromStr("0.25"),
+			},
+			{
+				ReleaseTime: types.MustParseRFC3339("2023-09-01T00:00:00Z"),
+				Weight:      sdk.MustNewDecFromStr("0.25"),
+			},
+			{
+				ReleaseTime: types.MustParseRFC3339("2023-12-01T00:00:00Z"),
+				Weight:      sdk.MustNewDecFromStr("0.25"),
+			},
+		},
+		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
+		types.MustParseRFC3339("2022-05-21T00:00:00Z"),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	// Place bids
+	s.placeBid(auction.GetId(), s.addr(1), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
+	s.placeBid(auction.GetId(), s.addr(2), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 30_000_000), true)
+	s.placeBid(auction.GetId(), s.addr(3), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 15_000_000), true)
+	s.placeBid(auction.GetId(), s.addr(4), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 35_000_000), true)
+
+	// Modify the current block time a day after the end time
+	s.ctx = s.ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, 1))
+	fundraising.EndBlocker(s.ctx, s.keeper)
+
+	// Modify the time to make the first and second vesting queues over
+	s.ctx = s.ctx.WithBlockTime(auction.VestingSchedules[1].ReleaseTime.AddDate(0, 0, 1))
+	fundraising.EndBlocker(s.ctx, s.keeper)
+
+	queues := s.keeper.GetVestingQueuesByAuctionId(s.ctx, 1)
+	s.Require().Len(queues, 4)
+
+	for i, queue := range queues {
+		if i == 0 || i == 1 {
+			s.Require().True(queue.Released)
+		} else {
+			s.Require().False(queue.Released)
+		}
 	}
-	suite.Require().Len(suite.keeper.GetAuctions(suite.ctx), 2)
-
-	// make bids and reserve paying coin to reserve account
-	for _, bid := range suite.sampleFixedPriceBids {
-		suite.PlaceBid(bid)
-	}
-	suite.Require().Len(suite.keeper.GetBids(suite.ctx), 4)
-
-	// set the current block time a day before second auction so that it gets finished
-	suite.ctx = suite.ctx.WithBlockTime(suite.sampleFixedPriceAuctions[1].GetEndTimes()[0].AddDate(0, 0, -1))
-	fundraising.EndBlocker(suite.ctx, suite.keeper)
-
-	// make first and second vesting queues over
-	suite.ctx = suite.ctx.WithBlockTime(types.MustParseRFC3339("2022-04-02T00:00:00Z"))
-	fundraising.EndBlocker(suite.ctx, suite.keeper)
-
-	queues := suite.keeper.GetVestingQueuesByAuctionId(suite.ctx, 2)
-	suite.Require().Len(queues, 4)
 
 	var genState *types.GenesisState
-	suite.Require().NotPanics(func() {
-		genState = fundraising.ExportGenesis(suite.ctx, suite.keeper)
+	s.Require().NotPanics(func() {
+		genState = fundraising.ExportGenesis(s.ctx, s.keeper)
 	})
-	suite.Require().NoError(genState.Validate())
+	s.Require().NoError(genState.Validate())
 
-	suite.Require().NotPanics(func() {
-		fundraising.InitGenesis(suite.ctx, suite.keeper, *genState)
+	s.Require().NotPanics(func() {
+		fundraising.InitGenesis(s.ctx, s.keeper, *genState)
 	})
-	suite.Require().Equal(genState, fundraising.ExportGenesis(suite.ctx, suite.keeper))
+	s.Require().Equal(genState, fundraising.ExportGenesis(s.ctx, s.keeper))
 }
 
-func (suite *ModuleTestSuite) TestMarshalUnmarshalDefaultGenesis() {
-	genState := fundraising.ExportGenesis(suite.ctx, suite.keeper)
-	bz, err := suite.app.AppCodec().MarshalJSON(genState)
-	suite.Require().NoError(err)
+func (s *ModuleTestSuite) TestMarshalUnmarshalDefaultGenesis() {
+	genState := fundraising.ExportGenesis(s.ctx, s.keeper)
+	bz, err := s.app.AppCodec().MarshalJSON(genState)
+	s.Require().NoError(err)
 
 	genState2 := types.GenesisState{}
-	err = suite.app.AppCodec().UnmarshalJSON(bz, &genState2)
-	suite.Require().NoError(err)
-	suite.Require().Equal(*genState, genState2)
+	err = s.app.AppCodec().UnmarshalJSON(bz, &genState2)
+	s.Require().NoError(err)
+	s.Require().Equal(*genState, genState2)
 
 	app2 := simapp.New(app.DefaultNodeHome)
 	ctx2 := app2.BaseApp.NewContext(false, tmproto.Header{})
 	fundraising.InitGenesis(ctx2, app2.FundraisingKeeper, genState2)
 
 	genState3 := fundraising.ExportGenesis(ctx2, app2.FundraisingKeeper)
-	suite.Require().Equal(genState2, *genState3)
+	s.Require().Equal(genState2, *genState3)
 }

@@ -299,14 +299,14 @@ func (ba BaseAuction) IsAuctionFinished(t time.Time) bool {
 	return !endTimes[len(endTimes)-1].After(t)
 }
 
-// NewFixedPriceAuction returns a new fixed price ba.
+// NewFixedPriceAuction returns a new fixed price auction.
 func NewFixedPriceAuction(baseAuction *BaseAuction) *FixedPriceAuction {
 	return &FixedPriceAuction{
 		BaseAuction: baseAuction,
 	}
 }
 
-// NewEnglishAuction returns a new english ba.
+// NewEnglishAuction returns a new english auction.
 func NewEnglishAuction(baseAuction *BaseAuction, maximumBidPrice sdk.Dec, extended uint32, extendRate sdk.Dec) *EnglishAuction {
 	return &EnglishAuction{
 		BaseAuction:     baseAuction,
