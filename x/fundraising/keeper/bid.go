@@ -25,22 +25,22 @@ func (k Keeper) ReservePayingCoin(ctx sdk.Context, auctionId uint64, bidderAcc s
 }
 
 // PlaceBid places a bid for the auction.
-func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
+func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, error) {
 	auction, found := k.GetAuction(ctx, msg.AuctionId)
 	if !found {
-		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", msg.AuctionId)
+		return types.Bid{}, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", msg.AuctionId)
 	}
 
 	if auction.GetStatus() != types.AuctionStatusStarted {
-		return sdkerrors.Wrapf(types.ErrInvalidAuctionStatus, "unable to bid because the auction is in %s", auction.GetStatus().String())
+		return types.Bid{}, sdkerrors.Wrapf(types.ErrInvalidAuctionStatus, "unable to bid because the auction is in %s", auction.GetStatus().String())
 	}
 
 	if auction.GetPayingCoinDenom() != msg.Coin.Denom {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "coin denom must match with the paying coin denom")
+		return types.Bid{}, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "coin denom must match with the paying coin denom")
 	}
 
 	if err := k.ReservePayingCoin(ctx, auction.GetId(), msg.GetBidder(), msg.Coin); err != nil {
-		return err
+		return types.Bid{}, err
 	}
 
 	receiveAmt := msg.Coin.Amount.ToDec().QuoTruncate(msg.Price).TruncateInt()
@@ -49,20 +49,19 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 	// The bidder cannot bid more than the remaining coin
 	remaining := auction.GetRemainingCoin().Sub(receiveCoin)
 	if remaining.IsNegative() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "request coin must be lower than or equal to the remaining coin")
+		return types.Bid{}, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "request coin must be lower than or equal to the remaining coin")
 	}
 
 	if auction.GetType() == types.AuctionTypeFixedPrice {
 		if !msg.Price.Equal(auction.GetStartPrice()) {
-			return sdkerrors.Wrap(types.ErrInvalidStartPrice, "bid price must be equal to the start price of the auction")
+			return types.Bid{}, sdkerrors.Wrap(types.ErrInvalidStartPrice, "bid price must be equal to the start price of the auction")
 		}
 
 		if err := auction.SetRemainingCoin(remaining); err != nil {
-			return err
+			return types.Bid{}, err
 		}
 
 		k.SetAuction(ctx, auction)
-
 	} else if auction.GetType() == types.AuctionTypeEnglish {
 		bids := k.GetBidsByBidder(ctx, msg.GetBidder())
 		bidsLen := len(bids)
@@ -70,13 +69,13 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 		for i, bid := range bids {
 			if i == bidsLen-1 {
 				if msg.Price.LTE(bid.Price) {
-					return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "bid price can only increase for English auction")
+					return types.Bid{}, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "bid price can only increase for English auction")
 				}
 			}
 		}
 
 		if err := auction.SetRemainingCoin(remaining); err != nil {
-			return err
+			return types.Bid{}, err
 		}
 
 		k.SetAuction(ctx, auction)
@@ -107,5 +106,5 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 		),
 	})
 
-	return nil
+	return bid, nil
 }

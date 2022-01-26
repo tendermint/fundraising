@@ -29,7 +29,7 @@ var _ types.MsgServer = msgServer{}
 func (k msgServer) CreateFixedPriceAuction(goCtx context.Context, msg *types.MsgCreateFixedPriceAuction) (*types.MsgCreateFixedPriceAuctionResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if err := k.Keeper.CreateFixedPriceAuction(ctx, msg); err != nil {
+	if _, err := k.Keeper.CreateFixedPriceAuction(ctx, msg); err != nil {
 		return nil, err
 	}
 
@@ -51,7 +51,7 @@ func (k msgServer) CreateEnglishAuction(goCtx context.Context, msg *types.MsgCre
 func (k msgServer) CancelAuction(goCtx context.Context, msg *types.MsgCancelAuction) (*types.MsgCancelAuctionResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if err := k.Keeper.CancelAuction(ctx, msg); err != nil {
+	if _, err := k.Keeper.CancelAuction(ctx, msg); err != nil {
 		return nil, err
 	}
 
@@ -62,7 +62,7 @@ func (k msgServer) CancelAuction(goCtx context.Context, msg *types.MsgCancelAuct
 func (k msgServer) PlaceBid(goCtx context.Context, msg *types.MsgPlaceBid) (*types.MsgPlaceBidResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if err := k.Keeper.PlaceBid(ctx, msg); err != nil {
+	if _, err := k.Keeper.PlaceBid(ctx, msg); err != nil {
 		return nil, err
 	}
 

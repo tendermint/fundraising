@@ -160,24 +160,24 @@ func (k Keeper) ReserveCreationFees(ctx sdk.Context, auctioneerAcc sdk.AccAddres
 }
 
 // CreateFixedPriceAuction sets fixed price auction.
-func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFixedPriceAuction) error {
+func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFixedPriceAuction) (*types.FixedPriceAuction, error) {
 	nextId := k.GetNextAuctionIdWithUpdate(ctx)
 
 	auctioneerAcc, err := sdk.AccAddressFromBech32(msg.Auctioneer)
 	if err != nil {
-		return err
+		return &types.FixedPriceAuction{}, err
 	}
 
 	if ctx.BlockTime().After(msg.EndTime) {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be prior to current time")
+		return &types.FixedPriceAuction{}, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be prior to current time")
 	}
 
 	if err := k.ReserveCreationFees(ctx, auctioneerAcc); err != nil {
-		return err
+		return &types.FixedPriceAuction{}, err
 	}
 
 	if err := k.ReserveSellingCoin(ctx, nextId, auctioneerAcc, msg.SellingCoin); err != nil {
-		return err
+		return &types.FixedPriceAuction{}, err
 	}
 
 	sellingReserveAcc := types.SellingReserveAcc(nextId)
@@ -228,7 +228,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		),
 	})
 
-	return nil
+	return auction, nil
 }
 
 // CreateEnglishAuction sets english auction.
@@ -313,22 +313,22 @@ func (k Keeper) CreateEnglishAuction(ctx sdk.Context, msg *types.MsgCreateEnglis
 
 // CancelAuction cancels the auction in an event when the auctioneer needs to modify the auction.
 // However, it can only be canceled when the auction has not started yet.
-func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) error {
+func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) (types.AuctionI, error) {
 	auction, found := k.GetAuction(ctx, msg.AuctionId)
 	if !found {
-		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", msg.AuctionId)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", msg.AuctionId)
 	}
 
 	if auction.GetAuctioneer().String() != msg.Auctioneer {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "failed to verify ownership of the auction")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "failed to verify ownership of the auction")
 	}
 
 	if auction.GetStatus() != types.AuctionStatusStandBy {
-		return sdkerrors.Wrap(types.ErrInvalidAuctionStatus, "auction cannot be canceled due to current status")
+		return nil, sdkerrors.Wrap(types.ErrInvalidAuctionStatus, "auction cannot be canceled due to current status")
 	}
 
 	if err := k.ReleaseSellingCoin(ctx, auction); err != nil {
-		return err
+		return nil, err
 	}
 
 	_ = auction.SetRemainingCoin(sdk.NewCoin(auction.GetSellingCoin().Denom, sdk.ZeroInt()))
@@ -343,5 +343,5 @@ func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) erro
 		),
 	})
 
-	return nil
+	return auction, nil
 }

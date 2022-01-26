@@ -10,139 +10,200 @@ import (
 	_ "github.com/stretchr/testify/suite"
 )
 
-func (suite *KeeperTestSuite) TestSellingPoolReserveAmountInvariant() {
-	k, ctx, auction := suite.keeper, suite.ctx, suite.sampleFixedPriceAuctions[1]
-
-	k.SetAuction(suite.ctx, auction)
-
-	_, broken := keeper.SellingPoolReserveAmountInvariant(k)(ctx)
-	suite.Require().True(broken)
-
-	err := k.ReserveSellingCoin(
-		ctx,
-		auction.GetId(),
-		auction.GetAuctioneer(),
-		auction.GetSellingCoin(),
+func (s *KeeperTestSuite) TestSellingPoolReserveAmountInvariant() {
+	// Create a fixed price auction that has started status
+	auction := s.createFixedPriceAuction(
+		s.addr(0),
+		sdk.MustNewDecFromStr("0.5"),
+		sdk.NewInt64Coin("denom1", 500_000_000_000),
+		"denom2",
+		[]types.VestingSchedule{},
+		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
+		types.MustParseRFC3339("2022-06-10T00:00:00Z"),
+		true,
 	)
-	suite.Require().NoError(err)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	_, broken = keeper.SellingPoolReserveAmountInvariant(k)(ctx)
-	suite.Require().False(broken)
+	_, broken := keeper.SellingPoolReserveAmountInvariant(s.keeper)(s.ctx)
+	s.Require().False(broken)
 
-	// in reality, although it is not possible for an exploiter to have the same token denom
-	// but it is safe to test the case anyway
-	exploiterAcc := suite.addrs[2]
-	sendingCoins := sdk.NewCoins(
-		sdk.NewInt64Coin(denom1, 500_000_000),
-		sdk.NewInt64Coin(denom2, 500_000_000),
-		sdk.NewInt64Coin(denom3, 500_000_000),
-		sdk.NewInt64Coin(denom4, 500_000_000),
-	)
-	err = suite.app.BankKeeper.SendCoins(ctx, exploiterAcc, auction.GetSellingReserveAddress(), sendingCoins)
-	suite.Require().NoError(err)
+	// Although it is not possible for an exploiter to have the same token denom in reality,
+	// it is safe to test the case anyway
+	exploiterAcc := s.addr(1)
+	sellingReserveAddr := auction.GetSellingReserveAddress()
+	s.sendCoins(exploiterAcc, sellingReserveAddr, sdk.NewCoins(
+		sdk.NewInt64Coin("denom1", 500_000_000),
+		sdk.NewInt64Coin("denom2", 500_000_000),
+		sdk.NewInt64Coin("denom3", 500_000_000),
+		sdk.NewInt64Coin("denom4", 500_000_000),
+	), true)
 
-	_, broken = keeper.SellingPoolReserveAmountInvariant(k)(ctx)
-	suite.Require().False(broken)
+	_, broken = keeper.SellingPoolReserveAmountInvariant(s.keeper)(s.ctx)
+	s.Require().False(broken)
 }
 
-func (suite *KeeperTestSuite) TestPayingPoolReserveAmountInvariant() {
-	k, ctx, auction := suite.keeper, suite.ctx, suite.sampleFixedPriceAuctions[1]
+func (s *KeeperTestSuite) TestPayingPoolReserveAmountInvariant() {
+	k, ctx := s.keeper, s.ctx
 
-	suite.SetAuction(auction)
+	auction := s.createFixedPriceAuction(
+		s.addr(0),
+		sdk.OneDec(),
+		sdk.NewInt64Coin("denom3", 500_000_000_000),
+		"denom4",
+		[]types.VestingSchedule{},
+		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
+		types.MustParseRFC3339("2022-03-10T00:00:00Z"),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	for _, bid := range suite.sampleFixedPriceBids {
-		bidderAcc, err := sdk.AccAddressFromBech32(bid.Bidder)
-		suite.Require().NoError(err)
-		k.SetBid(ctx, bid.AuctionId, bid.Sequence, bidderAcc, bid)
-
-		err = k.ReservePayingCoin(ctx, bid.GetAuctionId(), bidderAcc, bid.Coin)
-		suite.Require().NoError(err)
-	}
+	s.placeBid(auction.GetId(), s.addr(1), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
+	s.placeBid(auction.GetId(), s.addr(2), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
+	s.placeBid(auction.GetId(), s.addr(2), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 15_000_000), true)
+	s.placeBid(auction.GetId(), s.addr(3), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 35_000_000), true)
 
 	_, broken := keeper.PayingPoolReserveAmountInvariant(k)(ctx)
-	suite.Require().False(broken)
+	s.Require().False(broken)
 
-	// in reality, although it is not possible for an exploiter to have the same token denom
-	// but it is safe to test the case anyway
-	exploiterAcc := suite.addrs[2]
-	sendingCoins := sdk.NewCoins(
-		sdk.NewInt64Coin(denom1, 500_000_000),
-		sdk.NewInt64Coin(denom2, 500_000_000),
-		sdk.NewInt64Coin(denom3, 500_000_000),
-		sdk.NewInt64Coin(denom4, 500_000_000),
-	)
-	err := suite.app.BankKeeper.SendCoins(ctx, exploiterAcc, auction.GetPayingReserveAddress(), sendingCoins)
-	suite.Require().NoError(err)
+	// Although it is not possible for an exploiter to have the same token denom in reality,
+	// it is safe to test the case anyway
+	exploiterAcc := s.addr(1)
+	payingReserveAddr := auction.GetPayingReserveAddress()
+	s.sendCoins(exploiterAcc, payingReserveAddr, sdk.NewCoins(
+		sdk.NewInt64Coin("denom1", 500_000_000),
+		sdk.NewInt64Coin("denom2", 500_000_000),
+		sdk.NewInt64Coin("denom3", 500_000_000),
+		sdk.NewInt64Coin("denom4", 500_000_000),
+	), true)
 
 	_, broken = keeper.PayingPoolReserveAmountInvariant(k)(ctx)
-	suite.Require().False(broken)
+	s.Require().False(broken)
 }
 
-func (suite *KeeperTestSuite) TestVestingPoolReserveAmountInvariant() {
-	k, ctx, auction := suite.keeper, suite.ctx, suite.sampleFixedPriceAuctions[1]
+func (s *KeeperTestSuite) TestVestingPoolReserveAmountInvariant() {
+	k, ctx := s.keeper, s.ctx
 
-	suite.SetAuction(auction)
+	auction := s.createFixedPriceAuction(
+		s.addr(0),
+		sdk.OneDec(),
+		sdk.NewInt64Coin("denom3", 500_000_000_000),
+		"denom4",
+		[]types.VestingSchedule{
+			{
+				ReleaseTime: types.MustParseRFC3339("2023-01-01T00:00:00Z"),
+				Weight:      sdk.MustNewDecFromStr("0.25"),
+			},
+			{
+				ReleaseTime: types.MustParseRFC3339("2023-05-01T00:00:00Z"),
+				Weight:      sdk.MustNewDecFromStr("0.25"),
+			},
+			{
+				ReleaseTime: types.MustParseRFC3339("2023-09-01T00:00:00Z"),
+				Weight:      sdk.MustNewDecFromStr("0.25"),
+			},
+			{
+				ReleaseTime: types.MustParseRFC3339("2023-12-01T00:00:00Z"),
+				Weight:      sdk.MustNewDecFromStr("0.25"),
+			},
+		},
+		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
+		types.MustParseRFC3339("2022-03-10T00:00:00Z"),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	for _, bid := range suite.sampleFixedPriceBids {
-		bidderAcc, err := sdk.AccAddressFromBech32(bid.Bidder)
-		suite.Require().NoError(err)
-		k.SetBid(ctx, bid.AuctionId, bid.Sequence, bidderAcc, bid)
+	s.placeBid(auction.GetId(), s.addr(1), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
+	s.placeBid(auction.GetId(), s.addr(2), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
+	s.placeBid(auction.GetId(), s.addr(2), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 15_000_000), true)
+	s.placeBid(auction.GetId(), s.addr(3), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 35_000_000), true)
 
-		err = k.ReservePayingCoin(ctx, bid.GetAuctionId(), bidderAcc, bid.Coin)
-		suite.Require().NoError(err)
-	}
-
-	// set the current block time a day before second auction so that it gets finished
-	ctx = ctx.WithBlockTime(suite.sampleFixedPriceAuctions[1].GetEndTimes()[0].AddDate(0, 0, -1))
+	// Make the auction ended
+	ctx = ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, 1))
 	fundraising.EndBlocker(ctx, k)
 
-	// make first and second vesting queues over
-	ctx = ctx.WithBlockTime(types.MustParseRFC3339("2022-04-02T00:00:00Z"))
+	// Make first and second vesting queues over
+	ctx = ctx.WithBlockTime(auction.GetVestingSchedules()[0].GetReleaseTime().AddDate(0, 0, 1))
 	fundraising.EndBlocker(ctx, k)
 
 	_, broken := keeper.VestingPoolReserveAmountInvariant(k)(ctx)
-	suite.Require().False(broken)
+	s.Require().False(broken)
 
-	// in reality, although it is not possible for an exploiter to have the same token denom
-	// but it is safe to test the case anyway
-	exploiterAcc := suite.addrs[2]
-	sendingCoins := sdk.NewCoins(
-		sdk.NewInt64Coin(denom1, 500_000_000),
-		sdk.NewInt64Coin(denom2, 500_000_000),
-		sdk.NewInt64Coin(denom3, 500_000_000),
-		sdk.NewInt64Coin(denom4, 500_000_000),
-	)
-	err := suite.app.BankKeeper.SendCoins(ctx, exploiterAcc, auction.GetVestingReserveAddress(), sendingCoins)
-	suite.Require().NoError(err)
+	// Although it is not possible for an exploiter to have the same token denom in reality,
+	// it is safe to test the case anyway
+	exploiterAcc := s.addr(1)
+	vestingReserveAddr := auction.GetVestingReserveAddress()
+	s.sendCoins(exploiterAcc, vestingReserveAddr, sdk.NewCoins(
+		sdk.NewInt64Coin("denom1", 500_000_000),
+		sdk.NewInt64Coin("denom2", 500_000_000),
+		sdk.NewInt64Coin("denom3", 500_000_000),
+		sdk.NewInt64Coin("denom4", 500_000_000),
+	), true)
 
 	_, broken = keeper.VestingPoolReserveAmountInvariant(k)(ctx)
-	suite.Require().False(broken)
+	s.Require().False(broken)
 }
 
-func (suite *KeeperTestSuite) TestAuctionStatusStatesInvariant() {
-	k, ctx := suite.keeper, suite.ctx
+func (s *KeeperTestSuite) TestAuctionStatusStatesInvariant() {
+	k, ctx := s.keeper, s.ctx
 
-	suite.SetAuction(suite.sampleFixedPriceAuctions[0])
+	standByAuction := s.createFixedPriceAuction(
+		s.addr(0),
+		sdk.MustNewDecFromStr("0.35"),
+		sdk.NewInt64Coin("denom1", 500_000_000_000),
+		"denom2",
+		[]types.VestingSchedule{},
+		types.MustParseRFC3339("2023-01-01T00:00:00Z"),
+		types.MustParseRFC3339("2023-03-01T00:00:00Z"),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStandBy, standByAuction.GetStatus())
 
 	_, broken := keeper.AuctionStatusStatesInvariant(k)(ctx)
-	suite.Require().False(broken)
+	s.Require().False(broken)
 
-	suite.SetAuction(suite.sampleFixedPriceAuctions[1])
+	startedAuction := s.createFixedPriceAuction(
+		s.addr(1),
+		sdk.MustNewDecFromStr("0.5"),
+		sdk.NewInt64Coin("denom3", 500_000_000_000),
+		"denom4",
+		[]types.VestingSchedule{
+			{
+				ReleaseTime: types.MustParseRFC3339("2023-01-01T00:00:00Z"),
+				Weight:      sdk.MustNewDecFromStr("0.25"),
+			},
+			{
+				ReleaseTime: types.MustParseRFC3339("2023-05-01T00:00:00Z"),
+				Weight:      sdk.MustNewDecFromStr("0.25"),
+			},
+			{
+				ReleaseTime: types.MustParseRFC3339("2023-09-01T00:00:00Z"),
+				Weight:      sdk.MustNewDecFromStr("0.25"),
+			},
+			{
+				ReleaseTime: types.MustParseRFC3339("2023-12-01T00:00:00Z"),
+				Weight:      sdk.MustNewDecFromStr("0.25"),
+			},
+		},
+		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
+		types.MustParseRFC3339("2022-03-01T00:00:00Z"),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, startedAuction.GetStatus())
 
 	_, broken = keeper.AuctionStatusStatesInvariant(k)(ctx)
-	suite.Require().False(broken)
+	s.Require().False(broken)
 
 	// set the current block time a day after so that it gets finished
-	ctx = ctx.WithBlockTime(suite.sampleFixedPriceAuctions[1].GetEndTimes()[0].AddDate(0, 0, 1))
+	ctx = ctx.WithBlockTime(startedAuction.GetEndTimes()[0].AddDate(0, 0, 1))
 	fundraising.EndBlocker(ctx, k)
 
 	_, broken = keeper.AuctionStatusStatesInvariant(k)(ctx)
-	suite.Require().False(broken)
+	s.Require().False(broken)
 
 	// set the current block time a day after so that all vesting queues get released
-	ctx = ctx.WithBlockTime(suite.sampleFixedPriceAuctions[1].GetVestingSchedules()[3].GetReleaseTime().AddDate(0, 0, 1))
+	ctx = ctx.WithBlockTime(startedAuction.GetVestingSchedules()[3].GetReleaseTime().AddDate(0, 0, 1))
 	fundraising.EndBlocker(ctx, k)
 
 	_, broken = keeper.AuctionStatusStatesInvariant(k)(ctx)
-	suite.Require().False(broken)
+	s.Require().False(broken)
 }
