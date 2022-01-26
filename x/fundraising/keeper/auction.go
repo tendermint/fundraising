@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -47,6 +48,7 @@ func (k Keeper) CalculateWinners(ctx sdk.Context, auction types.AuctionI) error 
 
 	} else {
 		// TODO
+		fmt.Println("")
 	}
 
 	// TODO: distribution and transferring the paying coin to the auctioneer
