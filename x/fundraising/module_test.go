@@ -49,14 +49,6 @@ func (s *ModuleTestSuite) getBalance(addr sdk.AccAddress, denom string) sdk.Coin
 	return s.app.BankKeeper.GetBalance(s.ctx, addr, denom)
 }
 
-func (s *ModuleTestSuite) sendCoins(fromAddr, toAddr sdk.AccAddress, coins sdk.Coins, fund bool) {
-	if fund {
-		s.fundAddr(fromAddr, coins)
-	}
-	err := s.app.BankKeeper.SendCoins(s.ctx, fromAddr, toAddr, coins)
-	s.Require().NoError(err)
-}
-
 func (s *ModuleTestSuite) createFixedPriceAuction(
 	auctioneer sdk.AccAddress,
 	startPrice sdk.Dec,
@@ -98,16 +90,6 @@ func (s *ModuleTestSuite) placeBid(auctionId uint64, bidder sdk.AccAddress, pric
 	s.Require().NoError(err)
 
 	return bid
-}
-
-func (s *ModuleTestSuite) cancelAuction(auctionId uint64, auctioneer sdk.AccAddress) types.AuctionI {
-	auction, err := s.keeper.CancelAuction(s.ctx, &types.MsgCancelAuction{
-		Auctioneer: auctioneer.String(),
-		AuctionId:  auctionId,
-	})
-	s.Require().NoError(err)
-
-	return auction
 }
 
 //
