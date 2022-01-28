@@ -13,7 +13,7 @@ import (
 )
 
 func TestMsgCreateFixedPriceAuction(t *testing.T) {
-	auctioneerAcc := sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer")))
+	auctioneerAddr := sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer")))
 	startTime := types.MustParseRFC3339("2021-12-10T00:00:00Z")
 	endTime := startTime.AddDate(0, 1, 0) // add 1 month
 
@@ -24,7 +24,7 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 		{
 			"", // empty means no error expected
 			types.NewMsgCreateFixedPriceAuction(
-				auctioneerAcc.String(),
+				auctioneerAddr.String(),
 				sdk.MustNewDecFromStr("0.5"),
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
@@ -36,7 +36,7 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 		{
 			"start price must be positve: invalid request",
 			types.NewMsgCreateFixedPriceAuction(
-				auctioneerAcc.String(),
+				auctioneerAddr.String(),
 				sdk.MustNewDecFromStr("0"),
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
@@ -48,7 +48,7 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 		{
 			"selling coin amount must be positive: invalid request",
 			types.NewMsgCreateFixedPriceAuction(
-				auctioneerAcc.String(),
+				auctioneerAddr.String(),
 				sdk.MustNewDecFromStr("0.5"),
 				sdk.NewInt64Coin("denom2", 0),
 				"denom1",
@@ -60,7 +60,7 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 		{
 			"selling coin denom must not be the same as paying coin denom: invalid request",
 			types.NewMsgCreateFixedPriceAuction(
-				auctioneerAcc.String(),
+				auctioneerAddr.String(),
 				sdk.MustNewDecFromStr("0.5"),
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom2",
@@ -72,7 +72,7 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 		{
 			"end time must be greater than start time: invalid request",
 			types.NewMsgCreateFixedPriceAuction(
-				auctioneerAcc.String(),
+				auctioneerAddr.String(),
 				sdk.MustNewDecFromStr("0.5"),
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
@@ -84,7 +84,7 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 		{
 			"vesting weight must be positive: invalid vesting schedules",
 			types.NewMsgCreateFixedPriceAuction(
-				auctioneerAcc.String(),
+				auctioneerAddr.String(),
 				sdk.MustNewDecFromStr("0.5"),
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
@@ -101,7 +101,7 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 		{
 			"each vesting weight must not be greater than 1: invalid vesting schedules",
 			types.NewMsgCreateFixedPriceAuction(
-				auctioneerAcc.String(),
+				auctioneerAddr.String(),
 				sdk.MustNewDecFromStr("0.5"),
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
@@ -118,7 +118,7 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 		{
 			"release time must be after the end time: invalid vesting schedules",
 			types.NewMsgCreateFixedPriceAuction(
-				auctioneerAcc.String(),
+				auctioneerAddr.String(),
 				sdk.MustNewDecFromStr("0.5"),
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
@@ -135,7 +135,7 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 		{
 			"release time must be chronological: invalid vesting schedules",
 			types.NewMsgCreateFixedPriceAuction(
-				auctioneerAcc.String(),
+				auctioneerAddr.String(),
 				sdk.MustNewDecFromStr("0.5"),
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
@@ -156,7 +156,7 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 		{
 			"total vesting weight must be equal to 1: invalid vesting schedules",
 			types.NewMsgCreateFixedPriceAuction(
-				auctioneerAcc.String(),
+				auctioneerAddr.String(),
 				sdk.MustNewDecFromStr("0.5"),
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
@@ -499,7 +499,7 @@ func TestMsgCancelAuction(t *testing.T) {
 }
 
 func TestMsgPlaceBid(t *testing.T) {
-	bidderAcc := sdk.AccAddress(crypto.AddressHash([]byte("Bidder")))
+	bidderAddr := sdk.AccAddress(crypto.AddressHash([]byte("Bidder")))
 
 	testCases := []struct {
 		expectedErr string
@@ -509,7 +509,7 @@ func TestMsgPlaceBid(t *testing.T) {
 			"", // empty means no error expected
 			types.NewMsgPlaceBid(
 				uint64(1),
-				bidderAcc.String(),
+				bidderAddr.String(),
 				sdk.OneDec(),
 				sdk.NewInt64Coin("denom2", 1000000),
 			),
@@ -518,7 +518,7 @@ func TestMsgPlaceBid(t *testing.T) {
 			"bid price must be positve value: invalid request",
 			types.NewMsgPlaceBid(
 				uint64(1),
-				bidderAcc.String(),
+				bidderAddr.String(),
 				sdk.ZeroDec(),
 				sdk.NewInt64Coin("denom2", 1000000),
 			),
@@ -527,7 +527,7 @@ func TestMsgPlaceBid(t *testing.T) {
 			"invalid coin amount: 0: invalid request",
 			types.NewMsgPlaceBid(
 				uint64(1),
-				bidderAcc.String(),
+				bidderAddr.String(),
 				sdk.OneDec(),
 				sdk.NewInt64Coin("denom2", 0),
 			),

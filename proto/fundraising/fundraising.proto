@@ -27,10 +27,10 @@ message Params {
   uint32 extended_period = 2
       [ (gogoproto.moretags) = "yaml:\"extended_period\"" ];
 
-  // auction_fee_collector is the module account address to collect fees within
+  // fee_collector_address is the module account address to collect fees within
   // the module
-  string auction_fee_collector = 3
-      [ (gogoproto.moretags) = "yaml:\"auction_fee_collector\"" ];
+  string fee_collector_address = 3
+      [ (gogoproto.moretags) = "yaml:\"fee_collector_address\"" ];
 }
 
 // BaseAuction defines a base auction type. It contains all the necessary fields

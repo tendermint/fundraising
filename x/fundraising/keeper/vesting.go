@@ -11,16 +11,16 @@ import (
 // SetVestingSchedules stores vesting queues based on the vesting schedules of the auction and
 // sets status to vesting.
 func (k Keeper) SetVestingSchedules(ctx sdk.Context, auction types.AuctionI) error {
-	payingReserveAcc := auction.GetPayingReserveAddress()
-	vestingReserveAcc := auction.GetVestingReserveAddress()
+	payingReserveAddress := auction.GetPayingReserveAddress()
+	vestingReserveAddress := auction.GetVestingReserveAddress()
 
-	reserveCoin := k.bankKeeper.GetBalance(ctx, payingReserveAcc, auction.GetPayingCoinDenom())
+	reserveCoin := k.bankKeeper.GetBalance(ctx, payingReserveAddress, auction.GetPayingCoinDenom())
 	reserveCoins := sdk.NewCoins(reserveCoin)
 
 	lenVestingSchedules := len(auction.GetVestingSchedules())
 
 	if lenVestingSchedules == 0 {
-		if err := k.bankKeeper.SendCoins(ctx, payingReserveAcc, auction.GetAuctioneer(), reserveCoins); err != nil {
+		if err := k.bankKeeper.SendCoins(ctx, payingReserveAddress, auction.GetAuctioneer(), reserveCoins); err != nil {
 			return err
 		}
 
@@ -31,7 +31,7 @@ func (k Keeper) SetVestingSchedules(ctx sdk.Context, auction types.AuctionI) err
 		k.SetAuction(ctx, auction)
 
 	} else {
-		if err := k.bankKeeper.SendCoins(ctx, payingReserveAcc, vestingReserveAcc, reserveCoins); err != nil {
+		if err := k.bankKeeper.SendCoins(ctx, payingReserveAddress, vestingReserveAddress, reserveCoins); err != nil {
 			return err
 		}
 

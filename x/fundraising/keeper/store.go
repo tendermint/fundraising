@@ -118,11 +118,11 @@ func (k Keeper) GetBid(ctx sdk.Context, auctionId uint64, sequence uint64) (bid 
 }
 
 // SetBid sets a bid with the given arguments.
-func (k Keeper) SetBid(ctx sdk.Context, auctionId uint64, sequence uint64, bidderAcc sdk.AccAddress, bid types.Bid) {
+func (k Keeper) SetBid(ctx sdk.Context, auctionId uint64, sequence uint64, bidderAddr sdk.AccAddress, bid types.Bid) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshal(&bid)
 	store.Set(types.GetBidKey(auctionId, sequence), bz)
-	store.Set(types.GetBidIndexKey(bidderAcc, auctionId, sequence), []byte{})
+	store.Set(types.GetBidIndexKey(bidderAddr, auctionId, sequence), []byte{})
 }
 
 // GetBids returns all bids registered in the store.
@@ -146,9 +146,9 @@ func (k Keeper) GetBidsByAuctionId(ctx sdk.Context, auctionId uint64) []types.Bi
 }
 
 // GetBidsByBidder returns all bids associated with the bidder that are registered in the store.
-func (k Keeper) GetBidsByBidder(ctx sdk.Context, bidderAcc sdk.AccAddress) []types.Bid {
+func (k Keeper) GetBidsByBidder(ctx sdk.Context, bidderAddr sdk.AccAddress) []types.Bid {
 	bids := []types.Bid{}
-	k.IterateBidsByBidder(ctx, bidderAcc, func(bid types.Bid) (stop bool) {
+	k.IterateBidsByBidder(ctx, bidderAddr, func(bid types.Bid) (stop bool) {
 		bids = append(bids, bid)
 		return false
 	})
@@ -189,9 +189,9 @@ func (k Keeper) IterateBidsByAuctionId(ctx sdk.Context, auctionId uint64, cb fun
 // IterateBidsByBidder iterates through all bids associated with the bidder stored in the store
 // and invokes callback function for each item.
 // Stops the iteration when the callback function returns true.
-func (k Keeper) IterateBidsByBidder(ctx sdk.Context, bidderAcc sdk.AccAddress, cb func(bid types.Bid) (stop bool)) {
+func (k Keeper) IterateBidsByBidder(ctx sdk.Context, bidderAddr sdk.AccAddress, cb func(bid types.Bid) (stop bool)) {
 	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.GetBidIndexByBidderPrefix(bidderAcc))
+	iter := sdk.KVStorePrefixIterator(store, types.GetBidIndexByBidderPrefix(bidderAddr))
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		auctionId, sequence := types.ParseBidIndexKey(iter.Key())

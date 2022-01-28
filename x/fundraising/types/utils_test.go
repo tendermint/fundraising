@@ -32,20 +32,20 @@ func TestDeriveAddress(t *testing.T) {
 		{
 			types.ReserveAddressType,
 			types.ModuleName,
-			"SellingReserveAcc|1",
-			"cosmos18xzvtd72y9j8xyf8a36z5jjhth7qgtcwhh8lz7yee3tvxqn6ll5quh78zq",
+			"SellingReserveAddress|1",
+			"cosmos1wl90665mfk3pgg095qhmlgha934exjvv437acgq42zw0sg94flestth4zu",
 		},
 		{
 			types.ReserveAddressType,
 			types.ModuleName,
-			"PayingReserveAcc|1",
-			"cosmos18permjyqvk5flft8ey9egr7hd4ry8tauqt4f9mg9knn4vvtkry9sujucrl",
+			"PayingReserveAddress|1",
+			"cosmos17gk7a5ys8pxuexl7tvyk3pc9tdmqjjek03zjemez4eqvqdxlu92qdhphm2",
 		},
 		{
 			types.ReserveAddressType,
 			types.ModuleName,
-			"VestingReserveAcc|1",
-			"cosmos1gukaqt783nhz79uhcqklsty7lc7jfyy8scn5ke4x7v0m3rkpt4dst7y4l3",
+			"VestingReserveAddress|1",
+			"cosmos1q4x4k4qsr4jwrrugnplhlj52mfd9f8jn5ck7r4ykdpv9wczvz4dqe8vrvt",
 		},
 		{
 			types.AddressType20Bytes,

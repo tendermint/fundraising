@@ -58,7 +58,7 @@ func (k Keeper) CalculateWinners(ctx sdk.Context, auction types.AuctionI) error 
 
 // DistributeSellingCoin releases designated selling coin from the selling reserve account.
 func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) error {
-	sellingReserveAcc := auction.GetSellingReserveAddress()
+	sellingReserveAddress := auction.GetSellingReserveAddress()
 
 	var inputs []banktypes.Input
 	var outputs []banktypes.Output
@@ -70,22 +70,22 @@ func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) e
 		receiveAmt := bid.Coin.Amount.ToDec().QuoTruncate(bid.Price).TruncateInt()
 		receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, receiveAmt)
 
-		bidderAcc, err := sdk.AccAddressFromBech32(bid.GetBidder())
+		bidderAddr, err := sdk.AccAddressFromBech32(bid.GetBidder())
 		if err != nil {
 			return err
 		}
 
-		inputs = append(inputs, banktypes.NewInput(sellingReserveAcc, sdk.NewCoins(receiveCoin)))
-		outputs = append(outputs, banktypes.NewOutput(bidderAcc, sdk.NewCoins(receiveCoin)))
+		inputs = append(inputs, banktypes.NewInput(sellingReserveAddress, sdk.NewCoins(receiveCoin)))
+		outputs = append(outputs, banktypes.NewOutput(bidderAddr, sdk.NewCoins(receiveCoin)))
 
 		totalBidCoin = totalBidCoin.Add(receiveCoin)
 	}
 
-	reserveBalance := k.bankKeeper.GetBalance(ctx, sellingReserveAcc, auction.GetSellingCoin().Denom)
+	reserveBalance := k.bankKeeper.GetBalance(ctx, sellingReserveAddress, auction.GetSellingCoin().Denom)
 	remainingCoin := reserveBalance.Sub(totalBidCoin)
 
 	// Send remaining coin to the auctioneer
-	inputs = append(inputs, banktypes.NewInput(sellingReserveAcc, sdk.NewCoins(remainingCoin)))
+	inputs = append(inputs, banktypes.NewInput(sellingReserveAddress, sdk.NewCoins(remainingCoin)))
 	outputs = append(outputs, banktypes.NewOutput(auction.GetAuctioneer(), sdk.NewCoins(remainingCoin)))
 
 	// Send all at once
@@ -102,9 +102,9 @@ func (k Keeper) DistributePayingCoin(ctx sdk.Context, auction types.AuctionI) er
 
 	for i, vq := range k.GetVestingQueuesByAuctionId(ctx, auction.GetId()) {
 		if vq.IsVestingReleasable(ctx.BlockTime()) {
-			vestingReserveAcc := auction.GetVestingReserveAddress()
+			vestingReserveAddress := auction.GetVestingReserveAddress()
 
-			if err := k.bankKeeper.SendCoins(ctx, vestingReserveAcc, auction.GetAuctioneer(), sdk.NewCoins(vq.PayingCoin)); err != nil {
+			if err := k.bankKeeper.SendCoins(ctx, vestingReserveAddress, auction.GetAuctioneer(), sdk.NewCoins(vq.PayingCoin)); err != nil {
 				return sdkerrors.Wrap(err, "failed to release paying coin to the auctioneer")
 			}
 
@@ -126,8 +126,8 @@ func (k Keeper) DistributePayingCoin(ctx sdk.Context, auction types.AuctionI) er
 }
 
 // ReserveSellingCoin reserves the selling coin to the selling reserve account.
-func (k Keeper) ReserveSellingCoin(ctx sdk.Context, auctionId uint64, auctioneerAcc sdk.AccAddress, sellingCoin sdk.Coin) error {
-	if err := k.bankKeeper.SendCoins(ctx, auctioneerAcc, types.SellingReserveAcc(auctionId), sdk.NewCoins(sellingCoin)); err != nil {
+func (k Keeper) ReserveSellingCoin(ctx sdk.Context, auctionId uint64, auctioneerAddr sdk.AccAddress, sellingCoin sdk.Coin) error {
+	if err := k.bankKeeper.SendCoins(ctx, auctioneerAddr, types.SellingReserveAddress(auctionId), sdk.NewCoins(sellingCoin)); err != nil {
 		return sdkerrors.Wrap(err, "failed to reserve selling coin")
 	}
 	return nil
@@ -135,26 +135,26 @@ func (k Keeper) ReserveSellingCoin(ctx sdk.Context, auctionId uint64, auctioneer
 
 // ReleaseSellingCoin releases the selling coin to the auctioneer.
 func (k Keeper) ReleaseSellingCoin(ctx sdk.Context, auction types.AuctionI) error {
-	sellingReserveAcc := auction.GetSellingReserveAddress()
-	auctioneerAcc := auction.GetAuctioneer()
+	sellingReserveAddress := auction.GetSellingReserveAddress()
+	auctioneerAddr := auction.GetAuctioneer()
 
-	reserveBalance := k.bankKeeper.GetBalance(ctx, sellingReserveAcc, auction.GetSellingCoin().Denom)
+	reserveBalance := k.bankKeeper.GetBalance(ctx, sellingReserveAddress, auction.GetSellingCoin().Denom)
 
-	if err := k.bankKeeper.SendCoins(ctx, sellingReserveAcc, auctioneerAcc, sdk.NewCoins(reserveBalance)); err != nil {
+	if err := k.bankKeeper.SendCoins(ctx, sellingReserveAddress, auctioneerAddr, sdk.NewCoins(reserveBalance)); err != nil {
 		return sdkerrors.Wrap(err, "failed to release selling coin")
 	}
 	return nil
 }
 
 // ReserveCreationFees reserves the auction creation fee to the fee collector account.
-func (k Keeper) ReserveCreationFees(ctx sdk.Context, auctioneerAcc sdk.AccAddress) error {
+func (k Keeper) ReserveCreationFees(ctx sdk.Context, auctioneerAddr sdk.AccAddress) error {
 	params := k.GetParams(ctx)
-	auctionFeeCollectorAcc, err := sdk.AccAddressFromBech32(params.AuctionFeeCollector)
+	feeCollectorAddr, err := sdk.AccAddressFromBech32(params.FeeCollectorAddress)
 	if err != nil {
 		return err
 	}
 
-	if err := k.bankKeeper.SendCoins(ctx, auctioneerAcc, auctionFeeCollectorAcc, params.AuctionCreationFee); err != nil {
+	if err := k.bankKeeper.SendCoins(ctx, auctioneerAddr, feeCollectorAddr, params.AuctionCreationFee); err != nil {
 		return sdkerrors.Wrap(err, "failed to reserve auction creation fee")
 	}
 
@@ -165,7 +165,7 @@ func (k Keeper) ReserveCreationFees(ctx sdk.Context, auctioneerAcc sdk.AccAddres
 func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFixedPriceAuction) (*types.FixedPriceAuction, error) {
 	nextId := k.GetNextAuctionIdWithUpdate(ctx)
 
-	auctioneerAcc, err := sdk.AccAddressFromBech32(msg.Auctioneer)
+	auctioneerAddr, err := sdk.AccAddressFromBech32(msg.Auctioneer)
 	if err != nil {
 		return &types.FixedPriceAuction{}, err
 	}
@@ -174,28 +174,24 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		return &types.FixedPriceAuction{}, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be prior to current time")
 	}
 
-	if err := k.ReserveCreationFees(ctx, auctioneerAcc); err != nil {
+	if err := k.ReserveCreationFees(ctx, auctioneerAddr); err != nil {
 		return &types.FixedPriceAuction{}, err
 	}
 
-	if err := k.ReserveSellingCoin(ctx, nextId, auctioneerAcc, msg.SellingCoin); err != nil {
+	if err := k.ReserveSellingCoin(ctx, nextId, auctioneerAddr, msg.SellingCoin); err != nil {
 		return &types.FixedPriceAuction{}, err
 	}
-
-	sellingReserveAcc := types.SellingReserveAcc(nextId)
-	payingReserveAcc := types.PayingReserveAcc(nextId)
-	vestingReserveAcc := types.VestingReserveAcc(nextId)
 
 	baseAuction := types.NewBaseAuction(
 		nextId,
 		types.AuctionTypeFixedPrice,
-		auctioneerAcc.String(),
-		sellingReserveAcc.String(),
-		payingReserveAcc.String(),
+		auctioneerAddr.String(),
+		types.SellingReserveAddress(nextId).String(),
+		types.PayingReserveAddress(nextId).String(),
 		msg.StartPrice,
 		msg.SellingCoin,
 		msg.PayingCoinDenom,
-		vestingReserveAcc.String(),
+		types.VestingReserveAddress(nextId).String(),
 		msg.VestingSchedules,
 		sdk.ZeroDec(),
 		msg.SellingCoin, // add selling coin to remaining coin
@@ -210,7 +206,6 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 	}
 
 	auction := types.NewFixedPriceAuction(baseAuction)
-
 	k.SetAuction(ctx, auction)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -234,40 +229,36 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 }
 
 // CreateEnglishAuction sets english auction.
-func (k Keeper) CreateEnglishAuction(ctx sdk.Context, msg *types.MsgCreateEnglishAuction) error {
+func (k Keeper) CreateEnglishAuction(ctx sdk.Context, msg *types.MsgCreateEnglishAuction) (*types.EnglishAuction, error) {
 	nextId := k.GetNextAuctionIdWithUpdate(ctx)
 
-	auctioneerAcc, err := sdk.AccAddressFromBech32(msg.Auctioneer)
+	auctioneerAddr, err := sdk.AccAddressFromBech32(msg.Auctioneer)
 	if err != nil {
-		return err
+		return &types.EnglishAuction{}, err
 	}
 
 	if ctx.BlockTime().After(msg.EndTime) {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be prior to current time")
+		return &types.EnglishAuction{}, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be prior to current time")
 	}
 
-	if err := k.ReserveCreationFees(ctx, auctioneerAcc); err != nil {
-		return err
+	if err := k.ReserveCreationFees(ctx, auctioneerAddr); err != nil {
+		return &types.EnglishAuction{}, err
 	}
 
-	if err := k.ReserveSellingCoin(ctx, nextId, auctioneerAcc, msg.SellingCoin); err != nil {
-		return err
+	if err := k.ReserveSellingCoin(ctx, nextId, auctioneerAddr, msg.SellingCoin); err != nil {
+		return &types.EnglishAuction{}, err
 	}
-
-	sellingReserveAcc := types.SellingReserveAcc(nextId)
-	payingReserveAcc := types.PayingReserveAcc(nextId)
-	vestingReserveAcc := types.VestingReserveAcc(nextId)
 
 	baseAuction := types.NewBaseAuction(
 		nextId,
 		types.AuctionTypeEnglish,
-		auctioneerAcc.String(),
-		sellingReserveAcc.String(),
-		payingReserveAcc.String(),
+		auctioneerAddr.String(),
+		types.SellingReserveAddress(nextId).String(),
+		types.PayingReserveAddress(nextId).String(),
 		msg.StartPrice,
 		msg.SellingCoin,
 		msg.PayingCoinDenom,
-		vestingReserveAcc.String(),
+		types.VestingReserveAddress(nextId).String(),
 		msg.VestingSchedules,
 		sdk.ZeroDec(),
 		msg.SellingCoin, // add selling coin to remaining coin
@@ -287,7 +278,6 @@ func (k Keeper) CreateEnglishAuction(ctx sdk.Context, msg *types.MsgCreateEnglis
 		msg.Extended,
 		msg.ExtendRate,
 	)
-
 	k.SetAuction(ctx, auction)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -310,7 +300,7 @@ func (k Keeper) CreateEnglishAuction(ctx sdk.Context, msg *types.MsgCreateEnglis
 		),
 	})
 
-	return nil
+	return auction, nil
 }
 
 // CancelAuction cancels the auction in an event when the auctioneer needs to modify the auction.

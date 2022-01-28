@@ -26,10 +26,10 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 var _ types.MsgServer = msgServer{}
 
 // CreateFixedPriceAuction defines a method to create fixed price auction.
-func (k msgServer) CreateFixedPriceAuction(goCtx context.Context, msg *types.MsgCreateFixedPriceAuction) (*types.MsgCreateFixedPriceAuctionResponse, error) {
+func (m msgServer) CreateFixedPriceAuction(goCtx context.Context, msg *types.MsgCreateFixedPriceAuction) (*types.MsgCreateFixedPriceAuctionResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if _, err := k.Keeper.CreateFixedPriceAuction(ctx, msg); err != nil {
+	if _, err := m.Keeper.CreateFixedPriceAuction(ctx, msg); err != nil {
 		return nil, err
 	}
 
@@ -40,7 +40,7 @@ func (k msgServer) CreateFixedPriceAuction(goCtx context.Context, msg *types.Msg
 func (k msgServer) CreateEnglishAuction(goCtx context.Context, msg *types.MsgCreateEnglishAuction) (*types.MsgCreateEnglishAuctionResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if err := k.Keeper.CreateEnglishAuction(ctx, msg); err != nil {
+	if _, err := k.Keeper.CreateEnglishAuction(ctx, msg); err != nil {
 		return nil, err
 	}
 
@@ -48,10 +48,10 @@ func (k msgServer) CreateEnglishAuction(goCtx context.Context, msg *types.MsgCre
 }
 
 // CancelAuction defines a method to cancel auction.
-func (k msgServer) CancelAuction(goCtx context.Context, msg *types.MsgCancelAuction) (*types.MsgCancelAuctionResponse, error) {
+func (m msgServer) CancelAuction(goCtx context.Context, msg *types.MsgCancelAuction) (*types.MsgCancelAuctionResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if _, err := k.Keeper.CancelAuction(ctx, msg); err != nil {
+	if _, err := m.Keeper.CancelAuction(ctx, msg); err != nil {
 		return nil, err
 	}
 
@@ -59,10 +59,10 @@ func (k msgServer) CancelAuction(goCtx context.Context, msg *types.MsgCancelAuct
 }
 
 // PlaceBid defines a method to place bid for the auction.
-func (k msgServer) PlaceBid(goCtx context.Context, msg *types.MsgPlaceBid) (*types.MsgPlaceBidResponse, error) {
+func (m msgServer) PlaceBid(goCtx context.Context, msg *types.MsgPlaceBid) (*types.MsgPlaceBidResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if _, err := k.Keeper.PlaceBid(ctx, msg); err != nil {
+	if _, err := m.Keeper.PlaceBid(ctx, msg); err != nil {
 		return nil, err
 	}
 
