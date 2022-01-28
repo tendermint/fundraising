@@ -13,10 +13,10 @@ import (
 )
 
 const (
-	SellingReserveAccPrefix string = "SellingReserveAcc"
-	PayingReserveAccPrefix  string = "PayingReserveAcc"
-	VestingReserveAccPrefix string = "VestingReserveAcc"
-	AccNameSplitter         string = "|"
+	SellingReserveAddressPrefix string = "SellingReserveAddress"
+	PayingReserveAddressPrefix  string = "PayingReserveAddress"
+	VestingReserveAddressPrefix string = "VestingReserveAddress"
+	ModuleAddressNameSplitter   string = "|"
 
 	// ReserveAddressType is an address type of reserve for selling, paying, and vesting.
 	// The module uses the address type of 32 bytes length, but it can be changed depending on Cosmos SDK's direction.
@@ -404,17 +404,17 @@ func UnmarshalBid(cdc codec.BinaryCodec, value []byte) (b Bid, err error) {
 	return b, err
 }
 
-// SellingReserveAcc returns an account for the selling reserve account with the given auction id.
-func SellingReserveAcc(auctionId uint64) sdk.AccAddress {
-	return DeriveAddress(ReserveAddressType, ModuleName, SellingReserveAccPrefix+AccNameSplitter+fmt.Sprint(auctionId))
+// SellingReserveAddress returns an account for the selling reserve address with the given auction id.
+func SellingReserveAddress(auctionId uint64) sdk.AccAddress {
+	return DeriveAddress(ReserveAddressType, ModuleName, SellingReserveAddressPrefix+ModuleAddressNameSplitter+fmt.Sprint(auctionId))
 }
 
-// PayingReserveAcc returns an account for the paying reserve account with the given auction id.
-func PayingReserveAcc(auctionId uint64) sdk.AccAddress {
-	return DeriveAddress(ReserveAddressType, ModuleName, PayingReserveAccPrefix+AccNameSplitter+fmt.Sprint(auctionId))
+// PayingReserveAddress returns an account for the paying reserve address with the given auction id.
+func PayingReserveAddress(auctionId uint64) sdk.AccAddress {
+	return DeriveAddress(ReserveAddressType, ModuleName, PayingReserveAddressPrefix+ModuleAddressNameSplitter+fmt.Sprint(auctionId))
 }
 
-// VestingReserveAcc returns an account for the vesting reserve account with the given auction id.
-func VestingReserveAcc(auctionId uint64) sdk.AccAddress {
-	return DeriveAddress(ReserveAddressType, ModuleName, VestingReserveAccPrefix+AccNameSplitter+fmt.Sprint(auctionId))
+// VestingReserveAddress returns an account for the vesting reserve address with the given auction id.
+func VestingReserveAddress(auctionId uint64) sdk.AccAddress {
+	return DeriveAddress(ReserveAddressType, ModuleName, VestingReserveAddressPrefix+ModuleAddressNameSplitter+fmt.Sprint(auctionId))
 }

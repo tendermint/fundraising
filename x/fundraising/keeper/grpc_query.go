@@ -196,12 +196,12 @@ func queryAllBids(ctx sdk.Context, k Querier, store sdk.KVStore, req *types.Quer
 }
 
 func queryBidsByBidder(ctx sdk.Context, k Querier, store sdk.KVStore, req *types.QueryBidsRequest) (bids []types.Bid, pageRes *query.PageResponse, err error) {
-	bidderAcc, err := sdk.AccAddressFromBech32(req.Bidder)
+	bidderAddr, err := sdk.AccAddressFromBech32(req.Bidder)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	bidStore := prefix.NewStore(store, types.GetBidIndexByBidderPrefix(bidderAcc))
+	bidStore := prefix.NewStore(store, types.GetBidIndexByBidderPrefix(bidderAddr))
 
 	pageRes, err = query.FilteredPaginate(bidStore, req.Pagination, func(key, value []byte, accumulate bool) (bool, error) {
 		auctionId, sequence := types.SplitAuctionIdSequenceKey(key)

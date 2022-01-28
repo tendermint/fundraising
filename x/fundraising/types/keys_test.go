@@ -63,10 +63,10 @@ func (suite *keysTestSuite) TestGetBidKey() {
 
 func (suite *keysTestSuite) TestBidIndexKey() {
 	testCases := []struct {
-		bidderAcc sdk.AccAddress
-		auctionId uint64
-		sequence  uint64
-		expected  []byte
+		bidderAddr sdk.AccAddress
+		auctionId  uint64
+		sequence   uint64
+		expected   []byte
 	}{
 		{
 			sdk.AccAddress(crypto.AddressHash([]byte("bidder1"))),
@@ -98,7 +98,7 @@ func (suite *keysTestSuite) TestBidIndexKey() {
 	}
 
 	for _, tc := range testCases {
-		key := types.GetBidIndexKey(tc.bidderAcc, tc.auctionId, tc.sequence)
+		key := types.GetBidIndexKey(tc.bidderAddr, tc.auctionId, tc.sequence)
 		suite.Require().Equal(tc.expected, key)
 
 		auctionId, sequence := types.ParseBidIndexKey(key)
