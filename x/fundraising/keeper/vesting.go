@@ -9,27 +9,24 @@ import (
 // SetVestingSchedules stores vesting queues based on the vesting schedules of the auction and
 // sets status to vesting.
 func (k Keeper) SetVestingSchedules(ctx sdk.Context, auction types.AuctionI) error {
-	payingReserveAddress := auction.GetPayingReserveAddress()
-	vestingReserveAddress := auction.GetVestingReserveAddress()
-
-	reserveCoin := k.bankKeeper.GetBalance(ctx, payingReserveAddress, auction.GetPayingCoinDenom())
+	payingReserveAddr := auction.GetPayingReserveAddress()
+	vestingReserveAddr := auction.GetVestingReserveAddress()
+	reserveCoin := k.bankKeeper.GetBalance(ctx, payingReserveAddr, auction.GetPayingCoinDenom())
 	reserveCoins := sdk.NewCoins(reserveCoin)
 
-	lenVestingSchedules := len(auction.GetVestingSchedules())
-
-	if lenVestingSchedules == 0 {
-		if err := k.bankKeeper.SendCoins(ctx, payingReserveAddress, auction.GetAuctioneer(), reserveCoins); err != nil {
+	vsLen := len(auction.GetVestingSchedules())
+	if vsLen == 0 {
+		if err := k.bankKeeper.SendCoins(ctx, payingReserveAddr, auction.GetAuctioneer(), reserveCoins); err != nil {
 			return err
 		}
 
 		if err := auction.SetStatus(types.AuctionStatusFinished); err != nil {
 			return err
 		}
-
 		k.SetAuction(ctx, auction)
 
 	} else {
-		if err := k.bankKeeper.SendCoins(ctx, payingReserveAddress, vestingReserveAddress, reserveCoins); err != nil {
+		if err := k.bankKeeper.SendCoins(ctx, payingReserveAddr, vestingReserveAddr, reserveCoins); err != nil {
 			return err
 		}
 
@@ -39,7 +36,7 @@ func (k Keeper) SetVestingSchedules(ctx sdk.Context, auction types.AuctionI) err
 			payingAmt := reserveCoin.Amount.ToDec().MulTruncate(vs.Weight).TruncateInt()
 
 			// Store remaining to the paying coin in the last queue
-			if i == lenVestingSchedules-1 {
+			if i == vsLen-1 {
 				payingAmt = remaining.Amount
 			}
 
@@ -57,7 +54,6 @@ func (k Keeper) SetVestingSchedules(ctx sdk.Context, auction types.AuctionI) err
 		if err := auction.SetStatus(types.AuctionStatusVesting); err != nil {
 			return err
 		}
-
 		k.SetAuction(ctx, auction)
 	}
 

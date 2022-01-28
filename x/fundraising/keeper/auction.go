@@ -125,27 +125,6 @@ func (k Keeper) DistributePayingCoin(ctx sdk.Context, auction types.AuctionI) er
 	return nil
 }
 
-// ReserveSellingCoin reserves the selling coin to the selling reserve account.
-func (k Keeper) ReserveSellingCoin(ctx sdk.Context, auctionId uint64, auctioneerAddr sdk.AccAddress, sellingCoin sdk.Coin) error {
-	if err := k.bankKeeper.SendCoins(ctx, auctioneerAddr, types.SellingReserveAddress(auctionId), sdk.NewCoins(sellingCoin)); err != nil {
-		return sdkerrors.Wrap(err, "failed to reserve selling coin")
-	}
-	return nil
-}
-
-// ReleaseSellingCoin releases the selling coin to the auctioneer.
-func (k Keeper) ReleaseSellingCoin(ctx sdk.Context, auction types.AuctionI) error {
-	sellingReserveAddress := auction.GetSellingReserveAddress()
-	auctioneerAddr := auction.GetAuctioneer()
-
-	reserveBalance := k.bankKeeper.GetBalance(ctx, sellingReserveAddress, auction.GetSellingCoin().Denom)
-
-	if err := k.bankKeeper.SendCoins(ctx, sellingReserveAddress, auctioneerAddr, sdk.NewCoins(reserveBalance)); err != nil {
-		return sdkerrors.Wrap(err, "failed to release selling coin")
-	}
-	return nil
-}
-
 // ReserveCreationFees reserves the auction creation fee to the fee collector account.
 func (k Keeper) ReserveCreationFees(ctx sdk.Context, auctioneerAddr sdk.AccAddress) error {
 	params := k.GetParams(ctx)
@@ -158,6 +137,14 @@ func (k Keeper) ReserveCreationFees(ctx sdk.Context, auctioneerAddr sdk.AccAddre
 		return sdkerrors.Wrap(err, "failed to reserve auction creation fee")
 	}
 
+	return nil
+}
+
+// ReserveSellingCoin reserves the selling coin to the selling reserve account.
+func (k Keeper) ReserveSellingCoin(ctx sdk.Context, auctionId uint64, auctioneerAddr sdk.AccAddress, sellingCoin sdk.Coin) error {
+	if err := k.bankKeeper.SendCoins(ctx, auctioneerAddr, types.SellingReserveAddress(auctionId), sdk.NewCoins(sellingCoin)); err != nil {
+		return sdkerrors.Wrap(err, "failed to reserve selling coin")
+	}
 	return nil
 }
 
@@ -319,8 +306,13 @@ func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) (typ
 		return nil, sdkerrors.Wrap(types.ErrInvalidAuctionStatus, "auction cannot be canceled due to current status")
 	}
 
-	if err := k.ReleaseSellingCoin(ctx, auction); err != nil {
-		return nil, err
+	// Release the selling coin to the auctioneer.
+	sellingReserveAddr := auction.GetSellingReserveAddress()
+	auctioneerAddr := auction.GetAuctioneer()
+	reserveCoin := k.bankKeeper.GetBalance(ctx, sellingReserveAddr, auction.GetSellingCoin().Denom)
+
+	if err := k.bankKeeper.SendCoins(ctx, sellingReserveAddr, auctioneerAddr, sdk.NewCoins(reserveCoin)); err != nil {
+		return nil, sdkerrors.Wrap(err, "failed to release selling coin")
 	}
 
 	_ = auction.SetRemainingCoin(sdk.NewCoin(auction.GetSellingCoin().Denom, sdk.ZeroInt()))
