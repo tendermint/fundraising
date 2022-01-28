@@ -14,11 +14,11 @@ import (
 var (
 	KeyAuctionCreationFee  = []byte("AuctionCreationFee")
 	KeyExtendedPeriod      = []byte("ExtendedPeriod")
-	KeyAuctionFeeCollector = []byte("AuctionFeeCollector")
+	KeyFeeCollectorAddress = []byte("FeeCollectorAddress")
 
 	DefaultAuctionCreationFee  = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100_000_000)))
 	DefaultExtendedPeriod      = uint32(1)
-	DefaultAuctionFeeCollector = sdk.AccAddress(address.Module(ModuleName, []byte("AuctionFeeCollector")))
+	DefaultFeeCollectorAddress = sdk.AccAddress(address.Module(ModuleName, []byte("FeeCollector")))
 )
 
 var _ paramstypes.ParamSet = (*Params)(nil)
@@ -33,7 +33,7 @@ func DefaultParams() Params {
 	return Params{
 		AuctionCreationFee:  DefaultAuctionCreationFee,
 		ExtendedPeriod:      DefaultExtendedPeriod,
-		AuctionFeeCollector: DefaultAuctionFeeCollector.String(),
+		FeeCollectorAddress: DefaultFeeCollectorAddress.String(),
 	}
 }
 
@@ -42,7 +42,7 @@ func (p *Params) ParamSetPairs() paramstypes.ParamSetPairs {
 	return paramstypes.ParamSetPairs{
 		paramstypes.NewParamSetPair(KeyAuctionCreationFee, &p.AuctionCreationFee, validateAuctionCreationFee),
 		paramstypes.NewParamSetPair(KeyExtendedPeriod, &p.ExtendedPeriod, validateExtendedPeriod),
-		paramstypes.NewParamSetPair(KeyAuctionFeeCollector, &p.AuctionFeeCollector, validateAuctionFeeCollector),
+		paramstypes.NewParamSetPair(KeyFeeCollectorAddress, &p.FeeCollectorAddress, validateFeeCollector),
 	}
 }
 
@@ -60,7 +60,7 @@ func (p Params) Validate() error {
 	}{
 		{p.AuctionCreationFee, validateAuctionCreationFee},
 		{p.ExtendedPeriod, validateExtendedPeriod},
-		{p.AuctionFeeCollector, validateAuctionFeeCollector},
+		{p.FeeCollectorAddress, validateFeeCollector},
 	} {
 		if err := v.validator(v.value); err != nil {
 			return err
@@ -91,7 +91,7 @@ func validateExtendedPeriod(i interface{}) error {
 	return nil
 }
 
-func validateAuctionFeeCollector(i interface{}) error {
+func validateFeeCollector(i interface{}) error {
 	v, ok := i.(string)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)

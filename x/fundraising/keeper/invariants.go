@@ -46,13 +46,13 @@ func SellingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 
 		for _, auction := range k.GetAuctions(ctx) {
 			if auction.GetStatus() == types.AuctionStatusStarted {
-				sellingPoolAcc := auction.GetSellingReserveAddress()
-				sellingReserve := k.bankKeeper.GetBalance(ctx, sellingPoolAcc, auction.GetSellingCoin().Denom)
+				sellingReserveAddr := auction.GetSellingReserveAddress()
+				sellingReserve := k.bankKeeper.GetBalance(ctx, sellingReserveAddr, auction.GetSellingCoin().Denom)
 				if !sellingReserve.IsGTE(auction.GetSellingCoin()) {
 					msg += fmt.Sprintf("\tselling reserve balance %s\n"+
 						"\tselling pool reserve: %v\n"+
 						"\ttotal selling coin: %v",
-						sellingPoolAcc.String(), sellingReserve, auction.GetSellingCoin())
+						sellingReserveAddr.String(), sellingReserve, auction.GetSellingCoin())
 					count++
 				}
 			}
@@ -79,13 +79,13 @@ func PayingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 				}
 			}
 
-			payingPoolAcc := auction.GetPayingReserveAddress()
-			payingReserve := k.bankKeeper.GetBalance(ctx, payingPoolAcc, auction.GetPayingCoinDenom())
+			payingReserveAddr := auction.GetPayingReserveAddress()
+			payingReserve := k.bankKeeper.GetBalance(ctx, payingReserveAddr, auction.GetPayingCoinDenom())
 			if !payingReserve.IsGTE(totalBidCoin) {
 				msg += fmt.Sprintf("\tpaying reserve balance %s\n"+
 					"\tpaying pool reserve: %v\n"+
 					"\ttotal bid coin: %v",
-					payingPoolAcc.String(), payingReserve, totalBidCoin)
+					payingReserveAddr.String(), payingReserve, totalBidCoin)
 				count++
 			}
 		}
@@ -113,13 +113,13 @@ func VestingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 				}
 			}
 
-			vestingPoolAcc := auction.GetVestingReserveAddress()
-			vestingReserve := k.bankKeeper.GetBalance(ctx, vestingPoolAcc, auction.GetPayingCoinDenom())
+			vestingReserveAddr := auction.GetVestingReserveAddress()
+			vestingReserve := k.bankKeeper.GetBalance(ctx, vestingReserveAddr, auction.GetPayingCoinDenom())
 			if !vestingReserve.IsGTE(totalPayingCoin) {
 				msg += fmt.Sprintf("\tvesting reserve balance %s\n"+
 					"\tvesting pool reserve: %v\n"+
 					"\ttotal paying coin: %v",
-					vestingPoolAcc.String(), vestingReserve, totalPayingCoin)
+					vestingReserveAddr.String(), vestingReserve, totalPayingCoin)
 				count++
 			}
 		}

@@ -17,8 +17,8 @@ func (k Keeper) GetNextSequenceWithUpdate(ctx sdk.Context, auctionId uint64) uin
 }
 
 // ReservePayingCoin reserves paying coin to the paying reserve account.
-func (k Keeper) ReservePayingCoin(ctx sdk.Context, auctionId uint64, bidderAcc sdk.AccAddress, payingCoin sdk.Coin) error {
-	if err := k.bankKeeper.SendCoins(ctx, bidderAcc, types.PayingReserveAcc(auctionId), sdk.NewCoins(payingCoin)); err != nil {
+func (k Keeper) ReservePayingCoin(ctx sdk.Context, auctionId uint64, bidderAddr sdk.AccAddress, payingCoin sdk.Coin) error {
+	if err := k.bankKeeper.SendCoins(ctx, bidderAddr, types.PayingReserveAddress(auctionId), sdk.NewCoins(payingCoin)); err != nil {
 		return sdkerrors.Wrap(err, "failed to reserve paying coin")
 	}
 	return nil

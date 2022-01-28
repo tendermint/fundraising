@@ -51,9 +51,9 @@ func (s *KeeperTestSuite) TestVestingQueueRemainingCoin() {
 }
 
 func (s *KeeperTestSuite) TestVestingQueueIterator() {
-	payingReserveAcc := s.addr(0)
+	payingReserveAddress := s.addr(0)
 	payingCoinDenom := "denom1"
-	reserveCoin := s.getBalance(payingReserveAcc, payingCoinDenom)
+	reserveCoin := s.getBalance(payingReserveAddress, payingCoinDenom)
 
 	// Set vesting schedules with 2 vesting queues
 	for _, vs := range []types.VestingSchedule{

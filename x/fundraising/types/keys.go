@@ -58,14 +58,14 @@ func GetBidAuctionIDKey(auctionId uint64) []byte {
 }
 
 // GetBidIndexKey returns the store key to retrieve the sequence number from the index fields.
-func GetBidIndexKey(bidderAcc sdk.AccAddress, auctionId uint64, sequence uint64) []byte {
-	return append(append(append(BidIndexKeyPrefix, address.MustLengthPrefix(bidderAcc)...), sdk.Uint64ToBigEndian(auctionId)...), sdk.Uint64ToBigEndian(sequence)...)
+func GetBidIndexKey(bidderAddr sdk.AccAddress, auctionId uint64, sequence uint64) []byte {
+	return append(append(append(BidIndexKeyPrefix, address.MustLengthPrefix(bidderAddr)...), sdk.Uint64ToBigEndian(auctionId)...), sdk.Uint64ToBigEndian(sequence)...)
 }
 
 // GetBidByBidderPrefix returns a key prefix used to iterate
 // bids by a bidder.
-func GetBidIndexByBidderPrefix(bidderAcc sdk.AccAddress) []byte {
-	return append(BidIndexKeyPrefix, address.MustLengthPrefix(bidderAcc)...)
+func GetBidIndexByBidderPrefix(bidderAddr sdk.AccAddress) []byte {
+	return append(BidIndexKeyPrefix, address.MustLengthPrefix(bidderAddr)...)
 }
 
 // GetVestingQueueKey returns the store key to retrieve the vesting queue from the index fields.

@@ -21,7 +21,7 @@ func TestParams(t *testing.T) {
 - denom: stake
   amount: "100000000"
 extended_period: 1
-auction_fee_collector: cosmos1t2gp44cx86rt8gxv64lpt0dggveg98y4ma2wlnfqts7d4m4z70vqrzud4t
+fee_collector_address: cosmos1kxyag8zx2j9m8063m92qazaxqg63xv5h7z5jxz8yr27tuk67ne8q0lzjm9
 `
 	require.Equal(t, paramsStr, defaultParams.String())
 }
@@ -42,9 +42,9 @@ func TestParamsValidate(t *testing.T) {
 			"",
 		},
 		{
-			"InvalidAuctionFeeCollector",
+			"InvalidFeeCollectorAddress",
 			func(params *types.Params) {
-				params.AuctionFeeCollector = "invalid"
+				params.FeeCollectorAddress = "invalid"
 			},
 			"invalid account address: invalid",
 		},
