@@ -19,43 +19,6 @@ func (k Keeper) GetNextAuctionIdWithUpdate(ctx sdk.Context) uint64 {
 	return id
 }
 
-// CalculateWinners ...
-// 1. Calculate the winners and if the extend rate is exceeded, extend the end time
-// 2. Distribute allocation to the winners
-// 3. Transfer the paying coin to the auctioneer with the given vesting schedules
-// By default, extended auction round is triggered once for all english auctions
-func (k Keeper) CalculateWinners(ctx sdk.Context, auction types.AuctionI) error {
-	bids := k.GetBidsByAuctionId(ctx, auction.GetId())
-	bids = types.SanitizeReverseBids(bids)
-
-	// first round needs to calculate the winning price
-	if len(auction.GetEndTimes()) == 1 {
-		totalSellingAmt := sdk.ZeroDec()
-		totalCoinAmt := sdk.ZeroDec()
-		remainingAmt := auction.GetRemainingCoin().Amount
-
-		for _, bid := range bids {
-			totalCoinAmt = totalCoinAmt.Add(bid.Coin.Amount.ToDec())
-			totalSellingAmt = totalCoinAmt.QuoTruncate(bid.Price)
-		}
-
-		remainingAmt = remainingAmt.Sub(totalSellingAmt.TruncateInt())
-		remainingCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, remainingAmt)
-
-		_ = auction.SetRemainingCoin(remainingCoin)
-
-		// TODO: fillPrice, store winning bids list, and set second last time (current block time)
-
-	} else {
-		// TODO
-		fmt.Println("")
-	}
-
-	// TODO: distribution and transferring the paying coin to the auctioneer
-
-	return nil
-}
-
 // DistributeSellingCoin releases designated selling coin from the selling reserve account.
 func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) error {
 	sellingReserveAddress := auction.GetSellingReserveAddress()
@@ -328,4 +291,41 @@ func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) (typ
 	})
 
 	return auction, nil
+}
+
+// CalculateWinners ...
+// 1. Calculate the winners and if the extend rate is exceeded, extend the end time
+// 2. Distribute allocation to the winners
+// 3. Transfer the paying coin to the auctioneer with the given vesting schedules
+// By default, extended auction round is triggered once for all english auctions
+func (k Keeper) CalculateWinners(ctx sdk.Context, auction types.AuctionI) error {
+	bids := k.GetBidsByAuctionId(ctx, auction.GetId())
+	bids = types.SanitizeReverseBids(bids)
+
+	// first round needs to calculate the winning price
+	if len(auction.GetEndTimes()) == 1 {
+		totalSellingAmt := sdk.ZeroDec()
+		totalCoinAmt := sdk.ZeroDec()
+		remainingAmt := auction.GetRemainingCoin().Amount
+
+		for _, bid := range bids {
+			totalCoinAmt = totalCoinAmt.Add(bid.Coin.Amount.ToDec())
+			totalSellingAmt = totalCoinAmt.QuoTruncate(bid.Price)
+		}
+
+		remainingAmt = remainingAmt.Sub(totalSellingAmt.TruncateInt())
+		remainingCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, remainingAmt)
+
+		_ = auction.SetRemainingCoin(remainingCoin)
+
+		// TODO: fillPrice, store winning bids list, and set second last time (current block time)
+
+	} else {
+		// TODO
+		fmt.Println("")
+	}
+
+	// TODO: distribution and transferring the paying coin to the auctioneer
+
+	return nil
 }

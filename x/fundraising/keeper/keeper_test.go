@@ -41,20 +41,8 @@ func (s *KeeperTestSuite) SetupTest() {
 }
 
 //
-// Below are just shortcuts to frequently-used functions.
+// Below are just shortcuts to internal functions.
 //
-
-func (s *KeeperTestSuite) getBalance(addr sdk.AccAddress, denom string) sdk.Coin {
-	return s.app.BankKeeper.GetBalance(s.ctx, addr, denom)
-}
-
-func (s *KeeperTestSuite) sendCoins(fromAddr, toAddr sdk.AccAddress, coins sdk.Coins, fund bool) {
-	if fund {
-		s.fundAddr(fromAddr, coins)
-	}
-	err := s.app.BankKeeper.SendCoins(s.ctx, fromAddr, toAddr, coins)
-	s.Require().NoError(err)
-}
 
 func (s *KeeperTestSuite) createFixedPriceAuction(
 	auctioneer sdk.AccAddress,
@@ -76,6 +64,40 @@ func (s *KeeperTestSuite) createFixedPriceAuction(
 		SellingCoin:      sellingCoin,
 		PayingCoinDenom:  payingCoinDenom,
 		VestingSchedules: vestingSchedules,
+		StartTime:        startTime,
+		EndTime:          endTime,
+	})
+	s.Require().NoError(err)
+
+	return auction
+}
+
+func (s *KeeperTestSuite) createEnglishAuction(
+	auctioneer sdk.AccAddress,
+	startPrice sdk.Dec,
+	sellingCoin sdk.Coin,
+	payingCoinDenom string,
+	vestingSchedules []types.VestingSchedule,
+	maximumBidPrice sdk.Dec,
+	extended uint32,
+	extnededRate sdk.Dec,
+	startTime time.Time,
+	endTime time.Time,
+	fund bool,
+) *types.EnglishAuction {
+	params := s.keeper.GetParams(s.ctx)
+	if fund {
+		s.fundAddr(auctioneer, params.AuctionCreationFee.Add(sellingCoin))
+	}
+	auction, err := s.keeper.CreateEnglishAuction(s.ctx, &types.MsgCreateEnglishAuction{
+		Auctioneer:       auctioneer.String(),
+		StartPrice:       startPrice,
+		SellingCoin:      sellingCoin,
+		PayingCoinDenom:  payingCoinDenom,
+		VestingSchedules: vestingSchedules,
+		MaximumBidPrice:  maximumBidPrice,
+		Extended:         extended,
+		ExtendRate:       extnededRate,
 		StartTime:        startTime,
 		EndTime:          endTime,
 	})
@@ -113,6 +135,18 @@ func (s *KeeperTestSuite) cancelAuction(auctionId uint64, auctioneer sdk.AccAddr
 // Below are useful helpers to write test code easily.
 //
 
+func (s *KeeperTestSuite) getBalance(addr sdk.AccAddress, denom string) sdk.Coin {
+	return s.app.BankKeeper.GetBalance(s.ctx, addr, denom)
+}
+
+func (s *KeeperTestSuite) sendCoins(fromAddr, toAddr sdk.AccAddress, coins sdk.Coins, fund bool) {
+	if fund {
+		s.fundAddr(fromAddr, coins)
+	}
+	err := s.app.BankKeeper.SendCoins(s.ctx, fromAddr, toAddr, coins)
+	s.Require().NoError(err)
+}
+
 func (s *KeeperTestSuite) addr(addrNum int) sdk.AccAddress {
 	addr := make(sdk.AccAddress, 20)
 	binary.PutVarint(addr, int64(addrNum))
@@ -122,6 +156,18 @@ func (s *KeeperTestSuite) addr(addrNum int) sdk.AccAddress {
 func (s *KeeperTestSuite) fundAddr(addr sdk.AccAddress, coins sdk.Coins) {
 	err := simapp.FundAccount(s.app.BankKeeper, s.ctx, addr, coins)
 	s.Require().NoError(err)
+}
+
+// func parseCoin(s string) sdk.Coin {
+// 	coin, err := sdk.ParseCoinNormalized(s)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	return coin
+// }
+
+func parseDec(s string) sdk.Dec {
+	return sdk.MustNewDecFromStr(s)
 }
 
 // coinEq is a convenient method to test expected and got values of sdk.Coin.
