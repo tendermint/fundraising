@@ -37,4 +37,4 @@ These documents can help you start using the fundraising module.
 
 ## Contributing
 
-We welcome contributions from everyone. The [main](https://github.com/tendermint/fundraising/tree/main) branch contains the development version of the code. You can branch of from main and create a pull request, or maintain your own fork and submit a cross-repository pull request. If you're not sure where to start check out [CONTRIBUTING.md](./CONTRIBUTING.md) for our guidelines and policies for how we develop fundraising module. Thank you to everyone who has contributed to fundraising module!
+We welcome contributions from everyone. The [main](https://github.com/tendermint/fundraising/tree/main) branch contains the development version of the code. You can branch of from main and create a pull request, or maintain your own fork and submit a cross-repository pull request. If you're not sure where to start check out [CONTRIBUTING.md](./CONTRIBUTING.md) for our guidelines and policies for how we develop the fundraising module. Thank you to everyone who has contributed to the fundraising module!
