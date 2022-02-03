@@ -189,7 +189,8 @@ type BaseAuction struct {
 	Id uint64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	// type specifies the auction type; type 1 is fixed price and 2 is english
 	Type AuctionType `protobuf:"varint,2,opt,name=type,proto3,enum=tendermint.fundraising.AuctionType" json:"type,omitempty"`
-	// allowed_bidders specifies the allowed bidders for the auction
+	// allowed_bidders specifies the bidders who are allowed to bid for the
+	// auction
 	AllowedBidders []AllowedBidder `protobuf:"bytes,3,rep,name=allowed_bidders,json=allowedBidders,proto3" json:"allowed_bidders"`
 	// auctioneer specifies the bech32-encoded address that creates the auction
 	Auctioneer string `protobuf:"bytes,4,opt,name=auctioneer,proto3" json:"auctioneer,omitempty"`

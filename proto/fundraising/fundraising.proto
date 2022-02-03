@@ -48,7 +48,8 @@ message BaseAuction {
   // type specifies the auction type; type 1 is fixed price and 2 is english
   AuctionType type = 2;
 
-  // allowed_bidders specifies the allowed bidders for the auction
+  // allowed_bidders specifies the bidders who are allowed to bid for the
+  // auction
   repeated AllowedBidder allowed_bidders = 3 [ (gogoproto.nullable) = false ];
 
   // auctioneer specifies the bech32-encoded address that creates the auction

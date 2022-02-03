@@ -138,7 +138,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 	baseAuction := types.NewBaseAuction(
 		nextId,
 		types.AuctionTypeFixedPrice,
-		[]types.AllowedBidder{},
+		[]types.AllowedBidder{}, // it is always nil when an auction is created
 		auctioneerAddr.String(),
 		types.SellingReserveAddress(nextId).String(),
 		types.PayingReserveAddress(nextId).String(),
