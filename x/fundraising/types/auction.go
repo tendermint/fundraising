@@ -39,6 +39,9 @@ type AuctionI interface {
 	GetType() AuctionType
 	SetType(AuctionType) error
 
+	GetAllowedBidders() []AllowedBidder
+	SetAllowedBidders([]AllowedBidder) error
+
 	GetAuctioneer() sdk.AccAddress
 	SetAuctioneer(sdk.AccAddress) error
 
@@ -87,8 +90,8 @@ type AuctionI interface {
 // NewBaseAuction creates a new BaseAuction object
 //nolint:interfacer
 func NewBaseAuction(
-	id uint64, typ AuctionType, auctioneerAddr string, sellingPoolAddr string,
-	payingPoolAddr string, startPrice sdk.Dec, sellingCoin sdk.Coin,
+	id uint64, typ AuctionType, allowedBidders []AllowedBidder, auctioneerAddr string,
+	sellingPoolAddr string, payingPoolAddr string, startPrice sdk.Dec, sellingCoin sdk.Coin,
 	payingCoinDenom string, vestingPoolAddr string, vestingSchedules []VestingSchedule,
 	winningPrice sdk.Dec, remainingCoin sdk.Coin, startTime time.Time,
 	endTimes []time.Time, status AuctionStatus,
@@ -96,6 +99,7 @@ func NewBaseAuction(
 	return &BaseAuction{
 		Id:                    id,
 		Type:                  typ,
+		AllowedBidders:        allowedBidders,
 		Auctioneer:            auctioneerAddr,
 		SellingReserveAddress: sellingPoolAddr,
 		PayingReserveAddress:  payingPoolAddr,
@@ -127,6 +131,15 @@ func (ba BaseAuction) GetType() AuctionType {
 
 func (ba *BaseAuction) SetType(typ AuctionType) error {
 	ba.Type = typ
+	return nil
+}
+
+func (ba BaseAuction) GetAllowedBidders() []AllowedBidder {
+	return ba.AllowedBidders
+}
+
+func (ba *BaseAuction) SetAllowedBidders(bidders []AllowedBidder) error {
+	ba.AllowedBidders = bidders
 	return nil
 }
 
