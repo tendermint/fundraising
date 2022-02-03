@@ -237,7 +237,7 @@ func (k Keeper) AddAllowedBidders(ctx sdk.Context, auctionId uint64, bidders []t
 	}
 
 	for _, bidder := range bidders {
-		if bidder.MaxBidAmount.IsNegative() {
+		if !bidder.MaxBidAmount.IsPositive() {
 			return types.ErrInvalidMaxBidAmount
 		}
 	}

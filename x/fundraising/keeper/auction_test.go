@@ -279,6 +279,16 @@ func (s *KeeperTestSuite) TestAddAllowedBidder() {
 			types.ErrEmptyAllowedBidders,
 		},
 		{
+			"zero maximum bid amount value",
+			[]types.AllowedBidder{
+				{
+					Bidder:       s.addr(1).String(),
+					MaxBidAmount: sdk.NewInt(0),
+				},
+			},
+			types.ErrInvalidMaxBidAmount,
+		},
+		{
 			"negative maximum bid amount value",
 			[]types.AllowedBidder{
 				{
@@ -347,6 +357,18 @@ func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 			s.addr(10),
 			sdk.NewInt(300_000_000),
 			sdkerrors.Wrapf(sdkerrors.ErrNotFound, "bidder %s is not found", s.addr(10).String()),
+		},
+		{
+			"zero maximum bid amount value",
+			s.addr(1),
+			sdk.NewInt(0),
+			types.ErrInvalidMaxBidAmount,
+		},
+		{
+			"negative maximum bid amount value",
+			s.addr(1),
+			sdk.NewInt(-1),
+			types.ErrInvalidMaxBidAmount,
 		},
 	} {
 		s.Run(tc.name, func() {
