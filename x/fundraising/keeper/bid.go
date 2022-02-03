@@ -39,11 +39,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		return types.Bid{}, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "coin denom must match with the paying coin denom")
 	}
 
-	if err := k.ReservePayingCoin(ctx, auction.GetId(), msg.GetBidder(), msg.Coin); err != nil {
-		return types.Bid{}, err
-	}
-
-	allowedBiddersMap := make(map[string]sdk.Int) // Bidder | MaxBidAmount
+	allowedBiddersMap := make(map[string]sdk.Int) // map(bidder => maxBidAmount)
 	for _, bidder := range auction.GetAllowedBidders() {
 		allowedBiddersMap[bidder.GetBidder()] = bidder.MaxBidAmount
 	}
@@ -52,6 +48,10 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 	maxBidAmt, found := allowedBiddersMap[msg.Bidder]
 	if !found {
 		return types.Bid{}, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "bidder %s is not allowed to bid", msg.Bidder)
+	}
+
+	if err := k.ReservePayingCoin(ctx, auction.GetId(), msg.GetBidder(), msg.Coin); err != nil {
+		return types.Bid{}, err
 	}
 
 	receiveAmt := msg.Coin.Amount.ToDec().QuoTruncate(msg.Price).TruncateInt()
