@@ -32,7 +32,8 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 	}
 
 	if auction.GetStatus() != types.AuctionStatusStarted {
-		return types.Bid{}, sdkerrors.Wrapf(types.ErrInvalidAuctionStatus, "unable to bid because the auction is in %s", auction.GetStatus().String())
+		return types.Bid{}, sdkerrors.Wrapf(types.ErrInvalidAuctionStatus,
+			"unable to bid because the auction is in %s", auction.GetStatus().String())
 	}
 
 	if auction.GetPayingCoinDenom() != msg.Coin.Denom {
@@ -43,8 +44,24 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		return types.Bid{}, err
 	}
 
+	// Check the bidder existence in the allowed bidder list
+	allowedBidders := make(map[string]sdk.Int)
+	for _, bidder := range auction.GetAllowedBidders() {
+		allowedBidders[bidder.GetBidder()] = bidder.MaxBidAmount
+	}
+
+	maxBidAmt, found := allowedBidders[msg.Bidder]
+	if !found {
+		return types.Bid{}, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "bidder %s is not allowed to bid", msg.Bidder)
+	}
+
 	receiveAmt := msg.Coin.Amount.ToDec().QuoTruncate(msg.Price).TruncateInt()
 	receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, receiveAmt)
+
+	if receiveAmt.GT(maxBidAmt) {
+		return types.Bid{}, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest,
+			"bid amount %s is out of maximum bid amount limit %s", receiveAmt.String(), maxBidAmt.String())
+	}
 
 	// The bidder cannot bid more than the remaining coin
 	remaining := auction.GetRemainingCoin().Sub(receiveCoin)

@@ -84,3 +84,57 @@ func (s *KeeperTestSuite) TestBidSequence() {
 	nextSeq = s.keeper.GetNextSequenceWithUpdate(s.ctx, auction2.GetId())
 	s.Require().Equal(uint64(1), nextSeq)
 }
+
+func (s *KeeperTestSuite) TestPlaceBid() {
+	startedAuction := s.createFixedPriceAuction(
+		s.addr(0),
+		sdk.OneDec(),
+		sdk.NewInt64Coin("denom1", 500_000_000_000),
+		"denom2",
+		[]types.VestingSchedule{},
+		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
+		types.MustParseRFC3339("2022-06-10T00:00:00Z"),
+		true,
+	)
+	auction, found := s.keeper.GetAuction(s.ctx, startedAuction.GetId())
+	s.Require().True(found)
+
+	allowedBidder := s.addr(1)
+	notAllowedBidder := s.addr(2)
+
+	// Add allowed bidder to allowed bidder list
+	err := s.keeper.AddAllowedBidders(s.ctx, auction.GetId(), []types.AllowedBidder{
+		{Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(10_000_000)},
+	})
+	s.Require().NoError(err)
+
+	// The bidder is not allowed
+	s.fundAddr(notAllowedBidder, sdk.NewCoins(sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 5_000_000)))
+	_, err = s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
+		AuctionId: auction.GetId(),
+		Bidder:    notAllowedBidder.String(),
+		Price:     sdk.OneDec(),
+		Coin:      sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 5_000_000),
+	})
+	s.Require().Error(err)
+
+	// Maximum bid amount limit
+	s.fundAddr(allowedBidder, sdk.NewCoins(sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000)))
+	_, err = s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
+		AuctionId: auction.GetId(),
+		Bidder:    allowedBidder.String(),
+		Price:     sdk.OneDec(),
+		Coin:      sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000),
+	})
+	s.Require().Error(err)
+
+	// Happy case
+	s.fundAddr(allowedBidder, sdk.NewCoins(sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 10_000_000)))
+	_, err = s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
+		AuctionId: auction.GetId(),
+		Bidder:    allowedBidder.String(),
+		Price:     sdk.OneDec(),
+		Coin:      sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 10_000_000),
+	})
+	s.Require().NoError(err)
+}
