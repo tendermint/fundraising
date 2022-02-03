@@ -237,6 +237,10 @@ func (k Keeper) AddAllowedBidders(ctx sdk.Context, auctionId uint64, bidders []t
 	}
 
 	for _, bidder := range bidders {
+		if bidder.MaxBidAmount.IsNil() {
+			return types.ErrInvalidMaxBidAmount
+		}
+
 		if !bidder.MaxBidAmount.IsPositive() {
 			return types.ErrInvalidMaxBidAmount
 		}
@@ -267,6 +271,10 @@ func (k Keeper) UpdateAllowedBidder(ctx sdk.Context, auctionId uint64, bidder sd
 
 	if _, found := allowedBiddersMap[bidder.String()]; !found {
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "bidder %s is not found", bidder.String())
+	}
+
+	if maxBidAmount.IsNil() {
+		return types.ErrInvalidMaxBidAmount
 	}
 
 	if !maxBidAmount.IsPositive() {

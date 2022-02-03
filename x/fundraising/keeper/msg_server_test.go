@@ -200,7 +200,14 @@ func (s *KeeperTestSuite) TestMsgPlaceBid() {
 		},
 	} {
 		s.Run(tc.name, func() {
-			_, err := s.msgServer.PlaceBid(ctx, tc.msg)
+			receiveAmt := tc.msg.Coin.Amount.ToDec().QuoTruncate(tc.msg.Price).TruncateInt()
+
+			err := s.keeper.AddAllowedBidders(s.ctx, tc.msg.AuctionId, []types.AllowedBidder{
+				{Bidder: bidder.String(), MaxBidAmount: receiveAmt},
+			})
+			s.Require().NoError(err)
+
+			_, err = s.msgServer.PlaceBid(ctx, tc.msg)
 			if tc.err != nil {
 				s.Require().ErrorIs(err, tc.err)
 				return
