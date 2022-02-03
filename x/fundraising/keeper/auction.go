@@ -260,7 +260,7 @@ func (k Keeper) UpdateAllowedBidder(ctx sdk.Context, auctionId uint64, bidder sd
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", auctionId)
 	}
 
-	// Check the bidder existence in the allowed biider list
+	// Check the bidder existence in the allowed bidder list
 	allowedBidders := make(map[string]sdk.Int)
 	for _, bidder := range auction.GetAllowedBidders() {
 		allowedBidders[bidder.GetBidder()] = bidder.MaxBidAmount
@@ -270,7 +270,7 @@ func (k Keeper) UpdateAllowedBidder(ctx sdk.Context, auctionId uint64, bidder sd
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "bidder %s is not found", bidder.String())
 	}
 
-	if maxBidAmount.IsNegative() {
+	if !maxBidAmount.IsPositive() {
 		return types.ErrInvalidMaxBidAmount
 	}
 
