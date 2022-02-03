@@ -361,11 +361,11 @@ func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 			s.Require().True(found)
 
 			// Check if it is sucessfully updated
-			allowedBidders := make(map[string]sdk.Int)
+			allowedBiddersMap := make(map[string]sdk.Int)
 			for _, bidder := range auction.GetAllowedBidders() {
-				allowedBidders[bidder.GetBidder()] = bidder.MaxBidAmount
+				allowedBiddersMap[bidder.GetBidder()] = bidder.MaxBidAmount
 			}
-			s.Require().Equal(tc.maxBidAmount, allowedBidders[tc.bidder.String()])
+			s.Require().Equal(tc.maxBidAmount, allowedBiddersMap[tc.bidder.String()])
 		})
 	}
 }

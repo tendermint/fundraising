@@ -32,8 +32,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 	}
 
 	if auction.GetStatus() != types.AuctionStatusStarted {
-		return types.Bid{}, sdkerrors.Wrapf(types.ErrInvalidAuctionStatus,
-			"unable to bid because the auction is in %s", auction.GetStatus().String())
+		return types.Bid{}, sdkerrors.Wrapf(types.ErrInvalidAuctionStatus, "unable to bid because the auction status is %s", auction.GetStatus().String())
 	}
 
 	if auction.GetPayingCoinDenom() != msg.Coin.Denom {
@@ -44,13 +43,13 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		return types.Bid{}, err
 	}
 
-	// Check the bidder existence in the allowed bidder list
-	allowedBidders := make(map[string]sdk.Int)
+	allowedBiddersMap := make(map[string]sdk.Int) // Bidder | MaxBidAmount
 	for _, bidder := range auction.GetAllowedBidders() {
-		allowedBidders[bidder.GetBidder()] = bidder.MaxBidAmount
+		allowedBiddersMap[bidder.GetBidder()] = bidder.MaxBidAmount
 	}
 
-	maxBidAmt, found := allowedBidders[msg.Bidder]
+	// The bidder must be in the allowed bidder list in order to bid
+	maxBidAmt, found := allowedBiddersMap[msg.Bidder]
 	if !found {
 		return types.Bid{}, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "bidder %s is not allowed to bid", msg.Bidder)
 	}
@@ -58,6 +57,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 	receiveAmt := msg.Coin.Amount.ToDec().QuoTruncate(msg.Price).TruncateInt()
 	receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, receiveAmt)
 
+	// The receive amount can't be greater than the bidder's maximum bid amount
 	if receiveAmt.GT(maxBidAmt) {
 		return types.Bid{}, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest,
 			"bid amount %s is out of maximum bid amount limit %s", receiveAmt.String(), maxBidAmt.String())
@@ -79,17 +79,16 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		}
 
 		k.SetAuction(ctx, auction)
-
 	} else {
 		// TODO: implement English auction type
 		return types.Bid{}, sdkerrors.Wrap(types.ErrInvalidAuctionType, "not supported auction type in this version")
 	}
 
-	sequenceId := k.GetNextSequenceWithUpdate(ctx, auction.GetId())
+	seqId := k.GetNextSequenceWithUpdate(ctx, auction.GetId())
 
 	bid := types.Bid{
 		AuctionId: auction.GetId(),
-		Sequence:  sequenceId,
+		Sequence:  seqId,
 		Bidder:    msg.Bidder,
 		Price:     msg.Price,
 		Coin:      msg.Coin,
