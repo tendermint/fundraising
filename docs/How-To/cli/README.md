@@ -344,6 +344,7 @@ Result:
       "base_auction": {
         "id": "1",
         "type": "AUCTION_TYPE_FIXED_PRICE",
+        "allowed_bidders": [],
         "auctioneer": "cosmos1e9kp752fc6vs3n7enjcfjenfj9s7eehs3m7fdg",
         "selling_reserve_address": "cosmos18xzvtd72y9j8xyf8a36z5jjhth7qgtcwhh8lz7yee3tvxqn6ll5quh78zq",
         "paying_reserve_address": "cosmos18permjyqvk5flft8ey9egr7hd4ry8tauqt4f9mg9knn4vvtkry9sujucrl",
@@ -402,6 +403,7 @@ Result:
     "base_auction": {
       "id": "1",
       "type": "AUCTION_TYPE_FIXED_PRICE",
+      "allowed_bidders": [],
       "auctioneer": "cosmos1e9kp752fc6vs3n7enjcfjenfj9s7eehs3m7fdg",
       "selling_reserve_address": "cosmos18xzvtd72y9j8xyf8a36z5jjhth7qgtcwhh8lz7yee3tvxqn6ll5quh78zq",
       "paying_reserve_address": "cosmos18permjyqvk5flft8ey9egr7hd4ry8tauqt4f9mg9knn4vvtkry9sujucrl",
