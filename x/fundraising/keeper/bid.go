@@ -76,11 +76,11 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		return types.Bid{}, sdkerrors.Wrap(types.ErrInvalidAuctionType, "not supported auction type in this version")
 	}
 
-	sequenceId := k.GetNextSequenceWithUpdate(ctx, auction.GetId())
+	seqId := k.GetNextSequenceWithUpdate(ctx, auction.GetId())
 
 	bid := types.Bid{
 		AuctionId: auction.GetId(),
-		Sequence:  sequenceId,
+		Sequence:  seqId,
 		Bidder:    msg.Bidder,
 		Price:     msg.Price,
 		Coin:      msg.Coin,
