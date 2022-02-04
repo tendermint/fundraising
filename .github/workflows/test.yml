@@ -59,6 +59,5 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
-          files: ./coverage1.xml,./coverage2.xml
           fail_ci_if_error: true
           verbose: true
