@@ -14,10 +14,9 @@ func main() {
 		app.Name,
 		app.AccountAddressPrefix,
 		app.DefaultNodeHome,
-		app.Name,
+		app.DefaultChainID,
 		app.ModuleBasics,
 		app.New,
-		// this line is used by starport scaffolding # root/arguments
 	)
 	if err := svrcmd.Execute(rootCmd, app.DefaultNodeHome); err != nil {
 		os.Exit(1)

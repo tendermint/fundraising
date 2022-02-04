@@ -77,8 +77,8 @@ import (
 	ibchost "github.com/cosmos/ibc-go/modules/core/24-host"
 	ibckeeper "github.com/cosmos/ibc-go/modules/core/keeper"
 	"github.com/spf13/cast"
-	"github.com/tendermint/spm/cosmoscmd"
-	"github.com/tendermint/spm/openapiconsole"
+	"github.com/tendermint/starport/starport/pkg/cosmoscmd"
+	"github.com/tendermint/starport/starport/pkg/openapiconsole"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	"github.com/tendermint/tendermint/libs/log"
@@ -95,6 +95,7 @@ import (
 const (
 	AccountAddressPrefix = "cosmos"
 	Name                 = "fundraising"
+	DefaultChainID       = "fundraising-1"
 )
 
 // this line is used by starport scaffolding # stargate/wasm/app/enabledProposals
