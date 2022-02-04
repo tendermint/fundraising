@@ -43,25 +43,33 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		return types.Bid{}, err
 	}
 
-	receiveAmt := msg.Coin.Amount.ToDec().QuoTruncate(msg.Price).TruncateInt()
-	receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, receiveAmt)
-
-	// The bidder cannot bid more than the remaining coin
-	remaining := auction.GetRemainingCoin().Sub(receiveCoin)
-	if remaining.IsNegative() {
-		return types.Bid{}, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "request coin must be lower than or equal to the remaining total selling coin")
-	}
-
+	// Handle logics depending on auction type
 	if auction.GetType() == types.AuctionTypeFixedPrice {
 		if !msg.Price.Equal(auction.GetStartPrice()) {
-			return types.Bid{}, sdkerrors.Wrap(types.ErrInvalidStartPrice, "bid price must be equal to the start price of the auction")
+			return types.Bid{},
+				sdkerrors.Wrapf(types.ErrInvalidStartPrice, "expected start price %s, got %s", auction.GetStartPrice(), msg.Price)
 		}
 
+		receiveAmt := msg.Coin.Amount.ToDec().QuoTruncate(msg.Price).TruncateInt()
+		receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, receiveAmt)
+
+		if auction.GetRemainingCoin().IsLT(receiveCoin) {
+			return types.Bid{},
+				sdkerrors.Wrapf(types.ErrInsufficientRemainingAmount, "remaining coin amount %s", auction.GetRemainingCoin())
+		}
+
+		remaining := auction.GetRemainingCoin().Sub(receiveCoin)
 		if err := auction.SetRemainingCoin(remaining); err != nil {
 			return types.Bid{}, err
 		}
-
 		k.SetAuction(ctx, auction)
+
+		ctx.EventManager().EmitEvents(sdk.Events{
+			sdk.NewEvent(
+				types.EventTypePlaceBid,
+				sdk.NewAttribute(types.AttributeKeyBidAmount, receiveCoin.String()),
+			),
+		})
 
 	} else {
 		// TODO: implement English auction type
@@ -89,7 +97,6 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 			sdk.NewAttribute(types.AttributeKeyBidderAddress, msg.GetBidder().String()),
 			sdk.NewAttribute(types.AttributeKeyBidPrice, msg.Price.String()),
 			sdk.NewAttribute(types.AttributeKeyBidCoin, msg.Coin.String()),
-			sdk.NewAttribute(types.AttributeKeyBidAmount, receiveCoin.String()),
 		),
 	})
 
