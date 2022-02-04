@@ -100,7 +100,7 @@ message QueryBidsResponse {
 }
 
 // QueryBidRequest is the request type for the Query/Sequence RPC method.
-message QueryBidRequest {  
+message QueryBidRequest {
   uint64 auction_id = 1;
   uint64 sequence = 2;
 }
