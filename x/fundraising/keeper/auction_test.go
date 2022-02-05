@@ -223,6 +223,39 @@ func (s *KeeperTestSuite) TestCancelAuction() {
 	s.Require().True(coinEq(sdk.NewCoin(sellingCoinDenom, sdk.ZeroInt()), sellingReserve))
 }
 
+func (s *KeeperTestSuite) TestFixedPriceAuctionRemainingCoin() {
+	auction := s.createFixedPriceAuction(
+		s.addr(0),
+		sdk.OneDec(),
+		sdk.NewInt64Coin("denom1", 1_000_000_000),
+		"denom2",
+		[]types.VestingSchedule{},
+		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
+		types.MustParseRFC3339("2022-05-01T00:00:00Z"),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	s.placeBid(auction.GetId(), s.addr(1), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 200_000_000), true)
+	s.placeBid(auction.GetId(), s.addr(2), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 200_000_000), true)
+	s.placeBid(auction.GetId(), s.addr(3), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 250_000_000), true)
+	s.placeBid(auction.GetId(), s.addr(4), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 250_000_000), true)
+
+	// Test insufficient remaining coin amount
+	coin := sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 300_000_000)
+	s.fundAddr(s.addr(5), sdk.NewCoins(coin))
+	receiveAmt := coin.Amount.ToDec().QuoTruncate(sdk.OneDec()).TruncateInt()
+	s.addAllowedBidder(auction.GetId(), s.addr(5), receiveAmt)
+
+	_, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
+		AuctionId: auction.GetId(),
+		Bidder:    s.addr(5).String(),
+		Price:     sdk.OneDec(),
+		Coin:      coin,
+	})
+	s.Require().ErrorIs(err, types.ErrInsufficientRemainingAmount)
+}
+
 func (s *KeeperTestSuite) TestAddAllowedBidder() {
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(0),
@@ -310,6 +343,60 @@ func (s *KeeperTestSuite) TestAddAllowedBidder() {
 	}
 }
 
+func (s *KeeperTestSuite) TestAddAllowedBidderLength() {
+	startedAuction := s.createFixedPriceAuction(
+		s.addr(0),
+		sdk.MustNewDecFromStr("0.5"),
+		sdk.NewInt64Coin("denom1", 500_000_000_000),
+		"denom2",
+		[]types.VestingSchedule{},
+		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
+		types.MustParseRFC3339("2022-06-10T00:00:00Z"),
+		true,
+	)
+	auction, found := s.keeper.GetAuction(s.ctx, startedAuction.GetId())
+	s.Require().True(found)
+	s.Require().Len(auction.GetAllowedBidders(), 0)
+
+	// Add some bidders
+	err := s.keeper.AddAllowedBidders(s.ctx, auction.GetId(), []types.AllowedBidder{
+		{
+			Bidder:       s.addr(1).String(),
+			MaxBidAmount: sdk.NewInt(100_000_000),
+		},
+		{
+			Bidder:       s.addr(2).String(),
+			MaxBidAmount: sdk.NewInt(500_000_000),
+		},
+	})
+	s.Require().NoError(err)
+
+	auction, found = s.keeper.GetAuction(s.ctx, auction.GetId())
+	s.Require().True(found)
+	s.Require().Len(auction.GetAllowedBidders(), 2)
+
+	// Add more bidders
+	err = s.keeper.AddAllowedBidders(s.ctx, auction.GetId(), []types.AllowedBidder{
+		{
+			Bidder:       s.addr(3).String(),
+			MaxBidAmount: sdk.NewInt(100_000_000),
+		},
+		{
+			Bidder:       s.addr(4).String(),
+			MaxBidAmount: sdk.NewInt(100_000_000),
+		},
+		{
+			Bidder:       s.addr(5).String(),
+			MaxBidAmount: sdk.NewInt(100_000_000),
+		},
+	})
+	s.Require().NoError(err)
+
+	auction, found = s.keeper.GetAuction(s.ctx, auction.GetId())
+	s.Require().True(found)
+	s.Require().Len(auction.GetAllowedBidders(), 5)
+}
+
 func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(0),
@@ -390,40 +477,4 @@ func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 			s.Require().Equal(tc.maxBidAmount, allowedBiddersMap[tc.bidder.String()])
 		})
 	}
-}
-
-func (s *KeeperTestSuite) TestFixedPriceAuction_RemainingCoin() {
-	auction := s.createFixedPriceAuction(
-		s.addr(0),
-		sdk.OneDec(),
-		sdk.NewInt64Coin("denom1", 1_000_000_000),
-		"denom2",
-		[]types.VestingSchedule{},
-		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2022-05-01T00:00:00Z"),
-		true,
-	)
-	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
-
-	s.placeBid(auction.GetId(), s.addr(1), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 200_000_000), true)
-	s.placeBid(auction.GetId(), s.addr(2), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 200_000_000), true)
-	s.placeBid(auction.GetId(), s.addr(3), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 250_000_000), true)
-	s.placeBid(auction.GetId(), s.addr(4), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 250_000_000), true)
-
-	// Test insufficient remaining coin amount
-	coin := sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 300_000_000)
-	s.fundAddr(s.addr(5), sdk.NewCoins(coin))
-	receiveAmt := coin.Amount.ToDec().QuoTruncate(sdk.OneDec()).TruncateInt()
-	err := s.keeper.AddAllowedBidders(s.ctx, auction.GetId(), []types.AllowedBidder{
-		{Bidder: s.addr(5).String(), MaxBidAmount: receiveAmt},
-	})
-	s.Require().NoError(err)
-
-	_, err = s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
-		AuctionId: auction.GetId(),
-		Bidder:    s.addr(5).String(),
-		Price:     sdk.OneDec(),
-		Coin:      coin,
-	})
-	s.Require().ErrorIs(err, types.ErrInsufficientRemainingAmount)
 }

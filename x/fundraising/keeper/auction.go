@@ -246,8 +246,11 @@ func (k Keeper) AddAllowedBidders(ctx sdk.Context, auctionId uint64, bidders []t
 		}
 	}
 
-	// Add one or more bidders to allowed bidder list
-	if err := auction.SetAllowedBidders(bidders); err != nil {
+	// Append new bidders from the existing ones
+	allowedBidders := auction.GetAllowedBidders()
+	allowedBidders = append(allowedBidders, bidders...)
+
+	if err := auction.SetAllowedBidders(allowedBidders); err != nil {
 		return err
 	}
 	k.SetAuction(ctx, auction)
