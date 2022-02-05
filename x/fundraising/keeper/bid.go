@@ -32,11 +32,11 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 	}
 
 	if auction.GetStatus() != types.AuctionStatusStarted {
-		return types.Bid{}, sdkerrors.Wrapf(types.ErrInvalidAuctionStatus, "unable to bid because the auction status is %s", auction.GetStatus().String())
+		return types.Bid{}, types.ErrInvalidAuctionStatus
 	}
 
 	if auction.GetPayingCoinDenom() != msg.Coin.Denom {
-		return types.Bid{}, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "coin denom must match with the paying coin denom")
+		return types.Bid{}, types.ErrInvalidPayingCoinDenom
 	}
 
 	allowedBiddersMap := make(map[string]sdk.Int) // map(bidder => maxBidAmount)
@@ -54,31 +54,39 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		return types.Bid{}, err
 	}
 
-	receiveAmt := msg.Coin.Amount.ToDec().QuoTruncate(msg.Price).TruncateInt()
-	receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, receiveAmt)
-
-	// The receive amount can't be greater than the bidder's maximum bid amount
-	if receiveAmt.GT(maxBidAmt) {
-		return types.Bid{}, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest,
-			"bid amount %s is out of maximum bid amount limit %s", receiveAmt.String(), maxBidAmt.String())
-	}
-
-	// The bidder cannot bid more than the remaining coin
-	remaining := auction.GetRemainingCoin().Sub(receiveCoin)
-	if remaining.IsNegative() {
-		return types.Bid{}, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "request coin must be lower than or equal to the remaining total selling coin")
-	}
-
+	// Handle logics depending on auction type
 	if auction.GetType() == types.AuctionTypeFixedPrice {
 		if !msg.Price.Equal(auction.GetStartPrice()) {
-			return types.Bid{}, sdkerrors.Wrap(types.ErrInvalidStartPrice, "bid price must be equal to the start price of the auction")
+			return types.Bid{},
+				sdkerrors.Wrapf(types.ErrInvalidStartPrice, "expected start price %s, got %s", auction.GetStartPrice(), msg.Price)
 		}
 
+		receiveAmt := msg.Coin.Amount.ToDec().QuoTruncate(msg.Price).TruncateInt()
+		receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, receiveAmt)
+
+		// The receive amount can't be greater than the bidder's maximum bid amount
+		if receiveAmt.GT(maxBidAmt) {
+			return types.Bid{},
+				sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "bid amount %s, maximum bid amount %s", receiveAmt, maxBidAmt)
+		}
+
+		if auction.GetRemainingCoin().IsLT(receiveCoin) {
+			return types.Bid{},
+				sdkerrors.Wrapf(types.ErrInsufficientRemainingAmount, "remaining coin amount %s", auction.GetRemainingCoin())
+		}
+
+		remaining := auction.GetRemainingCoin().Sub(receiveCoin)
 		if err := auction.SetRemainingCoin(remaining); err != nil {
 			return types.Bid{}, err
 		}
-
 		k.SetAuction(ctx, auction)
+
+		ctx.EventManager().EmitEvents(sdk.Events{
+			sdk.NewEvent(
+				types.EventTypePlaceBid,
+				sdk.NewAttribute(types.AttributeKeyBidAmount, receiveCoin.String()),
+			),
+		})
 	} else {
 		// TODO: implement English auction type
 		return types.Bid{}, sdkerrors.Wrap(types.ErrInvalidAuctionType, "not supported auction type in this version")
@@ -105,7 +113,6 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 			sdk.NewAttribute(types.AttributeKeyBidderAddress, msg.GetBidder().String()),
 			sdk.NewAttribute(types.AttributeKeyBidPrice, msg.Price.String()),
 			sdk.NewAttribute(types.AttributeKeyBidCoin, msg.Coin.String()),
-			sdk.NewAttribute(types.AttributeKeyBidAmount, receiveCoin.String()),
 		),
 	})
 

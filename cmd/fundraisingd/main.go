@@ -4,7 +4,7 @@ import (
 	"os"
 
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
-	"github.com/tendermint/spm/cosmoscmd"
+	"github.com/tendermint/starport/starport/pkg/cosmoscmd"
 
 	"github.com/tendermint/fundraising/app"
 )
@@ -14,10 +14,9 @@ func main() {
 		app.Name,
 		app.AccountAddressPrefix,
 		app.DefaultNodeHome,
-		app.Name,
+		app.DefaultChainID,
 		app.ModuleBasics,
 		app.New,
-		// this line is used by starport scaffolding # root/arguments
 	)
 	if err := svrcmd.Execute(rootCmd, app.DefaultNodeHome); err != nil {
 		os.Exit(1)

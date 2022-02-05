@@ -179,14 +179,14 @@ func (s *KeeperTestSuite) TestMsgPlaceBid() {
 			sdkerrors.Wrap(types.ErrInvalidStartPrice, "bid price must be equal to start price"),
 		},
 		{
-			"invalid coin demo",
+			"invalid paying coin denom",
 			types.NewMsgPlaceBid(
 				auction.GetId(),
 				bidder.String(),
 				sdk.MustNewDecFromStr("0.5"),
 				sdk.NewInt64Coin(auction.GetSellingCoin().Denom, 1_000_000),
 			),
-			sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "coin denom must match with the paying coin denom"),
+			types.ErrInvalidPayingCoinDenom,
 		},
 		{
 			"insufficient funds",
