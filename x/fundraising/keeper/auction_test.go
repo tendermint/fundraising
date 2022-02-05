@@ -221,3 +221,32 @@ func (s *KeeperTestSuite) TestCancelAuction() {
 	sellingReserve := s.getBalance(auction.GetSellingReserveAddress(), sellingCoinDenom)
 	s.Require().True(coinEq(sdk.NewCoin(sellingCoinDenom, sdk.ZeroInt()), sellingReserve))
 }
+
+func (s *KeeperTestSuite) TestFixedPriceAuction_RemainingCoin() {
+	auction := s.createFixedPriceAuction(
+		s.addr(0),
+		sdk.OneDec(),
+		sdk.NewInt64Coin("denom1", 1_000_000_000),
+		"denom2",
+		[]types.VestingSchedule{},
+		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
+		types.MustParseRFC3339("2022-05-01T00:00:00Z"),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	s.placeBid(auction.GetId(), s.addr(1), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 200_000_000), true)
+	s.placeBid(auction.GetId(), s.addr(2), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 200_000_000), true)
+	s.placeBid(auction.GetId(), s.addr(3), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 250_000_000), true)
+	s.placeBid(auction.GetId(), s.addr(4), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 250_000_000), true)
+
+	// Test insufficient remaining coin amount
+	s.fundAddr(s.addr(5), sdk.NewCoins(sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 300_000_000)))
+	_, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
+		AuctionId: auction.GetId(),
+		Bidder:    s.addr(5).String(),
+		Price:     sdk.OneDec(),
+		Coin:      sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 300_000_000),
+	})
+	s.Require().ErrorIs(err, types.ErrInsufficientRemainingAmount)
+}
