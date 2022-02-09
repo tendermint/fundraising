@@ -53,12 +53,11 @@ When an auctioneer creates this batch auction, it must determine the following p
 
 A bidder can do the following behaviors during the auction period.
 1. Place a new bid
-    - This auction provides two options the bidders for bidding: 1) How-Much-Worth-To-Buy and 2) How-Many-Tokens-To-Buy
-        - (**Option A**) How-Much-Worth-To-Buy (fixed paying tokens/varying selling tokens): A bidder offers with a fixed amount of the paying tokens and, if win, the bidder gets the selling tokens, where the amount of the selling tokens varies depending on the offering price determined after the auction period ends.
-        - (**Option B**) How-Many-Tokens-To-Buy (varying paying tokens/fixed selling tokens): A bidder offers for a fixed amount of the selling token that the bidder wants to get if win. After the auction period ends, the residual paying tokens will be refunded depending on the offering price.
-    - Each bidder can choose one of the above two options. The two options mean a bidder choose either 1) how much worth of the selling tokens the bidder wants to buy, or 2) how many selling tokens the bidder wants to buy, respectively.
+    - This auction provides two options for bidder to choose: 1) How-Much-Worth-To-Buy and 2) How-Many-Tokens-To-Buy
+        - (**Option A**) How-Much-Worth-To-Buy (fixed paying tokens/varying selling tokens): A bidder offers with a fixed amount of the paying tokens and, if it wins, the bidder gets the selling tokens, where the amount of the selling tokens varies depending on the offering price determined after the auction period ends.
+        - (**Option B**) How-Many-Tokens-To-Buy (varying paying tokens/fixed selling tokens): A bidder offers for a fixed amount of the selling token that the bidder wants to get if it wins. After the auction period ends, the residual paying tokens will be refunded depending on the offering price.
 2. Replace the existing bid by a new one only with higher price and/or more quantities
-    - The bidder can replace its existing bid, which is previously placed,  by a new one with the same option between Option A and Option B.
+    - The bidder can replace its existing bid, which is previously placed, by a new one with the same option between Option A and Option B.
 
 A bidder cannot do the following behaviors during the auction period.
 
