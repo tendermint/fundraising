@@ -72,4 +72,4 @@ The auction will end when the auction end time is arrived.
 #### How the offering price is determined
 
 Once the auction period ends, the bids are ordered in descending order of the bid prices to determine the offering price. The offering price is determined by finding the lowest price among the bid prices satisfying that the total amount of receiving tokens placed at more than or equal to the price is less the entire offering quantity.
-The bidders who placed at the higher price than the offering price become the winning bidders and get the receiving tokens at the same price, which is the offering price.
+The bidders who placed at the higher price than the offering price become the winning bidders and get the receiving tokens at the same price, which is the offering price. 
