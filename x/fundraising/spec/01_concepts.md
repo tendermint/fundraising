@@ -8,13 +8,13 @@ The `x/fundraising` Cosmos SDK module is a module to raise funds as an auction o
 
 ## Auction Types
 
-This fundraising module provides two different types of auctions. 
+This fundraising module provides two different types of auctions: 1) Fixed Price Auction and 2) Batch Auction.
 
-### Fixed Price Auction
+## Fixed Price Auction
 
-This fixed price auction is to sell a given amount of tokens in a first-come, first-served basis.
+This fixed price auction is to sell a given amount of tokens on a first-come, first-served basis.
 
-#### What an auctioneer does
+### What an auctioneer does
 When an auctioneer creates a fixed price auction, it must determine the following parameters.
 
 - **Selling Token**: the denom of tokens to be auctioned,
@@ -24,22 +24,22 @@ When an auctioneer creates a fixed price auction, it must determine the followin
 - **Auction End Time**: when the auction ends,
 - **Offering Quantity**: total amount of selling tokens to be auctioned.
 
-#### What bidders can/cannot do
+### What bidders can/cannot do
 
 A bidder can place a new bid with a fixed amount of paying tokens. 
 A bidder cannot modify or cancel the existing bid it previously placed.
 
-#### When the auction ends
+### When the auction ends
 
 The auction will end either when Auction End Time is arrived or when the entire Offering Quantity is sold out.
 
 
 
-### Batch Auction
+## Batch Auction
 
 This batch auction allows each bidder to participate in the auction by placing limit orders with the price chosen freely and at any time within the auction period. An order book is created to record the bids with various bid prices.
 
-#### What an auctioneer does
+### What an auctioneer does
 
 When an auctioneer creates this batch auction, it must determine the following parameters.
 
@@ -49,7 +49,7 @@ When an auctioneer creates this batch auction, it must determine the following p
 - **Auction End Time**: when the auction ends,
 - **Offering Quantity**: total amount of selling tokens to be auctioned.
 
-#### What bidders can/cannot do
+### What bidders can/cannot do
 
 A bidder can do the following behaviors during the auction period:
 1. Place a new bid
@@ -65,11 +65,11 @@ A bidder cannot do the following behaviors during the auction period:
 1. Cancel the existing bid
 2. Replace the existing bid by a new one with lower price or fewer quantities.
 
-#### When the auction ends
+### When the auction ends
 
 The auction will end when Auction End Time is arrived.
 
-#### How the offering price is determined
+### How the offering price is determined
 
 Once the auction period ends, the bids are ordered in descending order of the bid prices to determine the offering price. The offering price is determined by finding the lowest price among the bid prices satisfying that the total amount of selling tokens placed at more than or equal to the price is less the entire Offering Quantity.
 The bidders who placed at the higher price than the offering price become the winning bidders and get the selling tokens at the same price, which is the offering price. 
