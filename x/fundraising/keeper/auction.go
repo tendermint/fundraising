@@ -138,7 +138,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 	baseAuction := types.NewBaseAuction(
 		nextId,
 		types.AuctionTypeFixedPrice,
-		[]types.AllowedBidder{}, // it is always nil when an auction is created
+		nil, // it is always nil when an auction is created
 		auctioneerAddr.String(),
 		types.SellingReserveAddress(nextId).String(),
 		types.PayingReserveAddress(nextId).String(),
@@ -226,7 +226,7 @@ func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) (typ
 // AddAllowedBidders is a function for an external module and it simply adds new bidder(s) to AllowedBidder list.
 // Note that it doesn't do auctioneer verification because the module is generalized for broader use cases.
 // It is designed to delegate to an external module to add necessary verification and logics depending on their use case.
-func (k Keeper) AddAllowedBidders(ctx sdk.Context, auctionId uint64, bidders []types.AllowedBidder) error {
+func (k Keeper) AddAllowedBidders(ctx sdk.Context, auctionId uint64, bidders []*types.AllowedBidder) error {
 	auction, found := k.GetAuction(ctx, auctionId)
 	if !found {
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", auctionId)
@@ -236,14 +236,8 @@ func (k Keeper) AddAllowedBidders(ctx sdk.Context, auctionId uint64, bidders []t
 		return types.ErrEmptyAllowedBidders
 	}
 
-	for _, bidder := range bidders {
-		if bidder.MaxBidAmount.IsNil() {
-			return types.ErrInvalidMaxBidAmount
-		}
-
-		if !bidder.MaxBidAmount.IsPositive() {
-			return types.ErrInvalidMaxBidAmount
-		}
+	if err := types.ValidatorAllowedBidders(bidders); err != nil {
+		return err
 	}
 
 	// Append new bidders from the existing ones
@@ -267,15 +261,6 @@ func (k Keeper) UpdateAllowedBidder(ctx sdk.Context, auctionId uint64, bidder sd
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", auctionId)
 	}
 
-	allowedBiddersMap := make(map[string]sdk.Int)
-	for _, bidder := range auction.GetAllowedBidders() {
-		allowedBiddersMap[bidder.GetBidder()] = bidder.MaxBidAmount
-	}
-
-	if _, found := allowedBiddersMap[bidder.String()]; !found {
-		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "bidder %s is not found", bidder.String())
-	}
-
 	if maxBidAmount.IsNil() {
 		return types.ErrInvalidMaxBidAmount
 	}
@@ -284,11 +269,22 @@ func (k Keeper) UpdateAllowedBidder(ctx sdk.Context, auctionId uint64, bidder sd
 		return types.ErrInvalidMaxBidAmount
 	}
 
-	// Update the bidder's maximum bid amount
-	if err := auction.SetAllowedBidders([]types.AllowedBidder{{
-		Bidder:       bidder.String(),
-		MaxBidAmount: maxBidAmount,
-	}}); err != nil {
+	allowedBidders := auction.GetAllowedBidders()
+	allowedBiddersMap := make(map[string]sdk.Int) // map(bidderAddress => maxBidAmount)
+
+	for _, b := range allowedBidders {
+		if b.Bidder == bidder.String() {
+			b.MaxBidAmount = maxBidAmount // update the bidder's maximum bid amount
+		}
+
+		allowedBiddersMap[b.GetBidder()] = b.MaxBidAmount
+	}
+
+	if _, found := allowedBiddersMap[bidder.String()]; !found {
+		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "bidder %s is not found", bidder.String())
+	}
+
+	if err := auction.SetAllowedBidders(allowedBidders); err != nil {
 		return err
 	}
 	k.SetAuction(ctx, auction)

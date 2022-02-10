@@ -84,7 +84,7 @@ func (s *ModuleTestSuite) placeBid(auctionId uint64, bidder sdk.AccAddress, pric
 
 	receiveAmt := coin.Amount.ToDec().QuoTruncate(price).TruncateInt()
 
-	err := s.keeper.AddAllowedBidders(s.ctx, auctionId, []types.AllowedBidder{
+	err := s.keeper.AddAllowedBidders(s.ctx, auctionId, []*types.AllowedBidder{
 		{Bidder: bidder.String(), MaxBidAmount: receiveAmt},
 	})
 	s.Require().NoError(err)
@@ -112,6 +112,16 @@ func (s *ModuleTestSuite) addr(addrNum int) sdk.AccAddress {
 
 func (s *ModuleTestSuite) fundAddr(addr sdk.AccAddress, coins sdk.Coins) {
 	err := simapp.FundAccount(s.app.BankKeeper, s.ctx, addr, coins)
+	s.Require().NoError(err)
+}
+
+func (s *ModuleTestSuite) addAllowedBidder(auctionId uint64, bidder sdk.AccAddress, maxBidAmount sdk.Int) {
+	err := s.keeper.AddAllowedBidders(s.ctx, auctionId, []*types.AllowedBidder{
+		{
+			Bidder:       bidder.String(),
+			MaxBidAmount: maxBidAmount,
+		},
+	})
 	s.Require().NoError(err)
 }
 
