@@ -17,12 +17,12 @@ This fixed price auction is to sell a given amount of tokens on a first-come, fi
 ### What an auctioneer does:
 When an auctioneer creates a fixed price auction, it must determine the following parameters.
 
-- **Selling Token**: the denom of tokens to be auctioned,
-- **Paying Token**: the denom of tokens to be used for payment,
 - **Price**: fixed amount of the paying tokens to get a selling token (i.e., amount of paying tokens per selling token),
+- **Selling Coin**: the denom and total amount of selling coin to be auctioned,
+- **Paying Coin Denom**: the denom of coin to be used for payment,
+- **Vesting Schedules**: the vesting schedules to receive the sold amounts,
 - **Auction Start Time**: when the auction starts,
-- **Auction End Time**: when the auction ends,
-- **Offering Quantity**: total amount of selling tokens to be auctioned.
+- **Auction End Time**: when the auction ends.
 
 ### What a bidder can/cannot do:
 
