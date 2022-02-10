@@ -56,3 +56,21 @@ type MsgPlaceBid struct {
 	Coin      sdk.Coin // paying amount of coin that the bidder bids
 }
 ```
+
+
+## MsgAddAllowedBidder
+
+This message is a custom message that is created for testing purpose only. It adds an allowed bidder to `AllowedBidders` for the auction. 
+It is accessible when you build `fundraisingd` binary by the following command:
+
+```bash
+make install-testing
+```
+
+```go
+// MsgAddAllowedBidder defines a SDK message to add an allowed bidder
+type MsgAddAllowedBidder struct {
+	AuctionId     uint64        // the id of the auction
+	AllowedBidder AllowedBidder // the bidder and their maximum bid amount
+}
+```

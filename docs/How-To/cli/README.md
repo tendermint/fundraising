@@ -16,6 +16,7 @@ To test out the following commands, you must set up a local network. By simply r
     * [CreateEnglishAuction](#CreateEnglishAuction)
     * [CancelAuction](#CancelAuction)
     * [PlaceBid](#PlaceBid)
+    * [AddAllowedBidder](#AddAllowedBidder)
 - [Query](#Query)
     * [Params](#Params)
     * [Auctions](#Auctions)
@@ -224,6 +225,10 @@ Result:
 
 ### PlaceBid
 
+**Important Note**: the fundraising module is designed in a way that allowed bidders of the auction is delegated to an external module. When an auction is created, the auction is closed meaning that no one can place a bid for the auction unless they are added in `AllowedBidders` list.  
+
+For testing purpose, you can use `MsgAddAllowedBidder` to add an allowed bidder for the auction and this message is only accessible when you build the `fundraisingd` by `make install-testing`.
+
 Example command:
 
 ```bash
@@ -285,6 +290,27 @@ Result:
     "JVOzqwLIV/GjTwhZag1z+nfwHCFEHpDYLL79lSclhVAjPNBVaJKnbCcTMjxUBESGs1tcyxQuB+mn2GV8ZnrTCQ=="
   ]
 }
+```
+
+### AddAllowedBidder
+
+Example command:
+
+```bash
+# Add steve's address to allowed bidder list
+fundraisingd tx fundraising add-allowed-bidder 1 1000000000 \
+--chain-id fundraising \
+--from steve \
+--keyring-backend test \
+--broadcast-mode block \
+--yes \
+--output json | jq
+```
+
+Result:
+
+```json
+
 ```
 
 ## Query
