@@ -39,6 +39,9 @@ type AuctionI interface {
 	GetType() AuctionType
 	SetType(AuctionType) error
 
+	GetAllowedBidders() []*AllowedBidder
+	SetAllowedBidders([]*AllowedBidder) error
+
 	GetAuctioneer() sdk.AccAddress
 	SetAuctioneer(sdk.AccAddress) error
 
@@ -87,8 +90,8 @@ type AuctionI interface {
 // NewBaseAuction creates a new BaseAuction object
 //nolint:interfacer
 func NewBaseAuction(
-	id uint64, typ AuctionType, auctioneerAddr string, sellingPoolAddr string,
-	payingPoolAddr string, startPrice sdk.Dec, sellingCoin sdk.Coin,
+	id uint64, typ AuctionType, allowedBidders []*AllowedBidder, auctioneerAddr string,
+	sellingPoolAddr string, payingPoolAddr string, startPrice sdk.Dec, sellingCoin sdk.Coin,
 	payingCoinDenom string, vestingPoolAddr string, vestingSchedules []VestingSchedule,
 	winningPrice sdk.Dec, remainingCoin sdk.Coin, startTime time.Time,
 	endTimes []time.Time, status AuctionStatus,
@@ -96,6 +99,7 @@ func NewBaseAuction(
 	return &BaseAuction{
 		Id:                    id,
 		Type:                  typ,
+		AllowedBidders:        allowedBidders,
 		Auctioneer:            auctioneerAddr,
 		SellingReserveAddress: sellingPoolAddr,
 		PayingReserveAddress:  payingPoolAddr,
@@ -127,6 +131,15 @@ func (ba BaseAuction) GetType() AuctionType {
 
 func (ba *BaseAuction) SetType(typ AuctionType) error {
 	ba.Type = typ
+	return nil
+}
+
+func (ba BaseAuction) GetAllowedBidders() []*AllowedBidder {
+	return ba.AllowedBidders
+}
+
+func (ba *BaseAuction) SetAllowedBidders(bidders []*AllowedBidder) error {
+	ba.AllowedBidders = bidders
 	return nil
 }
 
@@ -280,9 +293,10 @@ func (ba BaseAuction) Validate() error {
 	if err := sdk.ValidateDenom(ba.PayingCoinDenom); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid paying coin denom: %v", err)
 	}
-	// TODO: Reconsider if there's any case that using [0] becomes an issue
-	// English auction always has end time
-	if err := ValidateVestingSchedules(ba.VestingSchedules, ba.EndTimes[0]); err != nil {
+	if err := ValidateVestingSchedules(ba.VestingSchedules, ba.EndTimes[len(ba.EndTimes)-1]); err != nil {
+		return err
+	}
+	if err := ValidatorAllowedBidders(ba.AllowedBidders); err != nil {
 		return err
 	}
 	return nil
@@ -417,4 +431,17 @@ func PayingReserveAddress(auctionId uint64) sdk.AccAddress {
 // VestingReserveAddress returns an account for the vesting reserve address with the given auction id.
 func VestingReserveAddress(auctionId uint64) sdk.AccAddress {
 	return DeriveAddress(ReserveAddressType, ModuleName, VestingReserveAddressPrefix+ModuleAddressNameSplitter+fmt.Sprint(auctionId))
+}
+
+// ValidatorAllowedBidders validates allowed bidders.
+func ValidatorAllowedBidders(bidders []*AllowedBidder) error {
+	for _, bidder := range bidders {
+		if bidder.MaxBidAmount.IsNil() {
+			return ErrInvalidMaxBidAmount
+		}
+		if !bidder.MaxBidAmount.IsPositive() {
+			return ErrInvalidMaxBidAmount
+		}
+	}
+	return nil
 }
