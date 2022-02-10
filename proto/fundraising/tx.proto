@@ -1,7 +1,6 @@
 syntax = "proto3";
 package tendermint.fundraising;
 
-// this line is used by starport scaffolding # proto/tx/import
 import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
 import "google/protobuf/timestamp.proto";
@@ -11,20 +10,25 @@ option go_package = "github.com/tendermint/fundraising/x/fundraising/types";
 
 // Msg defines the Msg service.
 service Msg {
-  // this line is used by starport scaffolding # proto/tx/rpc
-  // Submit a create fixed price auction message.
+  // CreateFixedPriceAuction defines a method to create a FixedPrice auction
+  // message.
   rpc CreateFixedPriceAuction(MsgCreateFixedPriceAuction)
       returns (MsgCreateFixedPriceAuctionResponse);
 
-  // Submit a create english auction message.
+  // CreateEnglishAuction defines a method to create an English auction message
   rpc CreateEnglishAuction(MsgCreateEnglishAuction)
       returns (MsgCreateEnglishAuctionResponse);
 
-  // Submit a cancel auction message.
+  // CancelAuction defines a method to cancel the auction message.
   rpc CancelAuction(MsgCancelAuction) returns (MsgCancelAuctionResponse);
 
-  // Submit a PlaceBid message to the certain fundraising.
+  // PlaceBid defines a method to place a bid message.
   rpc PlaceBid(MsgPlaceBid) returns (MsgPlaceBidResponse);
+
+  // AddAllowedBidder defines a method sto add a single allowed bidder message.
+  // This is for the testing purpose and it must not be used in mainnet.
+  rpc AddAllowedBidder(MsgAddAllowedBidder)
+      returns (MsgAddAllowedBidderResponse);
 }
 
 // this line is used by starport scaffolding # proto/tx/message
@@ -171,3 +175,18 @@ message MsgPlaceBid { // id specifies index of the auction
 
 // MsgPlaceBidResponse defines the Msg/MsgPlaceBidResponse response type.
 message MsgPlaceBidResponse {}
+
+// MsgAddAllowedBidder defines a SDK message for adding an allowed bidder to the
+// auction.
+message MsgAddAllowedBidder {
+  option (gogoproto.goproto_getters) = false;
+
+  // auction_id specifies the auction id
+  uint64 auction_id = 1;
+
+  // allowed_bidder specifies the bidder who is allowed to bid and their maximum
+  // bid amount
+  AllowedBidder allowed_bidder = 2 [ (gogoproto.nullable) = false ];
+}
+
+message MsgAddAllowedBidderResponse {}

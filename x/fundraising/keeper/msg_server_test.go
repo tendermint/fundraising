@@ -4,6 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+	"github.com/tendermint/fundraising/x/fundraising/keeper"
 	"github.com/tendermint/fundraising/x/fundraising/types"
 
 	_ "github.com/stretchr/testify/suite"
@@ -144,7 +145,7 @@ func (s *KeeperTestSuite) TestMsgPlaceBid() {
 		"denom2",
 		[]types.VestingSchedule{},
 		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2022-03-01T00:00:00Z"),
+		types.MustParseRFC3339("2022-06-01T00:00:00Z"),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
@@ -208,6 +209,65 @@ func (s *KeeperTestSuite) TestMsgPlaceBid() {
 			s.Require().NoError(err)
 
 			_, err = s.msgServer.PlaceBid(ctx, tc.msg)
+			if tc.err != nil {
+				s.Require().ErrorIs(err, tc.err)
+				return
+			}
+			s.Require().NoError(err)
+		})
+	}
+}
+
+func (s *KeeperTestSuite) TestMsgAddAllowedBidder() {
+	ctx := sdk.WrapSDKContext(s.ctx)
+
+	auction := s.createFixedPriceAuction(
+		s.addr(0),
+		sdk.MustNewDecFromStr("0.5"),
+		sdk.NewInt64Coin("denom1", 500_000_000_000),
+		"denom2",
+		[]types.VestingSchedule{},
+		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
+		types.MustParseRFC3339("2022-06-01T00:00:00Z"),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	for _, tc := range []struct {
+		name                   string
+		msg                    *types.MsgAddAllowedBidder
+		enableAddAllowedBidder bool
+		err                    error
+	}{
+		{
+			"valid",
+			types.NewAddAllowedBidder(
+				auction.GetId(),
+				types.AllowedBidder{
+					Bidder:       s.addr(1).String(),
+					MaxBidAmount: sdk.NewInt(100000000),
+				},
+			),
+			true,
+			nil,
+		},
+		{
+			"invalid",
+			types.NewAddAllowedBidder(
+				auction.GetId(),
+				types.AllowedBidder{
+					Bidder:       s.addr(1).String(),
+					MaxBidAmount: sdk.NewInt(100000000),
+				},
+			),
+			false,
+			sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "EnableAddAllowedBidder is disabled"),
+		},
+	} {
+		s.Run(tc.name, func() {
+			keeper.EnableAddAllowedBidder = tc.enableAddAllowedBidder
+
+			_, err := s.msgServer.AddAllowedBidder(ctx, tc.msg)
 			if tc.err != nil {
 				s.Require().ErrorIs(err, tc.err)
 				return

@@ -14,6 +14,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/version"
 
+	"github.com/tendermint/fundraising/x/fundraising/keeper"
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
 
@@ -27,13 +28,15 @@ func GetTxCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	// this line is used by starport scaffolding # 1
 	cmd.AddCommand(
 		NewCreateFixedPriceAuction(),
 		NewCreateEnglishAuction(),
 		NewCancelAuction(),
 		NewPlaceBid(),
 	)
+	if keeper.EnableAddAllowedBidder {
+		cmd.AddCommand(NewAddAllowedBidderCmd())
+	}
 	return cmd
 }
 
@@ -238,6 +241,54 @@ in order to bid for the amount of coin you bid for the auction.
 				clientCtx.GetFromAddress().String(),
 				price,
 				coin,
+			)
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func NewAddAllowedBidderCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "add-allowed-bidder [auction-id] [max-bid-amount]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Add an allowed bidder for the auction",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Add an allowed bidder for the auction.
+This message is available for testing purpose and it is only accessible when you build the binary with testing mode.
+		
+Example:
+$ %s tx %s add-allowed-bidder 1 10000000000 --from mykey 
+`,
+				version.AppName, types.ModuleName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			auctionId, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return err
+			}
+
+			maxBidAmt, ok := sdk.NewIntFromString(args[1])
+			if !ok {
+				return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "maxium bid price must be a positive integer")
+			}
+
+			msg := types.NewAddAllowedBidder(
+				auctionId,
+				types.AllowedBidder{
+					Bidder:       clientCtx.GetFromAddress().String(),
+					MaxBidAmount: maxBidAmt,
+				},
 			)
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
