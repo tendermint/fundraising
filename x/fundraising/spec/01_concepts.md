@@ -24,7 +24,7 @@ When an auctioneer creates a fixed price auction, it must determine the followin
 - **Auction End Time**: when the auction ends,
 - **Offering Quantity**: total amount of selling tokens to be auctioned.
 
-### What bidders can/cannot do:
+### What a bidder can/cannot do:
 
 A bidder can place a new bid with a fixed amount of paying tokens. 
 A bidder cannot modify or cancel the existing bid it previously placed.
