@@ -31,7 +31,7 @@ A bidder cannot modify or cancel the existing bid it previously placed.
 
 ### When the auction ends:
 
-The auction will end either when Auction End Time is arrived or when the entire Offering Quantity is sold out.
+The auction will end either when the end time is arrived or when the entire selling coin is sold out.
 
 
 
