@@ -1,12 +1,9 @@
-# This config.yml file is for Starport 
-# Reference: https://docs.starport.network/kb/config.html
-#
 accounts:
   - name: alice
     coins: ["2000000000000stake","1000000000000000denom1","1000000000000000denom2"]
-  - name: bob # auctioneer
+  - name: bob 
     coins: ["2000000000000stake","1000000000000000denom1"]
-  - name: steve # bidder
+  - name: steve
     coins: ["1000000000000000denom2"]
 validator:
   name: alice
@@ -17,3 +14,6 @@ client:
 faucet:
   name: alice
   coins: ["100000stake", "1000000denom1", "1000000denom2"]
+build:
+  binary: "fundraisingd"
+  ldflags: ["-X github.com/tendermint/fundraising/x/fundraising/keeper.enableAddAllowedBidder=true"]
