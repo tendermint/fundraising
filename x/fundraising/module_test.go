@@ -115,16 +115,6 @@ func (s *ModuleTestSuite) fundAddr(addr sdk.AccAddress, coins sdk.Coins) {
 	s.Require().NoError(err)
 }
 
-func (s *ModuleTestSuite) addAllowedBidder(auctionId uint64, bidder sdk.AccAddress, maxBidAmount sdk.Int) {
-	err := s.keeper.AddAllowedBidders(s.ctx, auctionId, []*types.AllowedBidder{
-		{
-			Bidder:       bidder.String(),
-			MaxBidAmount: maxBidAmount,
-		},
-	})
-	s.Require().NoError(err)
-}
-
 // coinEq is a convenient method to test expected and got values of sdk.Coin.
 func coinEq(exp, got sdk.Coin) (bool, string, string, string) {
 	return exp.IsEqual(got), "expected:\t%v\ngot:\t\t%v", exp.String(), got.String()
