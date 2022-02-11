@@ -15,8 +15,8 @@ To test out the following commands, you must set up a local network. By simply r
     * [CreateFixedPriceAuction](#CreateFixedPriceAuction)
     * [CreateEnglishAuction](#CreateEnglishAuction)
     * [CancelAuction](#CancelAuction)
-    * [PlaceBid](#PlaceBid)
     * [AddAllowedBidder](#AddAllowedBidder)
+    * [PlaceBid](#PlaceBid)
 - [Query](#Query)
     * [Params](#Params)
     * [Auctions](#Auctions)
@@ -223,11 +223,75 @@ Result:
 }
 ```
 
+### AddAllowedBidder
+
+**Important Note**: the fundraising module is designed in a way that allowed bidders of the auction is delegated to an external module. When an auction is created, the auction is closed state meaning that no one can place a bid unless they are added in `AllowedBidders` list by an external module. 
+
+For testing purpose, a custom message `MsgAddAllowedBidder` is implemented to add an allowed bidder for the auction and this message is available during `make localnet` process. Under the hood, `ldflags` of `enableAddAllowedBidder` is passed to build configuration in `config-test.yml` file.
+
+Example command:
+
+```bash
+# Add steve's address to allowed bidder list
+fundraisingd tx fundraising add-allowed-bidder 1 1000000000 \
+--chain-id fundraising \
+--from steve \
+--keyring-backend test \
+--broadcast-mode block \
+--yes \
+--output json | jq
+```
+
+Result:
+
+```json
+{
+  "@type": "/cosmos.tx.v1beta1.Tx",
+  "body": {
+    "messages": [
+      {
+        "@type": "/tendermint.fundraising.MsgAddAllowedBidder",
+        "auction_id": "1",
+        "allowed_bidder": {
+          "bidder": "cosmos103f9errg3q99fd5pvgzal34uv0sxlaa7amw95j",
+          "max_bid_amount": "1000000000"
+        }
+      }
+    ],
+    "memo": "",
+    "timeout_height": "0",
+    "extension_options": [],
+    "non_critical_extension_options": []
+  },
+  "auth_info": {
+    "signer_infos": [
+      {
+        "public_key": {
+          "@type": "/cosmos.crypto.secp256k1.PubKey",
+          "key": "AnIdRm1oIOdEevAxoZ40BGIGn3q6EsPNeqepDNkZOHLy"
+        },
+        "mode_info": {
+          "single": {
+            "mode": "SIGN_MODE_DIRECT"
+          }
+        },
+        "sequence": "0"
+      }
+    ],
+    "fee": {
+      "amount": [],
+      "gas_limit": "200000",
+      "payer": "",
+      "granter": ""
+    }
+  },
+  "signatures": [
+    "j4wdzVwDj0x2+mAEVcJ2Z8APBtxFhtGG/5VnYwp8yLZ75E9dfRaDvv6yhvtrccTTnHKOIAeOKZMQvIeZt20biQ=="
+  ]
+}
+```
+
 ### PlaceBid
-
-**Important Note**: the fundraising module is designed in a way that allowed bidders of the auction is delegated to an external module. When an auction is created, the auction is closed meaning that no one can place a bid for the auction unless they are added in `AllowedBidders` list.  
-
-For testing purpose, you can use `MsgAddAllowedBidder` to add an allowed bidder for the auction and this message is only accessible when you build the `fundraisingd` by `make install-testing`.
 
 Example command:
 
@@ -290,27 +354,6 @@ Result:
     "JVOzqwLIV/GjTwhZag1z+nfwHCFEHpDYLL79lSclhVAjPNBVaJKnbCcTMjxUBESGs1tcyxQuB+mn2GV8ZnrTCQ=="
   ]
 }
-```
-
-### AddAllowedBidder
-
-Example command:
-
-```bash
-# Add steve's address to allowed bidder list
-fundraisingd tx fundraising add-allowed-bidder 1 1000000000 \
---chain-id fundraising \
---from steve \
---keyring-backend test \
---broadcast-mode block \
---yes \
---output json | jq
-```
-
-Result:
-
-```json
-
 ```
 
 ## Query
