@@ -179,14 +179,14 @@ func (s *KeeperTestSuite) TestMsgPlaceBid() {
 			sdkerrors.Wrap(types.ErrInvalidStartPrice, "bid price must be equal to start price"),
 		},
 		{
-			"invalid coin demo",
+			"invalid paying coin denom",
 			types.NewMsgPlaceBid(
 				auction.GetId(),
 				bidder.String(),
 				sdk.MustNewDecFromStr("0.5"),
 				sdk.NewInt64Coin(auction.GetSellingCoin().Denom, 1_000_000),
 			),
-			sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "coin denom must match with the paying coin denom"),
+			types.ErrInvalidPayingCoinDenom,
 		},
 		{
 			"insufficient funds",
@@ -200,7 +200,14 @@ func (s *KeeperTestSuite) TestMsgPlaceBid() {
 		},
 	} {
 		s.Run(tc.name, func() {
-			_, err := s.msgServer.PlaceBid(ctx, tc.msg)
+			receiveAmt := tc.msg.Coin.Amount.ToDec().QuoTruncate(tc.msg.Price).TruncateInt()
+
+			err := s.keeper.AddAllowedBidders(s.ctx, tc.msg.AuctionId, []*types.AllowedBidder{
+				{Bidder: bidder.String(), MaxBidAmount: receiveAmt},
+			})
+			s.Require().NoError(err)
+
+			_, err = s.msgServer.PlaceBid(ctx, tc.msg)
 			if tc.err != nil {
 				s.Require().ErrorIs(err, tc.err)
 				return

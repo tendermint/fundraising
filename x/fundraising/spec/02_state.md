@@ -20,6 +20,9 @@ type AuctionI interface {
 	GetType() AuctionType
 	SetType(AuctionType) error
 
+	GetAllowedBidders() []AllowedBidder
+	SetAllowedBidders([]AllowedBidder) error
+
 	GetAuctioneer() string
 	SetAuctioneer(string) error
 
@@ -66,6 +69,7 @@ A base auction is the simplest and most common auction type that just stores all
 type BaseAuction struct {
 	Id                    uint64            // id of the auction
 	Type                  AuctionType       // the auction type; currently FixedPrice and English are supported
+	AllowedBidders        []AllowedBidder   // the bidders who are allowed to bid for the auction
 	Auctioneer            string            // the owner of the auction
 	SellingReserveAddress string            // the reserve account to collect selling coins for the auction
 	PayingReserveAddress  string            // the reserve account to collect paying coins for the auction
@@ -100,7 +104,6 @@ type VestingQueue struct {
 	Released      bool    // the distribution status 
 }
 ```
-
 
 ## Auction Type
 

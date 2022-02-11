@@ -17,6 +17,7 @@ func TestIsAuctionStarted(t *testing.T) {
 		&types.BaseAuction{
 			Id:                    1,
 			Type:                  types.AuctionTypeFixedPrice,
+			AllowedBidders:        nil,
 			Auctioneer:            sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 			SellingReserveAddress: types.SellingReserveAddress(1).String(),
 			PayingReserveAddress:  types.PayingReserveAddress(1).String(),
@@ -54,6 +55,7 @@ func TestIsAuctionFinished(t *testing.T) {
 		&types.BaseAuction{
 			Id:                    1,
 			Type:                  types.AuctionTypeFixedPrice,
+			AllowedBidders:        nil,
 			Auctioneer:            sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 			SellingReserveAddress: types.SellingReserveAddress(1).String(),
 			PayingReserveAddress:  types.PayingReserveAddress(1).String(),

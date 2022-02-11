@@ -32,11 +32,22 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 	}
 
 	if auction.GetStatus() != types.AuctionStatusStarted {
-		return types.Bid{}, sdkerrors.Wrapf(types.ErrInvalidAuctionStatus, "unable to bid because the auction is in %s", auction.GetStatus().String())
+		return types.Bid{}, types.ErrInvalidAuctionStatus
 	}
 
 	if auction.GetPayingCoinDenom() != msg.Coin.Denom {
-		return types.Bid{}, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "coin denom must match with the paying coin denom")
+		return types.Bid{}, types.ErrInvalidPayingCoinDenom
+	}
+
+	allowedBiddersMap := make(map[string]sdk.Int) // map(bidder => maxBidAmount)
+	for _, bidder := range auction.GetAllowedBidders() {
+		allowedBiddersMap[bidder.GetBidder()] = bidder.MaxBidAmount
+	}
+
+	// The bidder must be in the allowed bidder list in order to bid
+	maxBidAmt, found := allowedBiddersMap[msg.Bidder]
+	if !found {
+		return types.Bid{}, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "bidder %s is not allowed to bid", msg.Bidder)
 	}
 
 	if err := k.ReservePayingCoin(ctx, auction.GetId(), msg.GetBidder(), msg.Coin); err != nil {
@@ -52,6 +63,12 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 
 		receiveAmt := msg.Coin.Amount.ToDec().QuoTruncate(msg.Price).TruncateInt()
 		receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, receiveAmt)
+
+		// The receive amount can't be greater than the bidder's maximum bid amount
+		if receiveAmt.GT(maxBidAmt) {
+			return types.Bid{},
+				sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "bid amount %s, maximum bid amount %s", receiveAmt, maxBidAmt)
+		}
 
 		if auction.GetRemainingCoin().IsLT(receiveCoin) {
 			return types.Bid{},
@@ -70,7 +87,6 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 				sdk.NewAttribute(types.AttributeKeyBidAmount, receiveCoin.String()),
 			),
 		})
-
 	} else {
 		// TODO: implement English auction type
 		return types.Bid{}, sdkerrors.Wrap(types.ErrInvalidAuctionType, "not supported auction type in this version")
