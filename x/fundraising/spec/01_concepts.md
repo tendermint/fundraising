@@ -65,7 +65,7 @@ A bidder can do the following behaviors during the auction period.
 
 A bidder cannot do the following behaviors during the auction period.
 
-1. Cancel the existing bid
+1. Cancel the existing bid 
 2. Replace the existing bid by a new one with lower price or fewer quantities.
 
 ### When the auction ends:
