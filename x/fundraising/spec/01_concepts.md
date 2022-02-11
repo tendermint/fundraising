@@ -58,8 +58,8 @@ The auctioneer can cancel the auction before `StartTime`.
 A bidder can do the following behaviors during the auction period.
 1. Place a new bid
     - This auction provides two options for bidder to choose: 1) How-Much-Worth-To-Buy and 2) How-Many-Coins-To-Buy
-        - (**Option A**) How-Much-Worth-To-Buy (fixed `PayingCoin`/varying `SellingCoin`): A bidder offers with a fixed amount of the paying coins and, if it wins, the bidder gets the selling coins, where the amount of the selling coins varies depending on the winning price determined after the auction period ends.
-        - (**Option B**) How-Many-Coins-To-Buy (varying `PayingCoin`/fixed `SellingCoin`): A bidder offers for a fixed amount of the selling coin that the bidder wants to get if it wins. After the auction period ends, the remaining paying coins will be refunded depending on the winning price.
+        - (**Option A**) How-Much-Worth-To-Buy (fixed `PayingCoin`/varying `SellingCoin`): A bidder places a bid with a fixed amount of the paying coins and, if it wins, the bidder gets the selling coins, where the amount of the selling coins varies depending on the winning price determined after the auction period ends.
+        - (**Option B**) How-Many-Coins-To-Buy (varying `PayingCoin`/fixed `SellingCoin`): A bidder places a bid for a fixed amount of the selling coin that the bidder wants to get if it wins. After the auction period ends, the remaining paying coins will be refunded depending on the winning price.
 2. Replace the existing bid by a new one only with higher price and/or more quantities
     - The bidder can replace its existing bid, which is previously placed, by a new one with the same option between Option A and Option B.
 
@@ -70,7 +70,7 @@ A bidder cannot do the following behaviors during the auction period.
 
 ### When the auction ends:
 
-The auction will end when Auction End Time is arrived.
+The auction will end when `EndTime` is arrived.
 
 ### How `WinningPrice` is determined:
 
