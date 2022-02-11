@@ -256,7 +256,7 @@ func NewAddAllowedBidderCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add-allowed-bidder [auction-id] [max-bid-amount]",
 		Args:  cobra.ExactArgs(2),
-		Short: "Add an allowed bidder for the auction",
+		Short: "(Testing) Add an allowed bidder for the auction",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Add an allowed bidder for the auction.
 This message is available for testing purpose and it is only accessible when you build the binary with testing mode.

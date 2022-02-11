@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/tendermint/fundraising/x/fundraising"
 	"github.com/tendermint/fundraising/x/fundraising/types"
@@ -273,12 +274,12 @@ func (s *KeeperTestSuite) TestAddAllowedBidder() {
 
 	for _, tc := range []struct {
 		name        string
-		bidders     []*types.AllowedBidder
+		bidders     []types.AllowedBidder
 		expectedErr error
 	}{
 		{
 			"single bidder",
-			[]*types.AllowedBidder{
+			[]types.AllowedBidder{
 				{
 					Bidder:       s.addr(1).String(),
 					MaxBidAmount: sdk.NewInt(100_000_000),
@@ -288,7 +289,7 @@ func (s *KeeperTestSuite) TestAddAllowedBidder() {
 		},
 		{
 			"multiple bidders",
-			[]*types.AllowedBidder{
+			[]types.AllowedBidder{
 				{
 					Bidder:       s.addr(1).String(),
 					MaxBidAmount: sdk.NewInt(100_000_000),
@@ -307,12 +308,12 @@ func (s *KeeperTestSuite) TestAddAllowedBidder() {
 		{
 
 			"empty bidders",
-			[]*types.AllowedBidder{},
+			[]types.AllowedBidder{},
 			types.ErrEmptyAllowedBidders,
 		},
 		{
 			"zero maximum bid amount value",
-			[]*types.AllowedBidder{
+			[]types.AllowedBidder{
 				{
 					Bidder:       s.addr(1).String(),
 					MaxBidAmount: sdk.NewInt(0),
@@ -322,7 +323,7 @@ func (s *KeeperTestSuite) TestAddAllowedBidder() {
 		},
 		{
 			"negative maximum bid amount value",
-			[]*types.AllowedBidder{
+			[]types.AllowedBidder{
 				{
 					Bidder:       s.addr(1).String(),
 					MaxBidAmount: sdk.NewInt(-1),
@@ -358,7 +359,7 @@ func (s *KeeperTestSuite) TestAddAllowedBidderLength() {
 	s.Require().Len(auction.GetAllowedBidders(), 0)
 
 	// Add some bidders
-	err := s.keeper.AddAllowedBidders(s.ctx, auction.GetId(), []*types.AllowedBidder{
+	err := s.keeper.AddAllowedBidders(s.ctx, auction.GetId(), []types.AllowedBidder{
 		{
 			Bidder:       s.addr(1).String(),
 			MaxBidAmount: sdk.NewInt(100_000_000),
@@ -375,7 +376,7 @@ func (s *KeeperTestSuite) TestAddAllowedBidderLength() {
 	s.Require().Len(auction.GetAllowedBidders(), 2)
 
 	// Add more bidders
-	err = s.keeper.AddAllowedBidders(s.ctx, auction.GetId(), []*types.AllowedBidder{
+	err = s.keeper.AddAllowedBidders(s.ctx, auction.GetId(), []types.AllowedBidder{
 		{
 			Bidder:       s.addr(3).String(),
 			MaxBidAmount: sdk.NewInt(100_000_000),
@@ -413,7 +414,7 @@ func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 	s.Require().Len(auction.GetAllowedBidders(), 0)
 
 	// Add 5 bidders with different maximum bid amount
-	err := s.keeper.AddAllowedBidders(s.ctx, auction.GetId(), []*types.AllowedBidder{
+	err := s.keeper.AddAllowedBidders(s.ctx, auction.GetId(), []types.AllowedBidder{
 		{Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(100_000_000)},
 		{Bidder: s.addr(2).String(), MaxBidAmount: sdk.NewInt(200_000_000)},
 		{Bidder: s.addr(3).String(), MaxBidAmount: sdk.NewInt(300_000_000)},
@@ -438,24 +439,24 @@ func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 			sdk.NewInt(555_000_000_000),
 			nil,
 		},
-		// {
-		// 	"bidder not found",
-		// 	s.addr(10),
-		// 	sdk.NewInt(300_000_000),
-		// 	sdkerrors.Wrapf(sdkerrors.ErrNotFound, "bidder %s is not found", s.addr(10).String()),
-		// },
-		// {
-		// 	"zero maximum bid amount value",
-		// 	s.addr(1),
-		// 	sdk.NewInt(0),
-		// 	types.ErrInvalidMaxBidAmount,
-		// },
-		// {
-		// 	"negative maximum bid amount value",
-		// 	s.addr(1),
-		// 	sdk.NewInt(-1),
-		// 	types.ErrInvalidMaxBidAmount,
-		// },
+		{
+			"bidder not found",
+			s.addr(10),
+			sdk.NewInt(300_000_000),
+			sdkerrors.Wrapf(sdkerrors.ErrNotFound, "bidder %s is not found", s.addr(10).String()),
+		},
+		{
+			"zero maximum bid amount value",
+			s.addr(1),
+			sdk.NewInt(0),
+			types.ErrInvalidMaxBidAmount,
+		},
+		{
+			"negative maximum bid amount value",
+			s.addr(1),
+			sdk.NewInt(-1),
+			types.ErrInvalidMaxBidAmount,
+		},
 	} {
 		s.Run(tc.name, func() {
 			err := s.keeper.UpdateAllowedBidder(s.ctx, auction.GetId(), tc.bidder, tc.maxBidAmount)

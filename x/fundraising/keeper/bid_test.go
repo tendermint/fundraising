@@ -103,7 +103,7 @@ func (s *KeeperTestSuite) TestPlaceBid() {
 	notAllowedBidder := s.addr(2)
 
 	// Add allowed bidder to allowed bidder list
-	err := s.keeper.AddAllowedBidders(s.ctx, auction.GetId(), []*types.AllowedBidder{
+	err := s.keeper.AddAllowedBidders(s.ctx, auction.GetId(), []types.AllowedBidder{
 		{Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(10_000_000)},
 	})
 	s.Require().NoError(err)
