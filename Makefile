@@ -63,10 +63,7 @@ endif
 ldflags += $(LDFLAGS)
 ldflags := $(strip $(ldflags))
 
-testing_ldflags = -X github.com/tendermint/fundraising/x/fundraising/keeper.enableAddAllowedBidder=true
-
 BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
-TESTING_BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags) $(testing_ldflags)'
 
 all: tools install lint
 
@@ -89,9 +86,6 @@ build-linux: go.sum
 
 install: go.sum
 	go install $(BUILD_FLAGS) ./cmd/fundraisingd
-
-install-testing: go.sum
-	go install $(TESTING_BUILD_FLAGS) ./cmd/fundraisingd
 
 build-reproducible: go.sum
 	$(DOCKER) rm latest-build || true
@@ -168,6 +162,6 @@ proto-format:
 ###############################################################################
 
 localnet: 
-	starport chain serve -v
+	starport chain serve -v -c ./config-test.yml
 
 .PHONY: localnet

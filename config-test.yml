@@ -16,4 +16,4 @@ faucet:
   coins: ["100000stake", "1000000denom1", "1000000denom2"]
 build:
   binary: "fundraisingd"
-  ldflags: ["-X github.com/tendermint/fundraising/x/fundraising/keeper.enableAddAllowedBidder=false"]
+  ldflags: ["-X github.com/tendermint/fundraising/x/fundraising/keeper.enableAddAllowedBidder=true"]
