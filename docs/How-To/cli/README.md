@@ -151,13 +151,12 @@ Result:
 Example command:
 
 ```bash
-TODO: It is actively being developed.
+TODO: it is being developed
 ```
 
 Result:
 
 ```json
-TODO: It is actively being developed.
 ```
 
 ### CancelAuction
