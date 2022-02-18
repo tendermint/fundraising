@@ -8,7 +8,7 @@ The module first gets all auctions registered in the store and proceed operation
 
 If the auction status is `AuctionStatusStandBy` and if the start time of the auction is passed, the auction status is updated to `AuctionStatusStarted`. 
 
-For a batch auction, if the auction status is `AuctionStatusStarted` and if the last end time of the auction is not arrived yet, `WinningPrice`, `NumberWinningBidders`, and `RemainingSellingCoin` are updated based on the collected bids for the auction.
+For a batch auction, if the auction status is `AuctionStatusStarted` and if an end time of `EndTimes` of the auction is arrived yet, `WinningPrice`, `NumberWinningBidders`, and `RemainingSellingCoin` are updated based on the collected bids for the auction.
 
 If the auction status is `AuctionStatusStarted` and if the last end time of the auction is arrived, or,
 if `RemainingSellingCoin` is equal to zero for a fixed price auction, 

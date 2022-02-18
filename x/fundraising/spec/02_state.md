@@ -46,11 +46,11 @@ type AuctionI interface {
 
 	GetVestingSchedules() []VestingSchedule
 	SetVestingSchedules([]VestingSchedule) error
-
-    GetWinningPrice() sdk.Dec  // To load WinningPrice at the current time	
-    GetNumberWinningBidders() uint64
-
-    GetRemainingSellingCoin() sdk.Coin // To calculate RemainingSellingCoin
+	
+	GetWinningPrice() sdk.Dec  // To load WinningPrice at the current time
+	GetNumberWinningBidders() uint64
+	
+	GetRemainingSellingCoin() sdk.Coin // To calculate RemainingSellingCoin
 	
 	GetStartTime() time.Time
 	SetStartTime(time.Time) error
@@ -91,8 +91,11 @@ type BaseAuction struct {
 	Status                AuctionStatus     // the auction status
 }
 
-// AllowedBidder defines a bidder who is allowed to bid for the auction.
-type AllowedBidder string
+// AllowedBidder defines a bidder who is allowed to bid with max number of bids.
+type AllowedBidder struct {
+    Bidder  string  // a bidder who is allowed to bid
+	MaxBidNumber uint64  // a maximum number of bids per bidder
+}
 ```
 
 
@@ -174,6 +177,7 @@ const (
 type Bid struct {
 	AuctionId uint64   // id of the auction
 	Bidder    string   // the account that bids for the auction
+	Id        uint64    // id of the bid of the bidder
 	Type      BidType   // the bid type; currently How-Much-Worth-To-Buy and How-Many-Coins-To-Buy are supported.  
 	BidPrice     sdk.Dec  // the price for the bid
 	BidCoin      sdk.Coin // targeted amount of coin that the bidder bids; the denom must be either the denom or SellingCoin or PayingCoinDenom
