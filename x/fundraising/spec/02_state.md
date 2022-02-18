@@ -47,6 +47,11 @@ type AuctionI interface {
 	GetVestingSchedules() []VestingSchedule
 	SetVestingSchedules([]VestingSchedule) error
 
+    GetWinningPrice() sdk.Dec  // To load WinningPrice at the current time	
+    GetNumberWinningBidders() uint64
+
+    GetRemainingSellingCoin() sdk.Coin // To calculate RemainingSellingCoin
+	
 	GetStartTime() time.Time
 	SetStartTime(time.Time) error
 
@@ -60,7 +65,7 @@ type AuctionI interface {
 
 ## Base Auction
 
-A base auction is the simplest and most common auction type that just stores all requisite fields directly in a struct.
+A base auction stores all requisite fields directly in a struct.
 
 ```go
 // BaseAuction defines a base auction type. It contains all the necessary fields
@@ -71,20 +76,25 @@ type BaseAuction struct {
 	Type                  AuctionType       // the auction type; currently FixedPrice and English are supported
 	AllowedBidders        []AllowedBidder   // the bidders who are allowed to bid for the auction
 	Auctioneer            string            // the owner of the auction
-	SellingReserveAddress string            // the reserve account to collect selling coins for the auction
-	PayingReserveAddress  string            // the reserve account to collect paying coins for the auction
+	SellingReserveAddress string            // the reserve account to collect selling coins from the auctioneer
+	PayingReserveAddress  string            // the reserve account to collect paying coins from the bidders
 	StartPrice            sdk.Dec           // the starting price for the auction
 	SellingCoin           sdk.Coin          // the selling coin for the auction
 	PayingCoinDenom       string            // the denom that the auctioneer receives to raise funds
 	VestingReserveAddress string            // the reserve account that releases the accumulated paying coins based on the schedules
 	VestingSchedules      []VestingSchedule // the vesting schedules for the auction
 	WinningPrice          sdk.Dec           // the winning price of the auction
-	RemainingCoin         sdk.Coin          // the remaining amount of coin to sell
+	NumberWinningBidders    uint64       // current number of winning bidders    
+	RemainingSellingCoin         sdk.Coin          // the remaining amount of coin to sell
 	StartTime             time.Time         // the start time of the auction
-	EndTime               []time.Time       // the end times of the auction; it is an array since extended round(s) can occur
+	EndTimes               []time.Time       // the end times of the auction; it is an array since extended round(s) can occur
 	Status                AuctionStatus     // the auction status
 }
+
+// AllowedBidder defines a bidder who is allowed to bid for the auction.
+type AllowedBidder string
 ```
+
 
 ## Vesting
 
@@ -97,11 +107,11 @@ type VestingSchedule struct {
 
 // VestingQueue defines the vesting queue.
 type VestingQueue struct {
-	AuctionId   uint64    // id of the auction
-	Auctioneer  string    // the owner of the auction
-	PayingCoin  sdk.Coin  // the paying amount of coin
-	ReleaseTime time.Time // the release time of the vesting coin
-	Released      bool    // the distribution status 
+	AuctionId       uint64    // id of the auction
+	Auctioneer      string    // the owner of the auction
+	PayingCoin      sdk.Coin  // the paying amount of coin for the vesting
+	ReleaseTime     time.Time // the release time of the vesting 
+	Released        bool      // the distribution status 
 }
 ```
 
@@ -114,25 +124,25 @@ type AuctionType uint32
 const (
 	// AUCTION_TYPE_UNSPECIFIED defines an invalid auction type
 	TypeNil AuctionType = 0
-	// AUCTION_TYPE_ENGLISH defines the English auction type
-	TypeEnglish AuctionType = 1
 	// AUCTION_TYPE_FIXED_PRICE defines the fixed price auction type
 	TypeFixedPrice AuctionType = 1
+	// AUCTION_TYPE_BATCH defines the batch auction type
+	TypeBatch AuctionType = 2
 )
-
-// EnglishAuction defines the english auction type 
-type EnglishAuction struct {
-	*BaseAuction
-
-	MaximumBidPrice sdk.Dec // maximum bid price that bidders can bid for the auction
-	Extended        uint32  // a number of extended rounds
-	ExtendRate      sdk.Dec // rate that determines if the auction needs an another round
-}
 
 // FixedPriceAuction defines the fixed price auction type
 type FixedPriceAuction struct {
 	*BaseAuction
 }
+
+// BatchAuction defines the batch auction type 
+type BatchAuction struct {
+    *BaseAuction
+    
+    MaxExtendedRound    uint32  // a maximum number of extended rounds
+    ExtendedRate        sdk.Dec // rate that determines if the auction needs another round, compared to the number of winning bidders at the previous end time.
+}
+
 ```
 
 ## Auction Status
@@ -164,12 +174,44 @@ const (
 type Bid struct {
 	AuctionId uint64   // id of the auction
 	Bidder    string   // the account that bids for the auction
-	Price     sdk.Dec  // the price for the bid
-	Coin      sdk.Coin // paying amount of coin that the bidder bids
-	Height    uint64   // block height
-	isWinner  bool     // the bid that is determined to be a winner when an auction ends; default value is false
+	Type      BidType   // the bid type; currently How-Much-Worth-To-Buy and How-Many-Coins-To-Buy are supported.  
+	BidPrice     sdk.Dec  // the price for the bid
+	BidCoin      sdk.Coin // targeted amount of coin that the bidder bids; the denom must be either the denom or SellingCoin or PayingCoinDenom
+	PayingCoin   sdk.Coin // paying amount of coin that the bidder bids
+	Height          uint64   // block height
+	isWinner        bool     // the bid that is determined to be a winner when an auction ends; default value is false
 }
 ```
+
+## Bid Type
+
+```go
+// BidType is the type of a bid.
+type BidType uint32
+
+const (
+	// BID_TYPE_UNSPECIFIED defines an invalid bid type
+	BidTypeNil          BidType = 0
+ 	// BID_TYPE_FIXED_PRICE defines the bid type used in a fixed price auction type
+	BidTypeFixedPrice   BidType = 1
+	// Bid_TYPE_BATCH_WORTH defines a bid type for How-Much-Worth-to-Buy
+	BidTypeBatchWorth   BidType = 2
+	// Bid_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy
+	BidTypeBatchMany    BidType = 3
+)
+
+```
+
+For `FixedPriceAuction`,
+- `BidType`must be set to `BidTypeFixedPrice`,
+- `BidPrice` must be set as `StartPrice` in `BaseAuction`, and
+- the denom of `BidCoin` must be set to`PayingCoinDenom`.
+
+For `BatchAuction`and `BidTypeBatchWorth`,
+- the denom of `BidCoin` must be set as `PayingCoinDenom`.
+
+For `BatchAuction`and `BidTypeBatchMany`,
+- the denom of `BidCoin` must be set as the denom of `SellingCoin`.
 
 ## Parameters
 
