@@ -100,7 +100,7 @@ func (msg MsgCreateFixedPriceAuction) GetAuctioneer() sdk.AccAddress {
 	return addr
 }
 
-// NewMsgCreateBatchAuction creates a new MsgCreateEnglishAuction.
+// NewMsgCreateBatchAuction creates a new MsgCreateBatchAuction.
 func NewMsgCreateBatchAuction(
 	auctioneer string,
 	startPrice sdk.Dec,
