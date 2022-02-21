@@ -10,7 +10,7 @@ import (
 
 var (
 	_ sdk.Msg = (*MsgCreateFixedPriceAuction)(nil)
-	_ sdk.Msg = (*MsgCreateEnglishAuction)(nil)
+	_ sdk.Msg = (*MsgCreateBatchAuction)(nil)
 	_ sdk.Msg = (*MsgCancelAuction)(nil)
 	_ sdk.Msg = (*MsgPlaceBid)(nil)
 	_ sdk.Msg = (*MsgAddAllowedBidder)(nil)
@@ -19,7 +19,7 @@ var (
 // Message types for the fundraising module.
 const (
 	TypeMsgCreateFixedPriceAuction = "create_fixed_price_auction"
-	TypeMsgCreateEnglishAuction    = "create_english_auction"
+	TypeMsgCreateBatchAuction      = "create_batch_auction"
 	TypeMsgCancelAuction           = "cancel_auction"
 	TypeMsgPlaceBid                = "place_bid"
 	TypeMsgAddAllowedBidder        = "add_allowed_bidder"
@@ -98,42 +98,41 @@ func (msg MsgCreateFixedPriceAuction) GetAuctioneer() sdk.AccAddress {
 	return addr
 }
 
-// NewMsgCreateEnglishAuction creates a new MsgCreateEnglishAuction.
-func NewMsgCreateEnglishAuction(
-	auctionner string,
-	startPrice sdk.Dec,
+// NewMsgCreateBatchAuction creates a new MsgCreateEnglishAuction.
+func NewMsgCreateBatchAuction(
+	auctioneer string,
 	sellingCoin sdk.Coin,
 	payingCoinDenom string,
 	vestingSchedules []VestingSchedule,
 	maximumBidPrice sdk.Dec,
-	extendRate sdk.Dec,
+	extendedRoundRate sdk.Dec,
 	startTime time.Time,
 	endTime time.Time,
-) *MsgCreateEnglishAuction {
-	return &MsgCreateEnglishAuction{
-		Auctioneer:       auctionner,
-		StartPrice:       startPrice,
+) *MsgCreateBatchAuction {
+	return &MsgCreateBatchAuction{
+		Auctioneer: auctioneer,
+		//StartPrice:       startPrice,
 		SellingCoin:      sellingCoin,
 		PayingCoinDenom:  payingCoinDenom,
 		VestingSchedules: vestingSchedules,
-		MaximumBidPrice:  maximumBidPrice,
-		ExtendRate:       extendRate,
-		StartTime:        startTime,
-		EndTime:          endTime,
+		//MaximumBidPrice:  maximumBidPrice,
+		ExtendedRoundRate: extendedRoundRate,
+		StartTime:         startTime,
+		EndTime:           endTime,
 	}
 }
 
-func (msg MsgCreateEnglishAuction) Route() string { return RouterKey }
+func (msg MsgCreateBatchAuction) Route() string { return RouterKey }
 
-func (msg MsgCreateEnglishAuction) Type() string { return TypeMsgCreateEnglishAuction }
+func (msg MsgCreateBatchAuction) Type() string { return TypeMsgCreateBatchAuction }
 
-func (msg MsgCreateEnglishAuction) ValidateBasic() error {
+func (msg MsgCreateBatchAuction) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Auctioneer); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid auctioneer address: %v", err)
 	}
-	if !msg.StartPrice.IsPositive() {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "start price must be positve")
-	}
+	//if !msg.StartPrice.IsPositive() {
+	//	return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "start price must be positve")
+	//}
 	if err := msg.SellingCoin.Validate(); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid selling coin: %v", err)
 	}
@@ -152,20 +151,20 @@ func (msg MsgCreateEnglishAuction) ValidateBasic() error {
 	if err := ValidateVestingSchedules(msg.VestingSchedules, msg.EndTime); err != nil {
 		return err
 	}
-	if !msg.MaximumBidPrice.IsPositive() {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "maximum bid price must be positve")
-	}
-	if !msg.ExtendRate.IsPositive() {
+	//if !msg.MaximumBidPrice.IsPositive() {
+	//	return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "maximum bid price must be positve")
+	//}
+	if !msg.ExtendedRoundRate.IsPositive() {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "extend rate must be positve")
 	}
 	return nil
 }
 
-func (msg MsgCreateEnglishAuction) GetSignBytes() []byte {
+func (msg MsgCreateBatchAuction) GetSignBytes() []byte {
 	return sdk.MustSortJSON(legacy.Cdc.MustMarshalJSON(&msg))
 }
 
-func (msg MsgCreateEnglishAuction) GetSigners() []sdk.AccAddress {
+func (msg MsgCreateBatchAuction) GetSigners() []sdk.AccAddress {
 	addr, err := sdk.AccAddressFromBech32(msg.Auctioneer)
 	if err != nil {
 		panic(err)
@@ -173,7 +172,7 @@ func (msg MsgCreateEnglishAuction) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{addr}
 }
 
-func (msg MsgCreateEnglishAuction) GetAuctioneer() sdk.AccAddress {
+func (msg MsgCreateBatchAuction) GetAuctioneer() sdk.AccAddress {
 	addr, err := sdk.AccAddressFromBech32(msg.Auctioneer)
 	if err != nil {
 		panic(err)
@@ -233,8 +232,8 @@ func NewMsgPlaceBid(
 	return &MsgPlaceBid{
 		AuctionId: id,
 		Bidder:    bidder,
-		Price:     price,
-		Coin:      coin,
+		BidPrice:  price,
+		BidCoin:   coin,
 	}
 }
 
@@ -246,14 +245,14 @@ func (msg MsgPlaceBid) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Bidder); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid bidder address: %v", err)
 	}
-	if !msg.Price.IsPositive() {
+	if !msg.BidPrice.IsPositive() {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "bid price must be positve value")
 	}
-	if err := msg.Coin.Validate(); err != nil {
+	if err := msg.BidCoin.Validate(); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid bid coin: %v", err)
 	}
-	if !msg.Coin.Amount.IsPositive() {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid coin amount: %s", msg.Coin.Amount.String())
+	if !msg.BidCoin.Amount.IsPositive() {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid coin amount: %s", msg.BidCoin.Amount.String())
 	}
 	return nil
 }

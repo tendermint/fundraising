@@ -25,7 +25,7 @@ const (
 
 var (
 	_ AuctionI = (*FixedPriceAuction)(nil)
-	_ AuctionI = (*EnglishAuction)(nil)
+	_ AuctionI = (*BatchAuction)(nil)
 )
 
 // AuctionI is an interface that inherits the BaseAuction and exposes common functions
@@ -69,8 +69,8 @@ type AuctionI interface {
 	GetWinningPrice() sdk.Dec
 	SetWinningPrice(sdk.Dec) error
 
-	GetRemainingCoin() sdk.Coin
-	SetRemainingCoin(sdk.Coin) error
+	GetRemainingSellingCoin() sdk.Coin
+	SetRemainingSellingCoin(sdk.Coin) error
 
 	GetStartTime() time.Time
 	SetStartTime(time.Time) error
@@ -93,7 +93,7 @@ func NewBaseAuction(
 	id uint64, typ AuctionType, allowedBidders []AllowedBidder, auctioneerAddr string,
 	sellingPoolAddr string, payingPoolAddr string, startPrice sdk.Dec, sellingCoin sdk.Coin,
 	payingCoinDenom string, vestingPoolAddr string, vestingSchedules []VestingSchedule,
-	winningPrice sdk.Dec, remainingCoin sdk.Coin, startTime time.Time,
+	winningPrice sdk.Dec, numWinningBidders uint64, remainingSellingCoin sdk.Coin, startTime time.Time,
 	endTimes []time.Time, status AuctionStatus,
 ) *BaseAuction {
 	return &BaseAuction{
@@ -109,7 +109,8 @@ func NewBaseAuction(
 		VestingReserveAddress: vestingPoolAddr,
 		VestingSchedules:      vestingSchedules,
 		WinningPrice:          winningPrice,
-		RemainingCoin:         remainingCoin,
+		NumWinningBidders:     numWinningBidders,
+		RemainingSellingCoin:  remainingSellingCoin,
 		StartTime:             startTime,
 		EndTimes:              endTimes,
 		Status:                status,
@@ -228,12 +229,12 @@ func (ba *BaseAuction) SetWinningPrice(price sdk.Dec) error {
 	return nil
 }
 
-func (ba BaseAuction) GetRemainingCoin() sdk.Coin {
-	return ba.RemainingCoin
+func (ba BaseAuction) GetRemainingSellingCoin() sdk.Coin {
+	return ba.RemainingSellingCoin
 }
 
-func (ba *BaseAuction) SetRemainingCoin(coin sdk.Coin) error {
-	ba.RemainingCoin = coin
+func (ba *BaseAuction) SetRemainingSellingCoin(coin sdk.Coin) error {
+	ba.RemainingSellingCoin = coin
 	return nil
 }
 
@@ -266,7 +267,7 @@ func (ba *BaseAuction) SetStatus(status AuctionStatus) error {
 
 // Validate checks for errors on the Auction fields
 func (ba BaseAuction) Validate() error {
-	if ba.Type != AuctionTypeFixedPrice && ba.Type != AuctionTypeEnglish {
+	if ba.Type != AuctionTypeFixedPrice && ba.Type != AuctionTypeBatch {
 		return sdkerrors.Wrapf(ErrInvalidAuctionType, "unknown plan type: %s", ba.Type)
 	}
 	if _, err := sdk.AccAddressFromBech32(ba.Auctioneer); err != nil {
@@ -320,13 +321,12 @@ func NewFixedPriceAuction(baseAuction *BaseAuction) *FixedPriceAuction {
 	}
 }
 
-// NewEnglishAuction returns a new english auction.
-func NewEnglishAuction(baseAuction *BaseAuction, maximumBidPrice sdk.Dec, extended uint32, extendRate sdk.Dec) *EnglishAuction {
-	return &EnglishAuction{
-		BaseAuction:     baseAuction,
-		MaximumBidPrice: maximumBidPrice,
-		Extended:        extended,
-		ExtendRate:      extendRate,
+// NewBatchAuction returns a new batch auction.
+func NewBatchAuction(baseAuction *BaseAuction, maximumBidPrice sdk.Dec, maxExtendedRound uint32, extendedRoundRate sdk.Dec) *BatchAuction {
+	return &BatchAuction{
+		BaseAuction:       baseAuction,
+		MaxExtendedRound:  maxExtendedRound,
+		ExtendedRoundRate: extendedRoundRate,
 	}
 }
 

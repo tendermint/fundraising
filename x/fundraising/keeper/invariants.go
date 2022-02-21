@@ -75,7 +75,7 @@ func PayingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 
 			if auction.GetStatus() == types.AuctionStatusStarted {
 				for _, bid := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
-					totalBidCoin = totalBidCoin.Add(bid.Coin)
+					totalBidCoin = totalBidCoin.Add(bid.BidCoin)
 				}
 			}
 
@@ -169,8 +169,8 @@ func AuctionStatusStatesInvariant(k Keeper) sdk.Invariant {
 					}
 				}
 			case types.AuctionStatusCancelled:
-				if !auction.GetRemainingCoin().IsZero() {
-					msg += fmt.Sprintf("expected remaining coin is 0 but got %v", auction.GetRemainingCoin())
+				if !auction.GetRemainingSellingCoin().IsZero() {
+					msg += fmt.Sprintf("expected remaining coin is 0 but got %v", auction.GetRemainingSellingCoin())
 					count++
 				}
 			default:

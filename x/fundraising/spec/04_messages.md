@@ -7,9 +7,10 @@ Messages (Msg) are objects that trigger state transitions. Msgs are wrapped in t
 ## MsgCreateFixedPriceAuction
 
 ```go
-// MsgCreateFixedPriceAuction defines a SDK message for creating a fixed price type auction
-type MsgCreateFixedPriceAuction struct {
+// MsgCreateFixedPriceAuction defines an SDK message for creating a fixed price type auction
+type MsgCreateFixedPriceAuction struct {	
 	Auctioneer       string            // the owner of the auction
+	AllowedBidders    []AllowedBidder   // the bidders who are allowed to bid for the auction 
 	StartPrice       sdk.Dec           // the starting price for the auction; it is proportional to the price of paying coin denom
 	SellingCoin      sdk.Coin          // the selling coin for the auction
 	PayingCoinDenom  string            // the denom that the auctioneer receives to raise funds
@@ -18,27 +19,27 @@ type MsgCreateFixedPriceAuction struct {
 	EndTime          time.Time         // the end time of the auction
 }
 ```
-## MsgCreateEnglishAuction
+## MsgCreateBatchAuction
 
 ```go
-// MsgCreateEnglishAuction defines a SDK message for creating a English type auction
-type MsgCreateEnglishAuction struct {
+// MsgCreateBatchAuction defines an SDK message for creating a batch type auction
+type MsgCreateBatchAuction struct {
 	Auctioneer       string            // the owner of the auction
-	StartPrice       sdk.Dec           // the starting price for the auction
+	AllowedBidders    []AllowedBidder   // the bidders who are allowed to bid for the auction
 	SellingCoin      sdk.Coin          // the selling coin for the auction
 	PayingCoinDenom  string            // the denom that the auctioneer receives to raise funds
 	VestingSchedules []VestingSchedule // the vesting schedules for the auction
-	MaximumBidPrice  sdk.Dec           // the maximum bid price that bidders can bid for the auction
-	ExtendRate       sdk.Dec           // the rate that determines if the auction needs an another round
-	StartTime        time.Time         // the start time of the auction
-	EndTime          time.Time         // the end time of the auction
+	MaxExtendedRound    uint32  // a maximum number of extended rounds 
+	ExtendedRate        sdk.Dec // rate that determines if the auction needs another round, compared to the number of winning bidders at the previous end time. 
+	StartTime        time.Time         // the start time of the auction 
+	EndTimes         []time.Time        // the end times of the auction 
 }
 ```
 
 ## MsgCancelAuction
 
 ```go
-// MsgCancelAuction defines a SDK message for cancelling an auction
+// MsgCancelAuction defines an SDK message for cancelling an auction
 type MsgCancelAuction struct {
 	Auctioneer string // the owner of the auction
 	AuctionId  uint64 // id of the auction
@@ -47,16 +48,33 @@ type MsgCancelAuction struct {
 
 ## MsgPlaceBid
 ```go
-// MsgPlaceBid defines a SDK message for placing a bid for the auction
+// MsgPlaceBid defines an SDK message for placing a bid for the auction
 // Bid price must be the start price for FixedPriceAuction whereas it can only be increased for EnglishAuction
 type MsgPlaceBid struct {
-	AuctionId uint64   // id of the auction
-	Bidder    string   // account that places a bid for the auction
-	Price     sdk.Dec  // bid price to bid for the auction
-	Coin      sdk.Coin // paying amount of coin that the bidder bids
+	AuctionId   uint64   // id of the auction
+	Bidder      string   // account that places a bid for the auction
+	Type        BidType  // bid type; currently How-Much-Worth-To-Buy and How-Many-Coins-To-Buy are supported.
+	BidPrice       sdk.Dec  // bid price to bid for the auction
+	BidCoin        sdk.Coin // targeted amount of coin that the bidder bids; the denom must be either the denom or SellingCoin or PayingCoinDenom
 }
 ```
 
+
+## MsgModifyBid
+```go
+// MsgModifyBid defines an SDK message for modifying a bid for the auction by replacing the existing bid by a new one.
+// MsgModifyBid only applies for BatchAuction.
+// Price cannot be lower than that of the original bid. If Price is the same as that of the original bid, the amount of BiddingCoin should be larger than that of the original bid. 
+// The amount of BiddingCoin cannot be smaller than that of the original bid. If the amount of BiddingCoin is the same that of the original bid, Price should be higher than that of the original bid.  
+// If the amount of BiddingCoin is the same that of the original bid, Price should be higher than that of the original bid. 
+type MsgModifyBid struct {
+	AuctionId           uint64   // id of the auction
+	Bidder              string   // account that places a bid for the auction
+	ID                  uint64   // id of the bid of the bidder
+	BidPrice            sdk.Dec  // bid price to bid for the auction
+	BidCoin             sdk.Coin // targeted amount of coin that the bidder bids; the denom must be either the denom or SellingCoin or PayingCoinDenom
+}
+```
 
 ## MsgAddAllowedBidder
 

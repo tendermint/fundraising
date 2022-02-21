@@ -235,15 +235,15 @@ func request_Query_Bid_0(ctx context.Context, marshaler runtime.Marshaler, clien
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "auction_id", err)
 	}
 
-	val, ok = pathParams["sequence"]
+	val, ok = pathParams["bid_id"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "sequence")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "bid_id")
 	}
 
-	protoReq.Sequence, err = runtime.Uint64(val)
+	protoReq.BidId, err = runtime.Uint64(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "sequence", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "bid_id", err)
 	}
 
 	msg, err := client.Bid(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -273,15 +273,15 @@ func local_request_Query_Bid_0(ctx context.Context, marshaler runtime.Marshaler,
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "auction_id", err)
 	}
 
-	val, ok = pathParams["sequence"]
+	val, ok = pathParams["bid_id"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "sequence")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "bid_id")
 	}
 
-	protoReq.Sequence, err = runtime.Uint64(val)
+	protoReq.BidId, err = runtime.Uint64(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "sequence", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "bid_id", err)
 	}
 
 	msg, err := server.Bid(ctx, &protoReq)
@@ -660,7 +660,7 @@ var (
 
 	pattern_Query_Bids_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"cosmos", "fundraising", "v1beta1", "auctions", "auction_id", "bids"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_Bid_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5, 1, 0, 4, 1, 5, 6}, []string{"cosmos", "fundraising", "v1beta1", "auctions", "auction_id", "bids", "sequence"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_Bid_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5, 1, 0, 4, 1, 5, 6}, []string{"cosmos", "fundraising", "v1beta1", "auctions", "auction_id", "bids", "bid_id"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Query_Vestings_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"cosmos", "fundraising", "v1beta1", "auctions", "auction_id", "vestings"}, "", runtime.AssumeColonVerbOpt(true)))
 )

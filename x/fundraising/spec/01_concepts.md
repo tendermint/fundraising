@@ -58,15 +58,15 @@ The auctioneer can cancel the auction before `StartTime`.
 A bidder can do the following behaviors during the auction period.
 1. Place a new bid
     - This auction provides two options for bidder to choose: 1) How-Much-Worth-To-Buy and 2) How-Many-Coins-To-Buy
-        - (**Option A**) How-Much-Worth-To-Buy (fixed `PayingCoin`/varying `SellingCoin`): A bidder places a bid with a fixed amount of the paying coins and, if it wins, the bidder gets the selling coins, where the amount of the selling coins varies depending on the winning price determined after the auction period ends.
-        - (**Option B**) How-Many-Coins-To-Buy (varying `PayingCoin`/fixed `SellingCoin`): A bidder places a bid for a fixed amount of the selling coin that the bidder wants to get if it wins. After the auction period ends, the remaining paying coins will be refunded depending on the winning price.
-2. Replace the existing bid by a new one only with higher price and/or more quantities
-    - The bidder can replace its existing bid, which is previously placed, by a new one with the same option between Option A and Option B.
+        - (`BidType` of `BidTypeBatchWorth`) How-Much-Worth-To-Buy (fixed `PayingCoin`/varying `SellingCoin`): A bidder places a bid with a fixed amount of the paying coins and, if it wins, the bidder gets the selling coins, where the amount of the selling coins varies depending on the winning price determined after the auction period ends.
+        - (`BidType` of `BidTypeBatchMany`) How-Many-Coins-To-Buy (varying `PayingCoin`/fixed `SellingCoin`): A bidder places a bid for a fixed amount of the selling coin that the bidder wants to get if it wins. After the auction period ends, the remaining paying coins will be refunded depending on the winning price.
+2. Replace the existing bid by a new one only with higher price and/or larger quantity
+    - The bidder can replace its existing bid, which is previously placed, by a new one with the same `BidType` between `BidTypeBatchWorth` and `BidTypeBatchMany`.
 
 A bidder cannot do the following behaviors during the auction period.
 
 1. Cancel the existing bid 
-2. Replace the existing bid by a new one with lower price or fewer quantities.
+2. Replace the existing bid by a new one with lower price or smaller quantity.
 
 ### When the auction ends:
 

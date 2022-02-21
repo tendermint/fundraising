@@ -26,16 +26,16 @@ func (suite *keysTestSuite) TestGetAuctionKey() {
 	suite.Require().Equal([]byte{0x21, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xa}, types.GetAuctionKey(10))
 }
 
-func (suite *keysTestSuite) TestGetSequenceKey() {
-	suite.Require().Equal([]byte{0x12, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}, types.GetSequenceKey(0))
-	suite.Require().Equal([]byte{0x12, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x9}, types.GetSequenceKey(9))
-	suite.Require().Equal([]byte{0x12, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xa}, types.GetSequenceKey(10))
+func (suite *keysTestSuite) TestGetBidIdKey() {
+	suite.Require().Equal([]byte{0x12, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}, types.GetBidIdKey(0))
+	suite.Require().Equal([]byte{0x12, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x9}, types.GetBidIdKey(9))
+	suite.Require().Equal([]byte{0x12, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xa}, types.GetBidIdKey(10))
 }
 
 func (suite *keysTestSuite) TestGetBidKey() {
 	testCases := []struct {
 		auctionId uint64
-		sequence  uint64
+		bidId     uint64
 		expected  []byte
 	}{
 		{
@@ -56,7 +56,7 @@ func (suite *keysTestSuite) TestGetBidKey() {
 	}
 
 	for _, tc := range testCases {
-		key := types.GetBidKey(tc.auctionId, tc.sequence)
+		key := types.GetBidKey(tc.auctionId, tc.bidId)
 		suite.Require().Equal(tc.expected, key)
 	}
 }
@@ -65,7 +65,7 @@ func (suite *keysTestSuite) TestBidIndexKey() {
 	testCases := []struct {
 		bidderAddr sdk.AccAddress
 		auctionId  uint64
-		sequence   uint64
+		bidId      uint64
 		expected   []byte
 	}{
 		{
@@ -98,12 +98,12 @@ func (suite *keysTestSuite) TestBidIndexKey() {
 	}
 
 	for _, tc := range testCases {
-		key := types.GetBidIndexKey(tc.bidderAddr, tc.auctionId, tc.sequence)
+		key := types.GetBidIndexKey(tc.bidderAddr, tc.auctionId, tc.bidId)
 		suite.Require().Equal(tc.expected, key)
 
-		auctionId, sequence := types.ParseBidIndexKey(key)
+		auctionId, bidId := types.ParseBidIndexKey(key)
 		suite.Require().Equal(tc.auctionId, auctionId)
-		suite.Require().Equal(tc.sequence, sequence)
+		suite.Require().Equal(tc.bidId, bidId)
 	}
 }
 

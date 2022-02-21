@@ -66,7 +66,7 @@ func (s *KeeperTestSuite) TestMsgCreateFixedPriceAuction() {
 	}
 }
 
-func (s *KeeperTestSuite) TestMsgCreateEnglishAuction() {
+func (s *KeeperTestSuite) TestMsgCreateBatchAuction() {
 	// TODO: not implemented yet
 }
 
@@ -201,7 +201,7 @@ func (s *KeeperTestSuite) TestMsgPlaceBid() {
 		},
 	} {
 		s.Run(tc.name, func() {
-			receiveAmt := tc.msg.Coin.Amount.ToDec().QuoTruncate(tc.msg.Price).TruncateInt()
+			receiveAmt := tc.msg.BidCoin.Amount.ToDec().QuoTruncate(tc.msg.BidPrice).TruncateInt()
 
 			err := s.keeper.AddAllowedBidders(s.ctx, tc.msg.AuctionId, []types.AllowedBidder{
 				{Bidder: bidder.String(), MaxBidAmount: receiveAmt},

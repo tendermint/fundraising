@@ -2,28 +2,40 @@
 
 # State Transitions
 
-This document describes the state transaction operations for the fundraising module.
+This document describes the state transaction operations in the fundraising module.
 
-## Auctions
+## Coin Reservation for Fundraising Module Message
 
-When an auctioneer creates English auction, the following state transitions occur:
+Transaction confirmation causes state transition on the [Bank](https://docs.cosmos.network/master/modules/bank/) module. Some messages on the fundraising module require coin reservation before confirmation.
 
--
--
--
+The coin reserve processes for each message type are:
 
-When an auctioneer creates fixed price auction, the following state transitions occur:
+### MsgCreateFixedPriceAuction
 
--
--
--
+When `MsgCreateFixedPriceAuction` is confirmed, 
+- `SellingCoin` of the auctioneer is reserved in `SellingReserveAddress`, and 
+- the created auction status is set to `AuctionStatusStandBy`.
 
-When an auctioneer cancels an auction, the following state transitions occur:
+### MsgCreateBatchAuction
 
--
+When `MsgCreateBatchAuction` is confirmed,
+- `SellingCoin` of the auctioneer is reserved in `SellingReserveAddress`, and
+- the created auction status is set to `AuctionStatusStandBy`.
 
-## Bid
+### MsgCancelAuction
 
-When a bidder places their bid for the auction, the following state transitions occur:
+When `MsgCancelAuction` is confirmed for the auction in `AuctionStatusStandBy`,
+- `SellingCoin` reserved in `SellingReserveAddress` is refunded to the auctioneer, and
+- the auction status is changed from `AuctionStatusStandBy` to `AuctionStatusCancelled`.
 
-- 
+### MsgPlaceBid
+
+When `MsgPlaceBid` is confirmed, `PayingCoin` of the bidder is reserved in `PayingReserveAddress`.
+
+For a fixed price auction, when `MsgPlaceBid` is confirmed, `NumberWinningBidders` and `RemainingSellingCoin` are updated based on the message.
+
+
+
+### MsgModifyBid
+
+When `MsgModifyBid` is confirmed for an existing bid, the difference of `PayingCoin`  of the modifying bid and `PayingCoin`  of the existing bid is reserved in `PayingReserveAddress`.

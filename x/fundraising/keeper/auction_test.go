@@ -250,8 +250,8 @@ func (s *KeeperTestSuite) TestFixedPriceAuctionRemainingCoin() {
 	_, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
 		AuctionId: auction.GetId(),
 		Bidder:    s.addr(5).String(),
-		Price:     sdk.OneDec(),
-		Coin:      coin,
+		BidPrice:  sdk.OneDec(),
+		BidCoin:   coin,
 	})
 	s.Require().ErrorIs(err, types.ErrInsufficientRemainingAmount)
 }

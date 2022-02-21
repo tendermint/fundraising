@@ -96,8 +96,8 @@ func (s *KeeperTestSuite) placeBid(auctionId uint64, bidder sdk.AccAddress, pric
 	bid, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
 		AuctionId: auctionId,
 		Bidder:    bidder.String(),
-		Price:     price,
-		Coin:      coin,
+		BidPrice:  price,
+		BidCoin:   coin,
 	})
 	s.Require().NoError(err)
 

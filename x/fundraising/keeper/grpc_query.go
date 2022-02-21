@@ -36,7 +36,7 @@ func (k Querier) Auctions(c context.Context, req *types.QueryAuctionsRequest) (*
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
-	if req.Type != "" && !(req.Type == types.AuctionTypeFixedPrice.String() || req.Type == types.AuctionTypeEnglish.String()) {
+	if req.Type != "" && !(req.Type == types.AuctionTypeFixedPrice.String() || req.Type == types.AuctionTypeBatch.String()) {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid auction type %s", req.Type)
 	}
 
@@ -121,12 +121,12 @@ func (k Querier) Bids(c context.Context, req *types.QueryBidsRequest) (*types.Qu
 
 	store := ctx.KVStore(k.storeKey)
 	switch {
-	case req.Bidder != "" && req.Eligible == "":
+	case req.Bidder != "" && req.IsWinner == "":
 		bids, pageRes, err = queryBidsByBidder(ctx, k, store, req)
-	case req.Bidder != "" && req.Eligible != "":
+	case req.Bidder != "" && req.IsWinner != "":
 		bids, pageRes, err = queryBidsByBidder(ctx, k, store, req)
-	case req.Bidder == "" && req.Eligible != "":
-		bids, pageRes, err = queryBidsByEligible(ctx, k, store, req)
+	case req.Bidder == "" && req.IsWinner != "":
+		bids, pageRes, err = queryBidsByIsWinner(ctx, k, store, req)
 	default:
 		bids, pageRes, err = queryAllBids(ctx, k, store, req)
 	}
@@ -137,16 +137,16 @@ func (k Querier) Bids(c context.Context, req *types.QueryBidsRequest) (*types.Qu
 	return &types.QueryBidsResponse{Bids: bids, Pagination: pageRes}, nil
 }
 
-// Bid queries the specific bid from the auction id and sequence number.
+// Bid queries the specific bid from the auction id and bid id.
 func (k Querier) Bid(c context.Context, req *types.QueryBidRequest) (*types.QueryBidResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	bid, found := k.Keeper.GetBid(ctx, req.AuctionId, req.Sequence)
+	bid, found := k.Keeper.GetBid(ctx, req.AuctionId, req.BidId)
 	if !found {
-		return nil, status.Errorf(codes.NotFound, "bid from auction id %d and sequence %d not found", req.AuctionId, req.Sequence)
+		return nil, status.Errorf(codes.NotFound, "bid from auction id %d and bid id %d not found", req.AuctionId, req.BidId)
 	}
 
 	return &types.QueryBidResponse{Bid: bid}, nil
@@ -204,16 +204,16 @@ func queryBidsByBidder(ctx sdk.Context, k Querier, store sdk.KVStore, req *types
 	bidStore := prefix.NewStore(store, types.GetBidIndexByBidderPrefix(bidderAddr))
 
 	pageRes, err = query.FilteredPaginate(bidStore, req.Pagination, func(key, value []byte, accumulate bool) (bool, error) {
-		auctionId, sequence := types.SplitAuctionIdSequenceKey(key)
-		bid, _ := k.GetBid(ctx, auctionId, sequence)
+		auctionId, bidId := types.SplitAuctionIdBidIdKey(key)
+		bid, _ := k.GetBid(ctx, auctionId, bidId)
 
-		if req.Eligible != "" {
-			eligible, err := strconv.ParseBool(req.Eligible)
+		if req.IsWinner != "" {
+			eligible, err := strconv.ParseBool(req.IsWinner)
 			if err != nil {
 				return false, err
 			}
 
-			if bid.Eligible != eligible {
+			if bid.IsWinner != eligible {
 				return false, nil
 			}
 		}
@@ -232,8 +232,8 @@ func queryBidsByBidder(ctx sdk.Context, k Querier, store sdk.KVStore, req *types
 	return bids, pageRes, err
 }
 
-func queryBidsByEligible(ctx sdk.Context, k Querier, store sdk.KVStore, req *types.QueryBidsRequest) (bids []types.Bid, pageRes *query.PageResponse, err error) {
-	eligible, err := strconv.ParseBool(req.Eligible)
+func queryBidsByIsWinner(ctx sdk.Context, k Querier, store sdk.KVStore, req *types.QueryBidsRequest) (bids []types.Bid, pageRes *query.PageResponse, err error) {
+	isWinner, err := strconv.ParseBool(req.IsWinner)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -250,7 +250,7 @@ func queryBidsByEligible(ctx sdk.Context, k Querier, store sdk.KVStore, req *typ
 			return false, nil
 		}
 
-		if bid.Eligible != eligible {
+		if bid.IsWinner != isWinner {
 			return false, nil
 		}
 

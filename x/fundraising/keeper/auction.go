@@ -29,7 +29,7 @@ func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) e
 
 	// Distribute coins to all bidders from the selling reserve account
 	for _, bid := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
-		receiveAmt := bid.Coin.Amount.ToDec().QuoTruncate(bid.Price).TruncateInt()
+		receiveAmt := bid.BidCoin.Amount.ToDec().QuoTruncate(bid.BidPrice).TruncateInt()
 		receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, receiveAmt)
 
 		bidderAddr, err := sdk.AccAddressFromBech32(bid.GetBidder())
@@ -148,6 +148,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		types.VestingReserveAddress(nextId).String(),
 		msg.VestingSchedules,
 		sdk.ZeroDec(),
+		0,
 		msg.SellingCoin, // add selling coin to remaining coin
 		msg.StartTime,
 		[]time.Time{msg.EndTime},
@@ -182,8 +183,8 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 	return auction, nil
 }
 
-// CreateEnglishAuction sets english auction.
-func (k Keeper) CreateEnglishAuction(ctx sdk.Context, msg *types.MsgCreateEnglishAuction) error {
+// CreateBatchAuction sets english auction.
+func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuction) error {
 	// TODO: not implemented yet
 	return nil
 }
@@ -208,7 +209,7 @@ func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) (typ
 		return nil, err
 	}
 
-	_ = auction.SetRemainingCoin(sdk.NewCoin(auction.GetSellingCoin().Denom, sdk.ZeroInt()))
+	_ = auction.SetRemainingSellingCoin(sdk.NewCoin(auction.GetSellingCoin().Denom, sdk.ZeroInt()))
 	_ = auction.SetStatus(types.AuctionStatusCancelled)
 
 	k.SetAuction(ctx, auction)

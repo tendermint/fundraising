@@ -14,7 +14,7 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 	registry.RegisterImplementations(
 		(*sdk.Msg)(nil),
 		&MsgCreateFixedPriceAuction{},
-		&MsgCreateEnglishAuction{},
+		&MsgCreateBatchAuction{},
 		&MsgCancelAuction{},
 		&MsgPlaceBid{},
 		&MsgAddAllowedBidder{},
@@ -24,7 +24,7 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 		"cosmos.fundraising.v1beta1.AuctionI",
 		(*AuctionI)(nil),
 		&FixedPriceAuction{},
-		&EnglishAuction{},
+		&BatchAuction{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
