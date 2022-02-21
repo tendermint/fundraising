@@ -84,7 +84,7 @@ func (s *ModuleTestSuite) placeBid(auctionId uint64, bidder sdk.AccAddress, pric
 
 	receiveAmt := coin.Amount.ToDec().QuoTruncate(price).TruncateInt()
 
-	err := s.keeper.AddAllowedBidders(s.ctx, auctionId, []*types.AllowedBidder{
+	err := s.keeper.AddAllowedBidders(s.ctx, auctionId, []types.AllowedBidder{
 		{Bidder: bidder.String(), MaxBidAmount: receiveAmt},
 	})
 	s.Require().NoError(err)

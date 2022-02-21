@@ -13,6 +13,7 @@ var (
 	_ sdk.Msg = (*MsgCreateEnglishAuction)(nil)
 	_ sdk.Msg = (*MsgCancelAuction)(nil)
 	_ sdk.Msg = (*MsgPlaceBid)(nil)
+	_ sdk.Msg = (*MsgAddAllowedBidder)(nil)
 )
 
 // Message types for the fundraising module.
@@ -21,6 +22,7 @@ const (
 	TypeMsgCreateEnglishAuction    = "create_english_auction"
 	TypeMsgCancelAuction           = "cancel_auction"
 	TypeMsgPlaceBid                = "place_bid"
+	TypeMsgAddAllowedBidder        = "add_allowed_bidder"
 )
 
 // NewMsgCreateFixedPriceAuction creates a new MsgCreateFixedPriceAuction.
@@ -274,4 +276,38 @@ func (msg MsgPlaceBid) GetBidder() sdk.AccAddress {
 		panic(err)
 	}
 	return addr
+}
+
+// NewAddAllowedBidder creates a new MsgAddAllowedBidder.
+func NewAddAllowedBidder(
+	auctionId uint64,
+	allowedBidder AllowedBidder,
+) *MsgAddAllowedBidder {
+	return &MsgAddAllowedBidder{
+		AuctionId:     auctionId,
+		AllowedBidder: allowedBidder,
+	}
+}
+
+func (msg MsgAddAllowedBidder) Route() string { return RouterKey }
+
+func (msg MsgAddAllowedBidder) Type() string { return TypeMsgAddAllowedBidder }
+
+func (msg MsgAddAllowedBidder) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.AllowedBidder.Bidder); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid bidder address: %v", err)
+	}
+	return nil
+}
+
+func (msg MsgAddAllowedBidder) GetSignBytes() []byte {
+	return sdk.MustSortJSON(legacy.Cdc.MustMarshalJSON(&msg))
+}
+
+func (msg MsgAddAllowedBidder) GetSigners() []sdk.AccAddress {
+	addr, err := sdk.AccAddressFromBech32(msg.AllowedBidder.Bidder)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{addr}
 }

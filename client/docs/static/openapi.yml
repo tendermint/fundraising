@@ -21874,6 +21874,18 @@ definitions:
       and
 
       freezing clients
+  tendermint.fundraising.AllowedBidder:
+    type: object
+    properties:
+      bidder:
+        type: string
+        title: bidder specifies the bech32-encoded address that bids for the auction
+      maxBidAmount:
+        type: string
+        title: >-
+          max_bid_amount specifies the maximum bid amount that the bidder can
+          bid
+    description: AllowedBidder defines an allowed bidder for the auction.
   tendermint.fundraising.Bid:
     type: object
     properties:
@@ -21918,6 +21930,8 @@ definitions:
           eligible specifies the bid that is eligible to purchase the selling
           coin
     description: Bid defines a standard bid for an auction.
+  tendermint.fundraising.MsgAddAllowedBidderResponse:
+    type: object
   tendermint.fundraising.MsgCancelAuctionResponse:
     type: object
     description: |-

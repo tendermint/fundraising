@@ -23,6 +23,9 @@ Cosmos SDK  | v0.44.0
 git clone https://github.com/tendermint/fundraising.git
 cd fundraising
 make install
+
+# Install binary in testing mode enables MsgAddAllowedBidder to add an allowed bidder 
+make install-testing
 ```
 
 ## Getting started
