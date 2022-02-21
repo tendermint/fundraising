@@ -147,7 +147,7 @@ Result:
 }
 ```
 
-### CreateEnglishAuction
+### CreateBatchAuction
 
 Example command:
 
