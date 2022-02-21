@@ -101,21 +101,22 @@ func (msg MsgCreateFixedPriceAuction) GetAuctioneer() sdk.AccAddress {
 // NewMsgCreateBatchAuction creates a new MsgCreateEnglishAuction.
 func NewMsgCreateBatchAuction(
 	auctioneer string,
+	startPrice sdk.Dec,
 	sellingCoin sdk.Coin,
 	payingCoinDenom string,
 	vestingSchedules []VestingSchedule,
-	maximumBidPrice sdk.Dec,
+	maxExtendedRound uint32,
 	extendedRoundRate sdk.Dec,
 	startTime time.Time,
 	endTime time.Time,
 ) *MsgCreateBatchAuction {
 	return &MsgCreateBatchAuction{
-		Auctioneer: auctioneer,
-		//StartPrice:       startPrice,
-		SellingCoin:      sellingCoin,
-		PayingCoinDenom:  payingCoinDenom,
-		VestingSchedules: vestingSchedules,
-		//MaximumBidPrice:  maximumBidPrice,
+		Auctioneer:        auctioneer,
+		StartPrice:        startPrice,
+		SellingCoin:       sellingCoin,
+		PayingCoinDenom:   payingCoinDenom,
+		VestingSchedules:  vestingSchedules,
+		MaxExtendedRound:  maxExtendedRound,
 		ExtendedRoundRate: extendedRoundRate,
 		StartTime:         startTime,
 		EndTime:           endTime,
@@ -130,9 +131,9 @@ func (msg MsgCreateBatchAuction) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Auctioneer); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid auctioneer address: %v", err)
 	}
-	//if !msg.StartPrice.IsPositive() {
-	//	return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "start price must be positve")
-	//}
+	if !msg.StartPrice.IsPositive() {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "start price must be positve")
+	}
 	if err := msg.SellingCoin.Validate(); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid selling coin: %v", err)
 	}
@@ -151,9 +152,6 @@ func (msg MsgCreateBatchAuction) ValidateBasic() error {
 	if err := ValidateVestingSchedules(msg.VestingSchedules, msg.EndTime); err != nil {
 		return err
 	}
-	//if !msg.MaximumBidPrice.IsPositive() {
-	//	return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "maximum bid price must be positve")
-	//}
 	if !msg.ExtendedRoundRate.IsPositive() {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "extend rate must be positve")
 	}
