@@ -41,7 +41,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			panic(fmt.Sprintf("auction %d is not found", bid.AuctionId))
 		}
 
-		k.SetBid(ctx, bid.AuctionId, bid.Sequence, bidderAddr, bid)
+		k.SetBid(ctx, bid.AuctionId, bid.Id, bidderAddr, bid)
 	}
 
 	for _, queue := range genState.VestingQueues {

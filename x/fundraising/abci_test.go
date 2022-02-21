@@ -61,7 +61,7 @@ func (s *ModuleTestSuite) TestEndBlockerStartedStatus() {
 	bid3 := s.placeBid(auction.GetId(), s.addr(3), sdk.OneDec(),
 		sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
 
-	totalBidCoin := bid1.Coin.Add(bid2.Coin).Add(bid3.Coin)
+	totalBidCoin := bid1.BidCoin.Add(bid2.BidCoin).Add(bid3.BidCoin)
 	receiveAmt := totalBidCoin.Amount.ToDec().QuoTruncate(auction.GetStartPrice()).TruncateInt()
 	receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, receiveAmt)
 
@@ -107,7 +107,7 @@ func (s *ModuleTestSuite) TestEndBlockerVestingStatus() {
 	bid3 := s.placeBid(auction.GetId(), s.addr(3), sdk.OneDec(),
 		sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
 
-	totalBidCoin := bid1.Coin.Add(bid2.Coin).Add(bid3.Coin)
+	totalBidCoin := bid1.BidCoin.Add(bid2.BidCoin).Add(bid3.BidCoin)
 
 	// Modify the current block time a day after the end time
 	s.ctx = s.ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, 1))

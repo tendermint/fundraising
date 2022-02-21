@@ -37,20 +37,20 @@ func TestGenesisState_Validate(t *testing.T) {
 					Weight:      sdk.MustNewDecFromStr("0.5"),
 				},
 			},
-			WinningPrice:  sdk.ZeroDec(),
-			RemainingCoin: sdk.NewInt64Coin("denom1", 1_000_000_000_000),
-			StartTime:     types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-			EndTimes:      []time.Time{types.MustParseRFC3339("2022-12-01T00:00:00Z")},
-			Status:        types.AuctionStatusStarted,
+			WinningPrice:         sdk.ZeroDec(),
+			RemainingSellingCoin: sdk.NewInt64Coin("denom1", 1_000_000_000_000),
+			StartTime:            types.MustParseRFC3339("2022-01-01T00:00:00Z"),
+			EndTimes:             []time.Time{types.MustParseRFC3339("2022-12-01T00:00:00Z")},
+			Status:               types.AuctionStatusStarted,
 		},
 	)
 
 	validBid := types.Bid{
 		AuctionId: 1,
-		Sequence:  1,
+		Id:        1,
 		Bidder:    validAddr.String(),
-		Price:     sdk.MustNewDecFromStr("0.5"),
-		Coin:      sdk.NewInt64Coin("denom2", 50_000_000),
+		BidPrice:  sdk.MustNewDecFromStr("0.5"),
+		BidCoin:   sdk.NewInt64Coin("denom2", 50_000_000),
 	}
 
 	validVestingQueue := types.VestingQueue{
@@ -112,11 +112,11 @@ func TestGenesisState_Validate(t *testing.T) {
 								Weight:      sdk.MustNewDecFromStr("0.5"),
 							},
 						},
-						WinningPrice:  sdk.ZeroDec(),
-						RemainingCoin: sdk.NewInt64Coin("denom1", 1_000_000_000_000),
-						StartTime:     types.MustParseRFC3339("2021-12-10T00:00:00Z"),
-						EndTimes:      []time.Time{types.MustParseRFC3339("2022-12-20T00:00:00Z")},
-						Status:        types.AuctionStatusStarted,
+						WinningPrice:         sdk.ZeroDec(),
+						RemainingSellingCoin: sdk.NewInt64Coin("denom1", 1_000_000_000_000),
+						StartTime:            types.MustParseRFC3339("2021-12-10T00:00:00Z"),
+						EndTimes:             []time.Time{types.MustParseRFC3339("2022-12-20T00:00:00Z")},
+						Status:               types.AuctionStatusStarted,
 					},
 				))
 
@@ -148,11 +148,11 @@ func TestGenesisState_Validate(t *testing.T) {
 								Weight:      sdk.MustNewDecFromStr("0.5"),
 							},
 						},
-						WinningPrice:  sdk.ZeroDec(),
-						RemainingCoin: sdk.NewInt64Coin("denom1", 1_000_000_000_000),
-						StartTime:     types.MustParseRFC3339("2021-12-10T00:00:00Z"),
-						EndTimes:      []time.Time{types.MustParseRFC3339("2022-12-20T00:00:00Z")},
-						Status:        types.AuctionStatusStarted,
+						WinningPrice:         sdk.ZeroDec(),
+						RemainingSellingCoin: sdk.NewInt64Coin("denom1", 1_000_000_000_000),
+						StartTime:            types.MustParseRFC3339("2021-12-10T00:00:00Z"),
+						EndTimes:             []time.Time{types.MustParseRFC3339("2022-12-20T00:00:00Z")},
+						Status:               types.AuctionStatusStarted,
 					},
 				))
 
@@ -184,11 +184,11 @@ func TestGenesisState_Validate(t *testing.T) {
 								Weight:      sdk.MustNewDecFromStr("0.5"),
 							},
 						},
-						WinningPrice:  sdk.ZeroDec(),
-						RemainingCoin: sdk.NewInt64Coin("denom1", 1_000_000_000_000),
-						StartTime:     types.MustParseRFC3339("2021-12-10T00:00:00Z"),
-						EndTimes:      []time.Time{types.MustParseRFC3339("2022-12-20T00:00:00Z")},
-						Status:        types.AuctionStatusStarted,
+						WinningPrice:         sdk.ZeroDec(),
+						RemainingSellingCoin: sdk.NewInt64Coin("denom1", 1_000_000_000_000),
+						StartTime:            types.MustParseRFC3339("2021-12-10T00:00:00Z"),
+						EndTimes:             []time.Time{types.MustParseRFC3339("2022-12-20T00:00:00Z")},
+						Status:               types.AuctionStatusStarted,
 					},
 				))
 
@@ -220,11 +220,11 @@ func TestGenesisState_Validate(t *testing.T) {
 								Weight:      sdk.MustNewDecFromStr("0.5"),
 							},
 						},
-						WinningPrice:  sdk.ZeroDec(),
-						RemainingCoin: sdk.NewInt64Coin("denom1", 1_000_000_000_000),
-						StartTime:     types.MustParseRFC3339("2021-12-10T00:00:00Z"),
-						EndTimes:      []time.Time{types.MustParseRFC3339("2022-12-20T00:00:00Z")},
-						Status:        types.AuctionStatusStarted,
+						WinningPrice:         sdk.ZeroDec(),
+						RemainingSellingCoin: sdk.NewInt64Coin("denom1", 1_000_000_000_000),
+						StartTime:            types.MustParseRFC3339("2021-12-10T00:00:00Z"),
+						EndTimes:             []time.Time{types.MustParseRFC3339("2022-12-20T00:00:00Z")},
+						Status:               types.AuctionStatusStarted,
 					},
 				))
 
@@ -238,10 +238,10 @@ func TestGenesisState_Validate(t *testing.T) {
 				genState.Bids = []types.Bid{
 					{
 						AuctionId: 1,
-						Sequence:  1,
+						Id:        1,
 						Bidder:    "invalid",
-						Price:     sdk.MustNewDecFromStr("0.5"),
-						Coin:      sdk.NewInt64Coin("denom2", 50_000_000),
+						BidPrice:  sdk.MustNewDecFromStr("0.5"),
+						BidCoin:   sdk.NewInt64Coin("denom2", 50_000_000),
 					},
 				}
 			},
@@ -253,10 +253,10 @@ func TestGenesisState_Validate(t *testing.T) {
 				genState.Bids = []types.Bid{
 					{
 						AuctionId: 1,
-						Sequence:  1,
+						Id:        1,
 						Bidder:    validAddr.String(),
-						Price:     sdk.MustNewDecFromStr("0.5"),
-						Coin:      sdk.NewInt64Coin("denom2", 0),
+						BidPrice:  sdk.MustNewDecFromStr("0.5"),
+						BidCoin:   sdk.NewInt64Coin("denom2", 0),
 					},
 				}
 			},
@@ -292,11 +292,11 @@ func TestGenesisState_Validate(t *testing.T) {
 								Weight:      sdk.MustNewDecFromStr("0.5"),
 							},
 						},
-						WinningPrice:  sdk.ZeroDec(),
-						RemainingCoin: sdk.NewInt64Coin("denom1", 1_000_000_000_000),
-						StartTime:     types.MustParseRFC3339("2021-12-10T00:00:00Z"),
-						EndTimes:      []time.Time{types.MustParseRFC3339("2022-12-20T00:00:00Z")},
-						Status:        types.AuctionStatusStarted,
+						WinningPrice:         sdk.ZeroDec(),
+						RemainingSellingCoin: sdk.NewInt64Coin("denom1", 1_000_000_000_000),
+						StartTime:            types.MustParseRFC3339("2021-12-10T00:00:00Z"),
+						EndTimes:             []time.Time{types.MustParseRFC3339("2022-12-20T00:00:00Z")},
+						Status:               types.AuctionStatusStarted,
 					},
 				))
 

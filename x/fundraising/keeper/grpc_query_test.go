@@ -190,8 +190,8 @@ func (s *KeeperTestSuite) TestGRPCBids() {
 	bid4 := s.placeBid(auction.GetId(), bidder3, sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 35_000_000), true)
 
 	// Make bid4 not eligible
-	bid4.Eligible = false
-	s.keeper.SetBid(s.ctx, auction.GetId(), bid4.Sequence, bidder3, bid4)
+	bid4.IsWinner = false
+	s.keeper.SetBid(s.ctx, auction.GetId(), bid4.Id, bidder3, bid4)
 
 	for _, tc := range []struct {
 		name      string
@@ -213,10 +213,10 @@ func (s *KeeperTestSuite) TestGRPCBids() {
 			false,
 			func(resp *types.QueryBidsResponse) {
 				s.Require().Len(resp.Bids, 4)
-				s.Require().True(coinEq(bid1.GetCoin(), resp.Bids[0].Coin))
-				s.Require().True(coinEq(bid2.GetCoin(), resp.Bids[1].Coin))
-				s.Require().True(coinEq(bid3.GetCoin(), resp.Bids[2].Coin))
-				s.Require().True(coinEq(bid4.GetCoin(), resp.Bids[3].Coin))
+				s.Require().True(coinEq(bid1.GetBidCoin(), resp.Bids[0].BidCoin))
+				s.Require().True(coinEq(bid2.GetBidCoin(), resp.Bids[1].BidCoin))
+				s.Require().True(coinEq(bid3.GetBidCoin(), resp.Bids[2].BidCoin))
+				s.Require().True(coinEq(bid4.GetBidCoin(), resp.Bids[3].BidCoin))
 			},
 		},
 		{
@@ -342,9 +342,9 @@ func (s *KeeperTestSuite) TestGRPCBid() {
 			func(resp *types.QueryBidResponse) {
 				s.Require().Equal(bid.GetAuctionId(), resp.Bid.GetAuctionId())
 				s.Require().Equal(bid.GetBidder(), resp.Bid.GetBidder())
-				s.Require().Equal(bid.GetSequence(), resp.Bid.GetSequence())
-				s.Require().Equal(bid.GetCoin(), resp.Bid.GetCoin())
-				s.Require().Equal(bid.GetEligible(), resp.Bid.GetEligible())
+				s.Require().Equal(bid.GetId(), resp.Bid.GetId())
+				s.Require().Equal(bid.GetBidCoin(), resp.Bid.GetBidCoin())
+				s.Require().Equal(bid.GetIsWinner(), resp.Bid.GetIsWinner())
 			},
 		},
 	} {

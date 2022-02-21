@@ -126,11 +126,11 @@ type AuctionType uint32
 
 const (
 	// AUCTION_TYPE_UNSPECIFIED defines an invalid auction type
-	TypeNil AuctionType = 0
+	AuctionTypeNil AuctionType = 0
 	// AUCTION_TYPE_FIXED_PRICE defines the fixed price auction type
-	TypeFixedPrice AuctionType = 1
+	AuctionTypeFixedPrice AuctionType = 1
 	// AUCTION_TYPE_BATCH defines the batch auction type
-	TypeBatch AuctionType = 2
+	AuctionTypeBatch AuctionType = 2
 )
 
 // FixedPriceAuction defines the fixed price auction type
@@ -196,11 +196,11 @@ type BidType uint32
 const (
 	// BID_TYPE_UNSPECIFIED defines an invalid bid type
 	BidTypeNil          BidType = 0
- 	// BID_TYPE_FIXED_PRICE defines the bid type used in a fixed price auction type
+ 	// BID_TYPE_FIXED_PRICE defines a bid type for a fixed price auction type
 	BidTypeFixedPrice   BidType = 1
-	// Bid_TYPE_BATCH_WORTH defines a bid type for How-Much-Worth-to-Buy
+	// Bid_TYPE_BATCH_WORTH defines a bid type for How-Much-Worth-to-Buy of a batch auction
 	BidTypeBatchWorth   BidType = 2
-	// Bid_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy
+	// Bid_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy of a batch auction
 	BidTypeBatchMany    BidType = 3
 )
 

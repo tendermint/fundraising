@@ -23,7 +23,7 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 		"cosmos.fundraising.v1beta1.AuctionI",
 		(*AuctionI)(nil),
 		&FixedPriceAuction{},
-		&EnglishAuction{},
+		&BatchAuction{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)

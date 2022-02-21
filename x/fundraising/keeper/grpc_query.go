@@ -36,7 +36,7 @@ func (k Querier) Auctions(c context.Context, req *types.QueryAuctionsRequest) (*
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
-	if req.Type != "" && !(req.Type == types.AuctionTypeFixedPrice.String() || req.Type == types.AuctionTypeEnglish.String()) {
+	if req.Type != "" && !(req.Type == types.AuctionTypeFixedPrice.String() || req.Type == types.AuctionTypeBatch.String()) {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid auction type %s", req.Type)
 	}
 
@@ -213,7 +213,7 @@ func queryBidsByBidder(ctx sdk.Context, k Querier, store sdk.KVStore, req *types
 				return false, err
 			}
 
-			if bid.Eligible != eligible {
+			if bid.IsWinner != eligible {
 				return false, nil
 			}
 		}
@@ -250,7 +250,7 @@ func queryBidsByEligible(ctx sdk.Context, k Querier, store sdk.KVStore, req *typ
 			return false, nil
 		}
 
-		if bid.Eligible != eligible {
+		if bid.IsWinner != eligible {
 			return false, nil
 		}
 

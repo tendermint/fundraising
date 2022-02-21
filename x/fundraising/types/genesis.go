@@ -55,14 +55,14 @@ func (b Bid) Validate() error {
 	if _, err := sdk.AccAddressFromBech32(b.Bidder); err != nil {
 		return err
 	}
-	if !b.Price.IsPositive() {
-		return fmt.Errorf("bid price must be positve value: %s", b.Price.String())
+	if !b.BidPrice.IsPositive() {
+		return fmt.Errorf("bid price must be positve value: %s", b.BidPrice.String())
 	}
-	if err := b.Coin.Validate(); err != nil {
+	if err := b.BidCoin.Validate(); err != nil {
 		return err
 	}
-	if !b.Coin.Amount.IsPositive() {
-		return fmt.Errorf("coin amount must be positive: %s", b.Coin.Amount.String())
+	if !b.BidCoin.Amount.IsPositive() {
+		return fmt.Errorf("coin amount must be positive: %s", b.BidCoin.Amount.String())
 	}
 	return nil
 }

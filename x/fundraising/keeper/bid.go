@@ -96,15 +96,15 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 
 	bid := types.Bid{
 		AuctionId: auction.GetId(),
-		Sequence:  seqId,
+		Id:        seqId,
 		Bidder:    msg.Bidder,
-		Price:     msg.Price,
-		Coin:      msg.Coin,
+		BidPrice:  msg.Price,
+		BidCoin:   msg.Coin,
 		Height:    uint64(ctx.BlockHeader().Height),
-		Eligible:  true,
+		IsWinner:  true,
 	}
 
-	k.SetBid(ctx, bid.AuctionId, bid.Sequence, msg.GetBidder(), bid)
+	k.SetBid(ctx, bid.AuctionId, bid.Id, msg.GetBidder(), bid)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(

@@ -25,7 +25,7 @@ const (
 
 var (
 	_ AuctionI = (*FixedPriceAuction)(nil)
-	_ AuctionI = (*EnglishAuction)(nil)
+	_ AuctionI = (*BatchAuction)(nil)
 )
 
 // AuctionI is an interface that inherits the BaseAuction and exposes common functions
@@ -93,7 +93,7 @@ func NewBaseAuction(
 	id uint64, typ AuctionType, allowedBidders []*AllowedBidder, auctioneerAddr string,
 	sellingPoolAddr string, payingPoolAddr string, startPrice sdk.Dec, sellingCoin sdk.Coin,
 	payingCoinDenom string, vestingPoolAddr string, vestingSchedules []VestingSchedule,
-	winningPrice sdk.Dec, remainingCoin sdk.Coin, startTime time.Time,
+	winningPrice sdk.Dec, remainingSellingCoin sdk.Coin, startTime time.Time,
 	endTimes []time.Time, status AuctionStatus,
 ) *BaseAuction {
 	return &BaseAuction{
@@ -109,7 +109,7 @@ func NewBaseAuction(
 		VestingReserveAddress: vestingPoolAddr,
 		VestingSchedules:      vestingSchedules,
 		WinningPrice:          winningPrice,
-		RemainingCoin:         remainingCoin,
+		RemainingSellingCoin:  remainingSellingCoin,
 		StartTime:             startTime,
 		EndTimes:              endTimes,
 		Status:                status,
@@ -229,11 +229,11 @@ func (ba *BaseAuction) SetWinningPrice(price sdk.Dec) error {
 }
 
 func (ba BaseAuction) GetRemainingCoin() sdk.Coin {
-	return ba.RemainingCoin
+	return ba.RemainingSellingCoin
 }
 
 func (ba *BaseAuction) SetRemainingCoin(coin sdk.Coin) error {
-	ba.RemainingCoin = coin
+	ba.RemainingSellingCoin = coin
 	return nil
 }
 
@@ -266,7 +266,7 @@ func (ba *BaseAuction) SetStatus(status AuctionStatus) error {
 
 // Validate checks for errors on the Auction fields
 func (ba BaseAuction) Validate() error {
-	if ba.Type != AuctionTypeFixedPrice && ba.Type != AuctionTypeEnglish {
+	if ba.Type != AuctionTypeFixedPrice && ba.Type != AuctionTypeBatch {
 		return sdkerrors.Wrapf(ErrInvalidAuctionType, "unknown plan type: %s", ba.Type)
 	}
 	if _, err := sdk.AccAddressFromBech32(ba.Auctioneer); err != nil {
@@ -320,13 +320,12 @@ func NewFixedPriceAuction(baseAuction *BaseAuction) *FixedPriceAuction {
 	}
 }
 
-// NewEnglishAuction returns a new english auction.
-func NewEnglishAuction(baseAuction *BaseAuction, maximumBidPrice sdk.Dec, extended uint32, extendRate sdk.Dec) *EnglishAuction {
-	return &EnglishAuction{
-		BaseAuction:     baseAuction,
-		MaximumBidPrice: maximumBidPrice,
-		Extended:        extended,
-		ExtendRate:      extendRate,
+// NewBatchAuction returns a new batch auction.
+func NewBatchAuction(baseAuction *BaseAuction, maximumBidPrice sdk.Dec, maxExtendedRound uint32, rateExtendedRound sdk.Dec) *BatchAuction {
+	return &BatchAuction{
+		BaseAuction:       baseAuction,
+		MaxExtendedRound:  maxExtendedRound,
+		RateExtendedRound: rateExtendedRound,
 	}
 }
 
