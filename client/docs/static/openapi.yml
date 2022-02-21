@@ -13442,7 +13442,7 @@ paths:
                       title: >-
                         bidder specifies the bech32-encoded address that bids
                         for the auction
-                    bidId:
+                    id:
                       type: string
                       format: uint64
                       title: id specifies an index of a bid for the bidder
@@ -13831,7 +13831,7 @@ paths:
                     title: >-
                       bidder specifies the bech32-encoded address that bids for
                       the auction
-                  bidId:
+                  id:
                     type: string
                     format: uint64
                     title: id specifies an index of a bid for the bidder
@@ -21975,7 +21975,7 @@ definitions:
       bidder:
         type: string
         title: bidder specifies the bech32-encoded address that bids for the auction
-      bidId:
+      id:
         type: string
         format: uint64
         title: id specifies an index of a bid for the bidder
@@ -22495,7 +22495,7 @@ definitions:
             title: >-
               bidder specifies the bech32-encoded address that bids for the
               auction
-          bidId:
+          id:
             type: string
             format: uint64
             title: id specifies an index of a bid for the bidder
@@ -22591,7 +22591,7 @@ definitions:
               title: >-
                 bidder specifies the bech32-encoded address that bids for the
                 auction
-            bidId:
+            id:
               type: string
               format: uint64
               title: id specifies an index of a bid for the bidder

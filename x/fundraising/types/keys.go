@@ -27,12 +27,12 @@ const (
 
 var (
 	LastAuctionIdKey = []byte{0x11} // key to retrieve the latest auction id
-	LastBidIdKey     = []byte{0x12} // key to retrieve the latest sequence number from the auction id
+	LastBidIdKey     = []byte{0x12} // key to retrieve the latest bid id number from the auction id
 
 	AuctionKeyPrefix = []byte{0x21} // prefix to retrieve the auction from an auction id
 
-	BidKeyPrefix      = []byte{0x31} // prefix to retrieve the bid from the auction id and sequence number
-	BidIndexKeyPrefix = []byte{0x32} // prefix to retrieve the auction id and sequence by iterating the bidder address
+	BidKeyPrefix      = []byte{0x31} // prefix to retrieve the bid from the auction id and bid id number
+	BidIndexKeyPrefix = []byte{0x32} // prefix to retrieve the auction id and bid id by iterating the bidder address
 
 	VestingQueueKeyPrefix = []byte{0x41} // prefix to retrieve the vesting queues from the auction id and vesting release time
 )
@@ -48,8 +48,8 @@ func GetAuctionKey(auctionId uint64) []byte {
 }
 
 // GetBidKey returns the store key to retrieve the bid from the index fields.
-func GetBidKey(auctionId uint64, sequence uint64) []byte {
-	return append(append(BidKeyPrefix, sdk.Uint64ToBigEndian(auctionId)...), sdk.Uint64ToBigEndian(sequence)...)
+func GetBidKey(auctionId uint64, bidId uint64) []byte {
+	return append(append(BidKeyPrefix, sdk.Uint64ToBigEndian(auctionId)...), sdk.Uint64ToBigEndian(bidId)...)
 }
 
 // GetBidAuctionIDKey returns the store key to retrieve the bid from the auction id.
@@ -57,9 +57,9 @@ func GetBidAuctionIDKey(auctionId uint64) []byte {
 	return append(BidKeyPrefix, sdk.Uint64ToBigEndian(auctionId)...)
 }
 
-// GetBidIndexKey returns the store key to retrieve the sequence number from the index fields.
-func GetBidIndexKey(bidderAddr sdk.AccAddress, auctionId uint64, sequence uint64) []byte {
-	return append(append(append(BidIndexKeyPrefix, address.MustLengthPrefix(bidderAddr)...), sdk.Uint64ToBigEndian(auctionId)...), sdk.Uint64ToBigEndian(sequence)...)
+// GetBidIndexKey returns the store key to retrieve the bid id from the index fields.
+func GetBidIndexKey(bidderAddr sdk.AccAddress, auctionId uint64, bidId uint64) []byte {
+	return append(append(append(BidIndexKeyPrefix, address.MustLengthPrefix(bidderAddr)...), sdk.Uint64ToBigEndian(auctionId)...), sdk.Uint64ToBigEndian(bidId)...)
 }
 
 // GetBidByBidderPrefix returns a key prefix used to iterate
@@ -80,7 +80,7 @@ func GetVestingQueueByAuctionIdPrefix(auctionId uint64) []byte {
 }
 
 // ParseBidIndexKey parses bid index key.
-func ParseBidIndexKey(key []byte) (auctionId, sequence uint64) {
+func ParseBidIndexKey(key []byte) (auctionId, bidId uint64) {
 	if !bytes.HasPrefix(key, BidIndexKeyPrefix) {
 		panic("key does not have proper prefix")
 	}
@@ -88,11 +88,11 @@ func ParseBidIndexKey(key []byte) (auctionId, sequence uint64) {
 	addrLen := key[1]
 	bytesLen := 8
 	auctionId = sdk.BigEndianToUint64(key[2+addrLen:])
-	sequence = sdk.BigEndianToUint64(key[2+addrLen+byte(bytesLen):])
+	bidId = sdk.BigEndianToUint64(key[2+addrLen+byte(bytesLen):])
 	return
 }
 
-// SplitAuctionIdSequenceKey splits the auction id and sequence.
+// SplitAuctionIdBidIdKey splits the auction id and bid id.
 func SplitAuctionIdBidIdKey(key []byte) (auctionId, bidId uint64) {
 	bytesLen := 8
 	auctionId = sdk.BigEndianToUint64(key)

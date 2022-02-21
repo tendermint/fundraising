@@ -52,8 +52,8 @@ func (s *KeeperTestSuite) TestBidId() {
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	sequence := s.keeper.GetLastBidId(s.ctx, auction.GetId())
-	s.Require().Equal(uint64(0), sequence)
+	bidId := s.keeper.GetLastBidId(s.ctx, auction.GetId())
+	s.Require().Equal(uint64(0), bidId)
 
 	s.placeBid(auction.GetId(), s.addr(1), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
 	s.placeBid(auction.GetId(), s.addr(2), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
@@ -77,7 +77,7 @@ func (s *KeeperTestSuite) TestBidId() {
 		true,
 	)
 
-	// Sequence must start from 1 with new auction
+	// Bid id must start from 1 with new auction
 	bidsById = s.keeper.GetBidsByAuctionId(s.ctx, auction2.GetId())
 	s.Require().Len(bidsById, 0)
 

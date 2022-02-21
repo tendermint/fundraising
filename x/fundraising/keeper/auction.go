@@ -148,6 +148,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		types.VestingReserveAddress(nextId).String(),
 		msg.VestingSchedules,
 		sdk.ZeroDec(),
+		0,
 		msg.SellingCoin, // add selling coin to remaining coin
 		msg.StartTime,
 		[]time.Time{msg.EndTime},

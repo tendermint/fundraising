@@ -80,13 +80,13 @@ func (k Keeper) IterateAuctions(ctx sdk.Context, cb func(auction types.AuctionI)
 	}
 }
 
-// GetLastSequence returns the last bid Id for the bid.
+// GetLastBidId returns the last bid Id for the bid.
 func (k Keeper) GetLastBidId(ctx sdk.Context, auctionId uint64) uint64 {
 	var seq uint64
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetBidIdKey(auctionId))
 	if bz == nil {
-		seq = 0 // initialize the sequence
+		seq = 0 // initialize the bid id
 	} else {
 		val := gogotypes.UInt64Value{}
 		err := k.cdc.Unmarshal(bz, &val)
@@ -98,18 +98,18 @@ func (k Keeper) GetLastBidId(ctx sdk.Context, auctionId uint64) uint64 {
 	return seq
 }
 
-// SetSequence sets the Bid Id number for the auction.
+// SetBidId sets the Bid Id number for the auction.
 func (k Keeper) SetBidId(ctx sdk.Context, auctionId uint64, seq uint64) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshal(&gogotypes.UInt64Value{Value: seq})
 	store.Set(types.GetBidIdKey(auctionId), bz)
 }
 
-// GetBid returns a bid for the given auction id and sequence number.
-// A bidder can have as many bids as they want, so sequence is required to get the bid.
-func (k Keeper) GetBid(ctx sdk.Context, auctionId uint64, sequence uint64) (bid types.Bid, found bool) {
+// GetBid returns a bid for the given auction id and bid id.
+// A bidder can have as many bids as they want, so bid id is required to get the bid.
+func (k Keeper) GetBid(ctx sdk.Context, auctionId uint64, bidId uint64) (bid types.Bid, found bool) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetBidKey(auctionId, sequence))
+	bz := store.Get(types.GetBidKey(auctionId, bidId))
 	if bz == nil {
 		return bid, false
 	}
@@ -118,11 +118,11 @@ func (k Keeper) GetBid(ctx sdk.Context, auctionId uint64, sequence uint64) (bid 
 }
 
 // SetBid sets a bid with the given arguments.
-func (k Keeper) SetBid(ctx sdk.Context, auctionId uint64, sequence uint64, bidderAddr sdk.AccAddress, bid types.Bid) {
+func (k Keeper) SetBid(ctx sdk.Context, auctionId uint64, bidId uint64, bidderAddr sdk.AccAddress, bid types.Bid) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshal(&bid)
-	store.Set(types.GetBidKey(auctionId, sequence), bz)
-	store.Set(types.GetBidIndexKey(bidderAddr, auctionId, sequence), []byte{})
+	store.Set(types.GetBidKey(auctionId, bidId), bz)
+	store.Set(types.GetBidIndexKey(bidderAddr, auctionId, bidId), []byte{})
 }
 
 // GetBids returns all bids registered in the store.
@@ -194,8 +194,8 @@ func (k Keeper) IterateBidsByBidder(ctx sdk.Context, bidderAddr sdk.AccAddress, 
 	iter := sdk.KVStorePrefixIterator(store, types.GetBidIndexByBidderPrefix(bidderAddr))
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
-		auctionId, sequence := types.ParseBidIndexKey(iter.Key())
-		bid, _ := k.GetBid(ctx, auctionId, sequence)
+		auctionId, bidId := types.ParseBidIndexKey(iter.Key())
+		bid, _ := k.GetBid(ctx, auctionId, bidId)
 		if cb(bid) {
 			break
 		}

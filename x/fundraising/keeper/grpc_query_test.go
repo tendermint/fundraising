@@ -191,7 +191,7 @@ func (s *KeeperTestSuite) TestGRPCBids() {
 
 	// Make bid4 not eligible
 	bid4.IsWinner = false
-	s.keeper.SetBid(s.ctx, auction.GetId(), bid4.BidId, bidder3, bid4)
+	s.keeper.SetBid(s.ctx, auction.GetId(), bid4.Id, bidder3, bid4)
 
 	for _, tc := range []struct {
 		name      string
@@ -324,7 +324,7 @@ func (s *KeeperTestSuite) TestGRPCBid() {
 			nil,
 		},
 		{
-			"sequence not found",
+			"bid id not found",
 			&types.QueryBidRequest{
 				AuctionId: 2,
 				BidId:     5,
@@ -333,7 +333,7 @@ func (s *KeeperTestSuite) TestGRPCBid() {
 			nil,
 		},
 		{
-			"query by id and sequence",
+			"query by id and bid id",
 			&types.QueryBidRequest{
 				AuctionId: 1,
 				BidId:     1,
@@ -342,7 +342,7 @@ func (s *KeeperTestSuite) TestGRPCBid() {
 			func(resp *types.QueryBidResponse) {
 				s.Require().Equal(bid.GetAuctionId(), resp.Bid.GetAuctionId())
 				s.Require().Equal(bid.GetBidder(), resp.Bid.GetBidder())
-				s.Require().Equal(bid.GetBidId(), resp.Bid.GetBidId())
+				s.Require().Equal(bid.GetId(), resp.Bid.GetId())
 				s.Require().Equal(bid.GetBidCoin(), resp.Bid.GetBidCoin())
 				s.Require().Equal(bid.GetIsWinner(), resp.Bid.GetIsWinner())
 			},

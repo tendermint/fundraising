@@ -96,7 +96,7 @@ message BaseAuction {
   ];
 
   // current number of winning bidders
-  uint64 number_winning_bidders = 13;
+  uint64 num_winning_bidders = 13;
 
   // remaining_coin specifes the remaining amount of selling coin to sell
   cosmos.base.v1beta1.Coin remaining_selling_coin = 14 [
@@ -242,7 +242,7 @@ message Bid {
   string bidder = 2;
 
   // id specifies an index of a bid for the bidder
-  uint64 bid_id = 3;
+  uint64 id = 3;
 
   // type specifies the bid type; type 1 is fixed price, 2 is how-much-worth, 3
   // is how-many-coins

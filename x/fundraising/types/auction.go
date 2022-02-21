@@ -93,7 +93,7 @@ func NewBaseAuction(
 	id uint64, typ AuctionType, allowedBidders []*AllowedBidder, auctioneerAddr string,
 	sellingPoolAddr string, payingPoolAddr string, startPrice sdk.Dec, sellingCoin sdk.Coin,
 	payingCoinDenom string, vestingPoolAddr string, vestingSchedules []VestingSchedule,
-	winningPrice sdk.Dec, remainingSellingCoin sdk.Coin, startTime time.Time,
+	winningPrice sdk.Dec, numWinningBidders uint64, remainingSellingCoin sdk.Coin, startTime time.Time,
 	endTimes []time.Time, status AuctionStatus,
 ) *BaseAuction {
 	return &BaseAuction{
@@ -109,6 +109,7 @@ func NewBaseAuction(
 		VestingReserveAddress: vestingPoolAddr,
 		VestingSchedules:      vestingSchedules,
 		WinningPrice:          winningPrice,
+		NumWinningBidders:     numWinningBidders,
 		RemainingSellingCoin:  remainingSellingCoin,
 		StartTime:             startTime,
 		EndTimes:              endTimes,

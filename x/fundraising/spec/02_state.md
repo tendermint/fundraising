@@ -236,21 +236,21 @@ Stores are KVStores in the multi-store. The key to find the store is the first p
 
 - `AuctionIdKey: 0x11 -> uint64`
 
-### prefix key to retrieve the latest sequence number from the auction id
+### prefix key to retrieve the latest bid id number from the auction id
 
-- `SequenceKey: 0x12 | AuctionId -> uint64`
+- `BidIdKey: 0x12 | AuctionId -> uint64`
 
 ### prefix key to retrieve the auction from the auction id
 
 - `AuctionKeyPrefix: 0x21 | AuctionId -> ProtocolBuffer(Auction)`
 
-### prefix key to retrieve the bid from the auction id and sequence number
+### prefix key to retrieve the bid from the auction id and bid id 
 
-- `BidKeyPrefix: 0x31 | AuctionId | Sequence -> ProtocolBuffer(Bid)`
+- `BidKeyPrefix: 0x31 | AuctionId | BidId -> ProtocolBuffer(Bid)`
 
-### prefix key to retrieve the auction id and sequence by iterating the bidder address
+### prefix key to retrieve the auction id and bid id by iterating the bidder address
 
-- `BidIndexKeyPrefix: 0x32 | BidderAddrLen (1 byte) | BidderAddr | AuctionId | Sequence -> nil`
+- `BidIndexKeyPrefix: 0x32 | BidderAddrLen (1 byte) | BidderAddr | AuctionId | BidId -> nil`
 
 ### prefix key to retrieve the vesting queues from the auction id and vesting release time
 

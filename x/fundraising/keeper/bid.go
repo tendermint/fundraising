@@ -9,7 +9,7 @@ import (
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
 
-// GetNextSequence increments sequence number by one and set it.
+// GetNextBidId increments bid id by one and set it.
 func (k Keeper) GetNextBidIdWithUpdate(ctx sdk.Context, auctionId uint64) uint64 {
 	seq := k.GetLastBidId(ctx, auctionId) + 1
 	k.SetBidId(ctx, auctionId, seq)
@@ -96,7 +96,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 
 	bid := types.Bid{
 		AuctionId: auction.GetId(),
-		BidId:     seqId,
+		Id:        seqId,
 		Bidder:    msg.Bidder,
 		BidPrice:  msg.BidPrice,
 		BidCoin:   msg.BidCoin,
@@ -104,7 +104,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		IsWinner:  true,
 	}
 
-	k.SetBid(ctx, bid.AuctionId, bid.BidId, msg.GetBidder(), bid)
+	k.SetBid(ctx, bid.AuctionId, bid.Id, msg.GetBidder(), bid)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
