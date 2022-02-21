@@ -13442,11 +13442,11 @@ paths:
                       title: >-
                         bidder specifies the bech32-encoded address that bids
                         for the auction
-                    id:
+                    bidId:
                       type: string
                       format: uint64
                       title: id specifies an index of a bid for the bidder
-                    type:
+                    bidType:
                       title: >-
                         type specifies the bid type; type 1 is fixed price, 2 is
                         how-much-worth, 3
@@ -13747,7 +13747,7 @@ paths:
           in: query
           required: false
           type: string
-        - name: eligible
+        - name: isWinner
           in: query
           required: false
           type: string
@@ -13809,9 +13809,9 @@ paths:
           type: boolean
       tags:
         - Query
-  '/cosmos/fundraising/v1beta1/auctions/{auctionId}/bids/{sequence}':
+  '/cosmos/fundraising/v1beta1/auctions/{auctionId}/bids/{bidId}':
     get:
-      summary: Bid returns the specific bid from the auction id and sequence.
+      summary: Bid returns the specific bid from the auction id and bid id.
       operationId: TendermintFundraisingBid
       responses:
         '200':
@@ -13831,11 +13831,11 @@ paths:
                     title: >-
                       bidder specifies the bech32-encoded address that bids for
                       the auction
-                  id:
+                  bidId:
                     type: string
                     format: uint64
                     title: id specifies an index of a bid for the bidder
-                  type:
+                  bidType:
                     title: >-
                       type specifies the bid type; type 1 is fixed price, 2 is
                       how-much-worth, 3
@@ -14105,7 +14105,7 @@ paths:
           required: true
           type: string
           format: uint64
-        - name: sequence
+        - name: bidId
           in: path
           required: true
           type: string
@@ -21953,6 +21953,18 @@ definitions:
       and
 
       freezing clients
+  tendermint.fundraising.AllowedBidder:
+    type: object
+    properties:
+      bidder:
+        type: string
+        title: bidder specifies the bech32-encoded address that bids for the auction
+      maxBidAmount:
+        type: string
+        title: >-
+          max_bid_amount specifies the maximum bid amount that the bidder can
+          bid
+    description: AllowedBidder defines an allowed bidder for the auction.
   tendermint.fundraising.Bid:
     type: object
     properties:
@@ -21963,11 +21975,11 @@ definitions:
       bidder:
         type: string
         title: bidder specifies the bech32-encoded address that bids for the auction
-      id:
+      bidId:
         type: string
         format: uint64
         title: id specifies an index of a bid for the bidder
-      type:
+      bidType:
         title: >-
           type specifies the bid type; type 1 is fixed price, 2 is
           how-much-worth, 3
@@ -22061,11 +22073,11 @@ definitions:
     description: |-
       MsgCancelAuctionResponse defines the Msg/MsgCancelAuctionResponse
       response type.
-  tendermint.fundraising.MsgCreateEnglishAuctionResponse:
+  tendermint.fundraising.MsgCreateBatchAuctionResponse:
     type: object
     description: |-
-      MsgCreateEnglishAuctionResponse defines the
-      Msg/MsgCreateEnglishAuctionResponse response type.
+      MsgCreateBatchAuctionResponse defines the
+      Msg/MsgCreateBatchAuctionResponse response type.
   tendermint.fundraising.MsgCreateFixedPriceAuctionResponse:
     type: object
     description: |-
@@ -22483,11 +22495,11 @@ definitions:
             title: >-
               bidder specifies the bech32-encoded address that bids for the
               auction
-          id:
+          bidId:
             type: string
             format: uint64
             title: id specifies an index of a bid for the bidder
-          type:
+          bidType:
             title: >-
               type specifies the bid type; type 1 is fixed price, 2 is
               how-much-worth, 3
@@ -22579,11 +22591,11 @@ definitions:
               title: >-
                 bidder specifies the bech32-encoded address that bids for the
                 auction
-            id:
+            bidId:
               type: string
               format: uint64
               title: id specifies an index of a bid for the bidder
-            type:
+            bidType:
               title: >-
                 type specifies the bid type; type 1 is fixed price, 2 is
                 how-much-worth, 3

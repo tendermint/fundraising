@@ -47,7 +47,7 @@ func TestGenesisState_Validate(t *testing.T) {
 
 	validBid := types.Bid{
 		AuctionId: 1,
-		Id:        1,
+		BidId:     1,
 		Bidder:    validAddr.String(),
 		BidPrice:  sdk.MustNewDecFromStr("0.5"),
 		BidCoin:   sdk.NewInt64Coin("denom2", 50_000_000),
@@ -238,7 +238,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				genState.Bids = []types.Bid{
 					{
 						AuctionId: 1,
-						Id:        1,
+						BidId:     1,
 						Bidder:    "invalid",
 						BidPrice:  sdk.MustNewDecFromStr("0.5"),
 						BidCoin:   sdk.NewInt64Coin("denom2", 50_000_000),
@@ -253,7 +253,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				genState.Bids = []types.Bid{
 					{
 						AuctionId: 1,
-						Id:        1,
+						BidId:     1,
 						Bidder:    validAddr.String(),
 						BidPrice:  sdk.MustNewDecFromStr("0.5"),
 						BidCoin:   sdk.NewInt64Coin("denom2", 0),

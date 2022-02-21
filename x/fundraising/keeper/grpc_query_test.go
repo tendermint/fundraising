@@ -191,7 +191,7 @@ func (s *KeeperTestSuite) TestGRPCBids() {
 
 	// Make bid4 not eligible
 	bid4.IsWinner = false
-	s.keeper.SetBid(s.ctx, auction.GetId(), bid4.Id, bidder3, bid4)
+	s.keeper.SetBid(s.ctx, auction.GetId(), bid4.BidId, bidder3, bid4)
 
 	for _, tc := range []struct {
 		name      string
@@ -234,7 +234,7 @@ func (s *KeeperTestSuite) TestGRPCBids() {
 			"query by eligible",
 			&types.QueryBidsRequest{
 				AuctionId: 1,
-				Eligible:  "true",
+				IsWinner:  "true",
 			},
 			false,
 			func(resp *types.QueryBidsResponse) {
@@ -245,7 +245,7 @@ func (s *KeeperTestSuite) TestGRPCBids() {
 			"query by eligible",
 			&types.QueryBidsRequest{
 				AuctionId: 1,
-				Eligible:  "false",
+				IsWinner:  "false",
 			},
 			false,
 			func(resp *types.QueryBidsResponse) {
@@ -257,7 +257,7 @@ func (s *KeeperTestSuite) TestGRPCBids() {
 			&types.QueryBidsRequest{
 				AuctionId: 1,
 				Bidder:    bidder3.String(),
-				Eligible:  "false",
+				IsWinner:  "false",
 			},
 			false,
 			func(resp *types.QueryBidsResponse) {
@@ -269,7 +269,7 @@ func (s *KeeperTestSuite) TestGRPCBids() {
 			&types.QueryBidsRequest{
 				AuctionId: 1,
 				Bidder:    bidder3.String(),
-				Eligible:  "true",
+				IsWinner:  "true",
 			},
 			false,
 			func(resp *types.QueryBidsResponse) {
@@ -327,7 +327,7 @@ func (s *KeeperTestSuite) TestGRPCBid() {
 			"sequence not found",
 			&types.QueryBidRequest{
 				AuctionId: 2,
-				Sequence:  5,
+				BidId:     5,
 			},
 			true,
 			nil,
@@ -336,13 +336,13 @@ func (s *KeeperTestSuite) TestGRPCBid() {
 			"query by id and sequence",
 			&types.QueryBidRequest{
 				AuctionId: 1,
-				Sequence:  1,
+				BidId:     1,
 			},
 			false,
 			func(resp *types.QueryBidResponse) {
 				s.Require().Equal(bid.GetAuctionId(), resp.Bid.GetAuctionId())
 				s.Require().Equal(bid.GetBidder(), resp.Bid.GetBidder())
-				s.Require().Equal(bid.GetId(), resp.Bid.GetId())
+				s.Require().Equal(bid.GetBidId(), resp.Bid.GetBidId())
 				s.Require().Equal(bid.GetBidCoin(), resp.Bid.GetBidCoin())
 				s.Require().Equal(bid.GetIsWinner(), resp.Bid.GetIsWinner())
 			},

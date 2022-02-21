@@ -194,7 +194,7 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 	}
 }
 
-func TestMsgCreateEnglishAuction(t *testing.T) {
+func TestMsgCreateBatchAuction(t *testing.T) {
 	// TODO: not implemented yet
 }
 

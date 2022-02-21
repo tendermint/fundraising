@@ -27,7 +27,7 @@ const (
 
 var (
 	LastAuctionIdKey = []byte{0x11} // key to retrieve the latest auction id
-	LastSequenceKey  = []byte{0x12} // key to retrieve the latest sequence number from the auction id
+	LastBidIdKey     = []byte{0x12} // key to retrieve the latest sequence number from the auction id
 
 	AuctionKeyPrefix = []byte{0x21} // prefix to retrieve the auction from an auction id
 
@@ -37,9 +37,9 @@ var (
 	VestingQueueKeyPrefix = []byte{0x41} // prefix to retrieve the vesting queues from the auction id and vesting release time
 )
 
-// GetSequenceKey returns the store key to retrieve the latest sequence from the index fields.
-func GetSequenceKey(auctionId uint64) []byte {
-	return append(LastSequenceKey, sdk.Uint64ToBigEndian(auctionId)...)
+// GetBidIdKey returns the store key to retrieve the latest Bid Id from the index fields.
+func GetBidIdKey(auctionId uint64) []byte {
+	return append(LastBidIdKey, sdk.Uint64ToBigEndian(auctionId)...)
 }
 
 // GetAuctionKey returns the store key to retrieve the auction from the index field.
@@ -93,9 +93,9 @@ func ParseBidIndexKey(key []byte) (auctionId, sequence uint64) {
 }
 
 // SplitAuctionIdSequenceKey splits the auction id and sequence.
-func SplitAuctionIdSequenceKey(key []byte) (auctionId, sequence uint64) {
+func SplitAuctionIdBidIdKey(key []byte) (auctionId, bidId uint64) {
 	bytesLen := 8
 	auctionId = sdk.BigEndianToUint64(key)
-	sequence = sdk.BigEndianToUint64(key[byte(bytesLen):])
+	bidId = sdk.BigEndianToUint64(key[byte(bytesLen):])
 	return
 }

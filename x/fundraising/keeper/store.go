@@ -80,11 +80,11 @@ func (k Keeper) IterateAuctions(ctx sdk.Context, cb func(auction types.AuctionI)
 	}
 }
 
-// GetLastSequence returns the last sequence for the bid.
-func (k Keeper) GetLastSequence(ctx sdk.Context, auctionId uint64) uint64 {
+// GetLastSequence returns the last bid Id for the bid.
+func (k Keeper) GetLastBidId(ctx sdk.Context, auctionId uint64) uint64 {
 	var seq uint64
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetSequenceKey(auctionId))
+	bz := store.Get(types.GetBidIdKey(auctionId))
 	if bz == nil {
 		seq = 0 // initialize the sequence
 	} else {
@@ -98,11 +98,11 @@ func (k Keeper) GetLastSequence(ctx sdk.Context, auctionId uint64) uint64 {
 	return seq
 }
 
-// SetSequence sets the sequence number for the auction.
-func (k Keeper) SetSequence(ctx sdk.Context, auctionId uint64, seq uint64) {
+// SetSequence sets the Bid Id number for the auction.
+func (k Keeper) SetBidId(ctx sdk.Context, auctionId uint64, seq uint64) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshal(&gogotypes.UInt64Value{Value: seq})
-	store.Set(types.GetSequenceKey(auctionId), bz)
+	store.Set(types.GetBidIdKey(auctionId), bz)
 }
 
 // GetBid returns a bid for the given auction id and sequence number.

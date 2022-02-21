@@ -35,7 +35,7 @@ message Params {
 
 // BaseAuction defines a base auction type. It contains all the necessary fields
 // for basic auction functionality. Any custom auction type should extend this
-// type for additional functionality (e.g. english auction, fixed price
+// type for additional functionality (e.g. batch auction, fixed price
 // auction).
 message BaseAuction {
   option (gogoproto.goproto_getters) = false;
@@ -45,7 +45,8 @@ message BaseAuction {
   // id specifies index of the auction
   uint64 id = 1;
 
-  // type specifies the auction type; type 1 is fixed price and 2 is english
+  // type specifies the auction type; type 1 is fixed price and 2 is batch
+  // auction
   AuctionType type = 2;
 
   // allowed_bidders specifies the bidders who are allowed to bid for the
@@ -124,10 +125,12 @@ message FixedPriceAuction {
   BaseAuction base_auction = 1 [ (gogoproto.embed) = true ];
 }
 
-// BatAuction defines a batch auction type. It allows each bidder
-// to participate in the auction by placing limit orders with a bid price
-// chosen freely at any time within the auction period. An order book is created
-// to record the bids with various bid prices.
+// BatchAuction defines a batch auction type. It allows bidders to participate
+// in the auction by placing their limit orders with a bid price they are
+// willing to bid within the auction period. They can place multiple bids with
+// different bid prices and if they want to modify their existing bid, they only
+// have an option to modify with a higher bid price. Under the hood, an order
+// book is created to record the bids to calculate winners.
 message BatchAuction {
   option (gogoproto.goproto_getters) = false;
 
@@ -136,9 +139,9 @@ message BatchAuction {
   // max_extended_round specifies a maximum number of extended rounds
   uint32 max_extended_round = 2;
 
-  // rate_extended_round specifies the rate that decides if the auction needs
+  // extended_round_rate specifies the rate that decides if the auction needs
   // another round
-  string rate_extended_round = 3 [
+  string extended_round_rate = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
@@ -239,11 +242,11 @@ message Bid {
   string bidder = 2;
 
   // id specifies an index of a bid for the bidder
-  uint64 id = 3;
+  uint64 bid_id = 3;
 
   // type specifies the bid type; type 1 is fixed price, 2 is how-much-worth, 3
   // is how-many-coins
-  BidType type = 4;
+  BidType bid_type = 4;
 
   // bid_price specifies the bid price in which price the bidder places the bid
   string bid_price = 5 [

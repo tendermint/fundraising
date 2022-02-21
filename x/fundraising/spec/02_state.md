@@ -47,10 +47,14 @@ type AuctionI interface {
 	GetVestingSchedules() []VestingSchedule
 	SetVestingSchedules([]VestingSchedule) error
 	
-	GetWinningPrice() sdk.Dec  // To load WinningPrice at the current time
-	GetNumberWinningBidders() uint64
+	GetWinningPrice() sdk.Dec  // To load WinningPrice at the current time 
+	SetWinningPrice(sdk.Dec) error
 	
-	GetRemainingSellingCoin() sdk.Coin // To calculate RemainingSellingCoin
+	GetNumberWinningBidders() uint64
+	SetNumberWinningBidders(uint64) error
+	
+	GetRemainingSellingCoin() sdk.Coin // To calculate RemainingSellingCoin 
+	SetRemainingSellingCoin(sdk.Coin) error
 	
 	GetStartTime() time.Time
 	SetStartTime(time.Time) error

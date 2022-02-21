@@ -182,8 +182,8 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 	return auction, nil
 }
 
-// CreateEnglishAuction sets english auction.
-func (k Keeper) CreateEnglishAuction(ctx sdk.Context, msg *types.MsgCreateEnglishAuction) error {
+// CreateBatchAuction sets english auction.
+func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuction) error {
 	// TODO: not implemented yet
 	return nil
 }
@@ -208,7 +208,7 @@ func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) (typ
 		return nil, err
 	}
 
-	_ = auction.SetRemainingCoin(sdk.NewCoin(auction.GetSellingCoin().Denom, sdk.ZeroInt()))
+	_ = auction.SetRemainingSellingCoin(sdk.NewCoin(auction.GetSellingCoin().Denom, sdk.ZeroInt()))
 	_ = auction.SetStatus(types.AuctionStatusCancelled)
 
 	k.SetAuction(ctx, auction)

@@ -37,9 +37,9 @@ func (m msgServer) CreateFixedPriceAuction(goCtx context.Context, msg *types.Msg
 }
 
 // CreateEnglishAuction defines a method to create english auction.
-func (m msgServer) CreateEnglishAuction(goCtx context.Context, msg *types.MsgCreateEnglishAuction) (*types.MsgCreateEnglishAuctionResponse, error) {
+func (m msgServer) CreateBatchAuction(goCtx context.Context, msg *types.MsgCreateBatchAuction) (*types.MsgCreateBatchAuctionResponse, error) {
 	// TODO: not implemented yet
-	return &types.MsgCreateEnglishAuctionResponse{}, nil
+	return &types.MsgCreateBatchAuctionResponse{}, nil
 }
 
 // CancelAuction defines a method to cancel auction.

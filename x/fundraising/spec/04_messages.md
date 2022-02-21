@@ -8,9 +8,9 @@ Messages (Msg) are objects that trigger state transitions. Msgs are wrapped in t
 
 ```go
 // MsgCreateFixedPriceAuction defines an SDK message for creating a fixed price type auction
-type MsgCreateFixedPriceAuction struct {
-    AllowedBidders    []AllowedBidder   // the bidders who are allowed to bid for the auction
-    Auctioneer       string            // the owner of the auction
+type MsgCreateFixedPriceAuction struct {	
+	Auctioneer       string            // the owner of the auction
+	AllowedBidders    []AllowedBidder   // the bidders who are allowed to bid for the auction 
 	StartPrice       sdk.Dec           // the starting price for the auction; it is proportional to the price of paying coin denom
 	SellingCoin      sdk.Coin          // the selling coin for the auction
 	PayingCoinDenom  string            // the denom that the auctioneer receives to raise funds
@@ -24,16 +24,15 @@ type MsgCreateFixedPriceAuction struct {
 ```go
 // MsgCreateBatchAuction defines an SDK message for creating a batch type auction
 type MsgCreateBatchAuction struct {
-    AllowedBidders    []AllowedBidder   // the bidders who are allowed to bid for the auction
-	AllowedBidTypes   []AllowedBidType  // allowed bid types (??)
 	Auctioneer       string            // the owner of the auction
+	AllowedBidders    []AllowedBidder   // the bidders who are allowed to bid for the auction
 	SellingCoin      sdk.Coin          // the selling coin for the auction
 	PayingCoinDenom  string            // the denom that the auctioneer receives to raise funds
 	VestingSchedules []VestingSchedule // the vesting schedules for the auction
-	StartTime        time.Time         // the start time of the auction
-	EndTimes         []time.Time        // the end times of the auction
-    MaxExtendedRound    uint32  // a maximum number of extended rounds
-    ExtendedRate        sdk.Dec // rate that determines if the auction needs another round, compared to the number of winning bidders at the previous end time.
+	MaxExtendedRound    uint32  // a maximum number of extended rounds 
+	ExtendedRate        sdk.Dec // rate that determines if the auction needs another round, compared to the number of winning bidders at the previous end time. 
+	StartTime        time.Time         // the start time of the auction 
+	EndTimes         []time.Time        // the end times of the auction 
 }
 ```
 

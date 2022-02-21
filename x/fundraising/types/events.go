@@ -3,7 +3,7 @@ package types
 // Event types for the farming module.
 const (
 	EventTypeCreateFixedPriceAuction = "create_fixed_price_auction"
-	EventTypeCreateEnglishAuction    = "create_english_auction"
+	EventTypeCreateBatchAuction      = "create_batch_auction"
 	EventTypeCancelAuction           = "cancel_auction"
 	EventTypePlaceBid                = "place_bid"
 

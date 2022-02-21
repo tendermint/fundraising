@@ -19,7 +19,7 @@ message GenesisState {
   Params params = 1 [ (gogoproto.nullable) = false ];
 
   // auctions define the auction interface for genesis state; the module
-  // supports FixedPriceAuction or EnglishAuction
+  // supports FixedPriceAuction or BatchAuction
   repeated google.protobuf.Any auctions = 2
       [ (cosmos_proto.accepts_interface) = "AuctionI" ];
 

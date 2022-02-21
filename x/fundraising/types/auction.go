@@ -69,8 +69,8 @@ type AuctionI interface {
 	GetWinningPrice() sdk.Dec
 	SetWinningPrice(sdk.Dec) error
 
-	GetRemainingCoin() sdk.Coin
-	SetRemainingCoin(sdk.Coin) error
+	GetRemainingSellingCoin() sdk.Coin
+	SetRemainingSellingCoin(sdk.Coin) error
 
 	GetStartTime() time.Time
 	SetStartTime(time.Time) error
@@ -228,11 +228,11 @@ func (ba *BaseAuction) SetWinningPrice(price sdk.Dec) error {
 	return nil
 }
 
-func (ba BaseAuction) GetRemainingCoin() sdk.Coin {
+func (ba BaseAuction) GetRemainingSellingCoin() sdk.Coin {
 	return ba.RemainingSellingCoin
 }
 
-func (ba *BaseAuction) SetRemainingCoin(coin sdk.Coin) error {
+func (ba *BaseAuction) SetRemainingSellingCoin(coin sdk.Coin) error {
 	ba.RemainingSellingCoin = coin
 	return nil
 }
@@ -321,11 +321,11 @@ func NewFixedPriceAuction(baseAuction *BaseAuction) *FixedPriceAuction {
 }
 
 // NewBatchAuction returns a new batch auction.
-func NewBatchAuction(baseAuction *BaseAuction, maximumBidPrice sdk.Dec, maxExtendedRound uint32, rateExtendedRound sdk.Dec) *BatchAuction {
+func NewBatchAuction(baseAuction *BaseAuction, maximumBidPrice sdk.Dec, maxExtendedRound uint32, extendedRoundRate sdk.Dec) *BatchAuction {
 	return &BatchAuction{
 		BaseAuction:       baseAuction,
 		MaxExtendedRound:  maxExtendedRound,
-		RateExtendedRound: rateExtendedRound,
+		ExtendedRoundRate: extendedRoundRate,
 	}
 }
 

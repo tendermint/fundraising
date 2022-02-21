@@ -30,7 +30,7 @@ func GetTxCmd() *cobra.Command {
 	// this line is used by starport scaffolding # 1
 	cmd.AddCommand(
 		NewCreateFixedPriceAuction(),
-		NewCreateEnglishAuction(),
+		NewCreateBatchAuction(),
 		NewCancelAuction(),
 		NewPlaceBid(),
 	)
@@ -118,17 +118,17 @@ Description of the parameters:
 	return cmd
 }
 
-func NewCreateEnglishAuction() *cobra.Command {
+func NewCreateBatchAuction() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-english-auction [file]",
+		Use:   "create-batch-auction [file]",
 		Args:  cobra.ExactArgs(1),
-		Short: "Create a english auction",
+		Short: "Create a batch auction",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Create a english auction.
+			fmt.Sprintf(`Create a batch auction.
 The auction details must be provided through a JSON file. 
 		
 Example:
-$ %s tx %s create-english-auction <path/to/auction.json> --from mykey 
+$ %s tx %s create-batch-auction <path/to/auction.json> --from mykey 
 
 Where auction.json contains:
 

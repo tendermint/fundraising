@@ -169,8 +169,8 @@ func AuctionStatusStatesInvariant(k Keeper) sdk.Invariant {
 					}
 				}
 			case types.AuctionStatusCancelled:
-				if !auction.GetRemainingCoin().IsZero() {
-					msg += fmt.Sprintf("expected remaining coin is 0 but got %v", auction.GetRemainingCoin())
+				if !auction.GetRemainingSellingCoin().IsZero() {
+					msg += fmt.Sprintf("expected remaining coin is 0 but got %v", auction.GetRemainingSellingCoin())
 					count++
 				}
 			default:
