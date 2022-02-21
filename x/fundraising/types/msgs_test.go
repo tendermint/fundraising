@@ -242,6 +242,7 @@ func TestMsgPlaceBid(t *testing.T) {
 			types.NewMsgPlaceBid(
 				uint64(1),
 				bidderAddr.String(),
+				types.BidTypeBatchWorth,
 				sdk.OneDec(),
 				sdk.NewInt64Coin("denom2", 1000000),
 			),
@@ -251,6 +252,7 @@ func TestMsgPlaceBid(t *testing.T) {
 			types.NewMsgPlaceBid(
 				uint64(1),
 				bidderAddr.String(),
+				types.BidTypeBatchWorth,
 				sdk.ZeroDec(),
 				sdk.NewInt64Coin("denom2", 1000000),
 			),
@@ -260,6 +262,7 @@ func TestMsgPlaceBid(t *testing.T) {
 			types.NewMsgPlaceBid(
 				uint64(1),
 				bidderAddr.String(),
+				types.BidTypeBatchWorth,
 				sdk.OneDec(),
 				sdk.NewInt64Coin("denom2", 0),
 			),

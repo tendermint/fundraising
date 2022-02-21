@@ -25,6 +25,9 @@ service Msg {
   // PlaceBid defines a method to place a bid message.
   rpc PlaceBid(MsgPlaceBid) returns (MsgPlaceBidResponse);
 
+  // ModifyBid defines a method to modify the bid message.
+  rpc ModifyBid(MsgModifyBid) returns (MsgModifyBidResponse);
+
   // AddAllowedBidder defines a method sto add a single allowed bidder message.
   // This is for the testing purpose and it must not be used in mainnet.
   rpc AddAllowedBidder(MsgAddAllowedBidder)
@@ -85,37 +88,43 @@ message MsgCreateBatchAuction {
   // auctioneer specifies the bech32-encoded address that creates the auction
   string auctioneer = 1;
 
+  // start_price specifies the starting price of the auction
+  string start_price = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
   // selling_coin specifies the selling coin for the auction
-  cosmos.base.v1beta1.Coin selling_coin = 2 [
+  cosmos.base.v1beta1.Coin selling_coin = 3 [
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin",
     (gogoproto.nullable) = false
   ];
 
   // paying_coin_denom specifies the paying coin denom that bidders use to bid
   // for
-  string paying_coin_denom = 3;
+  string paying_coin_denom = 4;
 
   // vesting_schedules specifies the vesting schedules for the auction
-  repeated VestingSchedule vesting_schedules = 4
+  repeated VestingSchedule vesting_schedules = 5
       [ (gogoproto.nullable) = false ];
 
   // maximum_extended_round specifies the maximum number of extended rounds for
   // the auction
-  uint32 max_extended_round = 5;
+  uint32 max_extended_round = 6;
 
   // extended_round_rate specifies the rate that decides if the auction needs
   // another round
-  string extended_round_rate = 6 [
+  string extended_round_rate = 7 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // start_time specifies the start time of the plan
-  google.protobuf.Timestamp start_time = 7
+  google.protobuf.Timestamp start_time = 8
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // end_time specifies the end time of the plan
-  google.protobuf.Timestamp end_time = 8
+  google.protobuf.Timestamp end_time = 9
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 }
 

@@ -13,6 +13,7 @@ var (
 	_ sdk.Msg = (*MsgCreateBatchAuction)(nil)
 	_ sdk.Msg = (*MsgCancelAuction)(nil)
 	_ sdk.Msg = (*MsgPlaceBid)(nil)
+	_ sdk.Msg = (*MsgModifyBid)(nil)
 	_ sdk.Msg = (*MsgAddAllowedBidder)(nil)
 )
 
@@ -22,6 +23,7 @@ const (
 	TypeMsgCreateBatchAuction      = "create_batch_auction"
 	TypeMsgCancelAuction           = "cancel_auction"
 	TypeMsgPlaceBid                = "place_bid"
+	TypeMsgModifyBid               = "modify_bid"
 	TypeMsgAddAllowedBidder        = "add_allowed_bidder"
 )
 
@@ -222,14 +224,16 @@ func (msg MsgCancelAuction) GetAuctioneer() sdk.AccAddress {
 
 // NewMsgPlaceBid creates a new MsgPlaceBid.
 func NewMsgPlaceBid(
-	id uint64,
+	auctionId uint64,
 	bidder string,
+	bidType BidType,
 	price sdk.Dec,
 	coin sdk.Coin,
 ) *MsgPlaceBid {
 	return &MsgPlaceBid{
-		AuctionId: id,
+		AuctionId: auctionId,
 		Bidder:    bidder,
+		BidType:   bidType,
 		BidPrice:  price,
 		BidCoin:   coin,
 	}
@@ -252,6 +256,10 @@ func (msg MsgPlaceBid) ValidateBasic() error {
 	if !msg.BidCoin.Amount.IsPositive() {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid coin amount: %s", msg.BidCoin.Amount.String())
 	}
+	if msg.BidType != BidTypeBatchWorth &&
+		msg.BidType != BidTypeBatchMany {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid bid type: %T", msg.BidType.String())
+	}
 	return nil
 }
 
@@ -273,6 +281,55 @@ func (msg MsgPlaceBid) GetBidder() sdk.AccAddress {
 		panic(err)
 	}
 	return addr
+}
+
+// NewModifyBid creates a new MsgModifyBid.
+func NewModifyBid(
+	auctionId uint64,
+	bidder string,
+	bidId uint64,
+	bidPrice sdk.Dec,
+	bidCoin sdk.Coin,
+) *MsgModifyBid {
+	return &MsgModifyBid{
+		AuctionId: auctionId,
+		Bidder:    bidder,
+		BidId:     bidId,
+		BidPrice:  bidPrice,
+		BidCoin:   bidCoin,
+	}
+}
+
+func (msg MsgModifyBid) Route() string { return RouterKey }
+
+func (msg MsgModifyBid) Type() string { return TypeMsgModifyBid }
+
+func (msg MsgModifyBid) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Bidder); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid bidder address: %v", err)
+	}
+	if !msg.BidPrice.IsPositive() {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "bid price must be positve value")
+	}
+	if err := msg.BidCoin.Validate(); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid bid coin: %v", err)
+	}
+	if !msg.BidCoin.Amount.IsPositive() {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid coin amount: %s", msg.BidCoin.Amount.String())
+	}
+	return nil
+}
+
+func (msg MsgModifyBid) GetSignBytes() []byte {
+	return sdk.MustSortJSON(legacy.Cdc.MustMarshalJSON(&msg))
+}
+
+func (msg MsgModifyBid) GetSigners() []sdk.AccAddress {
+	addr, err := sdk.AccAddressFromBech32(msg.Bidder)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{addr}
 }
 
 // NewAddAllowedBidder creates a new MsgAddAllowedBidder.
