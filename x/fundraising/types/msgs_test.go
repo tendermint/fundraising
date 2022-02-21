@@ -283,3 +283,37 @@ func TestMsgPlaceBid(t *testing.T) {
 		}
 	}
 }
+
+func TestAddAllowedBidder(t *testing.T) {
+	testCases := []struct {
+		expectedErr string
+		msg         *types.MsgAddAllowedBidder
+	}{
+		{
+			"", // empty means no error expected
+			types.NewAddAllowedBidder(
+				uint64(1),
+				types.AllowedBidder{
+					sdk.AccAddress(crypto.AddressHash([]byte("Bidder"))).String(),
+					sdk.NewInt(100_000_000),
+				},
+			),
+		},
+	}
+
+	for _, tc := range testCases {
+		require.IsType(t, &types.MsgAddAllowedBidder{}, tc.msg)
+		require.Equal(t, types.TypeMsgAddAllowedBidder, tc.msg.Type())
+		require.Equal(t, types.RouterKey, tc.msg.Route())
+		require.Equal(t, sdk.MustSortJSON(legacy.Cdc.MustMarshalJSON(tc.msg)), tc.msg.GetSignBytes())
+
+		err := tc.msg.ValidateBasic()
+		if tc.expectedErr == "" {
+			require.Nil(t, err)
+			signers := tc.msg.GetSigners()
+			require.Len(t, signers, 1)
+		} else {
+			require.EqualError(t, err, tc.expectedErr)
+		}
+	}
+}

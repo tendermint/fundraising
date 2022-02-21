@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,6 +11,23 @@ import (
 
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
+
+var (
+	// Set this to "true" using testing build flag to enable AddAllowedBidder msg in Makefile
+	enableAddAllowedBidder = "false"
+
+	// EnableAddAllowedBidder indicates whether msgServer accepts MsgAddAllowedBidder or not.
+	// Never set this to true in production environment. Doing that will expose serious attack vector.
+	EnableAddAllowedBidder = false
+)
+
+func init() {
+	var err error
+	EnableAddAllowedBidder, err = strconv.ParseBool(enableAddAllowedBidder)
+	if err != nil {
+		panic(err)
+	}
+}
 
 type Keeper struct {
 	cdc        codec.BinaryCodec

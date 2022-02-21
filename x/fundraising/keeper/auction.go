@@ -227,7 +227,7 @@ func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) (typ
 // AddAllowedBidders is a function for an external module and it simply adds new bidder(s) to AllowedBidder list.
 // Note that it doesn't do auctioneer verification because the module is generalized for broader use cases.
 // It is designed to delegate to an external module to add necessary verification and logics depending on their use case.
-func (k Keeper) AddAllowedBidders(ctx sdk.Context, auctionId uint64, bidders []*types.AllowedBidder) error {
+func (k Keeper) AddAllowedBidders(ctx sdk.Context, auctionId uint64, bidders []types.AllowedBidder) error {
 	auction, found := k.GetAuction(ctx, auctionId)
 	if !found {
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", auctionId)
@@ -273,9 +273,9 @@ func (k Keeper) UpdateAllowedBidder(ctx sdk.Context, auctionId uint64, bidder sd
 	allowedBidders := auction.GetAllowedBidders()
 	allowedBiddersMap := make(map[string]sdk.Int) // map(bidderAddress => maxBidAmount)
 
-	for _, b := range allowedBidders {
+	for i, b := range allowedBidders {
 		if b.Bidder == bidder.String() {
-			b.MaxBidAmount = maxBidAmount // update the bidder's maximum bid amount
+			allowedBidders[i].MaxBidAmount = maxBidAmount // update the bidder's maximum bid amount
 		}
 
 		allowedBiddersMap[b.GetBidder()] = b.MaxBidAmount

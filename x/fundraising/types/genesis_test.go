@@ -270,7 +270,7 @@ func TestGenesisState_Validate(t *testing.T) {
 						Id:         1,
 						Type:       types.AuctionTypeFixedPrice,
 						Auctioneer: validAddr.String(),
-						AllowedBidders: []*types.AllowedBidder{
+						AllowedBidders: []types.AllowedBidder{
 							{
 								Bidder:       sdk.AccAddress(crypto.AddressHash([]byte("validBidder"))).String(),
 								MaxBidAmount: sdk.ZeroInt(),

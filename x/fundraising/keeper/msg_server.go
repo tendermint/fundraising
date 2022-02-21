@@ -9,6 +9,7 @@ import (
 	"context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
@@ -62,4 +63,20 @@ func (m msgServer) PlaceBid(goCtx context.Context, msg *types.MsgPlaceBid) (*typ
 	}
 
 	return &types.MsgPlaceBidResponse{}, nil
+}
+
+// AddAllowedBidder defines a method to add an allowed bidder.
+// This message is created for testing purpose and it must not be used in mainnet.
+func (m msgServer) AddAllowedBidder(goCtx context.Context, msg *types.MsgAddAllowedBidder) (*types.MsgAddAllowedBidderResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if EnableAddAllowedBidder {
+		if err := m.Keeper.AddAllowedBidders(ctx, msg.AuctionId, []types.AllowedBidder{msg.AllowedBidder}); err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "EnableAddAllowedBidder is disabled")
+	}
+
+	return &types.MsgAddAllowedBidderResponse{}, nil
 }

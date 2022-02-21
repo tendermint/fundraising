@@ -39,8 +39,8 @@ type AuctionI interface {
 	GetType() AuctionType
 	SetType(AuctionType) error
 
-	GetAllowedBidders() []*AllowedBidder
-	SetAllowedBidders([]*AllowedBidder) error
+	GetAllowedBidders() []AllowedBidder
+	SetAllowedBidders([]AllowedBidder) error
 
 	GetAuctioneer() sdk.AccAddress
 	SetAuctioneer(sdk.AccAddress) error
@@ -90,7 +90,7 @@ type AuctionI interface {
 // NewBaseAuction creates a new BaseAuction object
 //nolint:interfacer
 func NewBaseAuction(
-	id uint64, typ AuctionType, allowedBidders []*AllowedBidder, auctioneerAddr string,
+	id uint64, typ AuctionType, allowedBidders []AllowedBidder, auctioneerAddr string,
 	sellingPoolAddr string, payingPoolAddr string, startPrice sdk.Dec, sellingCoin sdk.Coin,
 	payingCoinDenom string, vestingPoolAddr string, vestingSchedules []VestingSchedule,
 	winningPrice sdk.Dec, numWinningBidders uint64, remainingSellingCoin sdk.Coin, startTime time.Time,
@@ -135,11 +135,11 @@ func (ba *BaseAuction) SetType(typ AuctionType) error {
 	return nil
 }
 
-func (ba BaseAuction) GetAllowedBidders() []*AllowedBidder {
+func (ba BaseAuction) GetAllowedBidders() []AllowedBidder {
 	return ba.AllowedBidders
 }
 
-func (ba *BaseAuction) SetAllowedBidders(bidders []*AllowedBidder) error {
+func (ba *BaseAuction) SetAllowedBidders(bidders []AllowedBidder) error {
 	ba.AllowedBidders = bidders
 	return nil
 }
@@ -434,7 +434,7 @@ func VestingReserveAddress(auctionId uint64) sdk.AccAddress {
 }
 
 // ValidatorAllowedBidders validates allowed bidders.
-func ValidatorAllowedBidders(bidders []*AllowedBidder) error {
+func ValidatorAllowedBidders(bidders []AllowedBidder) error {
 	for _, bidder := range bidders {
 		if bidder.MaxBidAmount.IsNil() {
 			return ErrInvalidMaxBidAmount

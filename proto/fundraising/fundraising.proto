@@ -51,7 +51,7 @@ message BaseAuction {
 
   // allowed_bidders specifies the bidders who are allowed to bid for the
   // auction
-  repeated AllowedBidder allowed_bidders = 3;
+  repeated AllowedBidder allowed_bidders = 3 [ (gogoproto.nullable) = false ];
 
   // auctioneer specifies the bech32-encoded address that creates the auction
   string auctioneer = 4;

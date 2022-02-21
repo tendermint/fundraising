@@ -1,7 +1,6 @@
 syntax = "proto3";
 package tendermint.fundraising;
 
-// this line is used by starport scaffolding # proto/tx/import
 import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
 import "google/protobuf/timestamp.proto";
@@ -20,11 +19,16 @@ service Msg {
   rpc CreateBatchAuction(MsgCreateBatchAuction)
       returns (MsgCreateBatchAuctionResponse);
 
-  // Submit a cancel auction message.
+  // CancelAuction defines a method to cancel the auction message.
   rpc CancelAuction(MsgCancelAuction) returns (MsgCancelAuctionResponse);
 
-  // Submit a PlaceBid message to the certain fundraising.
+  // PlaceBid defines a method to place a bid message.
   rpc PlaceBid(MsgPlaceBid) returns (MsgPlaceBidResponse);
+
+  // AddAllowedBidder defines a method sto add a single allowed bidder message.
+  // This is for the testing purpose and it must not be used in mainnet.
+  rpc AddAllowedBidder(MsgAddAllowedBidder)
+      returns (MsgAddAllowedBidderResponse);
 }
 
 // this line is used by Starport scaffolding # proto/tx/message
@@ -209,3 +213,18 @@ message MsgModifyBid { // id specifies index of the auction
 
 // MsgModifyBidResponse defines the Msg/MsgModifyBidResponse response type.
 message MsgModifyBidResponse {}
+
+// MsgAddAllowedBidder defines a SDK message for adding an allowed bidder to the
+// auction.
+message MsgAddAllowedBidder {
+  option (gogoproto.goproto_getters) = false;
+
+  // auction_id specifies the auction id
+  uint64 auction_id = 1;
+
+  // allowed_bidder specifies the bidder who is allowed to bid and their maximum
+  // bid amount
+  AllowedBidder allowed_bidder = 2 [ (gogoproto.nullable) = false ];
+}
+
+message MsgAddAllowedBidderResponse {}

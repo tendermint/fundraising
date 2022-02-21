@@ -17,6 +17,7 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 		&MsgCreateBatchAuction{},
 		&MsgCancelAuction{},
 		&MsgPlaceBid{},
+		&MsgAddAllowedBidder{},
 	)
 
 	registry.RegisterInterface(

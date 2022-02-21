@@ -9,12 +9,13 @@ This document provides a high-level overview of how the command line (CLI) inter
 
 ## Command Line Interface
 
-To test out the following commands, you must set up a local network. By simply running `make localnet` under the root project directory, you can start the local network. It requires [Starport](https://starport.com/), but if you don't have Starport set up in your local machine, see this [install Starport guide](https://docs.starport.network/) to install it.  
+To test out the following commands, you must set up a local network. By simply running `$ make localnet` under the root project directory, you can start the local network. It requires the latest [Starport](https://starport.com/). If you don't have `Starport` set up in your local machine, see this [Starport guide](https://docs.starport.network/) to install it.  
 
 - [Transaction](#Transaction)
     * [CreateFixedPriceAuction](#CreateFixedPriceAuction)
     * [CreateEnglishAuction](#CreateEnglishAuction)
     * [CancelAuction](#CancelAuction)
+    * [AddAllowedBidder](#AddAllowedBidder)
     * [PlaceBid](#PlaceBid)
 - [Query](#Query)
     * [Params](#Params)
@@ -53,21 +54,22 @@ In this JSON example, an auctioneer plans to create a fixed price auction that p
       "weight": "0.500000000000000000"
     }
   ],
-  "start_time": "2022-01-21T00:00:00Z",
-  "end_time": "2022-02-21T00:00:00Z"
+  "start_time": "2022-02-01T00:00:00Z",
+  "end_time": "2022-03-01T00:00:00Z"
 }
 ```
 
 Reference the description of each field:
 
-| **Field**         |  **Description**                                                              |
-| :---------------- | :---------------------------------------------------------------------------- |
-| start_price       | The starting price of the selling coin, proportional to the paying coin denom | 
-| selling_coin      | The selling amount of coin for the auction                                    | 
-| paying_coin_denom | The paying coin denom that bidders use to bid with                            | 
-| vesting_schedules | The vesting schedules that release the paying coins to the autioneer          | 
-| start_time        | The start time of the auction                                                 | 
-| end_time          | The end time of the auction                                                   | 
+| **Field**         |  **Description**                                                                    |
+| :---------------- | :---------------------------------------------------------------------------------- |
+| start_price       | The starting price of the selling coin; it is proportional to the paying coin denom | 
+| selling_coin      | The selling amount of coin for the auction                                          | 
+| paying_coin_denom | The paying coin denom that bidders use to bid with                                  | 
+| vesting_schedules | The vesting schedules that release the paying coins to the autioneer                | 
+| start_time        | The start time of the auction                                                       | 
+| end_time          | The end time of the auction                                                         | 
+|                   |                                                                                     |
 
 Example command:
 
@@ -91,7 +93,7 @@ Result:
     "messages": [
       {
         "@type": "/tendermint.fundraising.MsgCreateFixedPriceAuction",
-        "auctioneer": "cosmos1e9kp752fc6vs3n7enjcfjenfj9s7eehs3m7fdg",
+        "auctioneer": "cosmos1dncsflcfknkmlmt3t6836tkd3mu742e2wh4r70",
         "start_price": "1.000000000000000000",
         "selling_coin": {
           "denom": "denom1",
@@ -108,8 +110,8 @@ Result:
             "weight": "0.500000000000000000"
           }
         ],
-        "start_time": "2022-01-21T00:00:00Z",
-        "end_time": "2022-02-21T00:00:00Z"
+        "start_time": "2022-02-01T00:00:00Z",
+        "end_time": "2022-03-01T00:00:00Z"
       }
     ],
     "memo": "",
@@ -122,7 +124,7 @@ Result:
       {
         "public_key": {
           "@type": "/cosmos.crypto.secp256k1.PubKey",
-          "key": "Axm3aCxA77M5+SMNX7mQRCrdwWZdzpVtDIcmhfWINHMN"
+          "key": "A3mbh7d1pTgT3xSDyXHjdpcaxm58t0azRCXeGP0EsKsQ"
         },
         "mode_info": {
           "single": {
@@ -140,7 +142,7 @@ Result:
     }
   },
   "signatures": [
-    "3u2Pxxdmo9ISfYop70OXz353wNYSKgFgG5ug9t9/ECUBi/dBCiHb0WXiAg8IiyyIprQZPqIlly4HzrQSW6SZ0g=="
+    "UahsRZ27hATh0xu7M/IWFvNvaFESpQ+W0RmQhQql3ERsnYdTDrFP81/MxyYxuX4WNBUv4+3FyhOwEQ7hqlU+MQ=="
   ]
 }
 ```
@@ -150,13 +152,12 @@ Result:
 Example command:
 
 ```bash
-TODO: It is actively being developed.
+TODO: it is being developed
 ```
 
 Result:
 
 ```json
-TODO: It is actively being developed.
 ```
 
 ### CancelAuction
@@ -222,6 +223,74 @@ Result:
 }
 ```
 
+### AddAllowedBidder
+
+**Important Note**: the `fundraising` module is designed in a way that all auctions are closed when they are created. It means that no one can place a bid unless they are allowed. The module expects an external module (a module that imports and uses the `fundraising` module) to control a list of allowed bidder for an auction. There are functions, such as `AddAllowedBidders()` and `UpdateAllowedBidder()` implemented for the external module to use. 
+
+For testing purpose, there is a custom message called `MsgAddAllowedBidder`. It adds a single allowed bidder for the auction and this message is only available when you build `fundraisingd` with `config-test.yml` file. Running `make localnet` is automatically using `config-test.yml`. Under the hood, a custom `enableAddAllowedBidder` ldflags is passed to build configuration in `config-test.yml` file.
+
+Example command:
+
+```bash
+# Add steve's address to allowed bidder list
+fundraisingd tx fundraising add-allowed-bidder 1 1000000000 \
+--chain-id fundraising \
+--from steve \
+--keyring-backend test \
+--broadcast-mode block \
+--yes \
+--output json | jq
+```
+
+Result:
+
+```json
+{
+  "@type": "/cosmos.tx.v1beta1.Tx",
+  "body": {
+    "messages": [
+      {
+        "@type": "/tendermint.fundraising.MsgAddAllowedBidder",
+        "auction_id": "1",
+        "allowed_bidder": {
+          "bidder": "cosmos1tfzynkllgxdpmrcknx2j5d0hj9zd82tceyfa5n",
+          "max_bid_amount": "1000000000"
+        }
+      }
+    ],
+    "memo": "",
+    "timeout_height": "0",
+    "extension_options": [],
+    "non_critical_extension_options": []
+  },
+  "auth_info": {
+    "signer_infos": [
+      {
+        "public_key": {
+          "@type": "/cosmos.crypto.secp256k1.PubKey",
+          "key": "A8VLxM/RDIlFEtOe7rfzA2Am55/Zam2n+oq1+I/Ovkbv"
+        },
+        "mode_info": {
+          "single": {
+            "mode": "SIGN_MODE_DIRECT"
+          }
+        },
+        "sequence": "0"
+      }
+    ],
+    "fee": {
+      "amount": [],
+      "gas_limit": "200000",
+      "payer": "",
+      "granter": ""
+    }
+  },
+  "signatures": [
+    "D49R49OD1YIBzdVVy5g1yIc8AvKbII6f8n3NpJDDHbY3O2vX/dwsoC2TX5eWRSXGgJ92+PfIZIek5PrsZWyfxQ=="
+  ]
+}
+```
+
 ### PlaceBid
 
 Example command:
@@ -246,7 +315,7 @@ Result:
       {
         "@type": "/tendermint.fundraising.MsgPlaceBid",
         "auction_id": "1",
-        "bidder": "cosmos1nmd9ata0gl4agdspva84dwmmfe9ve70kjf4net",
+        "bidder": "cosmos1tfzynkllgxdpmrcknx2j5d0hj9zd82tceyfa5n",
         "price": "1.000000000000000000",
         "coin": {
           "denom": "denom2",
@@ -264,14 +333,14 @@ Result:
       {
         "public_key": {
           "@type": "/cosmos.crypto.secp256k1.PubKey",
-          "key": "AteB2mOe5DTkDDZAONTDLetQQtRq8csugsYdKpYokoUN"
+          "key": "A8VLxM/RDIlFEtOe7rfzA2Am55/Zam2n+oq1+I/Ovkbv"
         },
         "mode_info": {
           "single": {
             "mode": "SIGN_MODE_DIRECT"
           }
         },
-        "sequence": "0"
+        "sequence": "1"
       }
     ],
     "fee": {
@@ -282,7 +351,7 @@ Result:
     }
   },
   "signatures": [
-    "JVOzqwLIV/GjTwhZag1z+nfwHCFEHpDYLL79lSclhVAjPNBVaJKnbCcTMjxUBESGs1tcyxQuB+mn2GV8ZnrTCQ=="
+    "Ahrvo4CXneHxTd0Hgyt+HdZXmrhKhm1ijo5Tf7/K7OcK4P5590UlDpoqJ7ofLB738AGt+3rJ+cHy+K09KqBFaA=="
   ]
 }
 ```
@@ -308,7 +377,7 @@ fundraisingd q fundraising params --output json | jq
     }
   ],
   "extended_period": 1,
-  "auction_fee_collector": "cosmos1t2gp44cx86rt8gxv64lpt0dggveg98y4ma2wlnfqts7d4m4z70vqrzud4t"
+  "fee_collector_address": "cosmos1kxyag8zx2j9m8063m92qazaxqg63xv5h7z5jxz8yr27tuk67ne8q0lzjm9"
 }
 ```
 
@@ -344,17 +413,22 @@ Result:
       "base_auction": {
         "id": "1",
         "type": "AUCTION_TYPE_FIXED_PRICE",
-        "allowed_bidders": [],
-        "auctioneer": "cosmos1e9kp752fc6vs3n7enjcfjenfj9s7eehs3m7fdg",
-        "selling_reserve_address": "cosmos18xzvtd72y9j8xyf8a36z5jjhth7qgtcwhh8lz7yee3tvxqn6ll5quh78zq",
-        "paying_reserve_address": "cosmos18permjyqvk5flft8ey9egr7hd4ry8tauqt4f9mg9knn4vvtkry9sujucrl",
+        "allowed_bidders": [
+          {
+            "bidder": "cosmos1tfzynkllgxdpmrcknx2j5d0hj9zd82tceyfa5n",
+            "max_bid_amount": "1000000000"
+          }
+        ],
+        "auctioneer": "cosmos1dncsflcfknkmlmt3t6836tkd3mu742e2wh4r70",
+        "selling_reserve_address": "cosmos1wl90665mfk3pgg095qhmlgha934exjvv437acgq42zw0sg94flestth4zu",
+        "paying_reserve_address": "cosmos17gk7a5ys8pxuexl7tvyk3pc9tdmqjjek03zjemez4eqvqdxlu92qdhphm2",
         "start_price": "1.000000000000000000",
         "selling_coin": {
           "denom": "denom1",
           "amount": "1000000000000"
         },
         "paying_coin_denom": "denom2",
-        "vesting_reserve_address": "cosmos1gukaqt783nhz79uhcqklsty7lc7jfyy8scn5ke4x7v0m3rkpt4dst7y4l3",
+        "vesting_reserve_address": "cosmos1q4x4k4qsr4jwrrugnplhlj52mfd9f8jn5ck7r4ykdpv9wczvz4dqe8vrvt",
         "vesting_schedules": [
           {
             "release_time": "2022-06-21T00:00:00Z",
@@ -370,9 +444,9 @@ Result:
           "denom": "denom1",
           "amount": "999995000000"
         },
-        "start_time": "2022-01-21T00:00:00Z",
+        "start_time": "2022-02-01T00:00:00Z",
         "end_times": [
-          "2022-02-21T00:00:00Z"
+          "2022-03-01T00:00:00Z"
         ],
         "status": "AUCTION_STATUS_STARTED"
       }
@@ -403,17 +477,22 @@ Result:
     "base_auction": {
       "id": "1",
       "type": "AUCTION_TYPE_FIXED_PRICE",
-      "allowed_bidders": [],
-      "auctioneer": "cosmos1e9kp752fc6vs3n7enjcfjenfj9s7eehs3m7fdg",
-      "selling_reserve_address": "cosmos18xzvtd72y9j8xyf8a36z5jjhth7qgtcwhh8lz7yee3tvxqn6ll5quh78zq",
-      "paying_reserve_address": "cosmos18permjyqvk5flft8ey9egr7hd4ry8tauqt4f9mg9knn4vvtkry9sujucrl",
+      "allowed_bidders": [
+        {
+          "bidder": "cosmos1tfzynkllgxdpmrcknx2j5d0hj9zd82tceyfa5n",
+          "max_bid_amount": "1000000000"
+        }
+      ],
+      "auctioneer": "cosmos1dncsflcfknkmlmt3t6836tkd3mu742e2wh4r70",
+      "selling_reserve_address": "cosmos1wl90665mfk3pgg095qhmlgha934exjvv437acgq42zw0sg94flestth4zu",
+      "paying_reserve_address": "cosmos17gk7a5ys8pxuexl7tvyk3pc9tdmqjjek03zjemez4eqvqdxlu92qdhphm2",
       "start_price": "1.000000000000000000",
       "selling_coin": {
         "denom": "denom1",
         "amount": "1000000000000"
       },
       "paying_coin_denom": "denom2",
-      "vesting_reserve_address": "cosmos1gukaqt783nhz79uhcqklsty7lc7jfyy8scn5ke4x7v0m3rkpt4dst7y4l3",
+      "vesting_reserve_address": "cosmos1q4x4k4qsr4jwrrugnplhlj52mfd9f8jn5ck7r4ykdpv9wczvz4dqe8vrvt",
       "vesting_schedules": [
         {
           "release_time": "2022-06-21T00:00:00Z",
@@ -429,9 +508,9 @@ Result:
         "denom": "denom1",
         "amount": "999995000000"
       },
-      "start_time": "2022-01-21T00:00:00Z",
+      "start_time": "2022-02-01T00:00:00Z",
       "end_times": [
-        "2022-02-21T00:00:00Z"
+        "2022-03-01T00:00:00Z"
       ],
       "status": "AUCTION_STATUS_STARTED"
     }
@@ -457,13 +536,13 @@ Result:
     {
       "auction_id": "1",
       "sequence": "1",
-      "bidder": "cosmos1nmd9ata0gl4agdspva84dwmmfe9ve70kjf4net",
+      "bidder": "cosmos1tfzynkllgxdpmrcknx2j5d0hj9zd82tceyfa5n",
       "price": "1.000000000000000000",
       "coin": {
         "denom": "denom2",
         "amount": "5000000"
       },
-      "height": "50",
+      "height": "1407",
       "eligible": true
     }
   ],

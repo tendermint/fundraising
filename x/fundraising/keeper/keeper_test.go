@@ -130,7 +130,7 @@ func (s *KeeperTestSuite) fundAddr(addr sdk.AccAddress, coins sdk.Coins) {
 }
 
 func (s *KeeperTestSuite) addAllowedBidder(auctionId uint64, bidder sdk.AccAddress, maxBidAmount sdk.Int) {
-	err := s.keeper.AddAllowedBidders(s.ctx, auctionId, []*types.AllowedBidder{
+	err := s.keeper.AddAllowedBidders(s.ctx, auctionId, []types.AllowedBidder{
 		{
 			Bidder:       bidder.String(),
 			MaxBidAmount: maxBidAmount,

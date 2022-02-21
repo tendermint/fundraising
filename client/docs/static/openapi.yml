@@ -22068,6 +22068,8 @@ definitions:
       batch auction
        - Bid_TYPE_BATCH_MANY: Bid_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy of a batch
       auction
+  tendermint.fundraising.MsgAddAllowedBidderResponse:
+    type: object
   tendermint.fundraising.MsgCancelAuctionResponse:
     type: object
     description: |-

@@ -59,6 +59,7 @@ type MsgPlaceBid struct {
 }
 ```
 
+
 ## MsgModifyBid
 ```go
 // MsgModifyBid defines an SDK message for modifying a bid for the auction by replacing the existing bid by a new one.
@@ -72,5 +73,22 @@ type MsgModifyBid struct {
 	ID                  uint64   // id of the bid of the bidder
 	BidPrice            sdk.Dec  // bid price to bid for the auction
 	BidCoin             sdk.Coin // targeted amount of coin that the bidder bids; the denom must be either the denom or SellingCoin or PayingCoinDenom
-}`
+}
+```
+
+## MsgAddAllowedBidder
+
+This message is a custom message that is created for testing purpose only. It adds an allowed bidder to `AllowedBidders` for the auction. 
+It is accessible when you build `fundraisingd` binary by the following command:
+
+```bash
+make install-testing
+```
+
+```go
+// MsgAddAllowedBidder defines a SDK message to add an allowed bidder
+type MsgAddAllowedBidder struct {
+	AuctionId     uint64        // the id of the auction
+	AllowedBidder AllowedBidder // the bidder and their maximum bid amount
+}
 ```
