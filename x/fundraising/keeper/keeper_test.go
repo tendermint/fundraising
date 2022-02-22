@@ -31,10 +31,8 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *KeeperTestSuite) SetupTest() {
-	app := simapp.New(app.DefaultNodeHome)
-	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
-	s.app = app
-	s.ctx = ctx
+	s.app = simapp.New(app.DefaultNodeHome)
+	s.ctx = s.app.BaseApp.NewContext(false, tmproto.Header{})
 	s.ctx = s.ctx.WithBlockTime(time.Now()) // set to current time
 	s.keeper = s.app.FundraisingKeeper
 	s.querier = keeper.Querier{Keeper: s.keeper}
@@ -114,7 +112,14 @@ func (s *KeeperTestSuite) addAllowedBidder(auctionId uint64, bidder sdk.AccAddre
 	s.Require().NoError(err)
 }
 
-func (s *KeeperTestSuite) placeBid(auctionId uint64, bidder sdk.AccAddress, price sdk.Dec, coin sdk.Coin, fund bool) types.Bid {
+func (s *KeeperTestSuite) placeBid(
+	auctionId uint64,
+	bidder sdk.AccAddress,
+	bidType types.BidType,
+	price sdk.Dec,
+	coin sdk.Coin,
+	fund bool,
+) types.Bid {
 	if fund {
 		s.fundAddr(bidder, sdk.NewCoins(coin))
 	}
@@ -125,6 +130,7 @@ func (s *KeeperTestSuite) placeBid(auctionId uint64, bidder sdk.AccAddress, pric
 	bid, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
 		AuctionId: auctionId,
 		Bidder:    bidder.String(),
+		BidType:   bidType,
 		Price:     price,
 		Coin:      coin,
 	})

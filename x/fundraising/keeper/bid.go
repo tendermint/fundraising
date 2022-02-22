@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,9 +12,9 @@ import (
 
 // GetNextBidId increments bid id by one and set it.
 func (k Keeper) GetNextBidIdWithUpdate(ctx sdk.Context, auctionId uint64) uint64 {
-	seq := k.GetLastBidId(ctx, auctionId) + 1
-	k.SetBidId(ctx, auctionId, seq)
-	return seq
+	id := k.GetLastBidId(ctx, auctionId) + 1
+	k.SetBidId(ctx, auctionId, id)
+	return id
 }
 
 // ReservePayingCoin reserves paying coin to the paying reserve account.
@@ -28,7 +29,7 @@ func (k Keeper) ReservePayingCoin(ctx sdk.Context, auctionId uint64, bidderAddr 
 func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, error) {
 	auction, found := k.GetAuction(ctx, msg.AuctionId)
 	if !found {
-		return types.Bid{}, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", msg.AuctionId)
+		return types.Bid{}, sdkerrors.Wrap(sdkerrors.ErrNotFound, "auction not found")
 	}
 
 	if auction.GetStatus() != types.AuctionStatusStarted {
@@ -39,64 +40,35 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		return types.Bid{}, types.ErrInvalidPayingCoinDenom
 	}
 
-	allowedBiddersMap := make(map[string]sdk.Int) // map(bidder => maxBidAmount)
-	for _, bidder := range auction.GetAllowedBidders() {
-		allowedBiddersMap[bidder.GetBidder()] = bidder.MaxBidAmount
+	if err := k.ReservePayingCoin(ctx, auction.GetId(), msg.GetBidder(), msg.Coin); err != nil {
+		return types.Bid{}, err
 	}
 
-	// The bidder must be in the allowed bidder list in order to bid
+	allowedBiddersMap := make(map[string]sdk.Int) // map(bidder => maxBidAmount)
+	for _, ab := range auction.GetAllowedBidders() {
+		allowedBiddersMap[ab.Bidder] = ab.MaxBidAmount
+	}
+
+	// Check if the bidder is allowed to bid
 	maxBidAmt, found := allowedBiddersMap[msg.Bidder]
 	if !found {
 		return types.Bid{}, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "bidder %s is not allowed to bid", msg.Bidder)
 	}
 
-	if err := k.ReservePayingCoin(ctx, auction.GetId(), msg.GetBidder(), msg.Coin); err != nil {
-		return types.Bid{}, err
-	}
-
-	// Handle logics depending on auction type
-	if auction.GetType() == types.AuctionTypeFixedPrice {
-		if !msg.Price.Equal(auction.GetStartPrice()) {
-			return types.Bid{},
-				sdkerrors.Wrapf(types.ErrInvalidStartPrice, "expected start price %s, got %s", auction.GetStartPrice(), msg.Price)
-		}
-
-		receiveAmt := msg.Coin.Amount.ToDec().QuoTruncate(msg.Price).TruncateInt()
-		receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, receiveAmt)
-
-		// The receive amount can't be greater than the bidder's maximum bid amount
-		if receiveAmt.GT(maxBidAmt) {
-			return types.Bid{},
-				sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "bid amount %s, maximum bid amount %s", receiveAmt, maxBidAmt)
-		}
-
-		if auction.GetRemainingSellingCoin().IsLT(receiveCoin) {
-			return types.Bid{},
-				sdkerrors.Wrapf(types.ErrInsufficientRemainingAmount, "remaining coin amount %s", auction.GetRemainingSellingCoin())
-		}
-
-		remaining := auction.GetRemainingSellingCoin().Sub(receiveCoin)
-		if err := auction.SetRemainingSellingCoin(remaining); err != nil {
+	switch auction.GetType() {
+	case types.AuctionTypeFixedPrice:
+		if err := k.HandleFixedPriceBid(ctx, maxBidAmt, msg, auction); err != nil {
 			return types.Bid{}, err
 		}
-		k.SetAuction(ctx, auction)
-
-		ctx.EventManager().EmitEvents(sdk.Events{
-			sdk.NewEvent(
-				types.EventTypePlaceBid,
-				sdk.NewAttribute(types.AttributeKeyBidAmount, receiveCoin.String()),
-			),
-		})
-	} else {
-		// TODO: implement English auction type
-		return types.Bid{}, sdkerrors.Wrap(types.ErrInvalidAuctionType, "not supported auction type in this version")
+	case types.AuctionTypeBatch:
+		// TODO: not implemented yet
 	}
 
-	seqId := k.GetNextBidIdWithUpdate(ctx, auction.GetId())
+	bidId := k.GetNextBidIdWithUpdate(ctx, auction.GetId())
 
 	bid := types.Bid{
 		AuctionId: auction.GetId(),
-		Id:        seqId,
+		Id:        bidId,
 		Bidder:    msg.Bidder,
 		Price:     msg.Price,
 		Coin:      msg.Coin,
@@ -117,4 +89,85 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 	})
 
 	return bid, nil
+}
+
+func (k Keeper) HandleFixedPriceBid(ctx sdk.Context, maxBidAmt sdk.Int, msg *types.MsgPlaceBid, auction types.AuctionI) error {
+	if !msg.Price.Equal(auction.GetStartPrice()) {
+		return types.ErrInvalidStartPrice
+	}
+
+	receiveAmt := msg.Coin.Amount.ToDec().QuoTruncate(msg.Price).TruncateInt()
+	receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, receiveAmt)
+
+	// The bidder can't bid more than the maximum bid amount limit at once
+	if receiveAmt.GT(maxBidAmt) {
+		return types.ErrOverMaxBidAmountLimit
+	}
+
+	totalBidAmt := sdk.ZeroInt()
+	for _, b := range k.GetBidsByBidder(ctx, msg.GetBidder()) {
+		if b.Type == types.BidTypeFixedPrice {
+			totalBidAmt = totalBidAmt.Add(b.Coin.Amount)
+		}
+	}
+
+	// The bidder can't bid more than the sum of total bid amount
+	if totalBidAmt.GT(receiveAmt) {
+		return types.ErrOverMaxBidAmountLimit
+	}
+
+	// The bidder can't bid more than the remaining selling coin
+	if auction.GetRemainingSellingCoin().IsLT(receiveCoin) {
+		return sdkerrors.Wrapf(types.ErrInsufficientRemainingAmount, "remaining selling coin amount %s", auction.GetRemainingSellingCoin())
+	}
+
+	remaining := auction.GetRemainingSellingCoin().Sub(receiveCoin)
+	_ = auction.SetRemainingSellingCoin(remaining)
+
+	k.SetAuction(ctx, auction)
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypePlaceBid,
+			sdk.NewAttribute(types.AttributeKeyBidAmount, receiveCoin.String()),
+		),
+	})
+
+	return nil
+}
+
+func (k Keeper) HandleBatchWorth() {
+
+}
+
+func (k Keeper) HandleBatchMany() {
+
+}
+
+// ModifyBid modifies the auctioneer's bid
+func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) (types.MsgModifyBid, error) {
+
+	// TODO: not implemented yet
+	// 2. bid_id must be one of the existing bids in the auction with auction_id
+	// 3. bid_price must be higher of the price of bid_id and/or coin amount must be higher of the coin amount of bid_id
+
+	auction, found := k.GetAuction(ctx, msg.AuctionId)
+	if !found {
+		return types.MsgModifyBid{}, sdkerrors.Wrap(sdkerrors.ErrNotFound, "auction not found")
+	}
+
+	bid := &types.Bid{}
+	for _, b := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
+		if b.Bidder == msg.Bidder {
+			bid = &b
+		}
+	}
+
+	// if bid == nil {
+	// 	return
+	// }
+
+	fmt.Println("bid: ", bid)
+
+	return types.MsgModifyBid{}, nil
 }

@@ -67,7 +67,7 @@ func (k Keeper) DistributePayingCoin(ctx sdk.Context, auction types.AuctionI) er
 			}
 
 			vq.Released = true
-			k.SetVestingQueue(ctx, auction.GetId(), vq.ReleaseTime, vq)
+			k.SetVestingQueue(ctx, vq)
 
 			// Set finished status when vesting schedule is ended
 			if i == lenVestingQueue-1 {
@@ -86,10 +86,9 @@ func (k Keeper) DistributePayingCoin(ctx sdk.Context, auction types.AuctionI) er
 // ReserveSellingCoin reserves the selling coin to the selling reserve account.
 func (k Keeper) ReserveSellingCoin(ctx sdk.Context, auctionId uint64, auctioneerAddr sdk.AccAddress, sellingCoin sdk.Coin) error {
 	sellingReserveAddr := types.SellingReserveAddress(auctionId)
-	reserveCoins := sdk.NewCoins(sellingCoin)
 
-	if err := k.bankKeeper.SendCoins(ctx, auctioneerAddr, sellingReserveAddr, reserveCoins); err != nil {
-		return sdkerrors.Wrapf(err, "failed to reserve selling coin %s", reserveCoins)
+	if err := k.bankKeeper.SendCoins(ctx, auctioneerAddr, sellingReserveAddr, sdk.NewCoins(sellingCoin)); err != nil {
+		return sdkerrors.Wrap(err, "failed to reserve selling coin")
 	}
 	return nil
 }
@@ -99,10 +98,9 @@ func (k Keeper) ReleaseSellingCoin(ctx sdk.Context, auction types.AuctionI) erro
 	sellingReserveAddr := auction.GetSellingReserveAddress()
 	auctioneerAddr := auction.GetAuctioneer()
 	releaseCoin := k.bankKeeper.GetBalance(ctx, sellingReserveAddr, auction.GetSellingCoin().Denom)
-	releaseCoins := sdk.NewCoins(releaseCoin)
 
-	if err := k.bankKeeper.SendCoins(ctx, sellingReserveAddr, auctioneerAddr, releaseCoins); err != nil {
-		return sdkerrors.Wrapf(err, "failed to release selling coin %s", releaseCoins)
+	if err := k.bankKeeper.SendCoins(ctx, sellingReserveAddr, auctioneerAddr, sdk.NewCoins(releaseCoin)); err != nil {
+		return sdkerrors.Wrap(err, "failed to release selling coin")
 	}
 	return nil
 }
@@ -117,7 +115,7 @@ func (k Keeper) ReserveCreationFee(ctx sdk.Context, auctioneerAddr sdk.AccAddres
 	}
 
 	if err := k.bankKeeper.SendCoins(ctx, auctioneerAddr, feeCollectorAddr, params.AuctionCreationFee); err != nil {
-		return sdkerrors.Wrapf(err, "failed to reserve auction creation fee %s", params.AuctionCreationFee)
+		return sdkerrors.Wrap(err, "failed to reserve auction creation fee")
 	}
 	return nil
 }
@@ -130,16 +128,11 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 
 	nextId := k.GetNextAuctionIdWithUpdate(ctx)
 
-	auctioneerAddr, err := sdk.AccAddressFromBech32(msg.Auctioneer)
-	if err != nil {
+	if err := k.ReserveCreationFee(ctx, msg.GetAuctioneer()); err != nil {
 		return &types.FixedPriceAuction{}, err
 	}
 
-	if err := k.ReserveCreationFee(ctx, auctioneerAddr); err != nil {
-		return &types.FixedPriceAuction{}, err
-	}
-
-	if err := k.ReserveSellingCoin(ctx, nextId, auctioneerAddr, msg.SellingCoin); err != nil {
+	if err := k.ReserveSellingCoin(ctx, nextId, msg.GetAuctioneer(), msg.SellingCoin); err != nil {
 		return &types.FixedPriceAuction{}, err
 	}
 
@@ -153,7 +146,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		nextId,
 		types.AuctionTypeFixedPrice,
 		allowedBidders,
-		auctioneerAddr.String(),
+		msg.Auctioneer,
 		types.SellingReserveAddress(nextId).String(),
 		types.PayingReserveAddress(nextId).String(),
 		msg.StartPrice,
@@ -181,7 +174,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		sdk.NewEvent(
 			types.EventTypeCreateFixedPriceAuction,
 			sdk.NewAttribute(types.AttributeKeyAuctionId, strconv.FormatUint(nextId, 10)),
-			sdk.NewAttribute(types.AttributeKeyAuctioneerAddress, auctioneerAddr.String()),
+			sdk.NewAttribute(types.AttributeKeyAuctioneerAddress, msg.Auctioneer),
 			sdk.NewAttribute(types.AttributeKeyStartPrice, msg.StartPrice.String()),
 			sdk.NewAttribute(types.AttributeKeySellingReserveAddress, auction.GetSellingReserveAddress().String()),
 			sdk.NewAttribute(types.AttributeKeyPayingReserveAddress, auction.GetPayingReserveAddress().String()),
@@ -205,16 +198,11 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 
 	nextId := k.GetNextAuctionIdWithUpdate(ctx)
 
-	auctioneerAddr, err := sdk.AccAddressFromBech32(msg.Auctioneer)
-	if err != nil {
+	if err := k.ReserveCreationFee(ctx, msg.GetAuctioneer()); err != nil {
 		return &types.BatchAuction{}, err
 	}
 
-	if err := k.ReserveCreationFee(ctx, auctioneerAddr); err != nil {
-		return &types.BatchAuction{}, err
-	}
-
-	if err := k.ReserveSellingCoin(ctx, nextId, auctioneerAddr, msg.SellingCoin); err != nil {
+	if err := k.ReserveSellingCoin(ctx, nextId, msg.GetAuctioneer(), msg.SellingCoin); err != nil {
 		return &types.BatchAuction{}, err
 	}
 
@@ -228,7 +216,7 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 		nextId,
 		types.AuctionTypeBatch,
 		allowedBidders,
-		auctioneerAddr.String(),
+		msg.Auctioneer,
 		types.SellingReserveAddress(nextId).String(),
 		types.PayingReserveAddress(nextId).String(),
 		msg.StartPrice,
@@ -260,7 +248,7 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 		sdk.NewEvent(
 			types.EventTypeCreateFixedPriceAuction,
 			sdk.NewAttribute(types.AttributeKeyAuctionId, strconv.FormatUint(nextId, 10)),
-			sdk.NewAttribute(types.AttributeKeyAuctioneerAddress, auction.GetAuctioneer().String()),
+			sdk.NewAttribute(types.AttributeKeyAuctioneerAddress, msg.Auctioneer),
 			sdk.NewAttribute(types.AttributeKeyStartPrice, auction.GetStartPrice().String()),
 			sdk.NewAttribute(types.AttributeKeySellingReserveAddress, auction.GetSellingReserveAddress().String()),
 			sdk.NewAttribute(types.AttributeKeyPayingReserveAddress, auction.GetPayingReserveAddress().String()),
@@ -283,7 +271,7 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) (types.AuctionI, error) {
 	auction, found := k.GetAuction(ctx, msg.AuctionId)
 	if !found {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", msg.AuctionId)
+		return nil, sdkerrors.Wrap(sdkerrors.ErrNotFound, "auction not found")
 	}
 
 	if auction.GetAuctioneer().String() != msg.Auctioneer {

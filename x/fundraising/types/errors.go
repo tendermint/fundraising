@@ -15,5 +15,6 @@ var (
 	ErrInvalidPayingCoinDenom      = sdkerrors.Register(ModuleName, 6, "invalid paying coin denom")
 	ErrEmptyAllowedBidders         = sdkerrors.Register(ModuleName, 7, "empty bidders")
 	ErrInvalidMaxBidAmount         = sdkerrors.Register(ModuleName, 8, "invalid maximum bid amount")
-	ErrInsufficientRemainingAmount = sdkerrors.Register(ModuleName, 9, "insufficient remaining amount")
+	ErrOverMaxBidAmountLimit       = sdkerrors.Register(ModuleName, 9, "over maximum bid amount limit")
+	ErrInsufficientRemainingAmount = sdkerrors.Register(ModuleName, 10, "insufficient remaining amount")
 )

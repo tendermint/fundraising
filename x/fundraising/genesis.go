@@ -45,7 +45,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			panic(fmt.Sprintf("auction %d is not found", queue.AuctionId))
 		}
 
-		k.SetVestingQueue(ctx, queue.AuctionId, queue.ReleaseTime, queue)
+		k.SetVestingQueue(ctx, queue)
 	}
 }
 

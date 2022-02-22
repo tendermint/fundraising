@@ -297,7 +297,7 @@ func (ba BaseAuction) Validate() error {
 	if err := ValidateVestingSchedules(ba.VestingSchedules, ba.EndTimes[len(ba.EndTimes)-1]); err != nil {
 		return err
 	}
-	if err := ValidatorAllowedBidders(ba.AllowedBidders); err != nil {
+	if err := ValidateAllowedBidders(ba.AllowedBidders); err != nil {
 		return err
 	}
 	return nil
@@ -433,8 +433,8 @@ func VestingReserveAddress(auctionId uint64) sdk.AccAddress {
 	return DeriveAddress(ReserveAddressType, ModuleName, VestingReserveAddressPrefix+ModuleAddressNameSplitter+fmt.Sprint(auctionId))
 }
 
-// ValidatorAllowedBidders validates allowed bidders.
-func ValidatorAllowedBidders(bidders []AllowedBidder) error {
+// ValidateAllowedBidders validates allowed bidders.
+func ValidateAllowedBidders(bidders []AllowedBidder) error {
 	for _, bidder := range bidders {
 		if bidder.MaxBidAmount.IsNil() {
 			return ErrInvalidMaxBidAmount

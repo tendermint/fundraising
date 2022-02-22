@@ -45,10 +45,6 @@ func (s *ModuleTestSuite) SetupTest() {
 // Below are just shortcuts to frequently-used functions.
 //
 
-func (s *ModuleTestSuite) getBalance(addr sdk.AccAddress, denom string) sdk.Coin {
-	return s.app.BankKeeper.GetBalance(s.ctx, addr, denom)
-}
-
 func (s *ModuleTestSuite) createFixedPriceAuction(
 	auctioneer sdk.AccAddress,
 	startPrice sdk.Dec,
@@ -77,21 +73,32 @@ func (s *ModuleTestSuite) createFixedPriceAuction(
 	return auction
 }
 
-func (s *ModuleTestSuite) placeBid(auctionId uint64, bidder sdk.AccAddress, price sdk.Dec, coin sdk.Coin, fund bool) types.Bid {
+func (s *ModuleTestSuite) addAllowedBidder(auctionId uint64, bidder sdk.AccAddress, maxBidAmount sdk.Int) {
+	err := s.keeper.AddAllowedBidders(s.ctx, auctionId, []types.AllowedBidder{
+		{Bidder: bidder.String(), MaxBidAmount: maxBidAmount},
+	})
+	s.Require().NoError(err)
+}
+
+func (s *ModuleTestSuite) placeBid(
+	auctionId uint64,
+	bidder sdk.AccAddress,
+	bidType types.BidType,
+	price sdk.Dec,
+	coin sdk.Coin,
+	fund bool,
+) types.Bid {
 	if fund {
 		s.fundAddr(bidder, sdk.NewCoins(coin))
 	}
 
 	receiveAmt := coin.Amount.ToDec().QuoTruncate(price).TruncateInt()
-
-	err := s.keeper.AddAllowedBidders(s.ctx, auctionId, []types.AllowedBidder{
-		{Bidder: bidder.String(), MaxBidAmount: receiveAmt},
-	})
-	s.Require().NoError(err)
+	s.addAllowedBidder(auctionId, bidder, receiveAmt)
 
 	bid, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
 		AuctionId: auctionId,
 		Bidder:    bidder.String(),
+		BidType:   bidType,
 		Price:     price,
 		Coin:      coin,
 	})
@@ -104,6 +111,10 @@ func (s *ModuleTestSuite) placeBid(auctionId uint64, bidder sdk.AccAddress, pric
 // Below are useful helpers to write test code easily.
 //
 
+func (s *ModuleTestSuite) getBalance(addr sdk.AccAddress, denom string) sdk.Coin {
+	return s.app.BankKeeper.GetBalance(s.ctx, addr, denom)
+}
+
 func (s *ModuleTestSuite) addr(addrNum int) sdk.AccAddress {
 	addr := make(sdk.AccAddress, 20)
 	binary.PutVarint(addr, int64(addrNum))
@@ -113,6 +124,14 @@ func (s *ModuleTestSuite) addr(addrNum int) sdk.AccAddress {
 func (s *ModuleTestSuite) fundAddr(addr sdk.AccAddress, coins sdk.Coins) {
 	err := simapp.FundAccount(s.app.BankKeeper, s.ctx, addr, coins)
 	s.Require().NoError(err)
+}
+
+func parseCoin(s string) sdk.Coin {
+	coin, err := sdk.ParseCoinNormalized(s)
+	if err != nil {
+		panic(err)
+	}
+	return coin
 }
 
 // coinEq is a convenient method to test expected and got values of sdk.Coin.

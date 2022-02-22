@@ -64,6 +64,7 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_AuctionStatus() {
 		time.Now().AddDate(0, 6, 0).AddDate(0, 1, 0),
 		true,
 	)
+
 	auction, found := s.keeper.GetAuction(s.ctx, standByAuction.GetId())
 	s.Require().True(found)
 	s.Require().Equal(types.AuctionStatusStandBy, auction.GetStatus())
@@ -71,23 +72,24 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_AuctionStatus() {
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(1),
 		sdk.MustNewDecFromStr("0.5"),
-		sdk.NewInt64Coin("denom3", 500_000_000_000),
+		parseCoin("1000000000000denom3"),
 		"denom4",
 		[]types.VestingSchedule{},
 		time.Now().AddDate(0, 0, -1),
 		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
 		true,
 	)
+
 	auction, found = s.keeper.GetAuction(s.ctx, startedAuction.GetId())
 	s.Require().True(found)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 }
 
-func (s *KeeperTestSuite) TestFixedPriceAuction_RemainingCoin() {
+func (s *KeeperTestSuite) TestFixedPriceAuction_InsufficientRemainingAmount() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		sdk.OneDec(),
-		sdk.NewInt64Coin("denom1", 1_000_000_000),
+		parseCoin("1000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
 		time.Now().AddDate(0, 0, -1),
@@ -96,14 +98,15 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_RemainingCoin() {
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	s.placeBid(auction.GetId(), s.addr(1), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 200_000_000), true)
-	s.placeBid(auction.GetId(), s.addr(2), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 200_000_000), true)
-	s.placeBid(auction.GetId(), s.addr(3), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 250_000_000), true)
-	s.placeBid(auction.GetId(), s.addr(4), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 250_000_000), true)
+	s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("200000000denom2"), true)
+	s.placeBid(auction.GetId(), s.addr(2), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("200000000denom2"), true)
+	s.placeBid(auction.GetId(), s.addr(3), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("250000000denom2"), true)
+	s.placeBid(auction.GetId(), s.addr(4), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("250000000denom2"), true)
 
 	// Test insufficient remaining coin amount
-	coin := sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 300_000_000)
+	coin := parseCoin("300000000denom2")
 	s.fundAddr(s.addr(5), sdk.NewCoins(coin))
+
 	receiveAmt := coin.Amount.ToDec().QuoTruncate(sdk.OneDec()).TruncateInt()
 	s.addAllowedBidder(auction.GetId(), s.addr(5), receiveAmt)
 
@@ -129,6 +132,7 @@ func (s *KeeperTestSuite) TestBatchAuction_AuctionStatus() {
 		time.Now().AddDate(0, 6, 0).AddDate(0, 1, 0),
 		true,
 	)
+
 	auction, found := s.keeper.GetAuction(s.ctx, standByAuction.GetId())
 	s.Require().True(found)
 	s.Require().Equal(types.AuctionStatusStandBy, auction.GetStatus())
@@ -145,6 +149,7 @@ func (s *KeeperTestSuite) TestBatchAuction_AuctionStatus() {
 		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
 		true,
 	)
+
 	auction, found = s.keeper.GetAuction(s.ctx, startedAuction.GetId())
 	s.Require().True(found)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
@@ -165,14 +170,10 @@ func (s *KeeperTestSuite) TestDistributeSellingCoin() {
 	_, found := s.keeper.GetAuction(s.ctx, auction.Id)
 	s.Require().True(found)
 
-	bidder1 := s.addr(1)
-	bidder2 := s.addr(2)
-	bidder3 := s.addr(3)
-
 	// Place bids
-	s.placeBid(auction.Id, bidder1, sdk.OneDec(), parseCoin("100000000denom2"), true)
-	s.placeBid(auction.Id, bidder2, sdk.OneDec(), parseCoin("200000000denom2"), true)
-	s.placeBid(auction.Id, bidder3, sdk.OneDec(), parseCoin("200000000denom2"), true)
+	s.placeBid(auction.Id, s.addr(1), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("100000000denom2"), true)
+	s.placeBid(auction.Id, s.addr(2), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("200000000denom2"), true)
+	s.placeBid(auction.Id, s.addr(3), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("200000000denom2"), true)
 
 	// Distribute selling coin
 	err := s.keeper.DistributeSellingCoin(s.ctx, auction)
@@ -182,9 +183,9 @@ func (s *KeeperTestSuite) TestDistributeSellingCoin() {
 	s.Require().True(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).IsZero())
 
 	// The bidders must have the selling coin
-	s.Require().False(s.getBalance(bidder1, auction.GetSellingCoin().Denom).IsZero())
-	s.Require().False(s.getBalance(bidder2, auction.GetSellingCoin().Denom).IsZero())
-	s.Require().False(s.getBalance(bidder3, auction.GetSellingCoin().Denom).IsZero())
+	s.Require().False(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).IsZero())
+	s.Require().False(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).IsZero())
+	s.Require().False(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).IsZero())
 }
 
 func (s *KeeperTestSuite) TestDistributePayingCoin() {
@@ -218,9 +219,9 @@ func (s *KeeperTestSuite) TestDistributePayingCoin() {
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
 	// Place bids
-	s.placeBid(auction.GetId(), s.addr(1), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 100_000_000), true)
-	s.placeBid(auction.GetId(), s.addr(1), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 200_000_000), true)
-	s.placeBid(auction.GetId(), s.addr(1), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 200_000_000), true)
+	s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("100000000denom2"), true)
+	s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("200000000denom2"), true)
+	s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("200000000denom2"), true)
 
 	// Distribute selling coin
 	err := s.keeper.DistributeSellingCoin(s.ctx, auction)
@@ -270,74 +271,40 @@ func (s *KeeperTestSuite) TestDistributePayingCoin() {
 }
 
 func (s *KeeperTestSuite) TestCancelAuction() {
-	auctioneer := s.addr(0)
-
 	standByAuction := s.createFixedPriceAuction(
-		auctioneer,
+		s.addr(0),
 		sdk.MustNewDecFromStr("1.0"),
-		sdk.NewInt64Coin("denom1", 500_000_000_000),
+		parseCoin("500000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
-		types.MustParseRFC3339("2023-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2023-02-01T00:00:00Z"),
+		time.Now().AddDate(0, 1, 0),
+		time.Now().AddDate(0, 1, 0).AddDate(0, 1, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStandBy, standByAuction.GetStatus())
 
-	// Cancel the auction since it is not started yet
-	auction := s.cancelAuction(standByAuction.GetId(), auctioneer)
+	// Cancel the auction
+	auction := s.cancelAuction(standByAuction.GetId(), s.addr(0))
 	s.Require().Equal(types.AuctionStatusCancelled, auction.GetStatus())
 
 	// The selling reserve balance must be zero
+	sellingReserveAddr := auction.GetSellingReserveAddress()
 	sellingCoinDenom := auction.GetSellingCoin().Denom
-	sellingReserve := s.getBalance(auction.GetSellingReserveAddress(), sellingCoinDenom)
-	s.Require().True(coinEq(sdk.NewCoin(sellingCoinDenom, sdk.ZeroInt()), sellingReserve))
+	s.Require().True(s.getBalance(sellingReserveAddr, sellingCoinDenom).IsZero())
 }
 
-func (s *KeeperTestSuite) TestFixedPriceAuctionRemainingCoin() {
-	auction := s.createFixedPriceAuction(
-		s.addr(0),
-		sdk.OneDec(),
-		sdk.NewInt64Coin("denom1", 1_000_000_000),
-		"denom2",
-		[]types.VestingSchedule{},
-		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2022-05-01T00:00:00Z"),
-		true,
-	)
-	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
-
-	s.placeBid(auction.GetId(), s.addr(1), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 200_000_000), true)
-	s.placeBid(auction.GetId(), s.addr(2), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 200_000_000), true)
-	s.placeBid(auction.GetId(), s.addr(3), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 250_000_000), true)
-	s.placeBid(auction.GetId(), s.addr(4), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 250_000_000), true)
-
-	// Test insufficient remaining coin amount
-	coin := sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 300_000_000)
-	s.fundAddr(s.addr(5), sdk.NewCoins(coin))
-	receiveAmt := coin.Amount.ToDec().QuoTruncate(sdk.OneDec()).TruncateInt()
-	s.addAllowedBidder(auction.GetId(), s.addr(5), receiveAmt)
-
-	_, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
-		AuctionId: auction.GetId(),
-		Bidder:    s.addr(5).String(),
-		Price:     sdk.OneDec(),
-		Coin:      coin,
-	})
-	s.Require().ErrorIs(err, types.ErrInsufficientRemainingAmount)
-}
-
-func (s *KeeperTestSuite) TestAddAllowedBidder() {
+func (s *KeeperTestSuite) TestAddAllowedBidders() {
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(0),
 		sdk.MustNewDecFromStr("0.5"),
 		sdk.NewInt64Coin("denom1", 500_000_000_000),
 		"denom2",
 		[]types.VestingSchedule{},
-		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2022-06-10T00:00:00Z"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
 		true,
 	)
+
 	auction, found := s.keeper.GetAuction(s.ctx, startedAuction.GetId())
 	s.Require().True(found)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
@@ -414,54 +381,38 @@ func (s *KeeperTestSuite) TestAddAllowedBidder() {
 	}
 }
 
-func (s *KeeperTestSuite) TestAddAllowedBidderLength() {
+func (s *KeeperTestSuite) TestAddAllowedBidders_Length() {
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(0),
 		sdk.MustNewDecFromStr("0.5"),
 		sdk.NewInt64Coin("denom1", 500_000_000_000),
 		"denom2",
 		[]types.VestingSchedule{},
-		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2022-06-10T00:00:00Z"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
 		true,
 	)
+
 	auction, found := s.keeper.GetAuction(s.ctx, startedAuction.GetId())
 	s.Require().True(found)
 	s.Require().Len(auction.GetAllowedBidders(), 0)
 
 	// Add some bidders
-	err := s.keeper.AddAllowedBidders(s.ctx, auction.GetId(), []types.AllowedBidder{
-		{
-			Bidder:       s.addr(1).String(),
-			MaxBidAmount: sdk.NewInt(100_000_000),
-		},
-		{
-			Bidder:       s.addr(2).String(),
-			MaxBidAmount: sdk.NewInt(500_000_000),
-		},
-	})
-	s.Require().NoError(err)
+	s.Require().NoError(s.keeper.AddAllowedBidders(s.ctx, auction.GetId(), []types.AllowedBidder{
+		{Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(100_000_000)},
+		{Bidder: s.addr(2).String(), MaxBidAmount: sdk.NewInt(500_000_000)},
+	}))
 
 	auction, found = s.keeper.GetAuction(s.ctx, auction.GetId())
 	s.Require().True(found)
 	s.Require().Len(auction.GetAllowedBidders(), 2)
 
 	// Add more bidders
-	err = s.keeper.AddAllowedBidders(s.ctx, auction.GetId(), []types.AllowedBidder{
-		{
-			Bidder:       s.addr(3).String(),
-			MaxBidAmount: sdk.NewInt(100_000_000),
-		},
-		{
-			Bidder:       s.addr(4).String(),
-			MaxBidAmount: sdk.NewInt(100_000_000),
-		},
-		{
-			Bidder:       s.addr(5).String(),
-			MaxBidAmount: sdk.NewInt(100_000_000),
-		},
-	})
-	s.Require().NoError(err)
+	s.Require().NoError(s.keeper.AddAllowedBidders(s.ctx, auction.GetId(), []types.AllowedBidder{
+		{Bidder: s.addr(3).String(), MaxBidAmount: sdk.NewInt(100_000_000)},
+		{Bidder: s.addr(4).String(), MaxBidAmount: sdk.NewInt(100_000_000)},
+		{Bidder: s.addr(5).String(), MaxBidAmount: sdk.NewInt(100_000_000)},
+	}))
 
 	auction, found = s.keeper.GetAuction(s.ctx, auction.GetId())
 	s.Require().True(found)
@@ -475,8 +426,8 @@ func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 		sdk.NewInt64Coin("denom1", 500_000_000_000),
 		"denom2",
 		[]types.VestingSchedule{},
-		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2022-06-10T00:00:00Z"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
 		true,
 	)
 
@@ -485,14 +436,13 @@ func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 	s.Require().Len(auction.GetAllowedBidders(), 0)
 
 	// Add 5 bidders with different maximum bid amount
-	err := s.keeper.AddAllowedBidders(s.ctx, auction.GetId(), []types.AllowedBidder{
+	s.Require().NoError(s.keeper.AddAllowedBidders(s.ctx, auction.GetId(), []types.AllowedBidder{
 		{Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(100_000_000)},
 		{Bidder: s.addr(2).String(), MaxBidAmount: sdk.NewInt(200_000_000)},
 		{Bidder: s.addr(3).String(), MaxBidAmount: sdk.NewInt(300_000_000)},
 		{Bidder: s.addr(4).String(), MaxBidAmount: sdk.NewInt(400_000_000)},
 		{Bidder: s.addr(5).String(), MaxBidAmount: sdk.NewInt(500_000_000)},
-	})
-	s.Require().NoError(err)
+	}))
 
 	auction, found = s.keeper.GetAuction(s.ctx, startedAuction.GetId())
 	s.Require().True(found)

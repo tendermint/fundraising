@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/tendermint/fundraising/x/fundraising"
@@ -19,22 +21,22 @@ func (s *KeeperTestSuite) TestGRPCAuctions() {
 	s.createFixedPriceAuction(
 		s.addr(0),
 		sdk.MustNewDecFromStr("1.0"),
-		sdk.NewInt64Coin("denom1", 500_000_000_000),
+		parseCoin("5000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
-		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2022-06-10T00:00:00Z"),
+		time.Now().AddDate(0, 6, 0),
+		time.Now().AddDate(0, 6, 0).AddDate(0, 1, 0),
 		true,
 	)
 
 	s.createFixedPriceAuction(
 		s.addr(1),
 		sdk.MustNewDecFromStr("0.5"),
-		sdk.NewInt64Coin("denom3", 1_000_000_000_000),
+		parseCoin("1000000000000denom3"),
 		"denom4",
 		[]types.VestingSchedule{},
-		types.MustParseRFC3339("2025-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2025-06-10T00:00:00Z"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
 		true,
 	)
 
@@ -109,11 +111,11 @@ func (s *KeeperTestSuite) TestGRPCAuction() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		sdk.MustNewDecFromStr("0.5"),
-		sdk.NewInt64Coin("denom1", 500_000_000_000),
+		parseCoin("500000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
-		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2022-03-01T00:00:00Z"),
+		time.Now().AddDate(0, 6, 0),
+		time.Now().AddDate(0, 6, 0).AddDate(0, 1, 0),
 		true,
 	)
 
@@ -151,8 +153,8 @@ func (s *KeeperTestSuite) TestGRPCAuction() {
 				s.Require().Equal(auction.GetAuctioneer(), a.GetAuctioneer())
 				s.Require().Equal(auction.GetType(), a.GetType())
 				s.Require().Equal(auction.GetStartPrice(), a.GetStartPrice())
-				s.Require().Equal(auction.GetStartTime(), a.GetStartTime())
-				s.Require().Equal(auction.GetEndTimes(), a.GetEndTimes())
+				s.Require().Equal(auction.GetStartTime().UTC(), a.GetStartTime())
+				s.Require().Equal(auction.GetEndTimes()[0].UTC(), a.GetEndTimes()[0])
 			},
 		},
 	} {
@@ -172,11 +174,11 @@ func (s *KeeperTestSuite) TestGRPCBids() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		sdk.MustNewDecFromStr("1.0"),
-		sdk.NewInt64Coin("denom1", 500_000_000_000),
+		parseCoin("500000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
-		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2022-03-01T00:00:00Z"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 1, 0),
 		true,
 	)
 
@@ -184,10 +186,10 @@ func (s *KeeperTestSuite) TestGRPCBids() {
 	bidder2 := s.addr(2)
 	bidder3 := s.addr(3)
 
-	bid1 := s.placeBid(auction.GetId(), bidder1, sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
-	bid2 := s.placeBid(auction.GetId(), bidder1, sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
-	bid3 := s.placeBid(auction.GetId(), bidder2, sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 15_000_000), true)
-	bid4 := s.placeBid(auction.GetId(), bidder3, sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 35_000_000), true)
+	bid1 := s.placeBid(auction.GetId(), bidder1, types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom2"), true)
+	bid2 := s.placeBid(auction.GetId(), bidder1, types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom2"), true)
+	bid3 := s.placeBid(auction.GetId(), bidder2, types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("15000000denom2"), true)
+	bid4 := s.placeBid(auction.GetId(), bidder3, types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("35000000denom2"), true)
 
 	// Make bid4 not eligible
 	bid4.IsWinner = false
@@ -293,15 +295,15 @@ func (s *KeeperTestSuite) TestGRPCBid() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		sdk.MustNewDecFromStr("1.0"),
-		sdk.NewInt64Coin("denom1", 500_000_000_000),
+		parseCoin("500000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
-		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2022-03-01T00:00:00Z"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 1, 0),
 		true,
 	)
 
-	bid := s.placeBid(auction.GetId(), s.addr(1), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
+	bid := s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom2"), true)
 
 	for _, tc := range []struct {
 		name      string
@@ -364,7 +366,7 @@ func (s *KeeperTestSuite) TestGRPCVestings() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		sdk.OneDec(),
-		sdk.NewInt64Coin("denom1", 1_000_000_000_000),
+		parseCoin("1000000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{
 			{

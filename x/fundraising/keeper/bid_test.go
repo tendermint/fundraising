@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/tendermint/fundraising/x/fundraising/types"
@@ -8,46 +10,15 @@ import (
 	_ "github.com/stretchr/testify/suite"
 )
 
-func (s *KeeperTestSuite) TestBidIterators() {
-	startedAuction := s.createFixedPriceAuction(
-		s.addr(0),
-		sdk.OneDec(),
-		sdk.NewInt64Coin("denom1", 500_000_000_000),
-		"denom2",
-		[]types.VestingSchedule{},
-		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2022-03-10T00:00:00Z"),
-		true,
-	)
-
-	auction, found := s.keeper.GetAuction(s.ctx, startedAuction.GetId())
-	s.Require().True(found)
-	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
-
-	s.placeBid(auction.GetId(), s.addr(1), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
-	s.placeBid(auction.GetId(), s.addr(2), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
-	s.placeBid(auction.GetId(), s.addr(2), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 15_000_000), true)
-	s.placeBid(auction.GetId(), s.addr(3), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 35_000_000), true)
-
-	bids := s.keeper.GetBids(s.ctx)
-	s.Require().Len(bids, 4)
-
-	bidsById := s.keeper.GetBidsByAuctionId(s.ctx, auction.GetId())
-	s.Require().Len(bidsById, 4)
-
-	bidsByBidder := s.keeper.GetBidsByBidder(s.ctx, s.addr(2))
-	s.Require().Len(bidsByBidder, 2)
-}
-
-func (s *KeeperTestSuite) TestBidId() {
+func (s *KeeperTestSuite) TestLastBidId() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		sdk.OneDec(),
-		sdk.NewInt64Coin("denom1", 500_000_000_000),
+		parseCoin("500000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
-		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2022-03-10T00:00:00Z"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
@@ -55,9 +26,9 @@ func (s *KeeperTestSuite) TestBidId() {
 	bidId := s.keeper.GetLastBidId(s.ctx, auction.GetId())
 	s.Require().Equal(uint64(0), bidId)
 
-	s.placeBid(auction.GetId(), s.addr(1), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
-	s.placeBid(auction.GetId(), s.addr(2), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
-	s.placeBid(auction.GetId(), s.addr(3), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 15_000_000), true)
+	s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom2"), true)
+	s.placeBid(auction.GetId(), s.addr(2), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom2"), true)
+	s.placeBid(auction.GetId(), s.addr(3), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("15000000denom2"), true)
 
 	bidsById := s.keeper.GetBidsByAuctionId(s.ctx, auction.GetId())
 	s.Require().Len(bidsById, 3)
@@ -69,11 +40,11 @@ func (s *KeeperTestSuite) TestBidId() {
 	auction2 := s.createFixedPriceAuction(
 		s.addr(0),
 		sdk.MustNewDecFromStr("0.5"),
-		sdk.NewInt64Coin("denom3", 500_000_000_000),
-		"denom3",
+		parseCoin("1000000000000denom3"),
+		"denom4",
 		[]types.VestingSchedule{},
-		types.MustParseRFC3339("2022-01-10T00:00:00Z"),
-		types.MustParseRFC3339("2022-12-10T00:00:00Z"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
 		true,
 	)
 
@@ -85,15 +56,46 @@ func (s *KeeperTestSuite) TestBidId() {
 	s.Require().Equal(uint64(1), nextSeq)
 }
 
+func (s *KeeperTestSuite) TestBidIterators() {
+	startedAuction := s.createFixedPriceAuction(
+		s.addr(0),
+		sdk.OneDec(),
+		parseCoin("500000000000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+		true,
+	)
+
+	auction, found := s.keeper.GetAuction(s.ctx, startedAuction.GetId())
+	s.Require().True(found)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom2"), true)
+	s.placeBid(auction.GetId(), s.addr(2), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom2"), true)
+	s.placeBid(auction.GetId(), s.addr(2), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("15000000denom2"), true)
+	s.placeBid(auction.GetId(), s.addr(3), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("35000000denom2"), true)
+
+	bids := s.keeper.GetBids(s.ctx)
+	s.Require().Len(bids, 4)
+
+	bidsById := s.keeper.GetBidsByAuctionId(s.ctx, auction.GetId())
+	s.Require().Len(bidsById, 4)
+
+	bidsByBidder := s.keeper.GetBidsByBidder(s.ctx, s.addr(2))
+	s.Require().Len(bidsByBidder, 2)
+}
+
 func (s *KeeperTestSuite) TestPlaceBid() {
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(0),
 		sdk.OneDec(),
-		sdk.NewInt64Coin("denom1", 500_000_000_000),
+		parseCoin("500000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
-		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2022-06-10T00:00:00Z"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
 		true,
 	)
 	auction, found := s.keeper.GetAuction(s.ctx, startedAuction.GetId())
