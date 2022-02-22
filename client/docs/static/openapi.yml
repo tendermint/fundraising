@@ -13446,7 +13446,7 @@ paths:
                       type: string
                       format: uint64
                       title: id specifies an index of a bid for the bidder
-                    bidType:
+                    type:
                       title: >-
                         type specifies the bid type; type 1 is fixed price, 2 is
                         how-much-worth, 3
@@ -13468,15 +13468,14 @@ paths:
                         batch auction
                          - Bid_TYPE_BATCH_MANY: Bid_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy of a batch
                         auction
-                    bidPrice:
+                    price:
                       type: string
                       title: >-
-                        bid_price specifies the bid price in which price the
-                        bidder places the bid
-                    bidCoin:
+                        price specifies the bid price in which price the bidder
+                        places the bid
+                    coin:
                       description: >-
-                        bid_coin specifies the amount of coin that the bidder
-                        bids
+                        coin specifies the amount of coin that the bidder bids
 
                         for a fixed price auction, the denom is of the paying
                         coin.
@@ -13486,24 +13485,6 @@ paths:
 
                         for a batch auction of how-many-coins, the denom is of
                         the selling coin.
-                      type: object
-                      properties:
-                        denom:
-                          type: string
-                        amount:
-                          type: string
-                    payingCoin:
-                      description: >-
-                        paying_coin specifies the paying amount of coin that the
-                        bidder bids
-
-                        for a fixed price auction, paying_coin = bid_coin.
-
-                        for a batch auction of how-much-worth, paying_coin =
-                        bid_coin.
-
-                        for a batch auction of how-many-coins, paying_coin =
-                        bid_coin x bid_price.
                       type: object
                       properties:
                         denom:
@@ -13835,7 +13816,7 @@ paths:
                     type: string
                     format: uint64
                     title: id specifies an index of a bid for the bidder
-                  bidType:
+                  type:
                     title: >-
                       type specifies the bid type; type 1 is fixed price, 2 is
                       how-much-worth, 3
@@ -13857,14 +13838,14 @@ paths:
                       batch auction
                        - Bid_TYPE_BATCH_MANY: Bid_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy of a batch
                       auction
-                  bidPrice:
+                  price:
                     type: string
                     title: >-
-                      bid_price specifies the bid price in which price the
-                      bidder places the bid
-                  bidCoin:
+                      price specifies the bid price in which price the bidder
+                      places the bid
+                  coin:
                     description: >-
-                      bid_coin specifies the amount of coin that the bidder bids
+                      coin specifies the amount of coin that the bidder bids
 
                       for a fixed price auction, the denom is of the paying
                       coin.
@@ -13874,24 +13855,6 @@ paths:
 
                       for a batch auction of how-many-coins, the denom is of the
                       selling coin.
-                    type: object
-                    properties:
-                      denom:
-                        type: string
-                      amount:
-                        type: string
-                  payingCoin:
-                    description: >-
-                      paying_coin specifies the paying amount of coin that the
-                      bidder bids
-
-                      for a fixed price auction, paying_coin = bid_coin.
-
-                      for a batch auction of how-much-worth, paying_coin =
-                      bid_coin.
-
-                      for a batch auction of how-many-coins, paying_coin =
-                      bid_coin x bid_price.
                     type: object
                     properties:
                       denom:
@@ -21979,7 +21942,7 @@ definitions:
         type: string
         format: uint64
         title: id specifies an index of a bid for the bidder
-      bidType:
+      type:
         title: >-
           type specifies the bid type; type 1 is fixed price, 2 is
           how-much-worth, 3
@@ -22001,14 +21964,12 @@ definitions:
           batch auction
            - Bid_TYPE_BATCH_MANY: Bid_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy of a batch
           auction
-      bidPrice:
+      price:
         type: string
-        title: >-
-          bid_price specifies the bid price in which price the bidder places the
-          bid
-      bidCoin:
+        title: price specifies the bid price in which price the bidder places the bid
+      coin:
         description: >-
-          bid_coin specifies the amount of coin that the bidder bids
+          coin specifies the amount of coin that the bidder bids
 
           for a fixed price auction, the denom is of the paying coin.
 
@@ -22017,22 +21978,6 @@ definitions:
 
           for a batch auction of how-many-coins, the denom is of the selling
           coin.
-        type: object
-        properties:
-          denom:
-            type: string
-          amount:
-            type: string
-      payingCoin:
-        description: >-
-          paying_coin specifies the paying amount of coin that the bidder bids
-
-          for a fixed price auction, paying_coin = bid_coin.
-
-          for a batch auction of how-much-worth, paying_coin = bid_coin.
-
-          for a batch auction of how-many-coins, paying_coin = bid_coin x
-          bid_price.
         type: object
         properties:
           denom:
@@ -22504,7 +22449,7 @@ definitions:
             type: string
             format: uint64
             title: id specifies an index of a bid for the bidder
-          bidType:
+          type:
             title: >-
               type specifies the bid type; type 1 is fixed price, 2 is
               how-much-worth, 3
@@ -22526,14 +22471,14 @@ definitions:
               batch auction
                - Bid_TYPE_BATCH_MANY: Bid_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy of a batch
               auction
-          bidPrice:
+          price:
             type: string
             title: >-
-              bid_price specifies the bid price in which price the bidder places
-              the bid
-          bidCoin:
+              price specifies the bid price in which price the bidder places the
+              bid
+          coin:
             description: >-
-              bid_coin specifies the amount of coin that the bidder bids
+              coin specifies the amount of coin that the bidder bids
 
               for a fixed price auction, the denom is of the paying coin.
 
@@ -22542,23 +22487,6 @@ definitions:
 
               for a batch auction of how-many-coins, the denom is of the selling
               coin.
-            type: object
-            properties:
-              denom:
-                type: string
-              amount:
-                type: string
-          payingCoin:
-            description: >-
-              paying_coin specifies the paying amount of coin that the bidder
-              bids
-
-              for a fixed price auction, paying_coin = bid_coin.
-
-              for a batch auction of how-much-worth, paying_coin = bid_coin.
-
-              for a batch auction of how-many-coins, paying_coin = bid_coin x
-              bid_price.
             type: object
             properties:
               denom:
@@ -22600,7 +22528,7 @@ definitions:
               type: string
               format: uint64
               title: id specifies an index of a bid for the bidder
-            bidType:
+            type:
               title: >-
                 type specifies the bid type; type 1 is fixed price, 2 is
                 how-much-worth, 3
@@ -22622,14 +22550,14 @@ definitions:
                 batch auction
                  - Bid_TYPE_BATCH_MANY: Bid_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy of a batch
                 auction
-            bidPrice:
+            price:
               type: string
               title: >-
-                bid_price specifies the bid price in which price the bidder
-                places the bid
-            bidCoin:
+                price specifies the bid price in which price the bidder places
+                the bid
+            coin:
               description: >-
-                bid_coin specifies the amount of coin that the bidder bids
+                coin specifies the amount of coin that the bidder bids
 
                 for a fixed price auction, the denom is of the paying coin.
 
@@ -22638,23 +22566,6 @@ definitions:
 
                 for a batch auction of how-many-coins, the denom is of the
                 selling coin.
-              type: object
-              properties:
-                denom:
-                  type: string
-                amount:
-                  type: string
-            payingCoin:
-              description: >-
-                paying_coin specifies the paying amount of coin that the bidder
-                bids
-
-                for a fixed price auction, paying_coin = bid_coin.
-
-                for a batch auction of how-much-worth, paying_coin = bid_coin.
-
-                for a batch auction of how-many-coins, paying_coin = bid_coin x
-                bid_price.
               type: object
               properties:
                 denom:

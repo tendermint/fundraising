@@ -183,9 +183,8 @@ type Bid struct {
 	Bidder    string   // the account that bids for the auction
 	Id        uint64    // id of the bid of the bidder
 	Type      BidType   // the bid type; currently How-Much-Worth-To-Buy and How-Many-Coins-To-Buy are supported.  
-	BidPrice     sdk.Dec  // the price for the bid
-	BidCoin      sdk.Coin // targeted amount of coin that the bidder bids; the denom must be either the denom or SellingCoin or PayingCoinDenom
-	PayingCoin   sdk.Coin // paying amount of coin that the bidder bids
+	Price     sdk.Dec  // the price for the bid
+	Coin      sdk.Coin // targeted amount of coin that the bidder bids; the denom must be either the denom or SellingCoin or PayingCoinDenom
 	Height          uint64   // block height
 	isWinner        bool     // the bid that is determined to be a winner when an auction ends; default value is false
 }

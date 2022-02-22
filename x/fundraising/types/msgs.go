@@ -227,15 +227,15 @@ func NewMsgPlaceBid(
 	auctionId uint64,
 	bidder string,
 	bidType BidType,
-	bidPrice sdk.Dec,
-	bidCoin sdk.Coin,
+	Price sdk.Dec,
+	Coin sdk.Coin,
 ) *MsgPlaceBid {
 	return &MsgPlaceBid{
 		AuctionId: auctionId,
 		Bidder:    bidder,
 		BidType:   bidType,
-		BidPrice:  bidPrice,
-		BidCoin:   bidCoin,
+		Price:     Price,
+		Coin:      Coin,
 	}
 }
 
@@ -247,14 +247,14 @@ func (msg MsgPlaceBid) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Bidder); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid bidder address: %v", err)
 	}
-	if !msg.BidPrice.IsPositive() {
+	if !msg.Price.IsPositive() {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "bid price must be positve value")
 	}
-	if err := msg.BidCoin.Validate(); err != nil {
+	if err := msg.Coin.Validate(); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid bid coin: %v", err)
 	}
-	if !msg.BidCoin.Amount.IsPositive() {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid coin amount: %s", msg.BidCoin.Amount.String())
+	if !msg.Coin.Amount.IsPositive() {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid coin amount: %s", msg.Coin.Amount.String())
 	}
 	if msg.BidType != BidTypeFixedPrice && msg.BidType != BidTypeBatchWorth &&
 		msg.BidType != BidTypeBatchMany {
@@ -288,15 +288,15 @@ func NewMsgModifyBid(
 	auctionId uint64,
 	bidder string,
 	bidId uint64,
-	bidPrice sdk.Dec,
-	bidCoin sdk.Coin,
+	price sdk.Dec,
+	coin sdk.Coin,
 ) *MsgModifyBid {
 	return &MsgModifyBid{
 		AuctionId: auctionId,
 		Bidder:    bidder,
 		BidId:     bidId,
-		BidPrice:  bidPrice,
-		BidCoin:   bidCoin,
+		Price:     price,
+		Coin:      coin,
 	}
 }
 
@@ -308,14 +308,14 @@ func (msg MsgModifyBid) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Bidder); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid bidder address: %v", err)
 	}
-	if !msg.BidPrice.IsPositive() {
+	if !msg.Price.IsPositive() {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "bid price must be positve value")
 	}
-	if err := msg.BidCoin.Validate(); err != nil {
+	if err := msg.Coin.Validate(); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid bid coin: %v", err)
 	}
-	if !msg.BidCoin.Amount.IsPositive() {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid coin amount: %s", msg.BidCoin.Amount.String())
+	if !msg.Coin.Amount.IsPositive() {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid coin amount: %s", msg.Coin.Amount.String())
 	}
 	return nil
 }

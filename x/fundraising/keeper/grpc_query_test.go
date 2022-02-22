@@ -213,10 +213,10 @@ func (s *KeeperTestSuite) TestGRPCBids() {
 			false,
 			func(resp *types.QueryBidsResponse) {
 				s.Require().Len(resp.Bids, 4)
-				s.Require().True(coinEq(bid1.GetBidCoin(), resp.Bids[0].BidCoin))
-				s.Require().True(coinEq(bid2.GetBidCoin(), resp.Bids[1].BidCoin))
-				s.Require().True(coinEq(bid3.GetBidCoin(), resp.Bids[2].BidCoin))
-				s.Require().True(coinEq(bid4.GetBidCoin(), resp.Bids[3].BidCoin))
+				s.Require().True(coinEq(bid1.GetCoin(), resp.Bids[0].Coin))
+				s.Require().True(coinEq(bid2.GetCoin(), resp.Bids[1].Coin))
+				s.Require().True(coinEq(bid3.GetCoin(), resp.Bids[2].Coin))
+				s.Require().True(coinEq(bid4.GetCoin(), resp.Bids[3].Coin))
 			},
 		},
 		{
@@ -343,7 +343,7 @@ func (s *KeeperTestSuite) TestGRPCBid() {
 				s.Require().Equal(bid.GetAuctionId(), resp.Bid.GetAuctionId())
 				s.Require().Equal(bid.GetBidder(), resp.Bid.GetBidder())
 				s.Require().Equal(bid.GetId(), resp.Bid.GetId())
-				s.Require().Equal(bid.GetBidCoin(), resp.Bid.GetBidCoin())
+				s.Require().Equal(bid.GetCoin(), resp.Bid.GetCoin())
 				s.Require().Equal(bid.GetIsWinner(), resp.Bid.GetIsWinner())
 			},
 		},
