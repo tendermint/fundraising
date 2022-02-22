@@ -170,6 +170,14 @@ func (s *KeeperTestSuite) fundAddr(addr sdk.AccAddress, coins sdk.Coins) {
 	s.Require().NoError(err)
 }
 
+func parseCoin(s string) sdk.Coin {
+	coin, err := sdk.ParseCoinNormalized(s)
+	if err != nil {
+		panic(err)
+	}
+	return coin
+}
+
 // coinEq is a convenient method to test expected and got values of sdk.Coin.
 func coinEq(exp, got sdk.Coin) (bool, string, string, string) {
 	return exp.IsEqual(got), "expected:\t%v\ngot:\t\t%v", exp.String(), got.String()
