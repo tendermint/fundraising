@@ -227,15 +227,15 @@ func NewMsgPlaceBid(
 	auctionId uint64,
 	bidder string,
 	bidType BidType,
-	price sdk.Dec,
-	coin sdk.Coin,
+	bidPrice sdk.Dec,
+	bidCoin sdk.Coin,
 ) *MsgPlaceBid {
 	return &MsgPlaceBid{
 		AuctionId: auctionId,
 		Bidder:    bidder,
 		BidType:   bidType,
-		BidPrice:  price,
-		BidCoin:   coin,
+		BidPrice:  bidPrice,
+		BidCoin:   bidCoin,
 	}
 }
 
@@ -256,7 +256,7 @@ func (msg MsgPlaceBid) ValidateBasic() error {
 	if !msg.BidCoin.Amount.IsPositive() {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid coin amount: %s", msg.BidCoin.Amount.String())
 	}
-	if msg.BidType != BidTypeBatchWorth &&
+	if msg.BidType != BidTypeFixedPrice && msg.BidType != BidTypeBatchWorth &&
 		msg.BidType != BidTypeBatchMany {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid bid type: %T", msg.BidType.String())
 	}
@@ -283,8 +283,8 @@ func (msg MsgPlaceBid) GetBidder() sdk.AccAddress {
 	return addr
 }
 
-// NewModifyBid creates a new MsgModifyBid.
-func NewModifyBid(
+// NewMsgModifyBid creates a new MsgModifyBid.
+func NewMsgModifyBid(
 	auctionId uint64,
 	bidder string,
 	bidId uint64,
@@ -330,6 +330,14 @@ func (msg MsgModifyBid) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{addr}
+}
+
+func (msg MsgModifyBid) GetBidder() sdk.AccAddress {
+	addr, err := sdk.AccAddressFromBech32(msg.Bidder)
+	if err != nil {
+		panic(err)
+	}
+	return addr
 }
 
 // NewAddAllowedBidder creates a new MsgAddAllowedBidder.
