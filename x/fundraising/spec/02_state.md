@@ -97,8 +97,8 @@ type BaseAuction struct {
 
 // AllowedBidder defines a bidder who is allowed to bid with max number of bids.
 type AllowedBidder struct {
-	Bidder  string  // a bidder who is allowed to bid
-	MaxBidNumber uint64  // a maximum number of bids per bidder
+	Bidder          string  // a bidder who is allowed to bid
+	MaxBidAmount    uint64  // a maximum amount of bids per bidder
 }
 ```
 
