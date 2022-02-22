@@ -164,6 +164,7 @@ func (s *KeeperTestSuite) TestMsgPlaceBid() {
 			types.NewMsgPlaceBid(
 				auction.GetId(),
 				bidder.String(),
+				types.BidTypeBatchWorth,
 				sdk.MustNewDecFromStr("0.5"),
 				sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 1_000_000),
 			),
@@ -174,6 +175,7 @@ func (s *KeeperTestSuite) TestMsgPlaceBid() {
 			types.NewMsgPlaceBid(
 				auction.GetId(),
 				bidder.String(),
+				types.BidTypeBatchWorth,
 				sdk.MustNewDecFromStr("1.0"),
 				sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 1_000_000),
 			),
@@ -184,6 +186,7 @@ func (s *KeeperTestSuite) TestMsgPlaceBid() {
 			types.NewMsgPlaceBid(
 				auction.GetId(),
 				bidder.String(),
+				types.BidTypeBatchWorth,
 				sdk.MustNewDecFromStr("0.5"),
 				sdk.NewInt64Coin(auction.GetSellingCoin().Denom, 1_000_000),
 			),
@@ -194,6 +197,7 @@ func (s *KeeperTestSuite) TestMsgPlaceBid() {
 			types.NewMsgPlaceBid(
 				auction.GetId(),
 				bidder.String(),
+				types.BidTypeBatchWorth,
 				sdk.MustNewDecFromStr("0.5"),
 				sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 500_000_000_000_000_000),
 			),

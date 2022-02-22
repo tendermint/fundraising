@@ -22085,6 +22085,9 @@ definitions:
     description: |-
       MsgCreateFixedPriceAuctionResponse defines the
       Msg/MsgCreateFixedPriceAuctionResponse response type.
+  tendermint.fundraising.MsgModifyBidResponse:
+    type: object
+    description: MsgModifyBidResponse defines the Msg/MsgModifyBidResponse response type.
   tendermint.fundraising.MsgPlaceBidResponse:
     type: object
     description: MsgPlaceBidResponse defines the Msg/MsgPlaceBidResponse response type.

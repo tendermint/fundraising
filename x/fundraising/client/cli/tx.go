@@ -236,9 +236,13 @@ in order to bid for the amount of coin you bid for the auction.
 				return err
 			}
 
+			// TODO: receive bid type argument
+			bidType := types.BidTypeBatchWorth
+
 			msg := types.NewMsgPlaceBid(
 				auctionId,
 				clientCtx.GetFromAddress().String(),
+				bidType,
 				price,
 				coin,
 			)
