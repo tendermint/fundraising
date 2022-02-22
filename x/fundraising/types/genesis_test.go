@@ -49,8 +49,8 @@ func TestGenesisState_Validate(t *testing.T) {
 		AuctionId: 1,
 		Id:        1,
 		Bidder:    validAddr.String(),
-		BidPrice:  sdk.MustNewDecFromStr("0.5"),
-		BidCoin:   sdk.NewInt64Coin("denom2", 50_000_000),
+		Price:     sdk.MustNewDecFromStr("0.5"),
+		Coin:      sdk.NewInt64Coin("denom2", 50_000_000),
 	}
 
 	validVestingQueue := types.VestingQueue{
@@ -240,8 +240,8 @@ func TestGenesisState_Validate(t *testing.T) {
 						AuctionId: 1,
 						Id:        1,
 						Bidder:    "invalid",
-						BidPrice:  sdk.MustNewDecFromStr("0.5"),
-						BidCoin:   sdk.NewInt64Coin("denom2", 50_000_000),
+						Price:     sdk.MustNewDecFromStr("0.5"),
+						Coin:      sdk.NewInt64Coin("denom2", 50_000_000),
 					},
 				}
 			},
@@ -255,8 +255,8 @@ func TestGenesisState_Validate(t *testing.T) {
 						AuctionId: 1,
 						Id:        1,
 						Bidder:    validAddr.String(),
-						BidPrice:  sdk.MustNewDecFromStr("0.5"),
-						BidCoin:   sdk.NewInt64Coin("denom2", 0),
+						Price:     sdk.MustNewDecFromStr("0.5"),
+						Coin:      sdk.NewInt64Coin("denom2", 0),
 					},
 				}
 			},

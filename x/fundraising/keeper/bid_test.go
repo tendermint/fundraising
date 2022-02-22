@@ -113,8 +113,8 @@ func (s *KeeperTestSuite) TestPlaceBid() {
 	_, err = s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
 		AuctionId: auction.GetId(),
 		Bidder:    notAllowedBidder.String(),
-		BidPrice:  sdk.OneDec(),
-		BidCoin:   sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 5_000_000),
+		Price:     sdk.OneDec(),
+		Coin:      sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 5_000_000),
 	})
 	s.Require().Error(err)
 
@@ -123,8 +123,8 @@ func (s *KeeperTestSuite) TestPlaceBid() {
 	_, err = s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
 		AuctionId: auction.GetId(),
 		Bidder:    allowedBidder.String(),
-		BidPrice:  sdk.OneDec(),
-		BidCoin:   sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000),
+		Price:     sdk.OneDec(),
+		Coin:      sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000),
 	})
 	s.Require().Error(err)
 
@@ -133,8 +133,8 @@ func (s *KeeperTestSuite) TestPlaceBid() {
 	_, err = s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
 		AuctionId: auction.GetId(),
 		Bidder:    allowedBidder.String(),
-		BidPrice:  sdk.OneDec(),
-		BidCoin:   sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 10_000_000),
+		Price:     sdk.OneDec(),
+		Coin:      sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 10_000_000),
 	})
 	s.Require().NoError(err)
 }
