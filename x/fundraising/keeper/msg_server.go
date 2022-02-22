@@ -65,6 +65,14 @@ func (m msgServer) PlaceBid(goCtx context.Context, msg *types.MsgPlaceBid) (*typ
 	return &types.MsgPlaceBidResponse{}, nil
 }
 
+func (m msgServer) ModifyBid(goCtx context.Context, msg *types.MsgModifyBid) (*types.MsgModifyBidResponse, error) {
+	_ = sdk.UnwrapSDKContext(goCtx)
+
+	// TODO: not implemented yet
+
+	return &types.MsgModifyBidResponse{}, nil
+}
+
 // AddAllowedBidder defines a method to add an allowed bidder.
 // This message is created for testing purpose and it must not be used in mainnet.
 func (m msgServer) AddAllowedBidder(goCtx context.Context, msg *types.MsgAddAllowedBidder) (*types.MsgAddAllowedBidderResponse, error) {
