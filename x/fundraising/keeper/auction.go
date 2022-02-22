@@ -33,13 +33,8 @@ func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) e
 		receiveAmt := bid.BidCoin.Amount.ToDec().QuoTruncate(bid.BidPrice).TruncateInt()
 		receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, receiveAmt)
 
-		bidderAddr, err := sdk.AccAddressFromBech32(bid.GetBidder())
-		if err != nil {
-			return err
-		}
-
 		inputs = append(inputs, banktypes.NewInput(sellingReserveAddress, sdk.NewCoins(receiveCoin)))
-		outputs = append(outputs, banktypes.NewOutput(bidderAddr, sdk.NewCoins(receiveCoin)))
+		outputs = append(outputs, banktypes.NewOutput(bid.GetBidder(), sdk.NewCoins(receiveCoin)))
 
 		totalBidCoin = totalBidCoin.Add(receiveCoin)
 	}

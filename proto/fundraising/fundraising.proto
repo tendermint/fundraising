@@ -235,6 +235,8 @@ message AllowedBidder {
 
 // Bid defines a standard bid for an auction.
 message Bid {
+  option (gogoproto.goproto_getters) = false;
+
   // auction_id specifies the id of the auction
   uint64 auction_id = 1;
 
