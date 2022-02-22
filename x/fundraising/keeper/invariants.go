@@ -75,7 +75,7 @@ func PayingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 
 			if auction.GetStatus() == types.AuctionStatusStarted {
 				for _, bid := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
-					totalBidCoin = totalBidCoin.Add(bid.BidCoin)
+					totalBidCoin = totalBidCoin.Add(bid.Coin)
 				}
 			}
 

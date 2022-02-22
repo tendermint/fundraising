@@ -30,7 +30,7 @@ func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) e
 
 	// Distribute coins to all bidders from the selling reserve account
 	for _, bid := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
-		receiveAmt := bid.BidCoin.Amount.ToDec().QuoTruncate(bid.BidPrice).TruncateInt()
+		receiveAmt := bid.Coin.Amount.ToDec().QuoTruncate(bid.Price).TruncateInt()
 		receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, receiveAmt)
 
 		inputs = append(inputs, banktypes.NewInput(sellingReserveAddress, sdk.NewCoins(receiveCoin)))
@@ -326,7 +326,7 @@ func (k Keeper) AddAllowedBidders(ctx sdk.Context, auctionId uint64, bidders []t
 		return types.ErrEmptyAllowedBidders
 	}
 
-	if err := types.ValidatorAllowedBidders(bidders); err != nil {
+	if err := types.ValidateAllowedBidders(bidders); err != nil {
 		return err
 	}
 

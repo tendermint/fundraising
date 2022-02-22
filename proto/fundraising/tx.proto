@@ -163,17 +163,17 @@ message MsgPlaceBid { // id specifies index of the auction
   // is how-many-coins
   BidType bid_type = 3;
 
-  // bid_price specifies the bid price.
+  // price specifies the bid price.
   // The bid price must be the start price for fixed price auction whereas
   // the bide price can be any value that the bidder places.
-  string bid_price = 4 [
+  string price = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
-  // bid_coin specifies the paying amount of coin or the selling amount that the
+  // coin specifies the paying amount of coin or the selling amount that the
   // bidder bids
-  cosmos.base.v1beta1.Coin bid_coin = 5 [
+  cosmos.base.v1beta1.Coin coin = 5 [
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin",
     (gogoproto.nullable) = false
   ];
@@ -196,17 +196,17 @@ message MsgModifyBid { // id specifies index of the auction
   // bid_id specifies the bid id
   uint64 bid_id = 3;
 
-  // bid_price specifies the bid price.
+  // price specifies the bid price.
   // the bide price must be above or equal to the original value that the bidder
   // placed.
-  string bid_price = 4 [
+  string price = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
-  // bid_coin specifies the paying amount of coin or the selling amount that the
+  // coin specifies the paying amount of coin or the selling amount that the
   // bidder bids
-  cosmos.base.v1beta1.Coin bid_coin = 5 [
+  cosmos.base.v1beta1.Coin coin = 5 [
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin",
     (gogoproto.nullable) = false
   ];

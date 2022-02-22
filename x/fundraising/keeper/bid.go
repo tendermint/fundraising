@@ -35,7 +35,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		return types.Bid{}, types.ErrInvalidAuctionStatus
 	}
 
-	if auction.GetPayingCoinDenom() != msg.BidCoin.Denom {
+	if auction.GetPayingCoinDenom() != msg.Coin.Denom {
 		return types.Bid{}, types.ErrInvalidPayingCoinDenom
 	}
 
@@ -50,18 +50,18 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		return types.Bid{}, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "bidder %s is not allowed to bid", msg.Bidder)
 	}
 
-	if err := k.ReservePayingCoin(ctx, auction.GetId(), msg.GetBidder(), msg.BidCoin); err != nil {
+	if err := k.ReservePayingCoin(ctx, auction.GetId(), msg.GetBidder(), msg.Coin); err != nil {
 		return types.Bid{}, err
 	}
 
 	// Handle logics depending on auction type
 	if auction.GetType() == types.AuctionTypeFixedPrice {
-		if !msg.BidPrice.Equal(auction.GetStartPrice()) {
+		if !msg.Price.Equal(auction.GetStartPrice()) {
 			return types.Bid{},
-				sdkerrors.Wrapf(types.ErrInvalidStartPrice, "expected start price %s, got %s", auction.GetStartPrice(), msg.BidPrice)
+				sdkerrors.Wrapf(types.ErrInvalidStartPrice, "expected start price %s, got %s", auction.GetStartPrice(), msg.Price)
 		}
 
-		receiveAmt := msg.BidCoin.Amount.ToDec().QuoTruncate(msg.BidPrice).TruncateInt()
+		receiveAmt := msg.Coin.Amount.ToDec().QuoTruncate(msg.Price).TruncateInt()
 		receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, receiveAmt)
 
 		// The receive amount can't be greater than the bidder's maximum bid amount
@@ -98,21 +98,21 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		AuctionId: auction.GetId(),
 		Id:        seqId,
 		Bidder:    msg.Bidder,
-		BidPrice:  msg.BidPrice,
-		BidCoin:   msg.BidCoin,
+		Price:     msg.Price,
+		Coin:      msg.Coin,
 		Height:    uint64(ctx.BlockHeader().Height),
 		IsWinner:  true,
 	}
 
-	k.SetBid(ctx, bid.AuctionId, bid.Id, msg.GetBidder(), bid)
+	k.SetBid(ctx, bid)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypePlaceBid,
 			sdk.NewAttribute(types.AttributeKeyAuctionId, strconv.FormatUint(auction.GetId(), 10)),
 			sdk.NewAttribute(types.AttributeKeyBidderAddress, msg.GetBidder().String()),
-			sdk.NewAttribute(types.AttributeKeyBidPrice, msg.BidPrice.String()),
-			sdk.NewAttribute(types.AttributeKeyBidCoin, msg.BidCoin.String()),
+			sdk.NewAttribute(types.AttributeKeyBidPrice, msg.Price.String()),
+			sdk.NewAttribute(types.AttributeKeyBidCoin, msg.Coin.String()),
 		),
 	})
 

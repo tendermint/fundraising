@@ -248,38 +248,29 @@ message Bid {
 
   // type specifies the bid type; type 1 is fixed price, 2 is how-much-worth, 3
   // is how-many-coins
-  BidType bid_type = 4;
+  BidType type = 4;
 
-  // bid_price specifies the bid price in which price the bidder places the bid
-  string bid_price = 5 [
+  // price specifies the bid price in which price the bidder places the bid
+  string price = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
-  // bid_coin specifies the amount of coin that the bidder bids
+  // coin specifies the amount of coin that the bidder bids
   // for a fixed price auction, the denom is of the paying coin.
   // for a batch auction of how-much-worth, the denom is of the paying coin.
   // for a batch auction of how-many-coins, the denom is of the selling coin.
-  cosmos.base.v1beta1.Coin bid_coin = 6 [
-    (gogoproto.nullable) = false,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
-  ];
-
-  // paying_coin specifies the paying amount of coin that the bidder bids
-  // for a fixed price auction, paying_coin = bid_coin.
-  // for a batch auction of how-much-worth, paying_coin = bid_coin.
-  // for a batch auction of how-many-coins, paying_coin = bid_coin x bid_price.
-  cosmos.base.v1beta1.Coin paying_coin = 7 [
+  cosmos.base.v1beta1.Coin coin = 6 [
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
   ];
 
   // height specifies the block height of the bid
-  uint64 height = 8;
+  uint64 height = 7;
 
   // isWinner specifies the bid that is a winning bid and enables the bidder to
   // purchase the selling coin
-  bool isWinner = 9;
+  bool isWinner = 8;
 }
 
 // BidType enumerates the valid types of a bid.
