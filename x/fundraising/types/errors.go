@@ -17,4 +17,5 @@ var (
 	ErrInvalidMaxBidAmount         = sdkerrors.Register(ModuleName, 8, "invalid maximum bid amount")
 	ErrOverMaxBidAmountLimit       = sdkerrors.Register(ModuleName, 9, "over maximum bid amount limit")
 	ErrInsufficientRemainingAmount = sdkerrors.Register(ModuleName, 10, "insufficient remaining amount")
+	ErrNotAllowedBidder            = sdkerrors.Register(ModuleName, 11, "not allowed bidder")
 )

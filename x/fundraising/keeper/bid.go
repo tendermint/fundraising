@@ -49,22 +49,31 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		allowedBiddersMap[ab.Bidder] = ab.MaxBidAmount
 	}
 
-	// Check if the bidder is allowed to bid
 	maxBidAmt, found := allowedBiddersMap[msg.Bidder]
 	if !found {
-		return types.Bid{}, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "bidder %s is not allowed to bid", msg.Bidder)
+		return types.Bid{}, types.ErrNotAllowedBidder
 	}
 
+	// Place a bid depending on the auction type and the bid type
 	switch auction.GetType() {
 	case types.AuctionTypeFixedPrice:
-		if err := k.HandleFixedPriceBid(ctx, maxBidAmt, msg, auction); err != nil {
+		if err := k.PlaceFixedPriceBid(ctx, msg, auction, maxBidAmt); err != nil {
 			return types.Bid{}, err
 		}
 	case types.AuctionTypeBatch:
-		// TODO: not implemented yet
+		if msg.BidType == types.BidTypeBatchWorth {
+			if err := k.PlaceBatchWorthBid(ctx, msg, auction, maxBidAmt); err != nil {
+				return types.Bid{}, err
+			}
+		} else if msg.BidType == types.BidTypeBatchMany {
+			if err := k.PlaceBatchManyBid(ctx, msg, auction, maxBidAmt); err != nil {
+				return types.Bid{}, err
+			}
+		}
 	}
 
 	bidId := k.GetNextBidIdWithUpdate(ctx, auction.GetId())
+	height := uint64(ctx.BlockHeader().Height)
 
 	bid := types.Bid{
 		AuctionId: auction.GetId(),
@@ -72,7 +81,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		Bidder:    msg.Bidder,
 		Price:     msg.Price,
 		Coin:      msg.Coin,
-		Height:    uint64(ctx.BlockHeader().Height),
+		Height:    height,
 		IsWinner:  true,
 	}
 
@@ -91,18 +100,14 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 	return bid, nil
 }
 
-func (k Keeper) HandleFixedPriceBid(ctx sdk.Context, maxBidAmt sdk.Int, msg *types.MsgPlaceBid, auction types.AuctionI) error {
+func (k Keeper) PlaceFixedPriceBid(ctx sdk.Context, msg *types.MsgPlaceBid, auction types.AuctionI, maxBidAmt sdk.Int) error {
 	if !msg.Price.Equal(auction.GetStartPrice()) {
 		return types.ErrInvalidStartPrice
 	}
 
+	// TODO: better to handle this calculation logic in types?
 	receiveAmt := msg.Coin.Amount.ToDec().QuoTruncate(msg.Price).TruncateInt()
 	receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, receiveAmt)
-
-	// The bidder can't bid more than the maximum bid amount limit at once
-	if receiveAmt.GT(maxBidAmt) {
-		return types.ErrOverMaxBidAmountLimit
-	}
 
 	totalBidAmt := sdk.ZeroInt()
 	for _, b := range k.GetBidsByBidder(ctx, msg.GetBidder()) {
@@ -136,12 +141,13 @@ func (k Keeper) HandleFixedPriceBid(ctx sdk.Context, maxBidAmt sdk.Int, msg *typ
 	return nil
 }
 
-func (k Keeper) HandleBatchWorth() {
+func (k Keeper) PlaceBatchWorthBid(ctx sdk.Context, msg *types.MsgPlaceBid, auction types.AuctionI, maxBidAmt sdk.Int) error {
 
+	return nil
 }
 
-func (k Keeper) HandleBatchMany() {
-
+func (k Keeper) PlaceBatchManyBid(ctx sdk.Context, msg *types.MsgPlaceBid, auction types.AuctionI, maxBidAmt sdk.Int) error {
+	return nil
 }
 
 // ModifyBid modifies the auctioneer's bid

@@ -28,65 +28,6 @@ var (
 	_ AuctionI = (*BatchAuction)(nil)
 )
 
-// AuctionI is an interface that inherits the BaseAuction and exposes common functions
-// to get and set standard auction data.
-type AuctionI interface {
-	proto.Message
-
-	GetId() uint64
-	SetId(uint64) error
-
-	GetType() AuctionType
-	SetType(AuctionType) error
-
-	GetAllowedBidders() []AllowedBidder
-	SetAllowedBidders([]AllowedBidder) error
-
-	GetAuctioneer() sdk.AccAddress
-	SetAuctioneer(sdk.AccAddress) error
-
-	GetSellingReserveAddress() sdk.AccAddress
-	SetSellingReserveAddress(sdk.AccAddress) error
-
-	GetPayingReserveAddress() sdk.AccAddress
-	SetPayingReserveAddress(sdk.AccAddress) error
-
-	GetStartPrice() sdk.Dec
-	SetStartPrice(sdk.Dec) error
-
-	GetSellingCoin() sdk.Coin
-	SetSellingCoin(sdk.Coin) error
-
-	GetPayingCoinDenom() string
-	SetPayingCoinDenom(string) error
-
-	GetVestingReserveAddress() sdk.AccAddress
-	SetVestingReserveAddress(sdk.AccAddress) error
-
-	GetVestingSchedules() []VestingSchedule
-	SetVestingSchedules([]VestingSchedule) error
-
-	GetWinningPrice() sdk.Dec
-	SetWinningPrice(sdk.Dec) error
-
-	GetRemainingSellingCoin() sdk.Coin
-	SetRemainingSellingCoin(sdk.Coin) error
-
-	GetStartTime() time.Time
-	SetStartTime(time.Time) error
-
-	GetEndTimes() []time.Time
-	SetEndTimes([]time.Time) error
-
-	GetStatus() AuctionStatus
-	SetStatus(AuctionStatus) error
-
-	IsAuctionStarted(t time.Time) bool
-	IsAuctionFinished(t time.Time) bool
-
-	Validate() error
-}
-
 // NewBaseAuction creates a new BaseAuction object
 //nolint:interfacer
 func NewBaseAuction(
@@ -328,6 +269,65 @@ func NewBatchAuction(baseAuction *BaseAuction, maxExtendedRound uint32, extended
 		MaxExtendedRound:  maxExtendedRound,
 		ExtendedRoundRate: extendedRoundRate,
 	}
+}
+
+// AuctionI is an interface that inherits the BaseAuction and exposes common functions
+// to get and set standard auction data.
+type AuctionI interface {
+	proto.Message
+
+	GetId() uint64
+	SetId(uint64) error
+
+	GetType() AuctionType
+	SetType(AuctionType) error
+
+	GetAllowedBidders() []AllowedBidder
+	SetAllowedBidders([]AllowedBidder) error
+
+	GetAuctioneer() sdk.AccAddress
+	SetAuctioneer(sdk.AccAddress) error
+
+	GetSellingReserveAddress() sdk.AccAddress
+	SetSellingReserveAddress(sdk.AccAddress) error
+
+	GetPayingReserveAddress() sdk.AccAddress
+	SetPayingReserveAddress(sdk.AccAddress) error
+
+	GetStartPrice() sdk.Dec
+	SetStartPrice(sdk.Dec) error
+
+	GetSellingCoin() sdk.Coin
+	SetSellingCoin(sdk.Coin) error
+
+	GetPayingCoinDenom() string
+	SetPayingCoinDenom(string) error
+
+	GetVestingReserveAddress() sdk.AccAddress
+	SetVestingReserveAddress(sdk.AccAddress) error
+
+	GetVestingSchedules() []VestingSchedule
+	SetVestingSchedules([]VestingSchedule) error
+
+	GetWinningPrice() sdk.Dec
+	SetWinningPrice(sdk.Dec) error
+
+	GetRemainingSellingCoin() sdk.Coin
+	SetRemainingSellingCoin(sdk.Coin) error
+
+	GetStartTime() time.Time
+	SetStartTime(time.Time) error
+
+	GetEndTimes() []time.Time
+	SetEndTimes([]time.Time) error
+
+	GetStatus() AuctionStatus
+	SetStatus(AuctionStatus) error
+
+	IsAuctionStarted(t time.Time) bool
+	IsAuctionFinished(t time.Time) bool
+
+	Validate() error
 }
 
 // PackAuction converts AuctionI to Any.
