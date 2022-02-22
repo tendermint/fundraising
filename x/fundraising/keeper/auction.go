@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -89,27 +90,49 @@ func (k Keeper) DistributePayingCoin(ctx sdk.Context, auction types.AuctionI) er
 
 // ReserveSellingCoin reserves the selling coin to the selling reserve account.
 func (k Keeper) ReserveSellingCoin(ctx sdk.Context, auctionId uint64, auctioneerAddr sdk.AccAddress, sellingCoin sdk.Coin) error {
-	if err := k.bankKeeper.SendCoins(ctx, auctioneerAddr, types.SellingReserveAddress(auctionId), sdk.NewCoins(sellingCoin)); err != nil {
-		return sdkerrors.Wrap(err, "failed to reserve selling coin")
+	sellingReserveAddr := types.SellingReserveAddress(auctionId)
+	reserveCoins := sdk.NewCoins(sellingCoin)
+
+	if err := k.bankKeeper.SendCoins(ctx, auctioneerAddr, sellingReserveAddr, reserveCoins); err != nil {
+		return sdkerrors.Wrapf(err, "failed to reserve selling coin %s", reserveCoins)
 	}
 	return nil
 }
 
 // ReleaseSellingCoin releases the selling coin to the auctioneer.
 func (k Keeper) ReleaseSellingCoin(ctx sdk.Context, auction types.AuctionI) error {
-	sellingReserveAddress := auction.GetSellingReserveAddress()
+	sellingReserveAddr := auction.GetSellingReserveAddress()
 	auctioneerAddr := auction.GetAuctioneer()
+	releaseCoin := k.bankKeeper.GetBalance(ctx, sellingReserveAddr, auction.GetSellingCoin().Denom)
+	releaseCoins := sdk.NewCoins(releaseCoin)
 
-	reserveBalance := k.bankKeeper.GetBalance(ctx, sellingReserveAddress, auction.GetSellingCoin().Denom)
+	if err := k.bankKeeper.SendCoins(ctx, sellingReserveAddr, auctioneerAddr, releaseCoins); err != nil {
+		return sdkerrors.Wrapf(err, "failed to release selling coin %s", releaseCoins)
+	}
+	return nil
+}
 
-	if err := k.bankKeeper.SendCoins(ctx, sellingReserveAddress, auctioneerAddr, sdk.NewCoins(reserveBalance)); err != nil {
-		return sdkerrors.Wrap(err, "failed to release selling coin")
+// ReserveCreationFee reserves the auction creation fee to the fee collector account.
+func (k Keeper) ReserveCreationFee(ctx sdk.Context, auctioneerAddr sdk.AccAddress) error {
+	params := k.GetParams(ctx)
+
+	feeCollectorAddr, err := sdk.AccAddressFromBech32(params.FeeCollectorAddress)
+	if err != nil {
+		return err
+	}
+
+	if err := k.bankKeeper.SendCoins(ctx, auctioneerAddr, feeCollectorAddr, params.AuctionCreationFee); err != nil {
+		return sdkerrors.Wrapf(err, "failed to reserve auction creation fee %s", params.AuctionCreationFee)
 	}
 	return nil
 }
 
 // CreateFixedPriceAuction sets fixed price auction.
 func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFixedPriceAuction) (*types.FixedPriceAuction, error) {
+	if ctx.BlockTime().After(msg.EndTime) {
+		return &types.FixedPriceAuction{}, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be set prior to the current time")
+	}
+
 	nextId := k.GetNextAuctionIdWithUpdate(ctx)
 
 	auctioneerAddr, err := sdk.AccAddressFromBech32(msg.Auctioneer)
@@ -117,28 +140,24 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		return &types.FixedPriceAuction{}, err
 	}
 
-	if ctx.BlockTime().After(msg.EndTime) {
-		return &types.FixedPriceAuction{}, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be prior to current time")
-	}
-
-	params := k.GetParams(ctx)
-	feeCollectorAddr, err := sdk.AccAddressFromBech32(params.FeeCollectorAddress)
-	if err != nil {
+	if err := k.ReserveCreationFee(ctx, auctioneerAddr); err != nil {
 		return &types.FixedPriceAuction{}, err
-	}
-
-	if err := k.bankKeeper.SendCoins(ctx, msg.GetAuctioneer(), feeCollectorAddr, params.AuctionCreationFee); err != nil {
-		return &types.FixedPriceAuction{}, sdkerrors.Wrap(err, "failed to pay auction creation fee")
 	}
 
 	if err := k.ReserveSellingCoin(ctx, nextId, auctioneerAddr, msg.SellingCoin); err != nil {
 		return &types.FixedPriceAuction{}, err
 	}
 
+	allowedBidders := []types.AllowedBidder{} // it is nil when an auction is created
+	winningPrice := sdk.ZeroDec()             // TODO: makes sense to have start price?
+	numWinningBidders := uint64(0)            // initial value is 0
+	remainingSellingCoin := msg.SellingCoin   // it is starting with selling coin amount
+	endTimes := []time.Time{msg.EndTime}      // it is an array data type to handle BatchAuction
+
 	baseAuction := types.NewBaseAuction(
 		nextId,
 		types.AuctionTypeFixedPrice,
-		nil, // it is always nil when an auction is created
+		allowedBidders,
 		auctioneerAddr.String(),
 		types.SellingReserveAddress(nextId).String(),
 		types.PayingReserveAddress(nextId).String(),
@@ -147,11 +166,11 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		msg.PayingCoinDenom,
 		types.VestingReserveAddress(nextId).String(),
 		msg.VestingSchedules,
-		sdk.ZeroDec(),
-		0,
-		msg.SellingCoin, // add selling coin to remaining coin
+		winningPrice,
+		numWinningBidders,
+		remainingSellingCoin,
 		msg.StartTime,
-		[]time.Time{msg.EndTime},
+		endTimes,
 		types.AuctionStatusStandBy,
 	)
 
@@ -183,10 +202,85 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 	return auction, nil
 }
 
-// CreateBatchAuction sets english auction.
-func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuction) error {
-	// TODO: not implemented yet
-	return nil
+// CreateBatchAuction sets batch auction.
+func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuction) (*types.BatchAuction, error) {
+	if ctx.BlockTime().After(msg.EndTime) {
+		return &types.BatchAuction{}, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be set prior to the current time")
+	}
+
+	nextId := k.GetNextAuctionIdWithUpdate(ctx)
+
+	auctioneerAddr, err := sdk.AccAddressFromBech32(msg.Auctioneer)
+	if err != nil {
+		return &types.BatchAuction{}, err
+	}
+
+	if err := k.ReserveCreationFee(ctx, auctioneerAddr); err != nil {
+		return &types.BatchAuction{}, err
+	}
+
+	if err := k.ReserveSellingCoin(ctx, nextId, auctioneerAddr, msg.SellingCoin); err != nil {
+		return &types.BatchAuction{}, err
+	}
+
+	allowedBidders := []types.AllowedBidder{} // it is nil when an auction is created
+	winningPrice := sdk.ZeroDec()             // TODO: makes sense to have start price?
+	numWinningBidders := uint64(0)            // initial value is 0
+	remainingSellingCoin := msg.SellingCoin   // it is starting with selling coin amount
+	endTimes := []time.Time{msg.EndTime}      // it is an array data type to handle BatchAuction
+
+	baseAuction := types.NewBaseAuction(
+		nextId,
+		types.AuctionTypeBatch,
+		allowedBidders,
+		auctioneerAddr.String(),
+		types.SellingReserveAddress(nextId).String(),
+		types.PayingReserveAddress(nextId).String(),
+		msg.StartPrice,
+		msg.SellingCoin,
+		msg.PayingCoinDenom,
+		types.VestingReserveAddress(nextId).String(),
+		msg.VestingSchedules,
+		winningPrice,
+		numWinningBidders,
+		remainingSellingCoin,
+		msg.StartTime,
+		endTimes,
+		types.AuctionStatusStandBy,
+	)
+
+	// Update status if the start time is already passed the current time
+	if baseAuction.IsAuctionStarted(ctx.BlockTime()) {
+		baseAuction.Status = types.AuctionStatusStarted
+	}
+
+	auction := types.NewBatchAuction(
+		baseAuction,
+		msg.MaxExtendedRound,
+		msg.ExtendedRoundRate,
+	)
+	k.SetAuction(ctx, auction)
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCreateFixedPriceAuction,
+			sdk.NewAttribute(types.AttributeKeyAuctionId, strconv.FormatUint(nextId, 10)),
+			sdk.NewAttribute(types.AttributeKeyAuctioneerAddress, auction.GetAuctioneer().String()),
+			sdk.NewAttribute(types.AttributeKeyStartPrice, auction.GetStartPrice().String()),
+			sdk.NewAttribute(types.AttributeKeySellingReserveAddress, auction.GetSellingReserveAddress().String()),
+			sdk.NewAttribute(types.AttributeKeyPayingReserveAddress, auction.GetPayingReserveAddress().String()),
+			sdk.NewAttribute(types.AttributeKeyVestingReserveAddress, auction.GetVestingReserveAddress().String()),
+			sdk.NewAttribute(types.AttributeKeySellingCoin, auction.GetSellingCoin().String()),
+			sdk.NewAttribute(types.AttributeKeyPayingCoinDenom, auction.GetPayingCoinDenom()),
+			sdk.NewAttribute(types.AttributeKeyStartTime, auction.GetStartTime().String()),
+			sdk.NewAttribute(types.AttributeKeyEndTime, msg.EndTime.String()),
+			sdk.NewAttribute(types.AttributeKeyAuctionStatus, auction.GetStatus().String()),
+			sdk.NewAttribute(types.AttributeKeyMaxExtendedRound, fmt.Sprint(msg.MaxExtendedRound)),
+			sdk.NewAttribute(types.AttributeKeyExtendedRoundRate, msg.ExtendedRoundRate.String()),
+		),
+	})
+
+	return auction, nil
 }
 
 // CancelAuction cancels the auction in an event when the auctioneer needs to modify the auction.

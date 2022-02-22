@@ -322,7 +322,7 @@ func NewFixedPriceAuction(baseAuction *BaseAuction) *FixedPriceAuction {
 }
 
 // NewBatchAuction returns a new batch auction.
-func NewBatchAuction(baseAuction *BaseAuction, maximumBidPrice sdk.Dec, maxExtendedRound uint32, extendedRoundRate sdk.Dec) *BatchAuction {
+func NewBatchAuction(baseAuction *BaseAuction, maxExtendedRound uint32, extendedRoundRate sdk.Dec) *BatchAuction {
 	return &BatchAuction{
 		BaseAuction:       baseAuction,
 		MaxExtendedRound:  maxExtendedRound,
