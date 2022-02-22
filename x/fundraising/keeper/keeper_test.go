@@ -45,18 +45,6 @@ func (s *KeeperTestSuite) SetupTest() {
 // Below are just shortcuts to frequently-used functions.
 //
 
-func (s *KeeperTestSuite) getBalance(addr sdk.AccAddress, denom string) sdk.Coin {
-	return s.app.BankKeeper.GetBalance(s.ctx, addr, denom)
-}
-
-func (s *KeeperTestSuite) sendCoins(fromAddr, toAddr sdk.AccAddress, coins sdk.Coins, fund bool) {
-	if fund {
-		s.fundAddr(fromAddr, coins)
-	}
-	err := s.app.BankKeeper.SendCoins(s.ctx, fromAddr, toAddr, coins)
-	s.Require().NoError(err)
-}
-
 func (s *KeeperTestSuite) createFixedPriceAuction(
 	auctioneer sdk.AccAddress,
 	startPrice sdk.Dec,
@@ -71,6 +59,7 @@ func (s *KeeperTestSuite) createFixedPriceAuction(
 	if fund {
 		s.fundAddr(auctioneer, params.AuctionCreationFee.Add(sellingCoin))
 	}
+
 	auction, err := s.keeper.CreateFixedPriceAuction(s.ctx, &types.MsgCreateFixedPriceAuction{
 		Auctioneer:       auctioneer.String(),
 		StartPrice:       startPrice,
@@ -83,6 +72,46 @@ func (s *KeeperTestSuite) createFixedPriceAuction(
 	s.Require().NoError(err)
 
 	return auction
+}
+
+func (s *KeeperTestSuite) createBatchAuction(
+	auctioneer sdk.AccAddress,
+	startPrice sdk.Dec,
+	sellingCoin sdk.Coin,
+	payingCoinDenom string,
+	vestingSchedules []types.VestingSchedule,
+	maxExtendedRound uint32,
+	extendedRoundRate sdk.Dec,
+	startTime time.Time,
+	endTime time.Time,
+	fund bool,
+) *types.BatchAuction {
+	params := s.keeper.GetParams(s.ctx)
+	if fund {
+		s.fundAddr(auctioneer, params.AuctionCreationFee.Add(sellingCoin))
+	}
+
+	auction, err := s.keeper.CreateBatchAuction(s.ctx, &types.MsgCreateBatchAuction{
+		Auctioneer:        auctioneer.String(),
+		StartPrice:        startPrice,
+		SellingCoin:       sellingCoin,
+		PayingCoinDenom:   payingCoinDenom,
+		VestingSchedules:  vestingSchedules,
+		MaxExtendedRound:  maxExtendedRound,
+		ExtendedRoundRate: extendedRoundRate,
+		StartTime:         startTime,
+		EndTime:           endTime,
+	})
+	s.Require().NoError(err)
+
+	return auction
+}
+
+func (s *KeeperTestSuite) addAllowedBidder(auctionId uint64, bidder sdk.AccAddress, maxBidAmount sdk.Int) {
+	err := s.keeper.AddAllowedBidders(s.ctx, auctionId, []types.AllowedBidder{
+		{Bidder: bidder.String(), MaxBidAmount: maxBidAmount},
+	})
+	s.Require().NoError(err)
 }
 
 func (s *KeeperTestSuite) placeBid(auctionId uint64, bidder sdk.AccAddress, price sdk.Dec, coin sdk.Coin, fund bool) types.Bid {
@@ -118,6 +147,18 @@ func (s *KeeperTestSuite) cancelAuction(auctionId uint64, auctioneer sdk.AccAddr
 // Below are useful helpers to write test code easily.
 //
 
+func (s *KeeperTestSuite) getBalance(addr sdk.AccAddress, denom string) sdk.Coin {
+	return s.app.BankKeeper.GetBalance(s.ctx, addr, denom)
+}
+
+func (s *KeeperTestSuite) sendCoins(fromAddr, toAddr sdk.AccAddress, coins sdk.Coins, fund bool) {
+	if fund {
+		s.fundAddr(fromAddr, coins)
+	}
+	err := s.app.BankKeeper.SendCoins(s.ctx, fromAddr, toAddr, coins)
+	s.Require().NoError(err)
+}
+
 func (s *KeeperTestSuite) addr(addrNum int) sdk.AccAddress {
 	addr := make(sdk.AccAddress, 20)
 	binary.PutVarint(addr, int64(addrNum))
@@ -126,16 +167,6 @@ func (s *KeeperTestSuite) addr(addrNum int) sdk.AccAddress {
 
 func (s *KeeperTestSuite) fundAddr(addr sdk.AccAddress, coins sdk.Coins) {
 	err := simapp.FundAccount(s.app.BankKeeper, s.ctx, addr, coins)
-	s.Require().NoError(err)
-}
-
-func (s *KeeperTestSuite) addAllowedBidder(auctionId uint64, bidder sdk.AccAddress, maxBidAmount sdk.Int) {
-	err := s.keeper.AddAllowedBidders(s.ctx, auctionId, []types.AllowedBidder{
-		{
-			Bidder:       bidder.String(),
-			MaxBidAmount: maxBidAmount,
-		},
-	})
 	s.Require().NoError(err)
 }
 
