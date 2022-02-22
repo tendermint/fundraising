@@ -192,7 +192,6 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 }
 
 func TestMsgCreateBatchAuction(t *testing.T) {
-	// TODO: not implemented yet
 	testCases := []struct {
 		expectedErr string
 		msg         *types.MsgCreateBatchAuction
@@ -492,7 +491,6 @@ func TestMsgPlaceBid(t *testing.T) {
 }
 
 func TestMsgModifyBid(t *testing.T) {
-	// TODO: not implemented yet
 	testCases := []struct {
 		expectedErr string
 		msg         *types.MsgModifyBid
