@@ -47,7 +47,7 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_AuctionStatus() {
 func (s *KeeperTestSuite) TestBatchAuction_AuctionStatus() {
 	standByAuction := s.createBatchAuction(
 		s.addr(0),
-		sdk.MustNewDecFromStr("0.5"),
+		parseDec("1"),
 		parseCoin("5000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -64,7 +64,7 @@ func (s *KeeperTestSuite) TestBatchAuction_AuctionStatus() {
 
 	startedAuction := s.createBatchAuction(
 		s.addr(1),
-		sdk.MustNewDecFromStr("0.5"),
+		parseDec("0.5"),
 		parseCoin("5000000000denom3"),
 		"denom4",
 		[]types.VestingSchedule{},
@@ -204,7 +204,7 @@ func (s *KeeperTestSuite) TestDistributePayingCoin() {
 func (s *KeeperTestSuite) TestCancelAuction() {
 	standByAuction := s.createFixedPriceAuction(
 		s.addr(0),
-		sdk.MustNewDecFromStr("1.0"),
+		parseDec("1"),
 		parseCoin("500000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -227,8 +227,8 @@ func (s *KeeperTestSuite) TestCancelAuction() {
 func (s *KeeperTestSuite) TestAddAllowedBidders() {
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(0),
-		sdk.MustNewDecFromStr("0.5"),
-		sdk.NewInt64Coin("denom1", 500_000_000_000),
+		parseDec("0.5"),
+		parseCoin("500000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
 		time.Now().AddDate(0, 0, -1),
@@ -249,28 +249,16 @@ func (s *KeeperTestSuite) TestAddAllowedBidders() {
 		{
 			"single bidder",
 			[]types.AllowedBidder{
-				{
-					Bidder:       s.addr(1).String(),
-					MaxBidAmount: sdk.NewInt(100_000_000),
-				},
+				{Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(100_000_000)},
 			},
 			nil,
 		},
 		{
 			"multiple bidders",
 			[]types.AllowedBidder{
-				{
-					Bidder:       s.addr(1).String(),
-					MaxBidAmount: sdk.NewInt(100_000_000),
-				},
-				{
-					Bidder:       s.addr(2).String(),
-					MaxBidAmount: sdk.NewInt(500_000_000),
-				},
-				{
-					Bidder:       s.addr(3).String(),
-					MaxBidAmount: sdk.NewInt(800_000_000),
-				},
+				{Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(100_000_000)},
+				{Bidder: s.addr(2).String(), MaxBidAmount: sdk.NewInt(500_000_000)},
+				{Bidder: s.addr(3).String(), MaxBidAmount: sdk.NewInt(800_000_000)},
 			},
 			nil,
 		},
@@ -283,20 +271,14 @@ func (s *KeeperTestSuite) TestAddAllowedBidders() {
 		{
 			"zero maximum bid amount value",
 			[]types.AllowedBidder{
-				{
-					Bidder:       s.addr(1).String(),
-					MaxBidAmount: sdk.NewInt(0),
-				},
+				{Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(0)},
 			},
 			types.ErrInvalidMaxBidAmount,
 		},
 		{
 			"negative maximum bid amount value",
 			[]types.AllowedBidder{
-				{
-					Bidder:       s.addr(1).String(),
-					MaxBidAmount: sdk.NewInt(-1),
-				},
+				{Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(-1)},
 			},
 			types.ErrInvalidMaxBidAmount,
 		},
@@ -315,8 +297,8 @@ func (s *KeeperTestSuite) TestAddAllowedBidders() {
 func (s *KeeperTestSuite) TestAddAllowedBidders_Length() {
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(0),
-		sdk.MustNewDecFromStr("0.5"),
-		sdk.NewInt64Coin("denom1", 500_000_000_000),
+		parseDec("0.5"),
+		parseCoin("500000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
 		time.Now().AddDate(0, 0, -1),
@@ -353,8 +335,8 @@ func (s *KeeperTestSuite) TestAddAllowedBidders_Length() {
 func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(0),
-		sdk.MustNewDecFromStr("0.5"),
-		sdk.NewInt64Coin("denom1", 500_000_000_000),
+		parseDec("0.5"),
+		parseCoin("500000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
 		time.Now().AddDate(0, 0, -1),
@@ -423,10 +405,7 @@ func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 			s.Require().Len(auction.GetAllowedBidders(), 5)
 
 			// Check if it is sucessfully updated
-			allowedBiddersMap := make(map[string]sdk.Int)
-			for _, bidder := range auction.GetAllowedBidders() {
-				allowedBiddersMap[bidder.GetBidder()] = bidder.MaxBidAmount
-			}
+			allowedBiddersMap := auction.GetAllowedBiddersMap()
 			s.Require().Equal(tc.maxBidAmount, allowedBiddersMap[tc.bidder.String()])
 		})
 	}

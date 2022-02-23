@@ -169,6 +169,7 @@ func (s *KeeperTestSuite) sendCoins(fromAddr, toAddr sdk.AccAddress, coins sdk.C
 	if fund {
 		s.fundAddr(fromAddr, coins)
 	}
+
 	err := s.app.BankKeeper.SendCoins(s.ctx, fromAddr, toAddr, coins)
 	s.Require().NoError(err)
 }

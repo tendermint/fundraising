@@ -85,9 +85,7 @@ func (k Keeper) DistributePayingCoin(ctx sdk.Context, auction types.AuctionI) er
 
 // ReserveSellingCoin reserves the selling coin to the selling reserve account.
 func (k Keeper) ReserveSellingCoin(ctx sdk.Context, auctionId uint64, auctioneerAddr sdk.AccAddress, sellingCoin sdk.Coin) error {
-	sellingReserveAddr := types.SellingReserveAddress(auctionId)
-
-	if err := k.bankKeeper.SendCoins(ctx, auctioneerAddr, sellingReserveAddr, sdk.NewCoins(sellingCoin)); err != nil {
+	if err := k.bankKeeper.SendCoins(ctx, auctioneerAddr, types.SellingReserveAddress(auctionId), sdk.NewCoins(sellingCoin)); err != nil {
 		return sdkerrors.Wrap(err, "failed to reserve selling coin")
 	}
 	return nil
