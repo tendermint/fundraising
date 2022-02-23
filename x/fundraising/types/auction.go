@@ -328,7 +328,9 @@ type AuctionI interface {
 	IsAuctionFinished(t time.Time) bool
 
 	GetAllowedBiddersMap() map[string]sdk.Int
+
 	GetMaxBidAmount(bidder string) sdk.Int
+	SetMaxBidAmount(bidder string, maxBidAmt sdk.Int) error
 
 	Validate() error
 }
@@ -465,4 +467,13 @@ func (ba BaseAuction) GetMaxBidAmount(bidder string) sdk.Int {
 		}
 	}
 	return maxBidAmt
+}
+
+func (ba BaseAuction) SetMaxBidAmount(bidder string, maxBidAmt sdk.Int) error {
+	for i, ab := range ba.GetAllowedBidders() {
+		if ab.Bidder == bidder {
+			ba.GetAllowedBidders()[i].MaxBidAmount = maxBidAmt
+		}
+	}
+	return nil
 }
