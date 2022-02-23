@@ -190,7 +190,7 @@ func (s *KeeperTestSuite) TestMsgPlaceBid() {
 				sdk.MustNewDecFromStr("0.5"),
 				sdk.NewInt64Coin(auction.GetSellingCoin().Denom, 1_000_000),
 			),
-			types.ErrInvalidPayingCoinDenom,
+			types.ErrIncorrectCoinDenom,
 		},
 		{
 			"insufficient funds",

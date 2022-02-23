@@ -12,51 +12,10 @@ import (
 	_ "github.com/stretchr/testify/suite"
 )
 
-func (s *KeeperTestSuite) TestLastAuctionId() {
-	auctionId := s.keeper.GetLastAuctionId(s.ctx)
-	s.Require().Equal(uint64(0), auctionId)
-
-	cacheCtx, _ := s.ctx.CacheContext()
-	nextAuctionId := s.keeper.GetNextAuctionIdWithUpdate(cacheCtx)
-	s.Require().Equal(uint64(1), nextAuctionId)
-
-	s.createFixedPriceAuction(
-		s.addr(0),
-		sdk.MustNewDecFromStr("1.0"),
-		parseCoin("1000000000denom1"),
-		"denom2",
-		[]types.VestingSchedule{},
-		time.Now().AddDate(0, 6, 0),
-		time.Now().AddDate(0, 6, 0).AddDate(0, 1, 0),
-		true,
-	)
-	nextAuctionId = s.keeper.GetNextAuctionIdWithUpdate(cacheCtx)
-	s.Require().Equal(uint64(2), nextAuctionId)
-
-	auctions := s.keeper.GetAuctions(s.ctx)
-	s.Require().Len(auctions, 1)
-
-	s.createFixedPriceAuction(
-		s.addr(1),
-		sdk.MustNewDecFromStr("0.5"),
-		parseCoin("5000000000denom3"),
-		"denom4",
-		[]types.VestingSchedule{},
-		time.Now().AddDate(0, 6, 0),
-		time.Now().AddDate(0, 6, 0).AddDate(0, 1, 0),
-		true,
-	)
-	nextAuctionId = s.keeper.GetNextAuctionIdWithUpdate(cacheCtx)
-	s.Require().Equal(uint64(3), nextAuctionId)
-
-	auctions = s.keeper.GetAuctions(s.ctx)
-	s.Require().Len(auctions, 2)
-}
-
 func (s *KeeperTestSuite) TestFixedPriceAuction_AuctionStatus() {
 	standByAuction := s.createFixedPriceAuction(
 		s.addr(0),
-		sdk.MustNewDecFromStr("0.5"),
+		parseDec("0.5"),
 		parseCoin("5000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -71,7 +30,7 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_AuctionStatus() {
 
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(1),
-		sdk.MustNewDecFromStr("0.5"),
+		parseDec("0.5"),
 		parseCoin("1000000000000denom3"),
 		"denom4",
 		[]types.VestingSchedule{},
@@ -83,40 +42,6 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_AuctionStatus() {
 	auction, found = s.keeper.GetAuction(s.ctx, startedAuction.GetId())
 	s.Require().True(found)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
-}
-
-func (s *KeeperTestSuite) TestFixedPriceAuction_InsufficientRemainingAmount() {
-	auction := s.createFixedPriceAuction(
-		s.addr(0),
-		sdk.OneDec(),
-		parseCoin("1000000000denom1"),
-		"denom2",
-		[]types.VestingSchedule{},
-		time.Now().AddDate(0, 0, -1),
-		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
-		true,
-	)
-	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
-
-	s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("200000000denom2"), true)
-	s.placeBid(auction.GetId(), s.addr(2), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("200000000denom2"), true)
-	s.placeBid(auction.GetId(), s.addr(3), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("250000000denom2"), true)
-	s.placeBid(auction.GetId(), s.addr(4), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("250000000denom2"), true)
-
-	// Test insufficient remaining coin amount
-	coin := parseCoin("300000000denom2")
-	s.fundAddr(s.addr(5), sdk.NewCoins(coin))
-
-	receiveAmt := coin.Amount.ToDec().QuoTruncate(sdk.OneDec()).TruncateInt()
-	s.addAllowedBidder(auction.GetId(), s.addr(5), receiveAmt)
-
-	_, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
-		AuctionId: auction.GetId(),
-		Bidder:    s.addr(5).String(),
-		Price:     sdk.OneDec(),
-		Coin:      coin,
-	})
-	s.Require().ErrorIs(err, types.ErrInsufficientRemainingAmount)
 }
 
 func (s *KeeperTestSuite) TestBatchAuction_AuctionStatus() {

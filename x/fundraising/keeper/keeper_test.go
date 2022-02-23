@@ -124,8 +124,17 @@ func (s *KeeperTestSuite) placeBid(
 		s.fundAddr(bidder, sdk.NewCoins(coin))
 	}
 
-	receiveAmt := coin.Amount.ToDec().QuoTruncate(price).TruncateInt()
-	s.addAllowedBidder(auctionId, bidder, receiveAmt)
+	// totalBidAmt := sdk.ZeroInt()
+	// for _, b := range s.keeper.GetBidsByBidder(s.ctx, bidder) {
+	// 	exchangedSellingAmt := b.Coin.Amount.ToDec().QuoTruncate(b.Price).TruncateInt()
+	// 	totalBidAmt = totalBidAmt.Add(exchangedSellingAmt)
+	// }
+
+	// exchangedSellingAmt := coin.Amount.ToDec().QuoTruncate(price).TruncateInt()
+	// totalBidAmt = totalBidAmt.Add(exchangedSellingAmt)
+
+	// // Append the bidder's total bid amount with the exchanged selling amount and set it to max bid amount
+	// s.addAllowedBidder(auctionId, bidder, totalBidAmt)
 
 	bid, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
 		AuctionId: auctionId,
@@ -153,6 +162,17 @@ func (s *KeeperTestSuite) cancelAuction(auctionId uint64, auctioneer sdk.AccAddr
 // Below are useful helpers to write test code easily.
 //
 
+func (s *KeeperTestSuite) addr(addrNum int) sdk.AccAddress {
+	addr := make(sdk.AccAddress, 20)
+	binary.PutVarint(addr, int64(addrNum))
+	return addr
+}
+
+func (s *KeeperTestSuite) fundAddr(addr sdk.AccAddress, coins sdk.Coins) {
+	err := simapp.FundAccount(s.app.BankKeeper, s.ctx, addr, coins)
+	s.Require().NoError(err)
+}
+
 func (s *KeeperTestSuite) getBalance(addr sdk.AccAddress, denom string) sdk.Coin {
 	return s.app.BankKeeper.GetBalance(s.ctx, addr, denom)
 }
@@ -165,23 +185,32 @@ func (s *KeeperTestSuite) sendCoins(fromAddr, toAddr sdk.AccAddress, coins sdk.C
 	s.Require().NoError(err)
 }
 
-func (s *KeeperTestSuite) addr(addrNum int) sdk.AccAddress {
-	addr := make(sdk.AccAddress, 20)
-	binary.PutVarint(addr, int64(addrNum))
-	return addr
+// exchangeToSellingAmount exchanges to selling coin amount (PayingCoinAmount/Price).
+func exchangeToSellingAmount(price sdk.Dec, coin sdk.Coin) sdk.Int {
+	return coin.Amount.ToDec().QuoTruncate(price).TruncateInt()
 }
 
-func (s *KeeperTestSuite) fundAddr(addr sdk.AccAddress, coins sdk.Coins) {
-	err := simapp.FundAccount(s.app.BankKeeper, s.ctx, addr, coins)
-	s.Require().NoError(err)
-}
-
+// parseCoin parses and returns sdk.Coin.
 func parseCoin(s string) sdk.Coin {
 	coin, err := sdk.ParseCoinNormalized(s)
 	if err != nil {
 		panic(err)
 	}
 	return coin
+}
+
+// parseCoins parses and returns sdk.Coins.
+func parseCoins(s string) sdk.Coins {
+	coins, err := sdk.ParseCoinsNormalized(s)
+	if err != nil {
+		panic(err)
+	}
+	return coins
+}
+
+// parseDec is a shortcut for sdk.MustNewDecFromStr.
+func parseDec(s string) sdk.Dec {
+	return sdk.MustNewDecFromStr(s)
 }
 
 // coinEq is a convenient method to test expected and got values of sdk.Coin.
