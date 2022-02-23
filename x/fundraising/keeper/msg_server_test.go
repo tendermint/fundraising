@@ -150,10 +150,6 @@ func (s *KeeperTestSuite) TestMsgPlaceBid() {
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	// Fund the bidder
-	bidder := s.addr(1)
-	s.fundAddr(bidder, sdk.NewCoins(sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 5_000_000)))
-
 	for _, tc := range []struct {
 		name string
 		msg  *types.MsgPlaceBid
@@ -163,10 +159,10 @@ func (s *KeeperTestSuite) TestMsgPlaceBid() {
 			"valid message",
 			types.NewMsgPlaceBid(
 				auction.GetId(),
-				bidder.String(),
-				types.BidTypeBatchWorth,
+				s.addr(1).String(),
+				types.BidTypeFixedPrice,
 				sdk.MustNewDecFromStr("0.5"),
-				sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 1_000_000),
+				parseCoin("1000000denom2"),
 			),
 			nil,
 		},
@@ -174,45 +170,41 @@ func (s *KeeperTestSuite) TestMsgPlaceBid() {
 			"invalid start price",
 			types.NewMsgPlaceBid(
 				auction.GetId(),
-				bidder.String(),
-				types.BidTypeBatchWorth,
+				s.addr(1).String(),
+				types.BidTypeFixedPrice,
 				sdk.MustNewDecFromStr("1.0"),
-				sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 1_000_000),
+				parseCoin("1000000denom2"),
 			),
 			sdkerrors.Wrap(types.ErrInvalidStartPrice, "bid price must be equal to start price"),
 		},
 		{
-			"invalid paying coin denom",
+			"incorrect coin denom",
 			types.NewMsgPlaceBid(
 				auction.GetId(),
-				bidder.String(),
-				types.BidTypeBatchWorth,
+				s.addr(1).String(),
+				types.BidTypeFixedPrice,
 				sdk.MustNewDecFromStr("0.5"),
-				sdk.NewInt64Coin(auction.GetSellingCoin().Denom, 1_000_000),
+				parseCoin("1000000denom1"),
 			),
-			types.ErrInvalidPayingCoinDenom,
+			types.ErrIncorrectCoinDenom,
 		},
 		{
 			"insufficient funds",
 			types.NewMsgPlaceBid(
 				auction.GetId(),
-				bidder.String(),
-				types.BidTypeBatchWorth,
+				s.addr(1).String(),
+				types.BidTypeFixedPrice,
 				sdk.MustNewDecFromStr("0.5"),
-				sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 500_000_000_000_000_000),
+				parseCoin("50000000000000000denom2"),
 			),
 			sdkerrors.ErrInsufficientFunds,
 		},
 	} {
 		s.Run(tc.name, func() {
-			receiveAmt := tc.msg.Coin.Amount.ToDec().QuoTruncate(tc.msg.Price).TruncateInt()
+			s.fundAddr(tc.msg.GetBidder(), sdk.NewCoins(parseCoin("5000000denom2"), parseCoin("1000000denom1")))
+			s.addAllowedBidder(auction.Id, tc.msg.GetBidder(), exchangeToSellingAmount(tc.msg.Price, tc.msg.Coin))
 
-			err := s.keeper.AddAllowedBidders(s.ctx, tc.msg.AuctionId, []types.AllowedBidder{
-				{Bidder: bidder.String(), MaxBidAmount: receiveAmt},
-			})
-			s.Require().NoError(err)
-
-			_, err = s.msgServer.PlaceBid(ctx, tc.msg)
+			_, err := s.msgServer.PlaceBid(ctx, tc.msg)
 			if tc.err != nil {
 				s.Require().ErrorIs(err, tc.err)
 				return

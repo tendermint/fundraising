@@ -1,140 +1,112 @@
 package keeper_test
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/fundraising/x/fundraising/types"
 
 	_ "github.com/stretchr/testify/suite"
 )
 
-func (s *KeeperTestSuite) TestBidIterators() {
+func (s *KeeperTestSuite) TestFixedPriceAuction() {
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(0),
-		sdk.OneDec(),
-		sdk.NewInt64Coin("denom1", 500_000_000_000),
+		parseDec("0.5"),
+		parseCoin("1000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
-		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2022-03-10T00:00:00Z"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
 		true,
 	)
 
 	auction, found := s.keeper.GetAuction(s.ctx, startedAuction.GetId())
 	s.Require().True(found)
-	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	s.placeBid(auction.GetId(), s.addr(1), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
-	s.placeBid(auction.GetId(), s.addr(2), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
-	s.placeBid(auction.GetId(), s.addr(2), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 15_000_000), true)
-	s.placeBid(auction.GetId(), s.addr(3), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 35_000_000), true)
-
-	bids := s.keeper.GetBids(s.ctx)
-	s.Require().Len(bids, 4)
-
-	bidsById := s.keeper.GetBidsByAuctionId(s.ctx, auction.GetId())
-	s.Require().Len(bidsById, 4)
-
-	bidsByBidder := s.keeper.GetBidsByBidder(s.ctx, s.addr(2))
-	s.Require().Len(bidsByBidder, 2)
+	s.addAllowedBidder(auction.GetId(), s.addr(1), exchangeToSellingAmount(parseDec("0.5"), parseCoin("200000000denom2")))
+	s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, parseDec("0.5"), parseCoin("200000000denom2"), true)
 }
 
-func (s *KeeperTestSuite) TestBidId() {
+func (s *KeeperTestSuite) TestFixedPriceAuction_InvalidStartPrice() {
+	// TODO: not implemented yet
+}
+
+func (s *KeeperTestSuite) TestFixedPriceAuction_InsufficientRemainingAmount() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
-		sdk.OneDec(),
-		sdk.NewInt64Coin("denom1", 500_000_000_000),
+		parseDec("1"),
+		parseCoin("1000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
-		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2022-03-10T00:00:00Z"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	bidId := s.keeper.GetLastBidId(s.ctx, auction.GetId())
-	s.Require().Equal(uint64(0), bidId)
+	s.addAllowedBidder(auction.Id, s.addr(1), exchangeToSellingAmount(parseDec("1"), parseCoin("200000000denom2")))
+	s.addAllowedBidder(auction.Id, s.addr(2), exchangeToSellingAmount(parseDec("1"), parseCoin("200000000denom2")))
+	s.addAllowedBidder(auction.Id, s.addr(3), exchangeToSellingAmount(parseDec("1"), parseCoin("250000000denom2")))
+	s.addAllowedBidder(auction.Id, s.addr(4), exchangeToSellingAmount(parseDec("1"), parseCoin("250000000denom2")))
 
-	s.placeBid(auction.GetId(), s.addr(1), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
-	s.placeBid(auction.GetId(), s.addr(2), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
-	s.placeBid(auction.GetId(), s.addr(3), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 15_000_000), true)
+	s.placeBid(auction.Id, s.addr(1), types.BidTypeFixedPrice, parseDec("1"), parseCoin("200000000denom2"), true)
+	s.placeBid(auction.Id, s.addr(2), types.BidTypeFixedPrice, parseDec("1"), parseCoin("200000000denom2"), true)
+	s.placeBid(auction.Id, s.addr(3), types.BidTypeFixedPrice, parseDec("1"), parseCoin("250000000denom2"), true)
+	s.placeBid(auction.Id, s.addr(4), types.BidTypeFixedPrice, parseDec("1"), parseCoin("250000000denom2"), true)
 
-	bidsById := s.keeper.GetBidsByAuctionId(s.ctx, auction.GetId())
-	s.Require().Len(bidsById, 3)
+	// The remaining coin amount must be insufficient
+	s.fundAddr(s.addr(5), parseCoins("300000000denom2"))
+	s.addAllowedBidder(auction.Id, s.addr(5), exchangeToSellingAmount(parseDec("1"), parseCoin("300000000denom2")))
 
-	nextSeq := s.keeper.GetNextBidIdWithUpdate(s.ctx, auction.GetId())
-	s.Require().Equal(uint64(4), nextSeq)
-
-	// Create another auction
-	auction2 := s.createFixedPriceAuction(
-		s.addr(0),
-		sdk.MustNewDecFromStr("0.5"),
-		sdk.NewInt64Coin("denom3", 500_000_000_000),
-		"denom3",
-		[]types.VestingSchedule{},
-		types.MustParseRFC3339("2022-01-10T00:00:00Z"),
-		types.MustParseRFC3339("2022-12-10T00:00:00Z"),
-		true,
-	)
-
-	// Bid id must start from 1 with new auction
-	bidsById = s.keeper.GetBidsByAuctionId(s.ctx, auction2.GetId())
-	s.Require().Len(bidsById, 0)
-
-	nextSeq = s.keeper.GetNextBidIdWithUpdate(s.ctx, auction2.GetId())
-	s.Require().Equal(uint64(1), nextSeq)
+	_, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
+		AuctionId: auction.Id,
+		Bidder:    s.addr(5).String(),
+		BidType:   types.BidTypeFixedPrice,
+		Price:     parseDec("1.0"),
+		Coin:      parseCoin("300000000denom2"),
+	})
+	s.Require().ErrorIs(err, types.ErrInsufficientRemainingAmount)
 }
 
-func (s *KeeperTestSuite) TestPlaceBid() {
-	startedAuction := s.createFixedPriceAuction(
-		s.addr(0),
-		sdk.OneDec(),
-		sdk.NewInt64Coin("denom1", 500_000_000_000),
+func (s *KeeperTestSuite) TestFixedPriceAuction_OverMaxBidAmountLimit() {
+	// TODO: not implemented yet
+}
+
+func (s *KeeperTestSuite) TestBatchAuction() {
+	// TODO: not implemented yet
+}
+
+func (s *KeeperTestSuite) TestModifyBid() {
+	// TODO: not implemented yet
+	// cover a case to modify a bid with higher price
+	// cover a case to modify a bid with higher coin amount
+}
+
+func (s *KeeperTestSuite) TestHandleBatchWorthBid() {
+	// TODO: not implemented yet
+}
+
+func (s *KeeperTestSuite) TestHandleBatchManyBid() {
+	// TODO: not done yet
+	auction := s.createBatchAuction(
+		s.addr(1),
+		parseDec("0.5"),
+		parseCoin("5000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
-		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2022-06-10T00:00:00Z"),
+		1,
+		sdk.MustNewDecFromStr("0.2"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
 		true,
 	)
-	auction, found := s.keeper.GetAuction(s.ctx, startedAuction.GetId())
-	s.Require().True(found)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	allowedBidder := s.addr(1)
-	notAllowedBidder := s.addr(2)
+	s.addAllowedBidder(auction.Id, s.addr(1), sdk.NewInt(2_000_000_000))
 
-	// Add allowed bidder to allowed bidder list
-	err := s.keeper.AddAllowedBidders(s.ctx, auction.GetId(), []types.AllowedBidder{
-		{Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(10_000_000)},
-	})
-	s.Require().NoError(err)
-
-	// The bidder is not allowed
-	s.fundAddr(notAllowedBidder, sdk.NewCoins(sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 5_000_000)))
-	_, err = s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
-		AuctionId: auction.GetId(),
-		Bidder:    notAllowedBidder.String(),
-		Price:     sdk.OneDec(),
-		Coin:      sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 5_000_000),
-	})
-	s.Require().Error(err)
-
-	// Maximum bid amount limit
-	s.fundAddr(allowedBidder, sdk.NewCoins(sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000)))
-	_, err = s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
-		AuctionId: auction.GetId(),
-		Bidder:    allowedBidder.String(),
-		Price:     sdk.OneDec(),
-		Coin:      sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000),
-	})
-	s.Require().Error(err)
-
-	// Happy case
-	s.fundAddr(allowedBidder, sdk.NewCoins(sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 10_000_000)))
-	_, err = s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
-		AuctionId: auction.GetId(),
-		Bidder:    allowedBidder.String(),
-		Price:     sdk.OneDec(),
-		Coin:      sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 10_000_000),
-	})
-	s.Require().NoError(err)
+	s.placeBid(auction.Id, s.addr(1), types.BidTypeBatchMany, parseDec("0.2"), parseCoin("100000000denom1"), true)
+	s.placeBid(auction.Id, s.addr(1), types.BidTypeBatchMany, parseDec("0.3"), parseCoin("200000000denom1"), true)
+	s.placeBid(auction.Id, s.addr(1), types.BidTypeBatchMany, parseDec("0.5"), parseCoin("500000000denom1"), true)
+	s.placeBid(auction.Id, s.addr(1), types.BidTypeBatchMany, parseDec("1.0"), parseCoin("500000000denom1"), true)
 }

@@ -17,10 +17,7 @@ func (k Keeper) GetLastAuctionId(ctx sdk.Context) uint64 {
 		id = 0 // initialize the auction id
 	} else {
 		val := gogotypes.UInt64Value{}
-		err := k.cdc.Unmarshal(bz, &val)
-		if err != nil {
-			panic(err)
-		}
+		k.cdc.MustUnmarshal(bz, &val)
 		id = val.GetValue()
 	}
 	return id
@@ -46,22 +43,20 @@ func (k Keeper) GetAuction(ctx sdk.Context, id uint64) (auction types.AuctionI, 
 	return auction, true
 }
 
+// SetAuction sets an auction with the given auction id.
+func (k Keeper) SetAuction(ctx sdk.Context, auction types.AuctionI) {
+	store := ctx.KVStore(k.storeKey)
+	bz := types.MustMarshalAuction(k.cdc, auction)
+	store.Set(types.GetAuctionKey(auction.GetId()), bz)
+}
+
 // GetAuctions returns all auctions in the store.
 func (k Keeper) GetAuctions(ctx sdk.Context) (auctions []types.AuctionI) {
 	k.IterateAuctions(ctx, func(auction types.AuctionI) (stop bool) {
 		auctions = append(auctions, auction)
 		return false
 	})
-
 	return auctions
-}
-
-// SetAuction sets an auction with the given auction id.
-func (k Keeper) SetAuction(ctx sdk.Context, auction types.AuctionI) {
-	id := auction.GetId()
-	store := ctx.KVStore(k.storeKey)
-	bz := types.MustMarshalAuction(k.cdc, auction)
-	store.Set(types.GetAuctionKey(id), bz)
 }
 
 // IterateAuctions iterates over all the stored auctions and performs a callback function.
@@ -80,29 +75,26 @@ func (k Keeper) IterateAuctions(ctx sdk.Context, cb func(auction types.AuctionI)
 	}
 }
 
-// GetLastBidId returns the last bid Id for the bid.
+// GetLastBidId returns the last bid id for the bid.
 func (k Keeper) GetLastBidId(ctx sdk.Context, auctionId uint64) uint64 {
-	var seq uint64
+	var id uint64
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetBidIdKey(auctionId))
+	bz := store.Get(types.GetLastBidIdKey(auctionId))
 	if bz == nil {
-		seq = 0 // initialize the bid id
+		id = 0 // initialize the bid id
 	} else {
 		val := gogotypes.UInt64Value{}
-		err := k.cdc.Unmarshal(bz, &val)
-		if err != nil {
-			panic(err)
-		}
-		seq = val.GetValue()
+		k.cdc.MustUnmarshal(bz, &val)
+		id = val.GetValue()
 	}
-	return seq
+	return id
 }
 
-// SetBidId sets the Bid Id number for the auction.
-func (k Keeper) SetBidId(ctx sdk.Context, auctionId uint64, seq uint64) {
+// SetBidId sets the bid id for the auction.
+func (k Keeper) SetBidId(ctx sdk.Context, auctionId uint64, bidId uint64) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshal(&gogotypes.UInt64Value{Value: seq})
-	store.Set(types.GetBidIdKey(auctionId), bz)
+	bz := k.cdc.MustMarshal(&gogotypes.UInt64Value{Value: bidId})
+	store.Set(types.GetLastBidIdKey(auctionId), bz)
 }
 
 // GetBid returns a bid for the given auction id and bid id.
@@ -118,11 +110,11 @@ func (k Keeper) GetBid(ctx sdk.Context, auctionId uint64, bidId uint64) (bid typ
 }
 
 // SetBid sets a bid with the given arguments.
-func (k Keeper) SetBid(ctx sdk.Context, auctionId uint64, bidId uint64, bidderAddr sdk.AccAddress, bid types.Bid) {
+func (k Keeper) SetBid(ctx sdk.Context, bid types.Bid) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshal(&bid)
-	store.Set(types.GetBidKey(auctionId, bidId), bz)
-	store.Set(types.GetBidIndexKey(bidderAddr, auctionId, bidId), []byte{})
+	store.Set(types.GetBidKey(bid.AuctionId, bid.Id), bz)
+	store.Set(types.GetBidIndexKey(bid.GetBidder(), bid.AuctionId, bid.Id), []byte{})
 }
 
 // GetBids returns all bids registered in the store.
@@ -175,7 +167,7 @@ func (k Keeper) IterateBids(ctx sdk.Context, cb func(bid types.Bid) (stop bool))
 // Stops the iteration when the callback function returns true.
 func (k Keeper) IterateBidsByAuctionId(ctx sdk.Context, auctionId uint64, cb func(bid types.Bid) (stop bool)) {
 	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.GetBidAuctionIDKey(auctionId))
+	iter := sdk.KVStorePrefixIterator(store, types.GetBidByAuctionIdPrefix(auctionId))
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var bid types.Bid

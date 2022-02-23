@@ -231,26 +231,26 @@ For `BatchAuction`and `BidTypeBatchMany`,
 
 Stores are KVStores in the multi-store. The key to find the store is the first parameter in the list.
 
-### prefix key to retrieve the latest auction id
+### The key for the latest auction id
 
-- `AuctionIdKey: 0x11 -> uint64`
+- `LastAuctionIdKey: 0x11 -> Uint64Value(lastAuctionId)`
 
-### prefix key to retrieve the latest bid id number from the auction id
+### The key for the latest bid id
 
-- `BidIdKey: 0x12 | AuctionId -> uint64`
+- `LastBidIdKey: 0x12 | AuctionId -> Uint64Value(lastBidId)`
 
-### prefix key to retrieve the auction from the auction id
+### The key to retrieve the auction object from the auction id
 
-- `AuctionKeyPrefix: 0x21 | AuctionId -> ProtocolBuffer(Auction)`
+- `AuctionKey: 0x21 | AuctionId -> ProtocolBuffer(Auction)`
 
-### prefix key to retrieve the bid from the auction id and bid id 
+### The key to retrieve the bid object from the auction id and bid id
 
-- `BidKeyPrefix: 0x31 | AuctionId | BidId -> ProtocolBuffer(Bid)`
+- `BidKey: 0x31 | AuctionId | BidId -> ProtocolBuffer(Bid)`
 
-### prefix key to retrieve the auction id and bid id by iterating the bidder address
+### The index key to retrieve the bid object from the bidder address
 
-- `BidIndexKeyPrefix: 0x32 | BidderAddrLen (1 byte) | BidderAddr | AuctionId | BidId -> nil`
+- `BidIndexKey: 0x32 | BidderAddrLen (1 byte) | BidderAddr | AuctionId | BidId -> nil`
 
-### prefix key to retrieve the vesting queues from the auction id and vesting release time
+### The key to retrieve the vesting queue object from the  auction id and 
 
-- `VestingQueueKeyPrefix: 0x41 | AuctionId | format(time) -> ProtocolBuffer(VestingQueue)`
+- `VestingQueueKey: 0x41 | AuctionId | sdk.FormatTimeBytes(releaseTime) -> ProtocolBuffer(VestingQueue)`

@@ -31,17 +31,12 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	}
 
 	for _, bid := range genState.Bids {
-		bidderAddr, err := sdk.AccAddressFromBech32(bid.Bidder)
-		if err != nil {
-			panic(err)
-		}
-
 		_, found := k.GetAuction(ctx, bid.AuctionId)
 		if !found {
 			panic(fmt.Sprintf("auction %d is not found", bid.AuctionId))
 		}
 
-		k.SetBid(ctx, bid.AuctionId, bid.Id, bidderAddr, bid)
+		k.SetBid(ctx, bid)
 	}
 
 	for _, queue := range genState.VestingQueues {
@@ -50,7 +45,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			panic(fmt.Sprintf("auction %d is not found", queue.AuctionId))
 		}
 
-		k.SetVestingQueue(ctx, queue.AuctionId, queue.ReleaseTime, queue)
+		k.SetVestingQueue(ctx, queue)
 	}
 }
 
