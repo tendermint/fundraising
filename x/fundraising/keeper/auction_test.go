@@ -406,7 +406,8 @@ func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 
 			// Check if it is sucessfully updated
 			allowedBiddersMap := auction.GetAllowedBiddersMap()
-			s.Require().Equal(tc.maxBidAmount, allowedBiddersMap[tc.bidder.String()])
+			maxBidAmt := allowedBiddersMap[tc.bidder.String()]
+			s.Require().Equal(tc.maxBidAmount, maxBidAmt)
 		})
 	}
 }
