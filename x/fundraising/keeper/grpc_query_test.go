@@ -20,7 +20,7 @@ func (s *KeeperTestSuite) TestGRPCParams() {
 func (s *KeeperTestSuite) TestGRPCAuctions() {
 	s.createFixedPriceAuction(
 		s.addr(0),
-		sdk.MustNewDecFromStr("1.0"),
+		parseDec("1"),
 		parseCoin("5000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -173,7 +173,7 @@ func (s *KeeperTestSuite) TestGRPCAuction() {
 func (s *KeeperTestSuite) TestGRPCBids() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
-		sdk.MustNewDecFromStr("1.0"),
+		parseDec("1"),
 		parseCoin("500000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -186,10 +186,14 @@ func (s *KeeperTestSuite) TestGRPCBids() {
 	bidder2 := s.addr(2)
 	bidder3 := s.addr(3)
 
-	bid1 := s.placeBid(auction.GetId(), bidder1, types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom2"), true)
-	bid2 := s.placeBid(auction.GetId(), bidder1, types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom2"), true)
-	bid3 := s.placeBid(auction.GetId(), bidder2, types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("15000000denom2"), true)
-	bid4 := s.placeBid(auction.GetId(), bidder3, types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("35000000denom2"), true)
+	s.addAllowedBidder(auction.Id, bidder1, exchangeToSellingAmount(parseDec("1"), parseCoin("400000000denom2")))
+	s.addAllowedBidder(auction.Id, bidder2, exchangeToSellingAmount(parseDec("1"), parseCoin("150000000denom2")))
+	s.addAllowedBidder(auction.Id, bidder3, exchangeToSellingAmount(parseDec("1"), parseCoin("350000000denom2")))
+
+	bid1 := s.placeBid(auction.GetId(), bidder1, types.BidTypeFixedPrice, parseDec("1"), parseCoin("20000000denom2"), true)
+	bid2 := s.placeBid(auction.GetId(), bidder1, types.BidTypeFixedPrice, parseDec("1"), parseCoin("20000000denom2"), true)
+	bid3 := s.placeBid(auction.GetId(), bidder2, types.BidTypeFixedPrice, parseDec("1"), parseCoin("15000000denom2"), true)
+	bid4 := s.placeBid(auction.GetId(), bidder3, types.BidTypeFixedPrice, parseDec("1"), parseCoin("35000000denom2"), true)
 
 	// Make bid4 not eligible
 	bid4.IsWinner = false
@@ -294,7 +298,7 @@ func (s *KeeperTestSuite) TestGRPCBids() {
 func (s *KeeperTestSuite) TestGRPCBid() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
-		sdk.MustNewDecFromStr("1.0"),
+		parseDec("1"),
 		parseCoin("500000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -303,7 +307,8 @@ func (s *KeeperTestSuite) TestGRPCBid() {
 		true,
 	)
 
-	bid := s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom2"), true)
+	s.addAllowedBidder(auction.Id, s.addr(1), exchangeToSellingAmount(parseDec("1"), parseCoin("20000000denom2")))
+	bid := s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, parseDec("1"), parseCoin("20000000denom2"), true)
 
 	for _, tc := range []struct {
 		name      string
@@ -365,7 +370,7 @@ func (s *KeeperTestSuite) TestGRPCBid() {
 func (s *KeeperTestSuite) TestGRPCVestings() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
-		sdk.OneDec(),
+		parseDec("1"),
 		parseCoin("1000000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{

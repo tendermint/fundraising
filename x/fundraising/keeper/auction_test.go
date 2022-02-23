@@ -83,7 +83,7 @@ func (s *KeeperTestSuite) TestBatchAuction_AuctionStatus() {
 func (s *KeeperTestSuite) TestDistributeSellingCoin() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
-		sdk.OneDec(),
+		parseDec("1"),
 		parseCoin("1000000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -95,10 +95,14 @@ func (s *KeeperTestSuite) TestDistributeSellingCoin() {
 	_, found := s.keeper.GetAuction(s.ctx, auction.Id)
 	s.Require().True(found)
 
+	s.addAllowedBidder(auction.Id, s.addr(1), exchangeToSellingAmount(parseDec("1"), parseCoin("100000000denom2")))
+	s.addAllowedBidder(auction.Id, s.addr(2), exchangeToSellingAmount(parseDec("1"), parseCoin("200000000denom2")))
+	s.addAllowedBidder(auction.Id, s.addr(3), exchangeToSellingAmount(parseDec("1"), parseCoin("200000000denom2")))
+
 	// Place bids
-	s.placeBid(auction.Id, s.addr(1), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("100000000denom2"), true)
-	s.placeBid(auction.Id, s.addr(2), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("200000000denom2"), true)
-	s.placeBid(auction.Id, s.addr(3), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("200000000denom2"), true)
+	s.placeBid(auction.Id, s.addr(1), types.BidTypeFixedPrice, parseDec("1"), parseCoin("100000000denom2"), true)
+	s.placeBid(auction.Id, s.addr(2), types.BidTypeFixedPrice, parseDec("1"), parseCoin("200000000denom2"), true)
+	s.placeBid(auction.Id, s.addr(3), types.BidTypeFixedPrice, parseDec("1"), parseCoin("200000000denom2"), true)
 
 	// Distribute selling coin
 	err := s.keeper.DistributeSellingCoin(s.ctx, auction)
@@ -116,7 +120,7 @@ func (s *KeeperTestSuite) TestDistributeSellingCoin() {
 func (s *KeeperTestSuite) TestDistributePayingCoin() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
-		sdk.OneDec(),
+		parseDec("1"),
 		parseCoin("1000000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{
@@ -143,10 +147,12 @@ func (s *KeeperTestSuite) TestDistributePayingCoin() {
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
+	s.addAllowedBidder(auction.Id, s.addr(1), exchangeToSellingAmount(parseDec("1"), parseCoin("500000000denom2")))
+
 	// Place bids
-	s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("100000000denom2"), true)
-	s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("200000000denom2"), true)
-	s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("200000000denom2"), true)
+	s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, parseDec("1"), parseCoin("100000000denom2"), true)
+	s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, parseDec("1"), parseCoin("200000000denom2"), true)
+	s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, parseDec("1"), parseCoin("200000000denom2"), true)
 
 	// Distribute selling coin
 	err := s.keeper.DistributeSellingCoin(s.ctx, auction)

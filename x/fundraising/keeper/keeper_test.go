@@ -124,18 +124,6 @@ func (s *KeeperTestSuite) placeBid(
 		s.fundAddr(bidder, sdk.NewCoins(coin))
 	}
 
-	// totalBidAmt := sdk.ZeroInt()
-	// for _, b := range s.keeper.GetBidsByBidder(s.ctx, bidder) {
-	// 	exchangedSellingAmt := b.Coin.Amount.ToDec().QuoTruncate(b.Price).TruncateInt()
-	// 	totalBidAmt = totalBidAmt.Add(exchangedSellingAmt)
-	// }
-
-	// exchangedSellingAmt := coin.Amount.ToDec().QuoTruncate(price).TruncateInt()
-	// totalBidAmt = totalBidAmt.Add(exchangedSellingAmt)
-
-	// // Append the bidder's total bid amount with the exchanged selling amount and set it to max bid amount
-	// s.addAllowedBidder(auctionId, bidder, totalBidAmt)
-
 	bid, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
 		AuctionId: auctionId,
 		Bidder:    bidder.String(),

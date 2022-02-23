@@ -8,7 +8,7 @@ import (
 	_ "github.com/stretchr/testify/suite"
 )
 
-func (s *KeeperTestSuite) TestVestingQueueRemainingCoin() {
+func (s *KeeperTestSuite) TestVestingQueue_RemainingCoin() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		sdk.OneDec(),
@@ -33,6 +33,9 @@ func (s *KeeperTestSuite) TestVestingQueueRemainingCoin() {
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	s.addAllowedBidder(auction.Id, s.addr(1), exchangeToSellingAmount(parseDec("1"), parseCoin("200000000denom2")))
+	s.addAllowedBidder(auction.Id, s.addr(2), exchangeToSellingAmount(parseDec("1"), parseCoin("350000000denom2")))
 
 	s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom2"), true)
 	s.placeBid(auction.GetId(), s.addr(2), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom2"), true)

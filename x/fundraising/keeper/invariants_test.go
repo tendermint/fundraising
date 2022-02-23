@@ -57,6 +57,10 @@ func (s *KeeperTestSuite) TestPayingPoolReserveAmountInvariant() {
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
+	s.addAllowedBidder(auction.Id, s.addr(1), exchangeToSellingAmount(parseDec("1"), parseCoin("20000000denom4")))
+	s.addAllowedBidder(auction.Id, s.addr(2), exchangeToSellingAmount(parseDec("1"), parseCoin("35000000denom4")))
+	s.addAllowedBidder(auction.Id, s.addr(3), exchangeToSellingAmount(parseDec("1"), parseCoin("35000000denom4")))
+
 	s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom4"), true)
 	s.placeBid(auction.GetId(), s.addr(2), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom4"), true)
 	s.placeBid(auction.GetId(), s.addr(2), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("15000000denom4"), true)
@@ -111,6 +115,10 @@ func (s *KeeperTestSuite) TestVestingPoolReserveAmountInvariant() {
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	s.addAllowedBidder(auction.Id, s.addr(1), exchangeToSellingAmount(parseDec("1"), parseCoin("20000000denom4")))
+	s.addAllowedBidder(auction.Id, s.addr(2), exchangeToSellingAmount(parseDec("1"), parseCoin("35000000denom4")))
+	s.addAllowedBidder(auction.Id, s.addr(3), exchangeToSellingAmount(parseDec("1"), parseCoin("35000000denom4")))
 
 	s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom4"), true)
 	s.placeBid(auction.GetId(), s.addr(2), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom4"), true)
