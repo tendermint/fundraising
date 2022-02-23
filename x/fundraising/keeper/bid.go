@@ -67,18 +67,11 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		if err := k.PlaceBidFixedPrice(ctx, msg, auction, maxBidAmt); err != nil {
 			return types.Bid{}, err
 		}
-
 		bid.IsWinner = true
 
 	case types.AuctionTypeBatch:
-		if msg.BidType == types.BidTypeBatchWorth {
-			if err := k.PlaceBidBatchWorth(ctx, msg, auction, maxBidAmt); err != nil {
-				return types.Bid{}, err
-			}
-		} else if msg.BidType == types.BidTypeBatchMany {
-			if err := k.PlaceBidBatchMany(ctx, msg, auction, maxBidAmt); err != nil {
-				return types.Bid{}, err
-			}
+		if err := k.PlaceBidBatch(ctx, msg, auction, maxBidAmt); err != nil {
+			return types.Bid{}, err
 		}
 	}
 
@@ -145,17 +138,15 @@ func (k Keeper) PlaceBidFixedPrice(ctx sdk.Context, msg *types.MsgPlaceBid, auct
 	return nil
 }
 
-func (k Keeper) PlaceBidBatchWorth(ctx sdk.Context, msg *types.MsgPlaceBid, auction types.AuctionI, maxBidAmt sdk.Int) error {
-	if msg.Coin.Denom != auction.GetPayingCoinDenom() {
-		return types.ErrIncorrectCoinDenom
-	}
-
-	return nil
-}
-
-func (k Keeper) PlaceBidBatchMany(ctx sdk.Context, msg *types.MsgPlaceBid, auction types.AuctionI, maxBidAmt sdk.Int) error {
-	if msg.Coin.Denom != auction.GetSellingCoin().Denom {
-		return types.ErrIncorrectCoinDenom
+func (k Keeper) PlaceBidBatch(ctx sdk.Context, msg *types.MsgPlaceBid, auction types.AuctionI, maxBidAmt sdk.Int) error {
+	if msg.BidType == types.BidTypeBatchWorth {
+		if msg.Coin.Denom != auction.GetPayingCoinDenom() {
+			return types.ErrIncorrectCoinDenom
+		}
+	} else if msg.BidType == types.BidTypeBatchMany {
+		if msg.Coin.Denom != auction.GetSellingCoin().Denom {
+			return types.ErrIncorrectCoinDenom
+		}
 	}
 
 	return nil
