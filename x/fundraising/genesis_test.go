@@ -1,6 +1,8 @@
 package fundraising_test
 
 import (
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
@@ -16,37 +18,37 @@ func (s *ModuleTestSuite) TestGenesisState() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		sdk.OneDec(),
-		sdk.NewInt64Coin("denom1", 200_000_000_000),
+		parseCoin("200000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{
 			{
-				ReleaseTime: types.MustParseRFC3339("2023-01-01T00:00:00Z"),
+				ReleaseTime: time.Now().AddDate(0, 0, -1).AddDate(0, 6, 0),
 				Weight:      sdk.MustNewDecFromStr("0.25"),
 			},
 			{
-				ReleaseTime: types.MustParseRFC3339("2023-06-01T00:00:00Z"),
+				ReleaseTime: time.Now().AddDate(0, 0, -1).AddDate(0, 9, 0),
 				Weight:      sdk.MustNewDecFromStr("0.25"),
 			},
 			{
-				ReleaseTime: types.MustParseRFC3339("2023-09-01T00:00:00Z"),
+				ReleaseTime: time.Now().AddDate(0, 0, -1).AddDate(1, 0, 0),
 				Weight:      sdk.MustNewDecFromStr("0.25"),
 			},
 			{
-				ReleaseTime: types.MustParseRFC3339("2023-12-01T00:00:00Z"),
+				ReleaseTime: time.Now().AddDate(0, 0, -1).AddDate(1, 3, 0),
 				Weight:      sdk.MustNewDecFromStr("0.25"),
 			},
 		},
-		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2022-05-21T00:00:00Z"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 1, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
 	// Place bids
-	s.placeBid(auction.GetId(), s.addr(1), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
-	s.placeBid(auction.GetId(), s.addr(2), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 30_000_000), true)
-	s.placeBid(auction.GetId(), s.addr(3), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 15_000_000), true)
-	s.placeBid(auction.GetId(), s.addr(4), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 35_000_000), true)
+	s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom2"), true)
+	s.placeBid(auction.GetId(), s.addr(2), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("30000000denom2"), true)
+	s.placeBid(auction.GetId(), s.addr(3), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("15000000denom2"), true)
+	s.placeBid(auction.GetId(), s.addr(4), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("35000000denom2"), true)
 
 	// Modify the current block time a day after the end time
 	s.ctx = s.ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, 1))

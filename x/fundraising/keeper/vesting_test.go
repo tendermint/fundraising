@@ -8,7 +8,7 @@ import (
 	_ "github.com/stretchr/testify/suite"
 )
 
-func (s *KeeperTestSuite) TestVestingQueueRemainingCoin() {
+func (s *KeeperTestSuite) TestVestingQueue_RemainingCoin() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		sdk.OneDec(),
@@ -34,9 +34,12 @@ func (s *KeeperTestSuite) TestVestingQueueRemainingCoin() {
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	s.placeBid(auction.GetId(), s.addr(1), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
-	s.placeBid(auction.GetId(), s.addr(2), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
-	s.placeBid(auction.GetId(), s.addr(2), sdk.OneDec(), sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 15_000_000), true)
+	s.addAllowedBidder(auction.Id, s.addr(1), exchangeToSellingAmount(parseDec("1"), parseCoin("200000000denom2")))
+	s.addAllowedBidder(auction.Id, s.addr(2), exchangeToSellingAmount(parseDec("1"), parseCoin("350000000denom2")))
+
+	s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom2"), true)
+	s.placeBid(auction.GetId(), s.addr(2), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom2"), true)
+	s.placeBid(auction.GetId(), s.addr(2), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("15000000denom2"), true)
 
 	err := s.keeper.SetVestingSchedules(s.ctx, auction)
 	s.Require().NoError(err)
@@ -68,7 +71,7 @@ func (s *KeeperTestSuite) TestVestingQueueIterator() {
 	} {
 		payingAmt := reserveCoin.Amount.ToDec().MulTruncate(vs.Weight).TruncateInt()
 
-		s.keeper.SetVestingQueue(s.ctx, uint64(1), vs.ReleaseTime, types.VestingQueue{
+		s.keeper.SetVestingQueue(s.ctx, types.VestingQueue{
 			AuctionId:   uint64(1),
 			Auctioneer:  s.addr(1).String(),
 			PayingCoin:  sdk.NewCoin(payingCoinDenom, payingAmt),
@@ -98,7 +101,7 @@ func (s *KeeperTestSuite) TestVestingQueueIterator() {
 	} {
 		payingAmt := reserveCoin.Amount.ToDec().MulTruncate(vs.Weight).TruncateInt()
 
-		s.keeper.SetVestingQueue(s.ctx, uint64(2), vs.ReleaseTime, types.VestingQueue{
+		s.keeper.SetVestingQueue(s.ctx, types.VestingQueue{
 			AuctionId:   uint64(2),
 			Auctioneer:  s.addr(2).String(),
 			PayingCoin:  sdk.NewCoin(payingCoinDenom, payingAmt),

@@ -39,7 +39,12 @@ func (m msgServer) CreateFixedPriceAuction(goCtx context.Context, msg *types.Msg
 
 // CreateEnglishAuction defines a method to create english auction.
 func (m msgServer) CreateBatchAuction(goCtx context.Context, msg *types.MsgCreateBatchAuction) (*types.MsgCreateBatchAuctionResponse, error) {
-	// TODO: not implemented yet
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if _, err := m.Keeper.CreateBatchAuction(ctx, msg); err != nil {
+		return nil, err
+	}
+
 	return &types.MsgCreateBatchAuctionResponse{}, nil
 }
 
@@ -65,10 +70,13 @@ func (m msgServer) PlaceBid(goCtx context.Context, msg *types.MsgPlaceBid) (*typ
 	return &types.MsgPlaceBidResponse{}, nil
 }
 
+// ModifyBid defines a method to modify the auctioneer's bid
 func (m msgServer) ModifyBid(goCtx context.Context, msg *types.MsgModifyBid) (*types.MsgModifyBidResponse, error) {
 	_ = sdk.UnwrapSDKContext(goCtx)
 
-	// TODO: not implemented yet
+	// if _, err := m.Keeper.ModifyBid(ctx, msg); err != nil {
+	// 	return nil, err
+	// }
 
 	return &types.MsgModifyBidResponse{}, nil
 }

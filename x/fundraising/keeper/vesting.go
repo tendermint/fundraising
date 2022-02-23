@@ -45,7 +45,7 @@ func (k Keeper) SetVestingSchedules(ctx sdk.Context, auction types.AuctionI) err
 				payingAmt = remaining.Amount
 			}
 
-			k.SetVestingQueue(ctx, auction.GetId(), vs.ReleaseTime, types.VestingQueue{
+			k.SetVestingQueue(ctx, types.VestingQueue{
 				AuctionId:   auction.GetId(),
 				Auctioneer:  auction.GetAuctioneer().String(),
 				PayingCoin:  sdk.NewCoin(auction.GetPayingCoinDenom(), payingAmt),
@@ -82,10 +82,10 @@ func (k Keeper) GetVestingQueue(ctx sdk.Context, auctionId uint64, releaseTime t
 }
 
 // SetVestingQueue sets vesting queue into with the given release time and auction id.
-func (k Keeper) SetVestingQueue(ctx sdk.Context, auctionId uint64, releaseTime time.Time, queue types.VestingQueue) {
+func (k Keeper) SetVestingQueue(ctx sdk.Context, queue types.VestingQueue) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshal(&queue)
-	store.Set(types.GetVestingQueueKey(auctionId, releaseTime), bz)
+	store.Set(types.GetVestingQueueKey(queue.AuctionId, queue.ReleaseTime), bz)
 }
 
 // GetVestingQueues returns all vesting queues registered in the store.

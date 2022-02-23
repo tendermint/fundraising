@@ -1,6 +1,8 @@
 package fundraising_test
 
 import (
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/tendermint/fundraising/x/fundraising"
@@ -13,11 +15,11 @@ func (s *ModuleTestSuite) TestEndBlockerStandByStatus() {
 	standByAuction := s.createFixedPriceAuction(
 		s.addr(0),
 		sdk.MustNewDecFromStr("0.5"),
-		sdk.NewInt64Coin("denom1", 500_000_000_000),
+		parseCoin("500000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
-		types.MustParseRFC3339("2023-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2023-05-01T00:00:00Z"),
+		time.Now().AddDate(0, 3, 0),
+		time.Now().AddDate(0, 5, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStandBy, standByAuction.GetStatus())
@@ -36,7 +38,7 @@ func (s *ModuleTestSuite) TestEndBlockerStartedStatus() {
 	auction := s.createFixedPriceAuction(
 		auctioneer,
 		sdk.OneDec(),
-		sdk.NewInt64Coin("denom1", 500_000_000_000),
+		parseCoin("500000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{
 			{
@@ -48,18 +50,15 @@ func (s *ModuleTestSuite) TestEndBlockerStartedStatus() {
 				Weight:      sdk.MustNewDecFromStr("0.5"),
 			},
 		},
-		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2023-05-01T00:00:00Z"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 1, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	bid1 := s.placeBid(auction.GetId(), s.addr(1), sdk.OneDec(),
-		sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
-	bid2 := s.placeBid(auction.GetId(), s.addr(2), sdk.OneDec(),
-		sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
-	bid3 := s.placeBid(auction.GetId(), s.addr(3), sdk.OneDec(),
-		sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
+	bid1 := s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom2"), true)
+	bid2 := s.placeBid(auction.GetId(), s.addr(2), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom2"), true)
+	bid3 := s.placeBid(auction.GetId(), s.addr(3), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom2"), true)
 
 	totalBidCoin := bid1.Coin.Add(bid2.Coin).Add(bid3.Coin)
 	receiveAmt := totalBidCoin.Amount.ToDec().QuoTruncate(auction.GetStartPrice()).TruncateInt()
@@ -86,26 +85,23 @@ func (s *ModuleTestSuite) TestEndBlockerVestingStatus() {
 		"denom2",
 		[]types.VestingSchedule{
 			{
-				ReleaseTime: types.MustParseRFC3339("2024-01-01T00:00:00Z"),
+				ReleaseTime: time.Now().AddDate(0, 0, -1).AddDate(0, 6, 0),
 				Weight:      sdk.MustNewDecFromStr("0.5"),
 			},
 			{
-				ReleaseTime: types.MustParseRFC3339("2024-06-01T00:00:00Z"),
+				ReleaseTime: time.Now().AddDate(0, 0, -1).AddDate(1, 0, 0),
 				Weight:      sdk.MustNewDecFromStr("0.5"),
 			},
 		},
-		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2023-05-01T00:00:00Z"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 1, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	bid1 := s.placeBid(auction.GetId(), s.addr(1), sdk.OneDec(),
-		sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
-	bid2 := s.placeBid(auction.GetId(), s.addr(2), sdk.OneDec(),
-		sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
-	bid3 := s.placeBid(auction.GetId(), s.addr(3), sdk.OneDec(),
-		sdk.NewInt64Coin(auction.GetPayingCoinDenom(), 20_000_000), true)
+	bid1 := s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom2"), true)
+	bid2 := s.placeBid(auction.GetId(), s.addr(2), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom2"), true)
+	bid3 := s.placeBid(auction.GetId(), s.addr(3), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom2"), true)
 
 	totalBidCoin := bid1.Coin.Add(bid2.Coin).Add(bid3.Coin)
 

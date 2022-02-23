@@ -31,10 +31,8 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *KeeperTestSuite) SetupTest() {
-	app := simapp.New(app.DefaultNodeHome)
-	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
-	s.app = app
-	s.ctx = ctx
+	s.app = simapp.New(app.DefaultNodeHome)
+	s.ctx = s.app.BaseApp.NewContext(false, tmproto.Header{})
 	s.ctx = s.ctx.WithBlockTime(time.Now()) // set to current time
 	s.keeper = s.app.FundraisingKeeper
 	s.querier = keeper.Querier{Keeper: s.keeper}
@@ -44,18 +42,6 @@ func (s *KeeperTestSuite) SetupTest() {
 //
 // Below are just shortcuts to frequently-used functions.
 //
-
-func (s *KeeperTestSuite) getBalance(addr sdk.AccAddress, denom string) sdk.Coin {
-	return s.app.BankKeeper.GetBalance(s.ctx, addr, denom)
-}
-
-func (s *KeeperTestSuite) sendCoins(fromAddr, toAddr sdk.AccAddress, coins sdk.Coins, fund bool) {
-	if fund {
-		s.fundAddr(fromAddr, coins)
-	}
-	err := s.app.BankKeeper.SendCoins(s.ctx, fromAddr, toAddr, coins)
-	s.Require().NoError(err)
-}
 
 func (s *KeeperTestSuite) createFixedPriceAuction(
 	auctioneer sdk.AccAddress,
@@ -71,6 +57,7 @@ func (s *KeeperTestSuite) createFixedPriceAuction(
 	if fund {
 		s.fundAddr(auctioneer, params.AuctionCreationFee.Add(sellingCoin))
 	}
+
 	auction, err := s.keeper.CreateFixedPriceAuction(s.ctx, &types.MsgCreateFixedPriceAuction{
 		Auctioneer:       auctioneer.String(),
 		StartPrice:       startPrice,
@@ -85,17 +72,62 @@ func (s *KeeperTestSuite) createFixedPriceAuction(
 	return auction
 }
 
-func (s *KeeperTestSuite) placeBid(auctionId uint64, bidder sdk.AccAddress, price sdk.Dec, coin sdk.Coin, fund bool) types.Bid {
+func (s *KeeperTestSuite) createBatchAuction(
+	auctioneer sdk.AccAddress,
+	startPrice sdk.Dec,
+	sellingCoin sdk.Coin,
+	payingCoinDenom string,
+	vestingSchedules []types.VestingSchedule,
+	maxExtendedRound uint32,
+	extendedRoundRate sdk.Dec,
+	startTime time.Time,
+	endTime time.Time,
+	fund bool,
+) *types.BatchAuction {
+	params := s.keeper.GetParams(s.ctx)
+	if fund {
+		s.fundAddr(auctioneer, params.AuctionCreationFee.Add(sellingCoin))
+	}
+
+	auction, err := s.keeper.CreateBatchAuction(s.ctx, &types.MsgCreateBatchAuction{
+		Auctioneer:        auctioneer.String(),
+		StartPrice:        startPrice,
+		SellingCoin:       sellingCoin,
+		PayingCoinDenom:   payingCoinDenom,
+		VestingSchedules:  vestingSchedules,
+		MaxExtendedRound:  maxExtendedRound,
+		ExtendedRoundRate: extendedRoundRate,
+		StartTime:         startTime,
+		EndTime:           endTime,
+	})
+	s.Require().NoError(err)
+
+	return auction
+}
+
+func (s *KeeperTestSuite) addAllowedBidder(auctionId uint64, bidder sdk.AccAddress, maxBidAmount sdk.Int) {
+	err := s.keeper.AddAllowedBidders(s.ctx, auctionId, []types.AllowedBidder{
+		{Bidder: bidder.String(), MaxBidAmount: maxBidAmount},
+	})
+	s.Require().NoError(err)
+}
+
+func (s *KeeperTestSuite) placeBid(
+	auctionId uint64,
+	bidder sdk.AccAddress,
+	bidType types.BidType,
+	price sdk.Dec,
+	coin sdk.Coin,
+	fund bool,
+) types.Bid {
 	if fund {
 		s.fundAddr(bidder, sdk.NewCoins(coin))
 	}
 
-	receiveAmt := coin.Amount.ToDec().QuoTruncate(price).TruncateInt()
-	s.addAllowedBidder(auctionId, bidder, receiveAmt)
-
 	bid, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
 		AuctionId: auctionId,
 		Bidder:    bidder.String(),
+		BidType:   bidType,
 		Price:     price,
 		Coin:      coin,
 	})
@@ -129,14 +161,45 @@ func (s *KeeperTestSuite) fundAddr(addr sdk.AccAddress, coins sdk.Coins) {
 	s.Require().NoError(err)
 }
 
-func (s *KeeperTestSuite) addAllowedBidder(auctionId uint64, bidder sdk.AccAddress, maxBidAmount sdk.Int) {
-	err := s.keeper.AddAllowedBidders(s.ctx, auctionId, []types.AllowedBidder{
-		{
-			Bidder:       bidder.String(),
-			MaxBidAmount: maxBidAmount,
-		},
-	})
+func (s *KeeperTestSuite) getBalance(addr sdk.AccAddress, denom string) sdk.Coin {
+	return s.app.BankKeeper.GetBalance(s.ctx, addr, denom)
+}
+
+func (s *KeeperTestSuite) sendCoins(fromAddr, toAddr sdk.AccAddress, coins sdk.Coins, fund bool) {
+	if fund {
+		s.fundAddr(fromAddr, coins)
+	}
+
+	err := s.app.BankKeeper.SendCoins(s.ctx, fromAddr, toAddr, coins)
 	s.Require().NoError(err)
+}
+
+// exchangeToSellingAmount exchanges to selling coin amount (PayingCoinAmount/Price).
+func exchangeToSellingAmount(price sdk.Dec, coin sdk.Coin) sdk.Int {
+	return coin.Amount.ToDec().QuoTruncate(price).TruncateInt()
+}
+
+// parseCoin parses and returns sdk.Coin.
+func parseCoin(s string) sdk.Coin {
+	coin, err := sdk.ParseCoinNormalized(s)
+	if err != nil {
+		panic(err)
+	}
+	return coin
+}
+
+// parseCoins parses and returns sdk.Coins.
+func parseCoins(s string) sdk.Coins {
+	coins, err := sdk.ParseCoinsNormalized(s)
+	if err != nil {
+		panic(err)
+	}
+	return coins
+}
+
+// parseDec is a shortcut for sdk.MustNewDecFromStr.
+func parseDec(s string) sdk.Dec {
+	return sdk.MustNewDecFromStr(s)
 }
 
 // coinEq is a convenient method to test expected and got values of sdk.Coin.

@@ -28,65 +28,6 @@ var (
 	_ AuctionI = (*BatchAuction)(nil)
 )
 
-// AuctionI is an interface that inherits the BaseAuction and exposes common functions
-// to get and set standard auction data.
-type AuctionI interface {
-	proto.Message
-
-	GetId() uint64
-	SetId(uint64) error
-
-	GetType() AuctionType
-	SetType(AuctionType) error
-
-	GetAllowedBidders() []AllowedBidder
-	SetAllowedBidders([]AllowedBidder) error
-
-	GetAuctioneer() sdk.AccAddress
-	SetAuctioneer(sdk.AccAddress) error
-
-	GetSellingReserveAddress() sdk.AccAddress
-	SetSellingReserveAddress(sdk.AccAddress) error
-
-	GetPayingReserveAddress() sdk.AccAddress
-	SetPayingReserveAddress(sdk.AccAddress) error
-
-	GetStartPrice() sdk.Dec
-	SetStartPrice(sdk.Dec) error
-
-	GetSellingCoin() sdk.Coin
-	SetSellingCoin(sdk.Coin) error
-
-	GetPayingCoinDenom() string
-	SetPayingCoinDenom(string) error
-
-	GetVestingReserveAddress() sdk.AccAddress
-	SetVestingReserveAddress(sdk.AccAddress) error
-
-	GetVestingSchedules() []VestingSchedule
-	SetVestingSchedules([]VestingSchedule) error
-
-	GetWinningPrice() sdk.Dec
-	SetWinningPrice(sdk.Dec) error
-
-	GetRemainingSellingCoin() sdk.Coin
-	SetRemainingSellingCoin(sdk.Coin) error
-
-	GetStartTime() time.Time
-	SetStartTime(time.Time) error
-
-	GetEndTimes() []time.Time
-	SetEndTimes([]time.Time) error
-
-	GetStatus() AuctionStatus
-	SetStatus(AuctionStatus) error
-
-	IsAuctionStarted(t time.Time) bool
-	IsAuctionFinished(t time.Time) bool
-
-	Validate() error
-}
-
 // NewBaseAuction creates a new BaseAuction object
 //nolint:interfacer
 func NewBaseAuction(
@@ -297,7 +238,7 @@ func (ba BaseAuction) Validate() error {
 	if err := ValidateVestingSchedules(ba.VestingSchedules, ba.EndTimes[len(ba.EndTimes)-1]); err != nil {
 		return err
 	}
-	if err := ValidatorAllowedBidders(ba.AllowedBidders); err != nil {
+	if err := ValidateAllowedBidders(ba.AllowedBidders); err != nil {
 		return err
 	}
 	return nil
@@ -322,12 +263,74 @@ func NewFixedPriceAuction(baseAuction *BaseAuction) *FixedPriceAuction {
 }
 
 // NewBatchAuction returns a new batch auction.
-func NewBatchAuction(baseAuction *BaseAuction, maximumBidPrice sdk.Dec, maxExtendedRound uint32, extendedRoundRate sdk.Dec) *BatchAuction {
+func NewBatchAuction(baseAuction *BaseAuction, maxExtendedRound uint32, extendedRoundRate sdk.Dec) *BatchAuction {
 	return &BatchAuction{
 		BaseAuction:       baseAuction,
 		MaxExtendedRound:  maxExtendedRound,
 		ExtendedRoundRate: extendedRoundRate,
 	}
+}
+
+// AuctionI is an interface that inherits the BaseAuction and exposes common functions
+// to get and set standard auction data.
+type AuctionI interface {
+	proto.Message
+
+	GetId() uint64
+	SetId(uint64) error
+
+	GetType() AuctionType
+	SetType(AuctionType) error
+
+	GetAllowedBidders() []AllowedBidder
+	SetAllowedBidders([]AllowedBidder) error
+
+	GetAuctioneer() sdk.AccAddress
+	SetAuctioneer(sdk.AccAddress) error
+
+	GetSellingReserveAddress() sdk.AccAddress
+	SetSellingReserveAddress(sdk.AccAddress) error
+
+	GetPayingReserveAddress() sdk.AccAddress
+	SetPayingReserveAddress(sdk.AccAddress) error
+
+	GetStartPrice() sdk.Dec
+	SetStartPrice(sdk.Dec) error
+
+	GetSellingCoin() sdk.Coin
+	SetSellingCoin(sdk.Coin) error
+
+	GetPayingCoinDenom() string
+	SetPayingCoinDenom(string) error
+
+	GetVestingReserveAddress() sdk.AccAddress
+	SetVestingReserveAddress(sdk.AccAddress) error
+
+	GetVestingSchedules() []VestingSchedule
+	SetVestingSchedules([]VestingSchedule) error
+
+	GetWinningPrice() sdk.Dec
+	SetWinningPrice(sdk.Dec) error
+
+	GetRemainingSellingCoin() sdk.Coin
+	SetRemainingSellingCoin(sdk.Coin) error
+
+	GetStartTime() time.Time
+	SetStartTime(time.Time) error
+
+	GetEndTimes() []time.Time
+	SetEndTimes([]time.Time) error
+
+	GetStatus() AuctionStatus
+	SetStatus(AuctionStatus) error
+
+	IsAuctionStarted(t time.Time) bool
+	IsAuctionFinished(t time.Time) bool
+
+	GetAllowedBiddersMap() map[string]sdk.Int
+	GetMaxBidAmount(bidder string) sdk.Int
+
+	Validate() error
 }
 
 // PackAuction converts AuctionI to Any.
@@ -433,8 +436,8 @@ func VestingReserveAddress(auctionId uint64) sdk.AccAddress {
 	return DeriveAddress(ReserveAddressType, ModuleName, VestingReserveAddressPrefix+ModuleAddressNameSplitter+fmt.Sprint(auctionId))
 }
 
-// ValidatorAllowedBidders validates allowed bidders.
-func ValidatorAllowedBidders(bidders []AllowedBidder) error {
+// ValidateAllowedBidders validates allowed bidders.
+func ValidateAllowedBidders(bidders []AllowedBidder) error {
 	for _, bidder := range bidders {
 		if bidder.MaxBidAmount.IsNil() {
 			return ErrInvalidMaxBidAmount
@@ -444,4 +447,22 @@ func ValidatorAllowedBidders(bidders []AllowedBidder) error {
 		}
 	}
 	return nil
+}
+
+func (ba BaseAuction) GetAllowedBiddersMap() map[string]sdk.Int { // map(bidder => maxBidAmount)
+	allowedBiddersMap := make(map[string]sdk.Int)
+	for _, ab := range ba.GetAllowedBidders() {
+		allowedBiddersMap[ab.Bidder] = ab.MaxBidAmount
+	}
+	return allowedBiddersMap
+}
+
+func (ba BaseAuction) GetMaxBidAmount(bidder string) sdk.Int {
+	maxBidAmt := sdk.ZeroInt()
+	for _, ab := range ba.GetAllowedBidders() {
+		if ab.Bidder == bidder {
+			maxBidAmt = ab.MaxBidAmount
+		}
+	}
+	return maxBidAmt
 }
