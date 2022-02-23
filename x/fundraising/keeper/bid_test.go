@@ -88,7 +88,7 @@ func (s *KeeperTestSuite) TestHandleBatchWorthBid() {
 }
 
 func (s *KeeperTestSuite) TestHandleBatchManyBid() {
-	// TODO: not done yet
+	// TODO: not done yet : to do
 	auction := s.createBatchAuction(
 		s.addr(1),
 		parseDec("0.5"),
