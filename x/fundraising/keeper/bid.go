@@ -40,6 +40,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		return types.Bid{}, types.ErrNotAllowedBidder
 	}
 
+	// !! For BidTypeBatchMany, msg.Coin * msg.Price must be reserved.
 	if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), msg.Coin); err != nil {
 		return types.Bid{}, err
 	}
@@ -209,26 +210,44 @@ func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) (types.MsgMo
 		return types.MsgModifyBid{}, types.ErrIncorrectAuctionType
 	}
 
+	// !! Here seems to need modification: A same BidId can be in different bidders.
+	// need to check only within bid list of this bidder.
 	bid, found := k.GetBid(ctx, msg.AuctionId, msg.BidId)
 	if !found {
 		return types.MsgModifyBid{}, sdkerrors.Wrap(sdkerrors.ErrNotFound, "bid not found")
 	}
 
-	// Modiying bid type is not allowed
+	// Modifying bid type is not allowed
 	if bid.Coin.Denom != msg.Coin.Denom {
 		return types.MsgModifyBid{}, types.ErrIncorrectCoinDenom
 	}
 
+	// Modified by Jeongho
 	// Either bid price or coin amount must be higher than the previous bid
 	if msg.Price.LT(bid.Price) {
-		return types.MsgModifyBid{}, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "bid price must be higher")
+		return types.MsgModifyBid{}, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "bid price cannot be lower")
 	}
 	if msg.Coin.IsLT(bid.Coin) {
-		return types.MsgModifyBid{}, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "bid coin amount must be higher")
+		return types.MsgModifyBid{}, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "bid coin amount cannot be lower")
+	}
+	if msg.Price.Equal(bid.Price) && msg.Coin.IsEqual(bid.Coin) {
+		return types.MsgModifyBid{}, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Either bid price or coin amount must be higher")
 	}
 
+	// OR can be implemented as below
+	//if !(msg.Price.GTE(bid.Price) && msg.Coin.IsGTE(bid.Coin)) {
+	//	return types.MsgModifyBid{}, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Either bid price or coin amount must be higher")
+	//}
+
+	// !! Here seems to need modification: This needs to handle differently according to Bid Type
+	// If BidTypeBatchWorth --> just subtract msg.Coin
+	// If BidTypeBatchMany --> subtract msg.Coin * msg.Price from bid.Coin * bid.Price
 	// Reserve the bid amount difference
-	diffBidAmt := msg.Coin.Sub(bid.Coin)
+	diffBidAmt := msg.Coin.Sub(bid.Coin) // Suggest to change the name from diffBidAmt --> diffBidPayingAmt
+
+	// !! Need to check if total Bid Amount does not exceed maxBidAmount.
+	// HERE
+
 	if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), diffBidAmt); err != nil {
 		return types.MsgModifyBid{}, err
 	}
