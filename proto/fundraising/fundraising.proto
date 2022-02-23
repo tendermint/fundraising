@@ -279,16 +279,19 @@ enum BidType {
 
   // BID_TYPE_UNSPECIFIED defines the default bid type
   BID_TYPE_UNSPECIFIED = 0 [ (gogoproto.enumvalue_customname) = "BidTypeNil" ];
+
   // BID_TYPE_FIXED_PRICE defines a bid type for a fixed price auction type
   BID_TYPE_FIXED_PRICE = 1
       [ (gogoproto.enumvalue_customname) = "BidTypeFixedPrice" ];
-  // Bid_TYPE_BATCH_WORTH defines a bid type for How-Much-Worth-to-Buy of a
+
+  // BID_TYPE_BATCH_WORTH defines a bid type for How-Much-Worth-to-Buy of a
   // batch auction
-  Bid_TYPE_BATCH_WORTH = 2
+  BID_TYPE_BATCH_WORTH = 2
       [ (gogoproto.enumvalue_customname) = "BidTypeBatchWorth" ];
-  // Bid_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy of a batch
+
+  // BID_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy of a batch
   // auction
-  Bid_TYPE_BATCH_MANY = 3
+  BID_TYPE_BATCH_MANY = 3
       [ (gogoproto.enumvalue_customname) = "BidTypeBatchMany" ];
 }
 

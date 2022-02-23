@@ -13456,17 +13456,17 @@ paths:
                       enum:
                         - BID_TYPE_UNSPECIFIED
                         - BID_TYPE_FIXED_PRICE
-                        - Bid_TYPE_BATCH_WORTH
-                        - Bid_TYPE_BATCH_MANY
+                        - BID_TYPE_BATCH_WORTH
+                        - BID_TYPE_BATCH_MANY
                       default: BID_TYPE_UNSPECIFIED
                       description: |-
                         BidType enumerates the valid types of a bid.
 
                          - BID_TYPE_UNSPECIFIED: BID_TYPE_UNSPECIFIED defines the default bid type
                          - BID_TYPE_FIXED_PRICE: BID_TYPE_FIXED_PRICE defines a bid type for a fixed price auction type
-                         - Bid_TYPE_BATCH_WORTH: Bid_TYPE_BATCH_WORTH defines a bid type for How-Much-Worth-to-Buy of a
+                         - BID_TYPE_BATCH_WORTH: BID_TYPE_BATCH_WORTH defines a bid type for How-Much-Worth-to-Buy of a
                         batch auction
-                         - Bid_TYPE_BATCH_MANY: Bid_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy of a batch
+                         - BID_TYPE_BATCH_MANY: BID_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy of a batch
                         auction
                     price:
                       type: string
@@ -13826,17 +13826,17 @@ paths:
                     enum:
                       - BID_TYPE_UNSPECIFIED
                       - BID_TYPE_FIXED_PRICE
-                      - Bid_TYPE_BATCH_WORTH
-                      - Bid_TYPE_BATCH_MANY
+                      - BID_TYPE_BATCH_WORTH
+                      - BID_TYPE_BATCH_MANY
                     default: BID_TYPE_UNSPECIFIED
                     description: |-
                       BidType enumerates the valid types of a bid.
 
                        - BID_TYPE_UNSPECIFIED: BID_TYPE_UNSPECIFIED defines the default bid type
                        - BID_TYPE_FIXED_PRICE: BID_TYPE_FIXED_PRICE defines a bid type for a fixed price auction type
-                       - Bid_TYPE_BATCH_WORTH: Bid_TYPE_BATCH_WORTH defines a bid type for How-Much-Worth-to-Buy of a
+                       - BID_TYPE_BATCH_WORTH: BID_TYPE_BATCH_WORTH defines a bid type for How-Much-Worth-to-Buy of a
                       batch auction
-                       - Bid_TYPE_BATCH_MANY: Bid_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy of a batch
+                       - BID_TYPE_BATCH_MANY: BID_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy of a batch
                       auction
                   price:
                     type: string
@@ -21952,17 +21952,17 @@ definitions:
         enum:
           - BID_TYPE_UNSPECIFIED
           - BID_TYPE_FIXED_PRICE
-          - Bid_TYPE_BATCH_WORTH
-          - Bid_TYPE_BATCH_MANY
+          - BID_TYPE_BATCH_WORTH
+          - BID_TYPE_BATCH_MANY
         default: BID_TYPE_UNSPECIFIED
         description: |-
           BidType enumerates the valid types of a bid.
 
            - BID_TYPE_UNSPECIFIED: BID_TYPE_UNSPECIFIED defines the default bid type
            - BID_TYPE_FIXED_PRICE: BID_TYPE_FIXED_PRICE defines a bid type for a fixed price auction type
-           - Bid_TYPE_BATCH_WORTH: Bid_TYPE_BATCH_WORTH defines a bid type for How-Much-Worth-to-Buy of a
+           - BID_TYPE_BATCH_WORTH: BID_TYPE_BATCH_WORTH defines a bid type for How-Much-Worth-to-Buy of a
           batch auction
-           - Bid_TYPE_BATCH_MANY: Bid_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy of a batch
+           - BID_TYPE_BATCH_MANY: BID_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy of a batch
           auction
       price:
         type: string
@@ -22001,17 +22001,17 @@ definitions:
     enum:
       - BID_TYPE_UNSPECIFIED
       - BID_TYPE_FIXED_PRICE
-      - Bid_TYPE_BATCH_WORTH
-      - Bid_TYPE_BATCH_MANY
+      - BID_TYPE_BATCH_WORTH
+      - BID_TYPE_BATCH_MANY
     default: BID_TYPE_UNSPECIFIED
     description: |-
       BidType enumerates the valid types of a bid.
 
        - BID_TYPE_UNSPECIFIED: BID_TYPE_UNSPECIFIED defines the default bid type
        - BID_TYPE_FIXED_PRICE: BID_TYPE_FIXED_PRICE defines a bid type for a fixed price auction type
-       - Bid_TYPE_BATCH_WORTH: Bid_TYPE_BATCH_WORTH defines a bid type for How-Much-Worth-to-Buy of a
+       - BID_TYPE_BATCH_WORTH: BID_TYPE_BATCH_WORTH defines a bid type for How-Much-Worth-to-Buy of a
       batch auction
-       - Bid_TYPE_BATCH_MANY: Bid_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy of a batch
+       - BID_TYPE_BATCH_MANY: BID_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy of a batch
       auction
   tendermint.fundraising.MsgAddAllowedBidderResponse:
     type: object
@@ -22459,17 +22459,17 @@ definitions:
             enum:
               - BID_TYPE_UNSPECIFIED
               - BID_TYPE_FIXED_PRICE
-              - Bid_TYPE_BATCH_WORTH
-              - Bid_TYPE_BATCH_MANY
+              - BID_TYPE_BATCH_WORTH
+              - BID_TYPE_BATCH_MANY
             default: BID_TYPE_UNSPECIFIED
             description: |-
               BidType enumerates the valid types of a bid.
 
                - BID_TYPE_UNSPECIFIED: BID_TYPE_UNSPECIFIED defines the default bid type
                - BID_TYPE_FIXED_PRICE: BID_TYPE_FIXED_PRICE defines a bid type for a fixed price auction type
-               - Bid_TYPE_BATCH_WORTH: Bid_TYPE_BATCH_WORTH defines a bid type for How-Much-Worth-to-Buy of a
+               - BID_TYPE_BATCH_WORTH: BID_TYPE_BATCH_WORTH defines a bid type for How-Much-Worth-to-Buy of a
               batch auction
-               - Bid_TYPE_BATCH_MANY: Bid_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy of a batch
+               - BID_TYPE_BATCH_MANY: BID_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy of a batch
               auction
           price:
             type: string
@@ -22538,17 +22538,17 @@ definitions:
               enum:
                 - BID_TYPE_UNSPECIFIED
                 - BID_TYPE_FIXED_PRICE
-                - Bid_TYPE_BATCH_WORTH
-                - Bid_TYPE_BATCH_MANY
+                - BID_TYPE_BATCH_WORTH
+                - BID_TYPE_BATCH_MANY
               default: BID_TYPE_UNSPECIFIED
               description: |-
                 BidType enumerates the valid types of a bid.
 
                  - BID_TYPE_UNSPECIFIED: BID_TYPE_UNSPECIFIED defines the default bid type
                  - BID_TYPE_FIXED_PRICE: BID_TYPE_FIXED_PRICE defines a bid type for a fixed price auction type
-                 - Bid_TYPE_BATCH_WORTH: Bid_TYPE_BATCH_WORTH defines a bid type for How-Much-Worth-to-Buy of a
+                 - BID_TYPE_BATCH_WORTH: BID_TYPE_BATCH_WORTH defines a bid type for How-Much-Worth-to-Buy of a
                 batch auction
-                 - Bid_TYPE_BATCH_MANY: Bid_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy of a batch
+                 - BID_TYPE_BATCH_MANY: BID_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy of a batch
                 auction
             price:
               type: string

@@ -2,7 +2,9 @@ package cli
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"strings"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -76,4 +78,17 @@ func (req BatchAuctionRequest) String() string {
 		panic(err)
 	}
 	return string(result)
+}
+
+// parseBidType parses bid type string and returns types.BidType.
+func parseBidType(s string) (types.BidType, error) {
+	switch strings.ToLower(s) {
+	case "fixed-price", "fp", "f":
+		return types.BidTypeFixedPrice, nil
+	case "batch-worth", "bw", "w":
+		return types.BidTypeBatchWorth, nil
+	case "batch-many", "bm", "m":
+		return types.BidTypeBatchWorth, nil
+	}
+	return 0, fmt.Errorf("invalid bid type: %s", s)
 }
