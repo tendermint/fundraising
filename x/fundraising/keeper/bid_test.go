@@ -74,5 +74,11 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_OverMaxBidAmountLimit() {
 }
 
 func (s *KeeperTestSuite) TestBatchAuction() {
+	// TODO: not implemented yet
+}
 
+func (s *KeeperTestSuite) TestModifyBid() {
+	// TODO: not implemented yet
+	// cover a case to modify a bid with higher price
+	// cover a case to modify a bid with higher coin amount
 }

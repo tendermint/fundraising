@@ -177,22 +177,23 @@ func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) (types.MsgMo
 		return types.MsgModifyBid{}, sdkerrors.Wrap(sdkerrors.ErrNotFound, "bid not found")
 	}
 
-	// Can't modify the bid type
+	// Not allowed to modify the bid type
 	if bid.Coin.Denom != msg.Coin.Denom {
 		return types.MsgModifyBid{}, types.ErrIncorrectCoinDenom
 	}
 
-	// Sanity check
-	//
-	// Both BidPrice and CoinAmount can be higher than the previous one
-	// BidPrice is higher than previous
-	// CoinAmount is higher than previous
-	// msg.Price.LT(bid.Price) && msg.Coin.Amount.GT(bid.Coin.Amount)
-	// msg.Coin.Amount.LT(bid.Coin.Amount) && msg.Price.GT(bid.Price)
-	// msg.Price.GT(bid.Price) && msg.Coin.Amount.GT(bid.Coin.Amount)
+	exchangedSellingAmtBefore := bid.Coin.Amount.ToDec().QuoTruncate(bid.Price).TruncateInt()
+	exchangedSellingAmt := msg.Coin.Amount.ToDec().QuoTruncate(msg.Price).TruncateInt()
+
+	// Either bid price or coin amount must be higher than the previous bid
+	if exchangedSellingAmtBefore.LT(exchangedSellingAmt) {
+		return types.MsgModifyBid{},
+			sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "either bid price or coin amount must be higher than the previous bid")
+	}
 
 	bid.Price = msg.Price
 	bid.Coin = msg.Coin
+	bid.Height = uint64(ctx.BlockHeader().Height)
 
 	k.SetBid(ctx, bid)
 
