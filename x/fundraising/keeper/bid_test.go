@@ -105,8 +105,8 @@ func (s *KeeperTestSuite) TestHandleBatchManyBid() {
 
 	s.addAllowedBidder(auction.Id, s.addr(1), sdk.NewInt(2_000_000_000))
 
-	s.placeBid(auction.Id, s.addr(1), types.BidTypeBatchMany, parseDec("0.2"), parseCoin("100000000denom1"), true)
-	s.placeBid(auction.Id, s.addr(1), types.BidTypeBatchMany, parseDec("0.3"), parseCoin("200000000denom1"), true)
-	s.placeBid(auction.Id, s.addr(1), types.BidTypeBatchMany, parseDec("0.5"), parseCoin("500000000denom1"), true)
-	s.placeBid(auction.Id, s.addr(1), types.BidTypeBatchMany, parseDec("1.0"), parseCoin("500000000denom1"), true)
+	// s.placeBid(auction.Id, s.addr(1), types.BidTypeBatchMany, parseDec("0.2"), parseCoin("100000000denom1"), true)
+	// s.placeBid(auction.Id, s.addr(1), types.BidTypeBatchMany, parseDec("0.3"), parseCoin("200000000denom1"), true)
+	// s.placeBid(auction.Id, s.addr(1), types.BidTypeBatchMany, parseDec("0.5"), parseCoin("500000000denom1"), true)
+	// s.placeBid(auction.Id, s.addr(1), types.BidTypeBatchMany, parseDec("1.0"), parseCoin("500000000denom1"), true)
 }
