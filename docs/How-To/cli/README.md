@@ -13,7 +13,7 @@ To test out the following commands, you must set up a local network. By simply r
 
 - [Transaction](#Transaction)
     * [CreateFixedPriceAuction](#CreateFixedPriceAuction)
-    * [CreateEnglishAuction](#CreateEnglishAuction)
+    * [CreateBatchAuction](#CreateBatchAuction)
     * [CancelAuction](#CancelAuction)
     * [AddAllowedBidder](#AddAllowedBidder)
     * [PlaceBid](#PlaceBid)
@@ -147,17 +147,128 @@ Result:
 }
 ```
 
-### CreateEnglishAuction
+### CreateBatchAuction
+
+This command is another type of an auction for an auctioneer to raise funds for their project. See the [spec](https://github.com/tendermint/fundraising/blob/main/x/fundraising/spec/01_concepts.md#auction-types) for a detailed and technical information about a batch auction type.
+
+JSON example:
+
+```json
+{
+  "start_price": "0.100000000000000000",
+  "selling_coin": {
+    "denom": "denom1",
+    "amount": "1000000000000"
+  },
+  "paying_coin_denom": "denom2",
+  "vesting_schedules": [
+    {
+      "release_time": "2023-06-01T00:00:00Z",
+      "weight": "0.500000000000000000"
+    },
+    {
+      "release_time": "2023-12-01T00:00:00Z",
+      "weight": "0.500000000000000000"
+    }
+  ],
+  "max_extended_round": 2,
+  "extended_round_rate": "0.150000000000000000",
+  "start_time": "2022-02-01T00:00:00Z",
+  "end_time": "2022-06-20T00:00:00Z"
+}
+```
+
+Reference the description of each field:
+
+| **Field**           |  **Description**                                                                    |
+| :------------------ | :---------------------------------------------------------------------------------- |
+| start_price         | The starting price of the selling coin; it is proportional to the paying coin denom | 
+| selling_coin        | The selling amount of coin for the auction                                          | 
+| paying_coin_denom   | The paying coin denom that bidders use to bid with                                  | 
+| vesting_schedules   | The vesting schedules that release the paying coins to the autioneer                | 
+| max_extended_round  | The number of extended rounds                                                       | 
+| extended_round_rate | The rate that determines if the auction needs to run another round                  | 
+| start_time          | The start time of the auction                                                       | 
+| end_time            | The end time of the auction                                                         | 
+|                     |                                                                                     |
+
 
 Example command:
 
 ```bash
-TODO: it is being developed
+# Create a batch auction
+fundraisingd tx fundraising create-batch-auction auction-batch.json \
+--chain-id fundraising \
+--from bob \
+--keyring-backend test \
+--broadcast-mode block \
+--yes \
+--output json | jq
 ```
 
 Result:
 
 ```json
+{
+  "@type": "/cosmos.tx.v1beta1.Tx",
+  "body": {
+    "messages": [
+      {
+        "@type": "/tendermint.fundraising.MsgCreateBatchAuction",
+        "auctioneer": "cosmos1ygsq4lnaernkz02un4fyksdzhzm6aazqpktj9p",
+        "start_price": "0.100000000000000000",
+        "selling_coin": {
+          "denom": "denom1",
+          "amount": "1000000000000"
+        },
+        "paying_coin_denom": "denom2",
+        "vesting_schedules": [
+          {
+            "release_time": "2023-06-01T00:00:00Z",
+            "weight": "0.500000000000000000"
+          },
+          {
+            "release_time": "2023-12-01T00:00:00Z",
+            "weight": "0.500000000000000000"
+          }
+        ],
+        "max_extended_round": 2,
+        "extended_round_rate": "0.150000000000000000",
+        "start_time": "2022-02-01T00:00:00Z",
+        "end_time": "2022-06-20T00:00:00Z"
+      }
+    ],
+    "memo": "",
+    "timeout_height": "0",
+    "extension_options": [],
+    "non_critical_extension_options": []
+  },
+  "auth_info": {
+    "signer_infos": [
+      {
+        "public_key": {
+          "@type": "/cosmos.crypto.secp256k1.PubKey",
+          "key": "A1NJdw96iIRrlhyrPmkWVKNcbrd8mhCRXb4InQqjU1Vm"
+        },
+        "mode_info": {
+          "single": {
+            "mode": "SIGN_MODE_DIRECT"
+          }
+        },
+        "sequence": "0"
+      }
+    ],
+    "fee": {
+      "amount": [],
+      "gas_limit": "200000",
+      "payer": "",
+      "granter": ""
+    }
+  },
+  "signatures": [
+    "UJmyeX5azpoTCmJIUhzr7UqmipUadPHlLuYSfuYZonRKiunRj6JkJQ4xWzzvE05ehsoWXODBALtp4Brmnr87WA=="
+  ]
+}
 ```
 
 ### CancelAuction

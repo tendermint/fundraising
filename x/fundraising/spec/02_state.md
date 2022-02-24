@@ -64,6 +64,13 @@ type AuctionI interface {
 
 	GetStatus() AuctionStatus
 	SetStatus(AuctionStatus) error
+
+	GetAllowedBiddersMap() map[string]sdk.Int
+
+	GetMaxBidAmount(bidder string) sdk.Int
+	SetMaxBidAmount(bidder string, maxBidAmt sdk.Int) error
+
+	Validate() error
 }
 ```
 

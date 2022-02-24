@@ -345,24 +345,12 @@ func (k Keeper) UpdateAllowedBidder(ctx sdk.Context, auctionId uint64, bidder sd
 		return types.ErrInvalidMaxBidAmount
 	}
 
-	allowedBidders := auction.GetAllowedBidders()
-	allowedBiddersMap := make(map[string]sdk.Int) // map(bidderAddress => maxBidAmount)
-
-	for i, b := range allowedBidders {
-		if b.Bidder == bidder.String() {
-			allowedBidders[i].MaxBidAmount = maxBidAmount // update the bidder's maximum bid amount
-		}
-
-		allowedBiddersMap[b.GetBidder()] = b.MaxBidAmount
-	}
-
-	if _, found := allowedBiddersMap[bidder.String()]; !found {
+	if _, found := auction.GetAllowedBiddersMap()[bidder.String()]; !found {
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "bidder %s is not found", bidder.String())
 	}
 
-	if err := auction.SetAllowedBidders(allowedBidders); err != nil {
-		return err
-	}
+	_ = auction.SetMaxBidAmount(bidder.String(), maxBidAmount)
+
 	k.SetAuction(ctx, auction)
 
 	return nil
