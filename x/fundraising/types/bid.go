@@ -9,3 +9,11 @@ func (b Bid) GetBidder() sdk.AccAddress {
 	}
 	return addr
 }
+
+func (b *Bid) SetWinner(status bool) {
+	b.IsWinner = status
+}
+
+func (b Bid) GetExchangedSellingAmount() sdk.Int {
+	return b.Coin.Amount.ToDec().QuoTruncate(b.Price).TruncateInt()
+}
