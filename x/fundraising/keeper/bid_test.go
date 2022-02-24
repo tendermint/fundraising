@@ -149,13 +149,13 @@ func (s *KeeperTestSuite) TestBatchAuction_IncorrectCoinDenom() {
 
 }
 
-func (s *KeeperTestSuite) TestBatchWorth_OverMaxBidAmountLimit() {
-
-}
-
-func (s *KeeperTestSuite) TestBatchMany_OverMaxBidAmountLimit() {
-
-}
+//func (s *KeeperTestSuite) TestBatchWorth {
+//
+//}
+//
+//func (s *KeeperTestSuite) TestBatchMany {
+//
+//}
 
 func (s *KeeperTestSuite) TestModifyBid_IncorrectAuctionType() {
 	// TODO: not implemented yet
@@ -178,6 +178,13 @@ func (s *KeeperTestSuite) TestModifyBid_IncorrectCoinAmount() {
 }
 
 func (s *KeeperTestSuite) TestModifyBid_IncorrectBidId() {
+	// TODO: not implemented yet
+	// if Bid Id does not exist for the bidder
+	// if Bid type for the bid Id is not the same
+
+}
+
+func (s *KeeperTestSuite) TestModifyBid_InsufficientRemainingAmount() {
 	// TODO: not implemented yet
 
 }
