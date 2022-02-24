@@ -34,8 +34,8 @@ func (s *KeeperTestSuite) TestVestingQueue_RemainingCoin() {
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	s.addAllowedBidder(auction.Id, s.addr(1), exchangeToSellingAmount(parseDec("1"), parseCoin("200000000denom2")))
-	s.addAllowedBidder(auction.Id, s.addr(2), exchangeToSellingAmount(parseDec("1"), parseCoin("350000000denom2")))
+	s.addAllowedBidder(auction.Id, s.addr(1), exchangedSellingAmount(parseDec("1"), parseCoin("200000000denom2")))
+	s.addAllowedBidder(auction.Id, s.addr(2), exchangedSellingAmount(parseDec("1"), parseCoin("350000000denom2")))
 
 	s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom2"), true)
 	s.placeBid(auction.GetId(), s.addr(2), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom2"), true)

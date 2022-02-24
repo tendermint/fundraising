@@ -21,3 +21,11 @@ func SanitizeReverseBids(bids []Bid) []Bid {
 	})
 	return bids
 }
+
+func (b *Bid) SetWinner(status bool) {
+	b.IsWinner = status
+}
+
+func (b Bid) GetExchangedSellingAmount() sdk.Int {
+	return b.Coin.Amount.ToDec().QuoTruncate(b.Price).TruncateInt()
+}
