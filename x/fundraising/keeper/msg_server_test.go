@@ -197,7 +197,7 @@ func (s *KeeperTestSuite) TestMsgPlaceBid() {
 				sdk.MustNewDecFromStr("0.5"),
 				parseCoin("50000000000000000denom2"),
 			),
-			sdkerrors.ErrInsufficientFunds,
+			types.ErrInsufficientRemainingAmount,
 		},
 	} {
 		s.Run(tc.name, func() {
