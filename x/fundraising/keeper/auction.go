@@ -355,3 +355,40 @@ func (k Keeper) UpdateAllowedBidder(ctx sdk.Context, auctionId uint64, bidder sd
 
 	return nil
 }
+
+// CalculateWinners ...
+// 1. Calculate the winners and if the extend rate is exceeded, extend the end time
+// 2. Distribute allocation to the winners
+// 3. Transfer the paying coin to the auctioneer with the given vesting schedules
+// By default, extended auction round is triggered once for all english auctions
+func (k Keeper) CalculateWinners(ctx sdk.Context, auction types.AuctionI) error {
+	bids := k.GetBidsByAuctionId(ctx, auction.GetId())
+	bids = types.SanitizeReverseBids(bids)
+
+	// first round needs to calculate the winning price
+	if len(auction.GetEndTimes()) == 1 {
+		totalSellingAmt := sdk.ZeroDec()
+		totalCoinAmt := sdk.ZeroDec()
+		remainingAmt := auction.GetRemainingSellingCoin().Amount
+
+		for _, bid := range bids {
+			totalCoinAmt = totalCoinAmt.Add(bid.Coin.Amount.ToDec())
+			totalSellingAmt = totalCoinAmt.QuoTruncate(bid.Price)
+		}
+
+		remainingAmt = remainingAmt.Sub(totalSellingAmt.TruncateInt())
+		remainingCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, remainingAmt)
+
+		_ = auction.SetRemainingSellingCoin(remainingCoin)
+
+		// TODO: fillPrice, store winning bids list, and set second last time (current block time)
+
+	} else {
+		// TODO
+		fmt.Println("")
+	}
+
+	// TODO: distribution and transferring the paying coin to the auctioneer
+
+	return nil
+}

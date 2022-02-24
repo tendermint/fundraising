@@ -47,6 +47,18 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 
 					writeCache()
 				}
+			} else if auction.GetType() == types.AuctionTypeBatch {
+				if auction.IsAuctionFinished(ctx.BlockTime()) {
+					ctx, writeCache := ctx.CacheContext()
+
+					if err := k.CalculateWinners(ctx, auction); err != nil {
+						panic(err)
+					}
+
+					// TODO: not implemented yet
+
+					writeCache()
+				}
 			}
 
 		case types.AuctionStatusVesting:
