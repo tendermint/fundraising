@@ -150,51 +150,34 @@ func (s *KeeperTestSuite) TestBatchAuction_IncorrectCoinDenom() {
 }
 
 func (s *KeeperTestSuite) TestBatchWorth_OverMaxBidAmountLimit() {
-	auction := s.createBatchAuction(
-		s.addr(1),
-		parseDec("0.5"),
-		parseCoin("1000000000denom1"),
-		"denom2",
-		[]types.VestingSchedule{},
-		1,
-		sdk.MustNewDecFromStr("0.2"),
-		time.Now().AddDate(0, 0, -1),
-		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
-		true,
-	)
-	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	s.addAllowedBidder(auction.Id, s.addr(1), sdk.NewInt(2_000_000_000))
-	s.addAllowedBidder(auction.Id, s.addr(2), sdk.NewInt(2_000_000_000))
-	s.addAllowedBidder(auction.Id, s.addr(3), sdk.NewInt(2_000_000_000))
-
-	s.placeBid(auction.Id, s.addr(1), types.BidTypeBatchMany, parseDec("0.5"), parseCoin("200000000denom1"), true)
-	s.placeBid(auction.Id, s.addr(1), types.BidTypeBatchWorth, parseDec("0.25"), parseCoin("200000000denom2"), true)
-	s.placeBid(auction.Id, s.addr(2), types.BidTypeBatchMany, parseDec("0.5"), parseCoin("500000000denom1"), true)
-	s.placeBid(auction.Id, s.addr(2), types.BidTypeBatchWorth, parseDec("1.0"), parseCoin("500000000denom2"), true)
-	s.placeBid(auction.Id, s.addr(3), types.BidTypeBatchMany, parseDec("1.0"), parseCoin("500000000denom1"), true)
-
-	// The total amount of bids that a bidder places must be equal to or smaller than MaxBidAmount.
-	s.fundAddr(s.addr(4), parseCoins("5000000000denom2"))
-	s.addAllowedBidder(auction.Id, s.addr(4), sdk.NewInt(2_000_000_000))
-	s.placeBid(auction.Id, s.addr(4), types.BidTypeBatchMany, parseDec("0.5"), parseCoin("1000000000denom1"), true)
-
-	_, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
-		AuctionId: auction.Id,
-		Bidder:    s.addr(4).String(),
-		BidType:   types.BidTypeBatchWorth,
-		Price:     parseDec("0.5"),
-		Coin:      parseCoin("500000001denom2"),
-	})
-	s.Require().ErrorIs(err, types.ErrOverMaxBidAmountLimit)
 }
 
-func (s *KeeperTestSuite) TestBatchMany() {
+func (s *KeeperTestSuite) TestBatchMany_OverMaxBidAmountLimit() {
 
 }
 
 func (s *KeeperTestSuite) TestModifyBid_IncorrectAuctionType() {
 	// TODO: not implemented yet
+
+}
+
+func (s *KeeperTestSuite) TestModifyBid_IncorrectCoinDenom() {
+	// TODO: not implemented yet
+
+}
+
+func (s *KeeperTestSuite) TestModifyBid_IncorrectBidPrice() {
+	// TODO: not implemented yet
 	// cover a case to modify a bid with higher price
+}
+
+func (s *KeeperTestSuite) TestModifyBid_IncorrectCoinAmount() {
+	// TODO: not implemented yet
 	// cover a case to modify a bid with higher coin amount
+}
+
+func (s *KeeperTestSuite) TestModifyBid_IncorrectBidId() {
+	// TODO: not implemented yet
+
 }
