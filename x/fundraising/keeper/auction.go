@@ -363,30 +363,50 @@ func (k Keeper) UpdateAllowedBidder(ctx sdk.Context, auctionId uint64, bidder sd
 // By default, extended auction round is triggered once for all english auctions
 func (k Keeper) CalculateWinners(ctx sdk.Context, auction types.AuctionI) error {
 	bids := k.GetBidsByAuctionId(ctx, auction.GetId())
-	bids = types.SanitizeReverseBids(bids)
+	bids = types.SortByBidPrice(bids)
 
-	// first round needs to calculate the winning price
-	if len(auction.GetEndTimes()) == 1 {
-		totalSellingAmt := sdk.ZeroDec()
-		totalCoinAmt := sdk.ZeroDec()
-		remainingAmt := auction.GetRemainingSellingCoin().Amount
+	winningBids := []types.Bid{}
+	winningPrice := sdk.ZeroDec()
+	winningTotalAmt := sdk.ZeroInt()
+	accumulatedAmt := sdk.ZeroInt()
+	remainingSellingAmt := auction.GetRemainingSellingCoin().Amount
 
-		for _, bid := range bids {
-			totalCoinAmt = totalCoinAmt.Add(bid.Coin.Amount.ToDec())
-			totalSellingAmt = totalCoinAmt.QuoTruncate(bid.Price)
+	for _, b := range bids {
+		accumulatedAmt = accumulatedAmt.Add(b.Coin.Amount)
+
+		if b.Type == types.BidTypeBatchWorth {
+			winningTotalAmt = accumulatedAmt.ToDec().QuoTruncate(b.Price).TruncateInt()
+		} else {
+			winningTotalAmt = accumulatedAmt
 		}
 
-		remainingAmt = remainingAmt.Sub(totalSellingAmt.TruncateInt())
-		remainingCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, remainingAmt)
+		if winningTotalAmt.GTE(remainingSellingAmt) {
+			break
+		}
 
-		_ = auction.SetRemainingSellingCoin(remainingCoin)
+		winningPrice = b.Price
+		winningBids = append(winningBids, b)
+	}
 
-		// TODO: fillPrice, store winning bids list, and set second last time (current block time)
+	if len(auction.GetEndTimes()) == 1 {
+		// TODO:
+		// Store the last end time
+		// Store auction id -> winning bids
+		_ = auction.SetEndTimes([]time.Time{ctx.BlockTime()})
 
 	} else {
 		// TODO
-		fmt.Println("")
+		// GetLastWinningBidsByAuctionId() and compare with current winningBids length
+		// Determint if it needs an extended round
+		// YES -> Store the last time, store auction id -> winning bids
+		// NO -> Set remaining coin -> distribute, vesting (use multisend)
 	}
+
+	for _, wb := range winningBids {
+		fmt.Println("wb: ", wb)
+	}
+	fmt.Println("winningPrice: ", winningPrice)
+	fmt.Println("winningTotalAmt: ", winningTotalAmt)
 
 	// TODO: distribution and transferring the paying coin to the auctioneer
 

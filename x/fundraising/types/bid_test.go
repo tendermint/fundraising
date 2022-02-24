@@ -43,7 +43,7 @@ func TestSanitizeBids(t *testing.T) {
 		},
 	}
 
-	bids := types.SanitizeReverseBids(sampleBids)
+	bids := types.SortByBidPrice(sampleBids)
 
 	require.True(t, sort.SliceIsSorted(bids, func(i, j int) bool {
 		return bids[i].Price.GT(bids[j].Price)

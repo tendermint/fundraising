@@ -411,3 +411,43 @@ func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 		})
 	}
 }
+
+func (s *KeeperTestSuite) TestCalculateWinners() {
+	auction := s.createBatchAuction(
+		s.addr(1),
+		parseDec("1"),
+		parseCoin("150denom1"), // 1000
+		"denom2",
+		[]types.VestingSchedule{},
+		1,
+		sdk.MustNewDecFromStr("0.2"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	bidder1, bidPrice1, bidCoin1 := s.addr(1), parseDec("10"), parseCoin("100denom2") // 100
+	bidder2, bidPrice2, bidCoin2 := s.addr(2), parseDec("9"), parseCoin("150denom2")  // 150
+	bidder3, bidPrice3, bidCoin3 := s.addr(3), parseDec("8"), parseCoin("250denom2")  // 250
+	bidder4, bidPrice4, bidCoin4 := s.addr(4), parseDec("7"), parseCoin("400denom2")  // 400
+	bidder5, bidPrice5, bidCoin5 := s.addr(5), parseDec("6"), parseCoin("150denom2")  // 150
+	bidder6, bidPrice6, bidCoin6 := s.addr(5), parseDec("5"), parseCoin("150denom2")  // 150
+
+	s.addAllowedBidder(auction.Id, bidder1, exchangedSellingAmount(bidPrice1, bidCoin1))
+	s.addAllowedBidder(auction.Id, bidder2, exchangedSellingAmount(bidPrice2, bidCoin2))
+	s.addAllowedBidder(auction.Id, bidder3, exchangedSellingAmount(bidPrice3, bidCoin3))
+	s.addAllowedBidder(auction.Id, bidder4, exchangedSellingAmount(bidPrice4, bidCoin4))
+	s.addAllowedBidder(auction.Id, bidder5, exchangedSellingAmount(bidPrice5, bidCoin5))
+	s.addAllowedBidder(auction.Id, bidder6, exchangedSellingAmount(bidPrice6, bidCoin6))
+
+	s.placeBid(auction.Id, bidder1, types.BidTypeBatchWorth, bidPrice1, bidCoin1, true)
+	s.placeBid(auction.Id, bidder2, types.BidTypeBatchWorth, bidPrice2, bidCoin2, true)
+	s.placeBid(auction.Id, bidder3, types.BidTypeBatchWorth, bidPrice3, bidCoin3, true)
+	s.placeBid(auction.Id, bidder4, types.BidTypeBatchWorth, bidPrice4, bidCoin4, true)
+	s.placeBid(auction.Id, bidder5, types.BidTypeBatchWorth, bidPrice5, bidCoin5, true)
+	s.placeBid(auction.Id, bidder6, types.BidTypeBatchWorth, bidPrice6, bidCoin6, true)
+
+	err := s.keeper.CalculateWinners(s.ctx, auction)
+	s.Require().NoError(err)
+}
