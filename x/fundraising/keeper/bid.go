@@ -187,6 +187,7 @@ func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) (types.MsgMo
 		if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), diffBidCoin); err != nil {
 			return types.MsgModifyBid{}, err
 		}
+
 	case types.BidTypeBatchMany:
 		prevBidAmt := msg.Coin.Amount.ToDec().Mul(msg.Price)
 		currBidAmt := bid.Coin.Amount.ToDec().Mul(bid.Price)
