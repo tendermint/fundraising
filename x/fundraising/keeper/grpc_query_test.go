@@ -186,9 +186,9 @@ func (s *KeeperTestSuite) TestGRPCBids() {
 	bidder2 := s.addr(2)
 	bidder3 := s.addr(3)
 
-	s.addAllowedBidder(auction.Id, bidder1, exchangeToSellingAmount(parseDec("1"), parseCoin("400000000denom2")))
-	s.addAllowedBidder(auction.Id, bidder2, exchangeToSellingAmount(parseDec("1"), parseCoin("150000000denom2")))
-	s.addAllowedBidder(auction.Id, bidder3, exchangeToSellingAmount(parseDec("1"), parseCoin("350000000denom2")))
+	s.addAllowedBidder(auction.Id, bidder1, exchangedSellingAmount(parseDec("1"), parseCoin("400000000denom2")))
+	s.addAllowedBidder(auction.Id, bidder2, exchangedSellingAmount(parseDec("1"), parseCoin("150000000denom2")))
+	s.addAllowedBidder(auction.Id, bidder3, exchangedSellingAmount(parseDec("1"), parseCoin("350000000denom2")))
 
 	bid1 := s.placeBid(auction.GetId(), bidder1, types.BidTypeFixedPrice, parseDec("1"), parseCoin("20000000denom2"), true)
 	bid2 := s.placeBid(auction.GetId(), bidder1, types.BidTypeFixedPrice, parseDec("1"), parseCoin("20000000denom2"), true)
@@ -307,7 +307,7 @@ func (s *KeeperTestSuite) TestGRPCBid() {
 		true,
 	)
 
-	s.addAllowedBidder(auction.Id, s.addr(1), exchangeToSellingAmount(parseDec("1"), parseCoin("20000000denom2")))
+	s.addAllowedBidder(auction.Id, s.addr(1), exchangedSellingAmount(parseDec("1"), parseCoin("20000000denom2")))
 	bid := s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, parseDec("1"), parseCoin("20000000denom2"), true)
 
 	for _, tc := range []struct {
