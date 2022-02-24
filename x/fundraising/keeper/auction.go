@@ -400,6 +400,8 @@ func (k Keeper) CalculateWinners(ctx sdk.Context, auction types.AuctionI) error 
 		// Determint if it needs an extended round
 		// YES -> Store the last time, store auction id -> winning bids
 		// NO -> Set remaining coin -> distribute, vesting (use multisend)
+		params := k.GetParams(ctx)
+		fmt.Println("params: ", params)
 	}
 
 	for _, wb := range winningBids {
