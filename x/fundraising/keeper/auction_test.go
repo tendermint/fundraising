@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -410,7 +411,7 @@ func (s *KeeperTestSuite) TestCalculateWinners() {
 	auction := s.createBatchAuction(
 		s.addr(1),
 		parseDec("1"),
-		parseCoin("1000denom1"), // 1000
+		parseCoin("300000000denom1"), // 1000
 		"denom2",
 		[]types.VestingSchedule{},
 		1,
@@ -421,13 +422,21 @@ func (s *KeeperTestSuite) TestCalculateWinners() {
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	s.placeBidBatchWorth(auction.Id, s.addr(1), parseDec("10"), parseCoin("100denom2"), true) // 100
-	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("9"), parseCoin("150denom2"), true)  // 150
-	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("8"), parseCoin("250denom2"), true)  // 250
-	s.placeBidBatchMany(auction.Id, s.addr(4), parseDec("7"), parseCoin("400denom1"), true)   // 400
-	s.placeBidBatchMany(auction.Id, s.addr(5), parseDec("6"), parseCoin("150denom1"), true)   // 150
-	s.placeBidBatchMany(auction.Id, s.addr(6), parseDec("5"), parseCoin("150denom1"), true)   // 150
+	s.placeBidBatchWorth(auction.Id, s.addr(1), parseDec("10"), parseCoin("100000000denom2"), true)  // 100
+	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("9"), parseCoin("150000000denom2"), true)   // 150
+	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("8"), parseCoin("250000000denom2"), true)   // 250
+	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("7"), parseCoin("250000000denom2"), true)   // 250
+	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("5.5"), parseCoin("250000000denom2"), true) // 250
+	s.placeBidBatchMany(auction.Id, s.addr(4), parseDec("6"), parseCoin("400000000denom1"), true)    // 400
+	s.placeBidBatchMany(auction.Id, s.addr(5), parseDec("5"), parseCoin("150000000denom1"), true)    // 150
+	s.placeBidBatchMany(auction.Id, s.addr(6), parseDec("4.8"), parseCoin("150000000denom1"), true)  // 150
+	s.placeBidBatchMany(auction.Id, s.addr(6), parseDec("4.5"), parseCoin("150000000denom1"), true)  // 150
+	s.placeBidBatchMany(auction.Id, s.addr(7), parseDec("3.8"), parseCoin("150000000denom1"), true)  // 150
 
-	s.keeper.CalculateBatchResult(s.ctx, auction.Id, auction.RemainingSellingCoin.Amount)
+	result := s.keeper.CalculateBatchResult(s.ctx, auction.Id, auction.RemainingSellingCoin.Amount)
+
+	fmt.Println("Num: ", len(result.Bids))
+	fmt.Println("Price: ", result.Price)
+	fmt.Println("SoldAmount: ", result.SoldAmount)
 
 }

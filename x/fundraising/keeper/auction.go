@@ -414,12 +414,25 @@ func (k Keeper) CalculateBatchResult(ctx sdk.Context, auctionId uint64, remainin
 		SoldAmount: sdk.ZeroInt(),
 	}
 
+	auction, found := k.GetAuction(ctx, auctionId)
+	if !found {
+		panic("not found")
+	}
+
+	abMap := auction.GetAllowedBiddersMap() // map(bidder => maxBidAmt)
+	bcMap := map[string]sdk.Int{}           // map(bidder => accumulatedAmt)
+
 	// Iterate from the highest bid price and find the last bid price and total sold amount
 	// It doesn't calculate a partial amount of coins that the last bid can match
 	for _, b := range bids {
 		currPrice := b.Price
 		accumulatedAmt := sdk.ZeroInt()
 
+		for bidder, _ := range abMap {
+			bcMap[bidder] = sdk.ZeroInt()
+		}
+
+		// Bid Price = 10
 		for _, b := range bids {
 			if b.Price.LT(currPrice) {
 				continue
@@ -427,9 +440,16 @@ func (k Keeper) CalculateBatchResult(ctx sdk.Context, auctionId uint64, remainin
 
 			if b.Type == types.BidTypeBatchWorth {
 				amt := b.Coin.Amount.ToDec().QuoTruncate(currPrice).TruncateInt()
+				amt = sdk.MinInt(amt, abMap[b.Bidder].Sub(bcMap[b.Bidder])) // min(amt, maxBidAmount - bcMap[bidder] == j's accumulatedAmt)
+
 				accumulatedAmt = accumulatedAmt.Add(amt)
+
+				bcMap[b.Bidder] = bcMap[b.Bidder].Add(amt)
 			} else {
-				accumulatedAmt = accumulatedAmt.Add(b.Coin.Amount)
+				amt := sdk.MinInt(b.Coin.Amount, abMap[b.Bidder].Sub(bcMap[b.Bidder]))
+				accumulatedAmt = accumulatedAmt.Add(amt)
+
+				bcMap[b.Bidder] = bcMap[b.Bidder].Add(amt)
 			}
 		}
 
@@ -450,6 +470,53 @@ func (k Keeper) CalculateBatchResult(ctx sdk.Context, auctionId uint64, remainin
 
 	return result
 }
+
+// func (k Keeper) CalculateBatchResult(ctx sdk.Context, auctionId uint64, remainingAmt sdk.Int) BatchAuctionResult {
+// 	bids := k.GetBidsByAuctionId(ctx, auctionId)
+// 	bids = types.SortByBidPrice(bids)
+
+// 	result := BatchAuctionResult{
+// 		Bids:       []types.Bid{},
+// 		Price:      bids[0].Price,
+// 		SoldAmount: sdk.ZeroInt(),
+// 	}
+
+// 	// Iterate from the highest bid price and find the last bid price and total sold amount
+// 	// It doesn't calculate a partial amount of coins that the last bid can match
+// 	for _, b := range bids {
+// 		currPrice := b.Price
+// 		accumulatedAmt := sdk.ZeroInt()
+
+// 		for _, b := range bids {
+// 			if b.Price.LT(currPrice) {
+// 				continue
+// 			}
+
+// 			if b.Type == types.BidTypeBatchWorth {
+// 				amt := b.Coin.Amount.ToDec().QuoTruncate(currPrice).TruncateInt()
+// 				accumulatedAmt = accumulatedAmt.Add(amt)
+// 			} else {
+// 				accumulatedAmt = accumulatedAmt.Add(b.Coin.Amount)
+// 			}
+// 		}
+
+// 		if accumulatedAmt.GT(remainingAmt) {
+// 			break
+// 		}
+
+// 		// TODO: set winner status to true
+// 		b.SetWinner(true)
+// 		k.SetBid(ctx, b)
+
+// 		result.Bids = append(result.Bids, b)
+// 		result.Price = currPrice
+// 		result.SoldAmount = accumulatedAmt
+// 	}
+
+// 	k.SetWinningBidsLen(ctx, auctionId, len(result.Bids))
+
+// 	return result
+// }
 
 func (k Keeper) FinishBatchAuction(ctx sdk.Context, auction types.AuctionI) {
 	ba := auction.(*types.BatchAuction)
