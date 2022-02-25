@@ -27,44 +27,13 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	for _, auction := range k.GetAuctions(ctx) {
 		switch auction.GetStatus() {
 		case types.AuctionStatusStandBy:
-			if auction.IsAuctionStarted(ctx.BlockTime()) {
-				_ = auction.SetStatus(types.AuctionStatusStarted)
-				k.SetAuction(ctx, auction)
-			}
+			k.ExecuteStandByStatus(ctx, auction)
 
 		case types.AuctionStatusStarted:
-			if auction.GetType() == types.AuctionTypeFixedPrice {
-				if auction.IsAuctionFinished(ctx.BlockTime()) {
-					ctx, writeCache := ctx.CacheContext()
-
-					if err := k.DistributeSellingCoin(ctx, auction); err != nil {
-						panic(err)
-					}
-
-					if err := k.SetVestingSchedules(ctx, auction); err != nil {
-						panic(err)
-					}
-
-					writeCache()
-				}
-			} else if auction.GetType() == types.AuctionTypeBatch {
-				if auction.IsAuctionFinished(ctx.BlockTime()) {
-					ctx, writeCache := ctx.CacheContext()
-
-					if err := k.CalculateWinners(ctx, auction); err != nil {
-						panic(err)
-					}
-
-					// TODO: not implemented yet
-
-					writeCache()
-				}
-			}
+			k.ExecuteStartedStatus(ctx, auction)
 
 		case types.AuctionStatusVesting:
-			if err := k.DistributePayingCoin(ctx, auction); err != nil {
-				panic(err)
-			}
+			k.ExecuteVestingStatus(ctx, auction)
 
 		default:
 			continue

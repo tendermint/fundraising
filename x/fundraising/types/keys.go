@@ -31,8 +31,9 @@ var (
 
 	AuctionKeyPrefix = []byte{0x21}
 
-	BidKeyPrefix      = []byte{0x31}
-	BidIndexKeyPrefix = []byte{0x32}
+	BidKeyPrefix         = []byte{0x31}
+	BidIndexKeyPrefix    = []byte{0x32}
+	WinningBidsLenPrefix = []byte{0x33}
 
 	VestingQueueKeyPrefix = []byte{0x41}
 )
@@ -75,6 +76,10 @@ func GetVestingQueueKey(auctionId uint64, releaseTime time.Time) []byte {
 // GetVestingQueueByAuctionIdPrefix returns a key prefix used to iterate vesting queues by an auction id.
 func GetVestingQueueByAuctionIdPrefix(auctionId uint64) []byte {
 	return append(VestingQueueKeyPrefix, sdk.Uint64ToBigEndian(auctionId)...)
+}
+
+func GetLastWinningBidsLenKey(auctionId uint64) []byte {
+	return append(WinningBidsLenPrefix, sdk.Uint64ToBigEndian(auctionId)...)
 }
 
 // ParseBidIndexKey parses bid index key.

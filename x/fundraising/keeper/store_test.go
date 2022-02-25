@@ -71,9 +71,9 @@ func (s *KeeperTestSuite) TestLastBidId() {
 	s.addAllowedBidder(auction.Id, s.addr(2), exchangedSellingAmount(sdk.OneDec(), parseCoin("20000000denom2")))
 	s.addAllowedBidder(auction.Id, s.addr(3), exchangedSellingAmount(sdk.OneDec(), parseCoin("15000000denom2")))
 
-	s.placeBid(auction.Id, s.addr(1), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom2"), true)
-	s.placeBid(auction.Id, s.addr(2), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom2"), true)
-	s.placeBid(auction.Id, s.addr(3), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("15000000denom2"), true)
+	s.placeBidFixedPrice(auction.Id, s.addr(1), sdk.OneDec(), parseCoin("20000000denom2"), true)
+	s.placeBidFixedPrice(auction.Id, s.addr(2), sdk.OneDec(), parseCoin("20000000denom2"), true)
+	s.placeBidFixedPrice(auction.Id, s.addr(3), sdk.OneDec(), parseCoin("15000000denom2"), true)
 
 	bidsById := s.keeper.GetBidsByAuctionId(s.ctx, auction.GetId())
 	s.Require().Len(bidsById, 3)
@@ -121,10 +121,10 @@ func (s *KeeperTestSuite) TestIterateBids() {
 	s.addAllowedBidder(auction.GetId(), s.addr(2), exchangedSellingAmount(sdk.OneDec(), parseCoin("35000000denom2")))
 	s.addAllowedBidder(auction.GetId(), s.addr(3), exchangedSellingAmount(sdk.OneDec(), parseCoin("35000000denom2")))
 
-	s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom2"), true)
-	s.placeBid(auction.GetId(), s.addr(2), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom2"), true)
-	s.placeBid(auction.GetId(), s.addr(2), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("15000000denom2"), true)
-	s.placeBid(auction.GetId(), s.addr(3), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("35000000denom2"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(1), sdk.OneDec(), parseCoin("20000000denom2"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(2), sdk.OneDec(), parseCoin("20000000denom2"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(2), sdk.OneDec(), parseCoin("15000000denom2"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(3), sdk.OneDec(), parseCoin("35000000denom2"), true)
 
 	bids := s.keeper.GetBids(s.ctx)
 	s.Require().Len(bids, 4)

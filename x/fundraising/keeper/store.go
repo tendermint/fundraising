@@ -196,6 +196,26 @@ func (k Keeper) IterateBidsByBidder(ctx sdk.Context, bidderAddr sdk.AccAddress, 
 	}
 }
 
+func (k Keeper) GetWinningBidsLen(ctx sdk.Context, auctionId uint64) int64 {
+	var len int64
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.GetLastWinningBidsLenKey(auctionId))
+	if bz == nil {
+		len = 0 // initialize the auction id
+	} else {
+		val := gogotypes.Int64Value{}
+		k.cdc.MustUnmarshal(bz, &val)
+		len = val.GetValue()
+	}
+	return len
+}
+
+func (k Keeper) SetWinningBidsLen(ctx sdk.Context, auctionId uint64, lastWinningBidsLen int) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshal(&gogotypes.Int64Value{Value: int64(lastWinningBidsLen)})
+	store.Set(types.GetLastWinningBidsLenKey(auctionId), bz)
+}
+
 // GetVestingQueue returns a slice of vesting queues that the auction is complete and
 // waiting in a queue to release the vesting amount of coin at the respective release time.
 func (k Keeper) GetVestingQueue(ctx sdk.Context, auctionId uint64, releaseTime time.Time) types.VestingQueue {

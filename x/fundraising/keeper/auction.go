@@ -30,17 +30,17 @@ func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) e
 
 	// Distribute coins to all bidders from the selling reserve account
 	for _, bid := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
-		receiveAmt := bid.Coin.Amount.ToDec().QuoTruncate(bid.Price).TruncateInt()
-		receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, receiveAmt)
+		exchangedSellingAmt := bid.Coin.Amount.ToDec().QuoTruncate(bid.Price).TruncateInt()
+		exchangedSellingCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, exchangedSellingAmt)
 
-		inputs = append(inputs, banktypes.NewInput(sellingReserveAddress, sdk.NewCoins(receiveCoin)))
-		outputs = append(outputs, banktypes.NewOutput(bid.GetBidder(), sdk.NewCoins(receiveCoin)))
+		inputs = append(inputs, banktypes.NewInput(sellingReserveAddress, sdk.NewCoins(exchangedSellingCoin)))
+		outputs = append(outputs, banktypes.NewOutput(bid.GetBidder(), sdk.NewCoins(exchangedSellingCoin)))
 
-		totalBidCoin = totalBidCoin.Add(receiveCoin)
+		totalBidCoin = totalBidCoin.Add(exchangedSellingCoin)
 	}
 
-	reserveBalance := k.bankKeeper.GetBalance(ctx, sellingReserveAddress, auction.GetSellingCoin().Denom)
-	remainingCoin := reserveBalance.Sub(totalBidCoin)
+	balance := k.bankKeeper.GetBalance(ctx, sellingReserveAddress, auction.GetSellingCoin().Denom)
+	remainingCoin := balance.Sub(totalBidCoin)
 
 	// Send remaining coin to the auctioneer
 	inputs = append(inputs, banktypes.NewInput(sellingReserveAddress, sdk.NewCoins(remainingCoin)))
@@ -356,61 +356,130 @@ func (k Keeper) UpdateAllowedBidder(ctx sdk.Context, auctionId uint64, bidder sd
 	return nil
 }
 
-// CalculateWinners ...
-// 1. Calculate the winners and if the extend rate is exceeded, extend the end time
-// 2. Distribute allocation to the winners
-// 3. Transfer the paying coin to the auctioneer with the given vesting schedules
-// By default, extended auction round is triggered once for all english auctions
-func (k Keeper) CalculateWinners(ctx sdk.Context, auction types.AuctionI) error {
-	bids := k.GetBidsByAuctionId(ctx, auction.GetId())
-	bids = types.SortByBidPrice(bids)
+func (k Keeper) ExecuteStandByStatus(ctx sdk.Context, auction types.AuctionI) {
+	if auction.IsAuctionStarted(ctx.BlockTime()) {
+		if err := auction.SetStatus(types.AuctionStatusStarted); err != nil {
+			panic(err)
+		}
+		k.SetAuction(ctx, auction)
+	}
+}
 
-	winningBids := []types.Bid{}
-	winningPrice := sdk.ZeroDec()
-	winningTotalAmt := sdk.ZeroInt()
-	accumulatedAmt := sdk.ZeroInt()
-	remainingSellingAmt := auction.GetRemainingSellingCoin().Amount
+func (k Keeper) ExecuteStartedStatus(ctx sdk.Context, auction types.AuctionI) {
+	ctx, writeCache := ctx.CacheContext()
 
-	for _, b := range bids {
-		accumulatedAmt = accumulatedAmt.Add(b.Coin.Amount)
+	// Do nothing when the auction is still in started status
+	if !auction.IsAuctionFinished(ctx.BlockTime()) {
+		return
+	}
 
-		if b.Type == types.BidTypeBatchWorth {
-			winningTotalAmt = accumulatedAmt.ToDec().QuoTruncate(b.Price).TruncateInt()
-		} else {
-			winningTotalAmt = accumulatedAmt
+	switch auction.GetType() {
+	case types.AuctionTypeFixedPrice:
+		if err := k.DistributeSellingCoin(ctx, auction); err != nil {
+			panic(err)
 		}
 
-		if winningTotalAmt.GTE(remainingSellingAmt) {
+		if err := k.SetVestingSchedules(ctx, auction); err != nil {
+			panic(err)
+		}
+
+	case types.AuctionTypeBatch:
+		k.CalculateBatchResult(ctx, auction.GetId(), auction.GetRemainingSellingCoin().Amount)
+
+		k.FinishBatchAuction(ctx, auction)
+	}
+
+	writeCache()
+}
+
+func (k Keeper) ExecuteVestingStatus(ctx sdk.Context, auction types.AuctionI) {
+	if err := k.DistributePayingCoin(ctx, auction); err != nil {
+		panic(err)
+	}
+}
+
+type BatchAuctionResult struct {
+	Bids       []types.Bid
+	Price      sdk.Dec
+	SoldAmount sdk.Int
+}
+
+func (k Keeper) CalculateBatchResult(ctx sdk.Context, auctionId uint64, remainingAmt sdk.Int) BatchAuctionResult {
+	bids := k.GetBidsByAuctionId(ctx, auctionId)
+	bids = types.SortByBidPrice(bids)
+
+	result := BatchAuctionResult{
+		Bids:       []types.Bid{},
+		Price:      bids[0].Price,
+		SoldAmount: sdk.ZeroInt(),
+	}
+
+	// Iterate from the highest bid price and find the last bid price and total sold amount
+	// It doesn't calculate a partial amount of coins that the last bid can match
+	for _, b := range bids {
+		currPrice := b.Price
+		accumulatedAmt := sdk.ZeroInt()
+
+		for _, b := range bids {
+			if b.Price.LT(currPrice) {
+				continue
+			}
+
+			if b.Type == types.BidTypeBatchWorth {
+				amt := b.Coin.Amount.ToDec().QuoTruncate(currPrice).TruncateInt()
+				accumulatedAmt = accumulatedAmt.Add(amt)
+			} else {
+				accumulatedAmt = accumulatedAmt.Add(b.Coin.Amount)
+			}
+		}
+
+		if accumulatedAmt.GT(remainingAmt) {
 			break
 		}
 
-		winningPrice = b.Price
-		winningBids = append(winningBids, b)
+		// TODO: set winner status to true
+		b.SetWinner(true)
+		k.SetBid(ctx, b)
+
+		result.Bids = append(result.Bids, b)
+		result.Price = currPrice
+		result.SoldAmount = accumulatedAmt
 	}
 
-	if len(auction.GetEndTimes()) == 1 {
-		// TODO:
-		// Store the last end time
-		// Store auction id -> winning bids
-		_ = auction.SetEndTimes([]time.Time{ctx.BlockTime()})
+	k.SetWinningBidsLen(ctx, auctionId, len(result.Bids))
 
+	return result
+}
+
+func (k Keeper) FinishBatchAuction(ctx sdk.Context, auction types.AuctionI) {
+	ba := auction.(*types.BatchAuction)
+
+	if ba.MaxExtendedRound == 0 {
+		// Distribute
 	} else {
-		// TODO
-		// GetLastWinningBidsByAuctionId() and compare with current winningBids length
-		// Determint if it needs an extended round
-		// YES -> Store the last time, store auction id -> winning bids
-		// NO -> Set remaining coin -> distribute, vesting (use multisend)
-		params := k.GetParams(ctx)
-		fmt.Println("params: ", params)
+		// Compare last and current winning bids len and
+		// determine if it needs another round
+		lastWinningBidsLen := k.GetWinningBidsLen(ctx, ba.Id)
+		sdk.NewDec(lastWinningBidsLen)
+
+		ts := ba.GetEndTimes()
+		ts = append(ts, ctx.BlockTime())
+
+		_ = ba.SetEndTimes(ts)
+		k.SetAuction(ctx, ba)
 	}
 
-	for _, wb := range winningBids {
-		fmt.Println("wb: ", wb)
-	}
-	fmt.Println("winningPrice: ", winningPrice)
-	fmt.Println("winningTotalAmt: ", winningTotalAmt)
-
-	// TODO: distribution and transferring the paying coin to the auctioneer
-
-	return nil
+	// if ba.MaxExtendedRound == 0 {
+	// 	// Store the last end time
+	// 	// Store auction id -> len(LastWinningBids)
+	// } else {
+	// 	// GetLastWinningBidsByAuctionId() and compare with current winningBids length
+	// 	// Determint if it needs an extended round
+	// 	// YES
+	// 	// - Store the last time
+	// 	// - Store auction id -> len(LastWinningBids)
+	// 	// NO -
+	// 	// - Set remaining coin
+	// 	// - Distribute - vesting (use multisend)
+	// }
 }

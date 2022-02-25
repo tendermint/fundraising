@@ -105,29 +105,104 @@ func (s *KeeperTestSuite) createBatchAuction(
 	return auction
 }
 
-func (s *KeeperTestSuite) addAllowedBidder(auctionId uint64, bidder sdk.AccAddress, maxBidAmount sdk.Int) {
+func (s *KeeperTestSuite) addAllowedBidder(auctionId uint64, bidder sdk.AccAddress, maxBidAmt sdk.Int) {
+	auction, found := s.keeper.GetAuction(s.ctx, auctionId)
+	s.Require().True(found)
+
+	prevMaxBidAmt, found := auction.GetAllowedBiddersMap()[bidder.String()]
+	if found {
+		maxBidAmt = maxBidAmt.Add(prevMaxBidAmt)
+	}
+
 	err := s.keeper.AddAllowedBidders(s.ctx, auctionId, []types.AllowedBidder{
-		{Bidder: bidder.String(), MaxBidAmount: maxBidAmount},
+		{Bidder: bidder.String(), MaxBidAmount: maxBidAmt},
 	})
 	s.Require().NoError(err)
 }
 
-func (s *KeeperTestSuite) placeBid(
+func (s *KeeperTestSuite) placeBidFixedPrice(
 	auctionId uint64,
 	bidder sdk.AccAddress,
-	bidType types.BidType,
 	price sdk.Dec,
 	coin sdk.Coin,
 	fund bool,
 ) types.Bid {
+	fundAmt := coin.Amount
+	fundCoin := coin
+
 	if fund {
-		s.fundAddr(bidder, sdk.NewCoins(coin))
+		s.fundAddr(bidder, sdk.NewCoins(fundCoin))
 	}
+
+	s.addAllowedBidder(auctionId, bidder, fundAmt)
 
 	bid, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
 		AuctionId: auctionId,
 		Bidder:    bidder.String(),
-		BidType:   bidType,
+		BidType:   types.BidTypeFixedPrice,
+		Price:     price,
+		Coin:      coin,
+	})
+	s.Require().NoError(err)
+
+	return bid
+}
+
+func (s *KeeperTestSuite) placeBidBatchWorth(
+	auctionId uint64,
+	bidder sdk.AccAddress,
+	price sdk.Dec,
+	coin sdk.Coin,
+	fund bool,
+) types.Bid {
+	fundAmt := coin.Amount
+	fundCoin := coin
+
+	if fund {
+		s.fundAddr(bidder, sdk.NewCoins(fundCoin))
+	}
+
+	s.addAllowedBidder(auctionId, bidder, fundAmt)
+
+	bid, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
+		AuctionId: auctionId,
+		Bidder:    bidder.String(),
+		BidType:   types.BidTypeBatchWorth,
+		Price:     price,
+		Coin:      coin,
+	})
+	s.Require().NoError(err)
+
+	return bid
+}
+
+/*
+
+ */
+
+func (s *KeeperTestSuite) placeBidBatchMany(
+	auctionId uint64,
+	bidder sdk.AccAddress,
+	price sdk.Dec,
+	coin sdk.Coin,
+	fund bool,
+) types.Bid {
+	auction, found := s.keeper.GetAuction(s.ctx, auctionId)
+	s.Require().True(found)
+
+	fundAmt := coin.Amount.ToDec().Mul(price).Ceil().TruncateInt()
+	fundCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), fundAmt)
+
+	if fund {
+		s.fundAddr(bidder, sdk.NewCoins(fundCoin))
+	}
+
+	s.addAllowedBidder(auctionId, bidder, fundAmt)
+
+	bid, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
+		AuctionId: auctionId,
+		Bidder:    bidder.String(),
+		BidType:   types.BidTypeBatchMany,
 		Price:     price,
 		Coin:      coin,
 	})

@@ -182,21 +182,13 @@ func (s *KeeperTestSuite) TestGRPCBids() {
 		true,
 	)
 
-	bidder1 := s.addr(1)
-	bidder2 := s.addr(2)
-	bidder3 := s.addr(3)
-
-	s.addAllowedBidder(auction.Id, bidder1, exchangedSellingAmount(parseDec("1"), parseCoin("400000000denom2")))
-	s.addAllowedBidder(auction.Id, bidder2, exchangedSellingAmount(parseDec("1"), parseCoin("150000000denom2")))
-	s.addAllowedBidder(auction.Id, bidder3, exchangedSellingAmount(parseDec("1"), parseCoin("350000000denom2")))
-
-	bid1 := s.placeBid(auction.GetId(), bidder1, types.BidTypeFixedPrice, parseDec("1"), parseCoin("20000000denom2"), true)
-	bid2 := s.placeBid(auction.GetId(), bidder1, types.BidTypeFixedPrice, parseDec("1"), parseCoin("20000000denom2"), true)
-	bid3 := s.placeBid(auction.GetId(), bidder2, types.BidTypeFixedPrice, parseDec("1"), parseCoin("15000000denom2"), true)
-	bid4 := s.placeBid(auction.GetId(), bidder3, types.BidTypeFixedPrice, parseDec("1"), parseCoin("35000000denom2"), true)
+	bid1 := s.placeBidFixedPrice(auction.Id, s.addr(1), parseDec("1"), parseCoin("20000000denom2"), true)
+	bid2 := s.placeBidFixedPrice(auction.Id, s.addr(1), parseDec("1"), parseCoin("20000000denom2"), true)
+	bid3 := s.placeBidFixedPrice(auction.Id, s.addr(2), parseDec("1"), parseCoin("15000000denom2"), true)
+	bid4 := s.placeBidFixedPrice(auction.Id, s.addr(3), parseDec("1"), parseCoin("35000000denom2"), true)
 
 	// Make bid4 not eligible
-	bid4.IsWinner = false
+	bid4.SetWinner(false)
 	s.keeper.SetBid(s.ctx, bid4)
 
 	for _, tc := range []struct {
@@ -229,7 +221,7 @@ func (s *KeeperTestSuite) TestGRPCBids() {
 			"query by bidder address",
 			&types.QueryBidsRequest{
 				AuctionId: 1,
-				Bidder:    bidder1.String(),
+				Bidder:    bid1.Bidder,
 			},
 			false,
 			func(resp *types.QueryBidsResponse) {
@@ -259,11 +251,11 @@ func (s *KeeperTestSuite) TestGRPCBids() {
 			},
 		},
 		{
-			"query by both bidder address and eligible #1",
+			"query by both bidder address and isWinner #1",
 			&types.QueryBidsRequest{
 				AuctionId: 1,
-				Bidder:    bidder3.String(),
-				IsWinner:  "false",
+				Bidder:    bid3.Bidder,
+				IsWinner:  "true",
 			},
 			false,
 			func(resp *types.QueryBidsResponse) {
@@ -271,10 +263,10 @@ func (s *KeeperTestSuite) TestGRPCBids() {
 			},
 		},
 		{
-			"query by both bidder address and eligible #2",
+			"query by both bidder address and isWinner #2",
 			&types.QueryBidsRequest{
 				AuctionId: 1,
-				Bidder:    bidder3.String(),
+				Bidder:    bid4.Bidder,
 				IsWinner:  "true",
 			},
 			false,
@@ -308,7 +300,7 @@ func (s *KeeperTestSuite) TestGRPCBid() {
 	)
 
 	s.addAllowedBidder(auction.Id, s.addr(1), exchangedSellingAmount(parseDec("1"), parseCoin("20000000denom2")))
-	bid := s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, parseDec("1"), parseCoin("20000000denom2"), true)
+	bid := s.placeBidFixedPrice(auction.GetId(), s.addr(1), parseDec("1"), parseCoin("20000000denom2"), true)
 
 	for _, tc := range []struct {
 		name      string
