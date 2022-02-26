@@ -196,10 +196,10 @@ func (k Keeper) IterateBidsByBidder(ctx sdk.Context, bidderAddr sdk.AccAddress, 
 	}
 }
 
-func (k Keeper) GetWinningBidsLen(ctx sdk.Context, auctionId uint64) int64 {
+func (k Keeper) GetMatchedBidsLen(ctx sdk.Context, auctionId uint64) int64 {
 	var len int64
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetLastWinningBidsLenKey(auctionId))
+	bz := store.Get(types.GetLastMatchedBidsLenKey(auctionId))
 	if bz == nil {
 		len = 0 // initialize the auction id
 	} else {
@@ -210,10 +210,10 @@ func (k Keeper) GetWinningBidsLen(ctx sdk.Context, auctionId uint64) int64 {
 	return len
 }
 
-func (k Keeper) SetWinningBidsLen(ctx sdk.Context, auctionId uint64, lastWinningBidsLen int) {
+func (k Keeper) SetMatchedBidsLen(ctx sdk.Context, auctionId uint64, lastWinningBidsLen int) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshal(&gogotypes.Int64Value{Value: int64(lastWinningBidsLen)})
-	store.Set(types.GetLastWinningBidsLenKey(auctionId), bz)
+	store.Set(types.GetLastMatchedBidsLenKey(auctionId), bz)
 }
 
 // GetVestingQueue returns a slice of vesting queues that the auction is complete and

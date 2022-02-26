@@ -33,7 +33,7 @@ var (
 
 	BidKeyPrefix         = []byte{0x31}
 	BidIndexKeyPrefix    = []byte{0x32}
-	WinningBidsLenPrefix = []byte{0x33}
+	MatchedBidsLenPrefix = []byte{0x33}
 
 	VestingQueueKeyPrefix = []byte{0x41}
 )
@@ -78,8 +78,8 @@ func GetVestingQueueByAuctionIdPrefix(auctionId uint64) []byte {
 	return append(VestingQueueKeyPrefix, sdk.Uint64ToBigEndian(auctionId)...)
 }
 
-func GetLastWinningBidsLenKey(auctionId uint64) []byte {
-	return append(WinningBidsLenPrefix, sdk.Uint64ToBigEndian(auctionId)...)
+func GetLastMatchedBidsLenKey(auctionId uint64) []byte {
+	return append(MatchedBidsLenPrefix, sdk.Uint64ToBigEndian(auctionId)...)
 }
 
 // ParseBidIndexKey parses bid index key.

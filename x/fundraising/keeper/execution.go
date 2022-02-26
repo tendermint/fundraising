@@ -9,7 +9,7 @@ import (
 // ExecuteStandByStatus simply updates the auction status to AuctionStatusStarted
 // if the auction is ready to get started.
 func (k Keeper) ExecuteStandByStatus(ctx sdk.Context, auction types.AuctionI) {
-	if auction.ShouldAuctionStarted(ctx.BlockTime()) {
+	if auction.ShouldAuctionStarted(ctx.BlockTime()) { // BlockTime >= StartTime
 		_ = auction.SetStatus(types.AuctionStatusStarted)
 		k.SetAuction(ctx, auction)
 	}
@@ -22,23 +22,16 @@ func (k Keeper) ExecuteStartedStatus(ctx sdk.Context, auction types.AuctionI) {
 	ctx, writeCache := ctx.CacheContext()
 
 	// Do nothing when the auction is still in started status
-	if !auction.ShouldAuctionFinished(ctx.BlockTime()) {
+	if !auction.ShouldAuctionFinished(ctx.BlockTime()) { // BlockTime < EndTime
 		return
 	}
 
+	// Finish the auction
 	switch auction.GetType() {
 	case types.AuctionTypeFixedPrice:
-		if err := k.DistributeSellingCoin(ctx, auction); err != nil {
-			panic(err)
-		}
-
-		if err := k.SetVestingSchedules(ctx, auction); err != nil {
-			panic(err)
-		}
+		k.FinishFixedPriceAuction(ctx, auction)
 
 	case types.AuctionTypeBatch:
-		k.CalculateAllocation(ctx, auction)
-
 		k.FinishBatchAuction(ctx, auction)
 	}
 

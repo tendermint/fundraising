@@ -6,9 +6,9 @@ import (
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
 
-// SetVestingSchedules stores vesting queues based on the vesting schedules of the auction and
+// ApplyVestingSchedules stores vesting queues based on the vesting schedules of the auction and
 // sets status to vesting.
-func (k Keeper) SetVestingSchedules(ctx sdk.Context, auction types.AuctionI) error {
+func (k Keeper) ApplyVestingSchedules(ctx sdk.Context, auction types.AuctionI) error {
 	payingReserveAddr := auction.GetPayingReserveAddress()
 	vestingReserveAddr := auction.GetVestingReserveAddress()
 	reserveCoin := k.bankKeeper.GetBalance(ctx, payingReserveAddr, auction.GetPayingCoinDenom())
@@ -16,27 +16,26 @@ func (k Keeper) SetVestingSchedules(ctx sdk.Context, auction types.AuctionI) err
 
 	vsLen := len(auction.GetVestingSchedules())
 	if vsLen == 0 {
+		// Send reserve coins to the auctioneer from the paying reserve account
 		if err := k.bankKeeper.SendCoins(ctx, payingReserveAddr, auction.GetAuctioneer(), reserveCoins); err != nil {
 			return err
 		}
 
-		if err := auction.SetStatus(types.AuctionStatusFinished); err != nil {
-			return err
-		}
-
+		_ = auction.SetStatus(types.AuctionStatusFinished)
 		k.SetAuction(ctx, auction)
 
 	} else {
+		// Send reserve coins to the vesting reserve account from the paying reserve account
 		if err := k.bankKeeper.SendCoins(ctx, payingReserveAddr, vestingReserveAddr, reserveCoins); err != nil {
 			return err
 		}
 
 		remaining := reserveCoin
 
-		for i, vs := range auction.GetVestingSchedules() {
-			payingAmt := reserveCoin.Amount.ToDec().MulTruncate(vs.Weight).TruncateInt()
+		for i, schedule := range auction.GetVestingSchedules() {
+			payingAmt := reserveCoin.Amount.ToDec().MulTruncate(schedule.Weight).TruncateInt()
 
-			// Store remaining to the paying coin in the last queue
+			// All the remaining paying coin goes to the last vesting queue
 			if i == vsLen-1 {
 				payingAmt = remaining.Amount
 			}
@@ -45,17 +44,14 @@ func (k Keeper) SetVestingSchedules(ctx sdk.Context, auction types.AuctionI) err
 				AuctionId:   auction.GetId(),
 				Auctioneer:  auction.GetAuctioneer().String(),
 				PayingCoin:  sdk.NewCoin(auction.GetPayingCoinDenom(), payingAmt),
-				ReleaseTime: vs.ReleaseTime,
+				ReleaseTime: schedule.ReleaseTime,
 				Released:    false,
 			})
 
 			remaining = remaining.SubAmount(payingAmt)
 		}
 
-		if err := auction.SetStatus(types.AuctionStatusVesting); err != nil {
-			return err
-		}
-
+		_ = auction.SetStatus(types.AuctionStatusVesting)
 		k.SetAuction(ctx, auction)
 	}
 

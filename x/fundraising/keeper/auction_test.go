@@ -100,8 +100,10 @@ func (s *KeeperTestSuite) TestDistributeSellingCoin() {
 	s.placeBidFixedPrice(auction.Id, s.addr(2), parseDec("1"), parseCoin("200000000denom2"), true)
 	s.placeBidFixedPrice(auction.Id, s.addr(3), parseDec("1"), parseCoin("200000000denom2"), true)
 
+	bids := s.keeper.GetBidsByAuctionId(s.ctx, auction.Id)
+
 	// Distribute selling coin
-	err := s.keeper.DistributeSellingCoin(s.ctx, auction)
+	err := s.keeper.DistributeSellingCoin(s.ctx, auction, bids)
 	s.Require().NoError(err)
 
 	// The selling reserve account balance must be zero
@@ -148,12 +150,14 @@ func (s *KeeperTestSuite) TestDistributePayingCoin() {
 	s.placeBidFixedPrice(auction.GetId(), s.addr(1), parseDec("1"), parseCoin("200000000denom2"), true)
 	s.placeBidFixedPrice(auction.GetId(), s.addr(1), parseDec("1"), parseCoin("200000000denom2"), true)
 
+	bids := s.keeper.GetBidsByAuctionId(s.ctx, auction.Id)
+
 	// Distribute selling coin
-	err := s.keeper.DistributeSellingCoin(s.ctx, auction)
+	err := s.keeper.DistributeSellingCoin(s.ctx, auction, bids)
 	s.Require().NoError(err)
 
-	// Set vesting schedules
-	err = s.keeper.SetVestingSchedules(s.ctx, auction)
+	// Apply vesting schedules
+	err = s.keeper.ApplyVestingSchedules(s.ctx, auction)
 	s.Require().NoError(err)
 
 	// All of the vesting queues must not be released yet
@@ -432,7 +436,10 @@ func (s *KeeperTestSuite) TestCalculateWinners() {
 	s.placeBidBatchMany(auction.Id, s.addr(6), parseDec("4.5"), parseCoin("150000000denom1"), true)  // 150
 	s.placeBidBatchMany(auction.Id, s.addr(7), parseDec("3.8"), parseCoin("150000000denom1"), true)  // 150
 
-	a, _ := s.keeper.GetAuction(s.ctx, auction.Id)
+	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
+	s.Require().True(found)
 
 	s.keeper.CalculateAllocation(s.ctx, a)
+
+	// TODO:
 }

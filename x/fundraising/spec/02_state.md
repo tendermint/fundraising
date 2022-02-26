@@ -258,9 +258,9 @@ Stores are KVStores in the multi-store. The key to find the store is the first p
 
 - `BidIndexKey: 0x32 | BidderAddrLen (1 byte) | BidderAddr | AuctionId | BidId -> nil`
 
-### The key to retrieve the last winning bids length 
+### The key to retrieve the last matched bids length 
 
-- `LastWinningBidsLenKey: 0x33 | AuctionId -> Uint64Value(lastWinningBidsLen)`
+- `LastMatchedBidsLenKey: 0x33 | AuctionId -> Uint64Value(lastMatchedBidsLen)`
 
 ### The key to retrieve the vesting queue object from the  auction id and 
 
