@@ -12,7 +12,7 @@ import (
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
 
-func TestIsAuctionStarted(t *testing.T) {
+func TestShouldAuctionStarted(t *testing.T) {
 	auction := types.NewFixedPriceAuction(
 		&types.BaseAuction{
 			Id:                    1,
@@ -46,11 +46,11 @@ func TestIsAuctionStarted(t *testing.T) {
 		{"2021-12-10T00:00:00Z", true},
 		{"2022-01-01T00:00:00Z", true},
 	} {
-		require.Equal(t, tc.expResult, auction.IsAuctionStarted(types.MustParseRFC3339(tc.currentTime)))
+		require.Equal(t, tc.expResult, auction.ShouldAuctionStarted(types.MustParseRFC3339(tc.currentTime)))
 	}
 }
 
-func TestIsAuctionFinished(t *testing.T) {
+func TestShouldAuctionFinished(t *testing.T) {
 	auction := types.NewFixedPriceAuction(
 		&types.BaseAuction{
 			Id:                    1,
@@ -84,6 +84,6 @@ func TestIsAuctionFinished(t *testing.T) {
 		{"2021-12-30T00:00:00Z", true},
 		{"2022-01-01T00:00:00Z", true},
 	} {
-		require.Equal(t, tc.expResult, auction.IsAuctionFinished(types.MustParseRFC3339(tc.currentTime)))
+		require.Equal(t, tc.expResult, auction.ShouldAuctionFinished(types.MustParseRFC3339(tc.currentTime)))
 	}
 }

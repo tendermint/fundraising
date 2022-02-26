@@ -16,14 +16,6 @@ func (k Keeper) GetNextBidIdWithUpdate(ctx sdk.Context, auctionId uint64) uint64
 	return id
 }
 
-// ReservePayingCoin reserves paying coin to the paying reserve account.
-func (k Keeper) ReservePayingCoin(ctx sdk.Context, auctionId uint64, bidderAddr sdk.AccAddress, payingCoin sdk.Coin) error {
-	if err := k.bankKeeper.SendCoins(ctx, bidderAddr, types.PayingReserveAddress(auctionId), sdk.NewCoins(payingCoin)); err != nil {
-		return sdkerrors.Wrap(err, "failed to reserve paying coin")
-	}
-	return nil
-}
-
 // PlaceBid places a bid for the auction.
 func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, error) {
 	auction, found := k.GetAuction(ctx, msg.AuctionId)

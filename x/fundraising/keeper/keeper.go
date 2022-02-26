@@ -6,6 +6,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -88,4 +89,37 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 }
 
 // GetCodec returns codec.Codec object used by the keeper.
-func (k Keeper) GetCodec() codec.BinaryCodec { return k.cdc }
+func (k Keeper) GetCodec() codec.BinaryCodec {
+	return k.cdc
+}
+
+// ReserveCreationFee reserves the auction creation fee to the fee collector account.
+func (k Keeper) ReserveCreationFee(ctx sdk.Context, auctioneerAddr sdk.AccAddress) error {
+	params := k.GetParams(ctx)
+
+	feeCollectorAddr, err := sdk.AccAddressFromBech32(params.FeeCollectorAddress)
+	if err != nil {
+		return err
+	}
+
+	if err := k.bankKeeper.SendCoins(ctx, auctioneerAddr, feeCollectorAddr, params.AuctionCreationFee); err != nil {
+		return sdkerrors.Wrap(err, "failed to reserve auction creation fee")
+	}
+	return nil
+}
+
+// ReserveSellingCoin reserves the selling coin to the selling reserve account.
+func (k Keeper) ReserveSellingCoin(ctx sdk.Context, auctionId uint64, auctioneerAddr sdk.AccAddress, sellingCoin sdk.Coin) error {
+	if err := k.bankKeeper.SendCoins(ctx, auctioneerAddr, types.SellingReserveAddress(auctionId), sdk.NewCoins(sellingCoin)); err != nil {
+		return sdkerrors.Wrap(err, "failed to reserve selling coin")
+	}
+	return nil
+}
+
+// ReservePayingCoin reserves paying coin to the paying reserve account.
+func (k Keeper) ReservePayingCoin(ctx sdk.Context, auctionId uint64, bidderAddr sdk.AccAddress, payingCoin sdk.Coin) error {
+	if err := k.bankKeeper.SendCoins(ctx, bidderAddr, types.PayingReserveAddress(auctionId), sdk.NewCoins(payingCoin)); err != nil {
+		return sdkerrors.Wrap(err, "failed to reserve paying coin")
+	}
+	return nil
+}

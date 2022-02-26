@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -433,10 +432,7 @@ func (s *KeeperTestSuite) TestCalculateWinners() {
 	s.placeBidBatchMany(auction.Id, s.addr(6), parseDec("4.5"), parseCoin("150000000denom1"), true)  // 150
 	s.placeBidBatchMany(auction.Id, s.addr(7), parseDec("3.8"), parseCoin("150000000denom1"), true)  // 150
 
-	result := s.keeper.CalculateBatchResult(s.ctx, auction.Id, auction.RemainingSellingCoin.Amount)
+	a, _ := s.keeper.GetAuction(s.ctx, auction.Id)
 
-	fmt.Println("Num: ", len(result.Bids))
-	fmt.Println("Price: ", result.Price)
-	fmt.Println("SoldAmount: ", result.SoldAmount)
-
+	s.keeper.CalculateAllocation(s.ctx, a)
 }

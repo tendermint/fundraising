@@ -47,8 +47,12 @@ func ValidateVestingSchedules(schedules []VestingSchedule, endTime time.Time) er
 	return nil
 }
 
-// IsVestingReleasable returns true when the vesting queue is ready to release the paying coin.
+// ShouldRelease returns true when the vesting queue is ready to release the paying coin.
 // It checks if the release time is equal or before the given time t and released value is false.
-func (vq VestingQueue) IsVestingReleasable(t time.Time) bool {
+func (vq VestingQueue) ShouldRelease(t time.Time) bool {
 	return !vq.GetReleaseTime().After(t) && !vq.Released
+}
+
+func (vq *VestingQueue) SetReleased(status bool) {
+	vq.Released = status
 }

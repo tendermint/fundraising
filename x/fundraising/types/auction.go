@@ -244,13 +244,13 @@ func (ba BaseAuction) Validate() error {
 	return nil
 }
 
-// IsAuctionStarted returns true if the start time of the auction is equal or before the given time t.
-func (ba BaseAuction) IsAuctionStarted(t time.Time) bool {
+// ShouldAuctionStarted returns true if the start time of the auction is equal or before the given time t.
+func (ba BaseAuction) ShouldAuctionStarted(t time.Time) bool {
 	return !ba.GetStartTime().After(t)
 }
 
-// IsAuctionFinished returns true if the end time of the auction is equal or before the given time t.
-func (ba BaseAuction) IsAuctionFinished(t time.Time) bool {
+// ShouldAuctionFinished returns true if the end time of the auction is equal or before the given time t.
+func (ba BaseAuction) ShouldAuctionFinished(t time.Time) bool {
 	endTimes := ba.GetEndTimes()
 	return !endTimes[len(endTimes)-1].After(t)
 }
@@ -324,8 +324,8 @@ type AuctionI interface {
 	GetStatus() AuctionStatus
 	SetStatus(AuctionStatus) error
 
-	IsAuctionStarted(t time.Time) bool
-	IsAuctionFinished(t time.Time) bool
+	ShouldAuctionStarted(t time.Time) bool
+	ShouldAuctionFinished(t time.Time) bool
 
 	GetAllowedBiddersMap() map[string]sdk.Int
 

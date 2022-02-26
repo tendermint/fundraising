@@ -11,7 +11,7 @@ import (
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
 
-func TestIsVestingReleasable(t *testing.T) {
+func TestShouldRelease(t *testing.T) {
 	now := types.MustParseRFC3339("2021-12-10T00:00:00Z")
 
 	testCases := []struct {
@@ -57,7 +57,7 @@ func TestIsVestingReleasable(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			require.Equal(t, tc.expResult, tc.vq.IsVestingReleasable(now))
+			require.Equal(t, tc.expResult, tc.vq.ShouldRelease(now))
 		})
 	}
 }
