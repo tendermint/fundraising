@@ -601,7 +601,7 @@ func (app *App) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIConfig
 
 	// Register app's OpenAPI routes.
 	if apiConfig.Swagger {
-		apiSvr.Router.Handle("/static/openapi.yml", http.FileServer(http.FS(fundraisingdocs.Docs)))
+		apiSvr.Router.Handle("/static/openapi.yml", http.FileServer(fundraisingdocs.Docs))
 		apiSvr.Router.HandleFunc("/", openapiconsole.Handler(Name, "/static/openapi.yml"))
 	}
 }
