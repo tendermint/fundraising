@@ -353,7 +353,7 @@ func (k Keeper) CalculateAllocation(ctx sdk.Context, auction types.AuctionI) All
 	bids := k.GetBidsByAuctionId(ctx, auction.GetId())
 	bids = types.SortByBidPrice(bids)
 
-	info := AllocationInfo{
+	allocInfo := AllocationInfo{
 		MatchedBids:  []types.Bid{},
 		MatchedPrice: bids[0].Price,
 		SoldAmount:   sdk.ZeroInt(),
@@ -404,14 +404,14 @@ func (k Keeper) CalculateAllocation(ctx sdk.Context, auction types.AuctionI) All
 		b.SetWinner(true)
 		k.SetBid(ctx, b)
 
-		info.MatchedBids = append(info.MatchedBids, b)
-		info.MatchedPrice = matchingPrice
-		info.SoldAmount = accumulatedAmt
+		allocInfo.MatchedBids = append(allocInfo.MatchedBids, b)
+		allocInfo.MatchedPrice = matchingPrice
+		allocInfo.SoldAmount = accumulatedAmt
 	}
 
-	k.SetMatchedBidsLen(ctx, auction.GetId(), len(info.MatchedBids))
+	k.SetMatchedBidsLen(ctx, auction.GetId(), len(allocInfo.MatchedBids))
 
-	return info
+	return allocInfo
 }
 
 func (k Keeper) FinishFixedPriceAuction(ctx sdk.Context, auction types.AuctionI) {
@@ -427,12 +427,11 @@ func (k Keeper) FinishFixedPriceAuction(ctx sdk.Context, auction types.AuctionI)
 }
 
 func (k Keeper) FinishBatchAuction(ctx sdk.Context, auction types.AuctionI) {
-	// Calculate
-	info := k.CalculateAllocation(ctx, auction)
+	allocInfo := k.CalculateAllocation(ctx, auction)
 
 	ba := auction.(*types.BatchAuction)
 	if ba.MaxExtendedRound == 0 {
-		if err := k.DistributeSellingCoin(ctx, auction, info.MatchedBids); err != nil {
+		if err := k.DistributeSellingCoin(ctx, auction, allocInfo.MatchedBids); err != nil {
 			panic(err)
 		}
 
@@ -443,7 +442,7 @@ func (k Keeper) FinishBatchAuction(ctx sdk.Context, auction types.AuctionI) {
 	} else {
 		// Compare with the last matched bids length and
 		// determine if it needs another round
-		currMatchedLen := int64(len(info.MatchedBids))
+		currMatchedLen := int64(len(allocInfo.MatchedBids))
 		lastMatchedLen := k.GetMatchedBidsLen(ctx, ba.Id)
 		currDec := sdk.NewDec(currMatchedLen)
 		lastDec := sdk.NewDec(lastMatchedLen)
@@ -455,11 +454,10 @@ func (k Keeper) FinishBatchAuction(ctx sdk.Context, auction types.AuctionI) {
 		if diff.GTE(ba.ExtendedRoundRate) {
 			k.ExtendRound(ctx, ba)
 		} else {
-			if err := k.DistributeSellingCoin(ctx, auction, info.MatchedBids); err != nil {
+			if err := k.DistributeSellingCoin(ctx, auction, allocInfo.MatchedBids); err != nil {
 				panic(err)
 			}
 
-			// Apply vesting schedules
 			if err := k.ApplyVestingSchedules(ctx, auction); err != nil {
 				panic(err)
 			}
