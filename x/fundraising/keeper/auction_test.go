@@ -80,7 +80,7 @@ func (s *KeeperTestSuite) TestBatchAuction_AuctionStatus() {
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 }
 
-func (s *KeeperTestSuite) TestDistributeSellingCoin() {
+func (s *KeeperTestSuite) TestAllocateSellingCoin_FixedPriceAuction() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("1"),
@@ -100,10 +100,8 @@ func (s *KeeperTestSuite) TestDistributeSellingCoin() {
 	s.placeBidFixedPrice(auction.Id, s.addr(2), parseDec("1"), parseCoin("200000000denom2"), true)
 	s.placeBidFixedPrice(auction.Id, s.addr(3), parseDec("1"), parseCoin("200000000denom2"), true)
 
-	bids := s.keeper.GetBidsByAuctionId(s.ctx, auction.Id)
-
 	// Distribute selling coin
-	err := s.keeper.DistributeSellingCoin(s.ctx, auction, bids)
+	err := s.keeper.AllocateSellingCoin(s.ctx, auction)
 	s.Require().NoError(err)
 
 	// The selling reserve account balance must be zero
@@ -115,7 +113,11 @@ func (s *KeeperTestSuite) TestDistributeSellingCoin() {
 	s.Require().False(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).IsZero())
 }
 
-func (s *KeeperTestSuite) TestDistributePayingCoin() {
+func (s *KeeperTestSuite) TestAllocateSellingCoin_BatchAuction() {
+	// TODO: not implementd yet
+}
+
+func (s *KeeperTestSuite) TestAllocatePayingCoin() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("1"),
@@ -150,10 +152,8 @@ func (s *KeeperTestSuite) TestDistributePayingCoin() {
 	s.placeBidFixedPrice(auction.GetId(), s.addr(1), parseDec("1"), parseCoin("200000000denom2"), true)
 	s.placeBidFixedPrice(auction.GetId(), s.addr(1), parseDec("1"), parseCoin("200000000denom2"), true)
 
-	bids := s.keeper.GetBidsByAuctionId(s.ctx, auction.Id)
-
 	// Distribute selling coin
-	err := s.keeper.DistributeSellingCoin(s.ctx, auction, bids)
+	err := s.keeper.AllocateSellingCoin(s.ctx, auction)
 	s.Require().NoError(err)
 
 	// Apply vesting schedules
@@ -172,7 +172,7 @@ func (s *KeeperTestSuite) TestDistributePayingCoin() {
 	fundraising.EndBlocker(s.ctx, s.keeper)
 
 	// Distribute paying coin
-	err = s.keeper.DistributePayingCoin(s.ctx, auction)
+	err = s.keeper.AllocatePayingCoin(s.ctx, auction)
 	s.Require().NoError(err)
 
 	// First two vesting queues must be released
@@ -187,7 +187,7 @@ func (s *KeeperTestSuite) TestDistributePayingCoin() {
 	// Change the block time
 	s.ctx = s.ctx.WithBlockTime(vqs[3].GetReleaseTime().AddDate(0, 0, 1))
 	fundraising.EndBlocker(s.ctx, s.keeper)
-	s.Require().NoError(s.keeper.DistributePayingCoin(s.ctx, auction))
+	s.Require().NoError(s.keeper.AllocatePayingCoin(s.ctx, auction))
 
 	// All of the vesting queues must be released
 	for _, vq := range s.keeper.GetVestingQueuesByAuctionId(s.ctx, auction.GetId()) {

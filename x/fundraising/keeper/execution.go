@@ -16,12 +16,10 @@ func (k Keeper) ExecuteStandByStatus(ctx sdk.Context, auction types.AuctionI) {
 }
 
 // ExecuteStartedStatus executes operations depending on the auction type.
-// For FixedPriceAuction, it distributes the allocated paying coin to the bidders  and
-// sets vesting schedules if they are defined.
 func (k Keeper) ExecuteStartedStatus(ctx sdk.Context, auction types.AuctionI) {
 	ctx, writeCache := ctx.CacheContext()
 
-	// Do nothing when the auction is still in started status
+	// Do nothing when the auction still needs time to pass the end time
 	if !auction.ShouldAuctionFinished(ctx.BlockTime()) { // BlockTime < EndTime
 		return
 	}
@@ -42,7 +40,7 @@ func (k Keeper) ExecuteStartedStatus(ctx sdk.Context, auction types.AuctionI) {
 // look up the release time of each vesting queue to see if the module needs to
 // distribute the paying coin to the auctioneer.
 func (k Keeper) ExecuteVestingStatus(ctx sdk.Context, auction types.AuctionI) {
-	if err := k.DistributePayingCoin(ctx, auction); err != nil {
+	if err := k.AllocatePayingCoin(ctx, auction); err != nil {
 		panic(err)
 	}
 }

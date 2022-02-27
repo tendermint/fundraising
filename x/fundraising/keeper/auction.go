@@ -19,28 +19,43 @@ func (k Keeper) GetNextAuctionIdWithUpdate(ctx sdk.Context) uint64 {
 	return id
 }
 
-// DistributeSellingCoin releases designated selling coin from the selling reserve account.
-func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI, bids []types.Bid) error {
+// AllocateSellingCoin releases designated selling coin from the selling reserve account.
+func (k Keeper) AllocateSellingCoin(ctx sdk.Context, auction types.AuctionI) error {
 	sellingReserveAddr := auction.GetSellingReserveAddress()
 	sellingCoinDenom := auction.GetSellingCoin().Denom
 
-	totalBidCoin := sdk.NewCoin(sellingCoinDenom, sdk.ZeroInt())
 	inputs := []banktypes.Input{}
 	outputs := []banktypes.Output{}
+	totalOutputAmt := sdk.NewCoin(sellingCoinDenom, sdk.ZeroInt())
 
-	// Loop through all bids and set the allocated coins to all bidders from the selling reserve account
-	for _, b := range bids {
+	// Loop through all bids and set the allocated coins in transaction inputs and outputs
+	// from the selling reserve account
+	for _, b := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
 		switch b.Type {
 		case types.BidTypeFixedPrice:
-			exchangedSellingAmt := b.GetExchangedSellingAmount()
+			exchangedSellingAmt := b.Coin.Amount.ToDec().QuoTruncate(b.Price).TruncateInt()
 			exchangedSellingCoin := sdk.NewCoin(sellingCoinDenom, exchangedSellingAmt)
+			exchangedSellingCoins := sdk.NewCoins(exchangedSellingCoin)
 
-			inputs = append(inputs, banktypes.NewInput(sellingReserveAddr, sdk.NewCoins(exchangedSellingCoin)))
-			outputs = append(outputs, banktypes.NewOutput(b.GetBidder(), sdk.NewCoins(exchangedSellingCoin)))
+			inputs = append(inputs, banktypes.NewInput(sellingReserveAddr, exchangedSellingCoins))
+			outputs = append(outputs, banktypes.NewOutput(b.GetBidder(), exchangedSellingCoins))
 
-			totalBidCoin = totalBidCoin.Add(exchangedSellingCoin)
+			totalOutputAmt = totalOutputAmt.Add(exchangedSellingCoin)
 
 		case types.BidTypeBatchWorth:
+			/*
+				bids가 넘어오는게 아니라 allocInfo가 넘어와서 MatchedPrice로 계산해줘야 되는거 아닌가?
+				내일 다시 한번 생각을 해보고 생각한대로 구현 먼저하던지 정리해서 정호님한테 여쭤보기
+				MinBidAmount 추가하기로 했으니 그것부터 추가하는게 좋을 수도 있을 것 같다
+			*/
+			// exchangedSellingAmt := b.Coin.Amount.ToDec().QuoTruncate(allocInfo.MatchedPrice).TruncateInt()
+			// exchangedSellingCoin := sdk.NewCoin(sellingCoinDenom, exchangedSellingAmt)
+			// exchangedSellingCoins := sdk.NewCoins(exchangedSellingCoin)
+
+			// inputs = append(inputs, banktypes.NewInput(sellingReserveAddr, exchangedSellingCoins))
+			// outputs = append(outputs, banktypes.NewOutput(b.GetBidder(), exchangedSellingCoins))
+
+			// totalOutputAmt = totalOutputAmt.Add(exchangedSellingCoin)
 
 		case types.BidTypeBatchMany:
 
@@ -48,9 +63,9 @@ func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI, b
 	}
 
 	reserveCoin := k.bankKeeper.GetBalance(ctx, sellingReserveAddr, sellingCoinDenom)
-	remainingCoin := reserveCoin.Sub(totalBidCoin)
+	remainingCoin := reserveCoin.Sub(totalOutputAmt)
 
-	// Send remaining coin to the auctioneer
+	// Set transaction input and output to send the remaining coin back to the auctioneer
 	inputs = append(inputs, banktypes.NewInput(sellingReserveAddr, sdk.NewCoins(remainingCoin)))
 	outputs = append(outputs, banktypes.NewOutput(auction.GetAuctioneer(), sdk.NewCoins(remainingCoin)))
 
@@ -62,8 +77,8 @@ func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI, b
 	return nil
 }
 
-// DistributePayingCoin releases the selling coin from the vesting reserve account.
-func (k Keeper) DistributePayingCoin(ctx sdk.Context, auction types.AuctionI) error {
+// AllocatePayingCoin releases the selling coin from the vesting reserve account.
+func (k Keeper) AllocatePayingCoin(ctx sdk.Context, auction types.AuctionI) error {
 	vqs := k.GetVestingQueuesByAuctionId(ctx, auction.GetId())
 	vqsLen := len(vqs)
 
@@ -342,33 +357,36 @@ func (k Keeper) ExtendRound(ctx sdk.Context, ba *types.BatchAuction) {
 	k.SetAuction(ctx, ba)
 }
 
-// AllocationInfo holds information about a batch auction allocation.
-type AllocationInfo struct {
-	MatchedBids  []types.Bid // the matched bids
-	MatchedPrice sdk.Dec     // the final matched price
-	SoldAmount   sdk.Int     // the total sold amount
+// MatchingInfo holds information about a batch auction matching info.
+type MatchingInfo struct {
+	MatchedLen      int64   // the number of matched bids length
+	TotalSoldAmount sdk.Int // the total sold amount
+	MatchedPrice    sdk.Dec // the final matched price
+	Allocations     []AllocationInfo
 }
 
-func (k Keeper) CalculateAllocation(ctx sdk.Context, auction types.AuctionI) AllocationInfo {
+// AllocationInfo holds information about a bidder's allocation.
+type AllocationInfo struct {
+	Bidder string  // the bidder address
+	Amount sdk.Int // selling coin amount for distribution
+}
+
+func (k Keeper) CalculateAllocation(ctx sdk.Context, auction types.AuctionI) MatchingInfo {
 	bids := k.GetBidsByAuctionId(ctx, auction.GetId())
 	bids = types.SortByBidPrice(bids)
 
-	allocInfo := AllocationInfo{
-		MatchedBids:  []types.Bid{},
-		MatchedPrice: bids[0].Price,
-		SoldAmount:   sdk.ZeroInt(),
-	}
+	mInfo := MatchingInfo{}
 
 	allowedBidders := auction.GetAllowedBidders()
 	allowedBiddersMap := auction.GetAllowedBiddersMap() // map(bidder => maxBidAmt)
 	accumulatedMap := make(map[string]sdk.Int)          // map(bidder => accumulatedAmt)
-	totalSellingAmt := auction.GetSellingCoin().Amount
+	totalRemainingSellingAmt := auction.GetRemainingSellingCoin().Amount
 
 	// Iterate from the highest bid price and find the last matching bid price and total sold amount
 	// It doesn't concern about a partial amount of coins for the bid after the last matching bid
 	for _, b := range bids {
 		matchingPrice := b.Price
-		accumulatedAmt := sdk.ZeroInt()
+		totalSoldAmt := sdk.ZeroInt()
 
 		// Add all allowed bidders to accumulatedMap for every matching price
 		for _, ab := range allowedBidders {
@@ -380,44 +398,49 @@ func (k Keeper) CalculateAllocation(ctx sdk.Context, auction types.AuctionI) All
 				continue
 			}
 
+			// Uses minimum of the two amounts to prevent from exceeding the bidder's maximum bid amount
 			if b.Type == types.BidTypeBatchWorth {
-				// Min(ExchangedSellingAmt, MaxBidAmt-AccumulatedBidAmt)
+				// Min(MatchingAmt, MaxBidAmt-AccumulatedBidAmt)
 				matchingAmt := b.Coin.Amount.ToDec().QuoTruncate(matchingPrice).TruncateInt()
 				matchingAmt = sdk.MinInt(matchingAmt, allowedBiddersMap[b.Bidder].Sub(accumulatedMap[b.Bidder]))
 
-				accumulatedAmt = accumulatedAmt.Add(matchingAmt)
+				totalSoldAmt = totalSoldAmt.Add(matchingAmt)
 				accumulatedMap[b.Bidder] = accumulatedMap[b.Bidder].Add(matchingAmt)
 			} else {
-				// Min(SellingAmt, MaxBidAmount-AccumulatedBidAmount)
+				// Min(SellingCoinAmt, MaxBidAmount-AccumulatedBidAmount)
 				diffAmt := allowedBiddersMap[b.Bidder].Sub(accumulatedMap[b.Bidder])
 				matchingAmt := sdk.MinInt(b.Coin.Amount, diffAmt)
 
-				accumulatedAmt = accumulatedAmt.Add(matchingAmt)
+				totalSoldAmt = totalSoldAmt.Add(matchingAmt)
 				accumulatedMap[b.Bidder] = accumulatedMap[b.Bidder].Add(matchingAmt)
 			}
 		}
 
-		if accumulatedAmt.GT(totalSellingAmt) {
+		if totalSoldAmt.GT(totalRemainingSellingAmt) {
 			break
 		}
 
 		b.SetWinner(true)
 		k.SetBid(ctx, b)
 
-		allocInfo.MatchedBids = append(allocInfo.MatchedBids, b)
-		allocInfo.MatchedPrice = matchingPrice
-		allocInfo.SoldAmount = accumulatedAmt
+		mInfo.MatchedLen = mInfo.MatchedLen + 1
+		mInfo.MatchedPrice = matchingPrice
+		mInfo.TotalSoldAmount = totalSoldAmt
 	}
 
-	k.SetMatchedBidsLen(ctx, auction.GetId(), len(allocInfo.MatchedBids))
+	// for bidder, accumulatedAmt := range accumulatedMap {
+	// 	allocInfo.Bidder = bidder
+	// 	allocInfo.Amount = accumulatedAmt
+	// }
 
-	return allocInfo
+	k.SetMatchedBidsLen(ctx, auction.GetId(), mInfo.MatchedLen)
+
+	return mInfo
 }
 
 func (k Keeper) FinishFixedPriceAuction(ctx sdk.Context, auction types.AuctionI) {
-	bids := k.GetBidsByAuctionId(ctx, auction.GetId())
-
-	if err := k.DistributeSellingCoin(ctx, auction, bids); err != nil {
+	// TODO: should we just separate this function? (DistributeFixedPriceSellingCoin, DistributeBatchSellingCoin)
+	if err := k.AllocateSellingCoin(ctx, auction); err != nil {
 		panic(err)
 	}
 
@@ -427,11 +450,11 @@ func (k Keeper) FinishFixedPriceAuction(ctx sdk.Context, auction types.AuctionI)
 }
 
 func (k Keeper) FinishBatchAuction(ctx sdk.Context, auction types.AuctionI) {
-	allocInfo := k.CalculateAllocation(ctx, auction)
+	mInfo := k.CalculateAllocation(ctx, auction)
 
 	ba := auction.(*types.BatchAuction)
 	if ba.MaxExtendedRound == 0 {
-		if err := k.DistributeSellingCoin(ctx, auction, allocInfo.MatchedBids); err != nil {
+		if err := k.AllocateSellingCoin(ctx, auction); err != nil {
 			panic(err)
 		}
 
@@ -442,7 +465,7 @@ func (k Keeper) FinishBatchAuction(ctx sdk.Context, auction types.AuctionI) {
 	} else {
 		// Compare with the last matched bids length and
 		// determine if it needs another round
-		currMatchedLen := int64(len(allocInfo.MatchedBids))
+		currMatchedLen := mInfo.MatchedLen
 		lastMatchedLen := k.GetMatchedBidsLen(ctx, ba.Id)
 		currDec := sdk.NewDec(currMatchedLen)
 		lastDec := sdk.NewDec(lastMatchedLen)
@@ -454,7 +477,7 @@ func (k Keeper) FinishBatchAuction(ctx sdk.Context, auction types.AuctionI) {
 		if diff.GTE(ba.ExtendedRoundRate) {
 			k.ExtendRound(ctx, ba)
 		} else {
-			if err := k.DistributeSellingCoin(ctx, auction, allocInfo.MatchedBids); err != nil {
+			if err := k.AllocateSellingCoin(ctx, auction); err != nil {
 				panic(err)
 			}
 
