@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -410,11 +411,11 @@ func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 	}
 }
 
-func (s *KeeperTestSuite) TestCalculateWinners() {
+func (s *KeeperTestSuite) TestCalculateAllocation() {
 	auction := s.createBatchAuction(
 		s.addr(1),
 		parseDec("1"),
-		parseCoin("300000000denom1"), // 1000
+		parseCoin("300000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
 		1,
@@ -439,7 +440,17 @@ func (s *KeeperTestSuite) TestCalculateWinners() {
 	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
 	s.Require().True(found)
 
-	s.keeper.CalculateAllocation(s.ctx, a)
+	mInfo := s.keeper.CalculateAllocation(s.ctx, a)
 
-	// TODO:
+	fmt.Println("MatchedLen: ", mInfo.MatchedLen)
+	fmt.Println("MatchedPrice: ", mInfo.MatchedPrice)
+	fmt.Println("TotalSoldAmount: ", mInfo.TotalSoldAmount)
+	fmt.Println("")
+
+	// TODO: Verify
+	for _, alloc := range mInfo.Allocations {
+		fmt.Println("AllocateAmount: ", alloc.AllocateAmount)
+		fmt.Println("ReserveAmount: ", alloc.ReserveAmount)
+		fmt.Println("")
+	}
 }
