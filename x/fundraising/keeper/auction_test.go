@@ -101,8 +101,11 @@ func (s *KeeperTestSuite) TestAllocateSellingCoin_FixedPriceAuction() {
 	s.placeBidFixedPrice(auction.Id, s.addr(2), parseDec("1"), parseCoin("200000000denom2"), true)
 	s.placeBidFixedPrice(auction.Id, s.addr(3), parseDec("1"), parseCoin("200000000denom2"), true)
 
+	// Calculate allocation
+	mInfo := s.keeper.CalculateFixedPriceAllocation(s.ctx, auction)
+
 	// Distribute selling coin
-	err := s.keeper.AllocateSellingCoin(s.ctx, auction)
+	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
 	// The selling reserve account balance must be zero
@@ -153,8 +156,11 @@ func (s *KeeperTestSuite) TestAllocatePayingCoin() {
 	s.placeBidFixedPrice(auction.GetId(), s.addr(1), parseDec("1"), parseCoin("200000000denom2"), true)
 	s.placeBidFixedPrice(auction.GetId(), s.addr(1), parseDec("1"), parseCoin("200000000denom2"), true)
 
+	// Calculate allocation
+	mInfo := s.keeper.CalculateFixedPriceAllocation(s.ctx, auction)
+
 	// Distribute selling coin
-	err := s.keeper.AllocateSellingCoin(s.ctx, auction)
+	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
 	// Apply vesting schedules
@@ -415,7 +421,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation() {
 	auction := s.createBatchAuction(
 		s.addr(1),
 		parseDec("1"),
-		parseCoin("300000000denom1"),
+		parseCoin("1000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
 		1,
@@ -440,17 +446,18 @@ func (s *KeeperTestSuite) TestCalculateAllocation() {
 	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
 	s.Require().True(found)
 
-	mInfo := s.keeper.CalculateAllocation(s.ctx, a)
+	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
 
+	fmt.Println("=================================")
 	fmt.Println("MatchedLen: ", mInfo.MatchedLen)
 	fmt.Println("MatchedPrice: ", mInfo.MatchedPrice)
-	fmt.Println("TotalSoldAmount: ", mInfo.TotalSoldAmount)
+	fmt.Println("TotalSoldAmount: ", mInfo.TotalMatchedAmount)
 	fmt.Println("")
 
 	// TODO: Verify
-	for _, alloc := range mInfo.Allocations {
-		fmt.Println("AllocateAmount: ", alloc.AllocateAmount)
-		fmt.Println("ReserveAmount: ", alloc.ReserveAmount)
-		fmt.Println("")
-	}
+	// for _, alloc := range mInfo.Allocations {
+	// 	fmt.Println("AllocateAmount: ", alloc.AllocateAmount)
+	// 	fmt.Println("ReserveAmount: ", alloc.ReserveAmount)
+	// 	fmt.Println("")
+	// }
 }
