@@ -154,6 +154,7 @@ func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) (types.MsgMo
 		return types.MsgModifyBid{}, types.ErrIncorrectAuctionType
 	}
 
+	// also need to check if the bidder that modifies is the same bidder as who placed the bid.
 	bid, found := k.GetBid(ctx, msg.AuctionId, msg.BidId)
 	if !found {
 		return types.MsgModifyBid{}, sdkerrors.Wrap(sdkerrors.ErrNotFound, "bid not found")
@@ -165,6 +166,7 @@ func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) (types.MsgMo
 	}
 
 	// The bid price or coin amount must be higher than the modifying bid one
+	// Jeongho: need to check for error message.
 	if msg.Price.LTE(bid.Price) && msg.Coin.Amount.LTE(bid.Coin.Amount) {
 		return types.MsgModifyBid{},
 			sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "bid price or coin amount cannot be lower")
