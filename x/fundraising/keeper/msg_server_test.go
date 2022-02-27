@@ -67,7 +67,61 @@ func (s *KeeperTestSuite) TestMsgCreateFixedPriceAuction() {
 }
 
 func (s *KeeperTestSuite) TestMsgCreateBatchAuction() {
-	// TODO: not implemented yet
+	ctx := sdk.WrapSDKContext(s.ctx)
+
+	for _, tc := range []struct {
+		name string
+		msg  *types.MsgCreateBatchAuction
+		err  error
+	}{
+		{
+			"valid message with the future start time",
+			types.NewMsgCreateBatchAuction(
+				s.addr(0).String(),
+				sdk.MustNewDecFromStr("0.1"),
+				sdk.NewInt64Coin("denom1", 1_000_000_000_000),
+				"denom2",
+				[]types.VestingSchedule{
+					{
+						ReleaseTime: types.MustParseRFC3339("2023-01-01T00:00:00Z"),
+						Weight:      sdk.MustNewDecFromStr("0.25"),
+					},
+					{
+						ReleaseTime: types.MustParseRFC3339("2023-05-01T00:00:00Z"),
+						Weight:      sdk.MustNewDecFromStr("0.25"),
+					},
+					{
+						ReleaseTime: types.MustParseRFC3339("2023-09-01T00:00:00Z"),
+						Weight:      sdk.MustNewDecFromStr("0.25"),
+					},
+					{
+						ReleaseTime: types.MustParseRFC3339("2023-12-01T00:00:00Z"),
+						Weight:      sdk.MustNewDecFromStr("0.25"),
+					},
+				},
+				1,
+				sdk.MustNewDecFromStr("0.2"),
+				types.MustParseRFC3339("2022-05-01T00:00:00Z"),
+				types.MustParseRFC3339("2023-12-01T00:00:00Z"),
+			),
+			nil,
+		},
+	} {
+		s.Run(tc.name, func() {
+			params := s.keeper.GetParams(s.ctx)
+			s.fundAddr(tc.msg.GetAuctioneer(), params.AuctionCreationFee.Add(tc.msg.SellingCoin))
+
+			_, err := s.msgServer.CreateBatchAuction(ctx, tc.msg)
+			if tc.err != nil {
+				s.Require().ErrorIs(err, tc.err)
+				return
+			}
+			s.Require().NoError(err)
+
+			_, found := s.keeper.GetAuction(s.ctx, 1)
+			s.Require().True(found)
+		})
+	}
 }
 
 func (s *KeeperTestSuite) TestMsgCancelAuction() {

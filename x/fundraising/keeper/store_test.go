@@ -67,10 +67,6 @@ func (s *KeeperTestSuite) TestLastBidId() {
 	bidId := s.keeper.GetLastBidId(s.ctx, auction.Id)
 	s.Require().Equal(uint64(0), bidId)
 
-	s.addAllowedBidder(auction.Id, s.addr(1), exchangedSellingAmount(sdk.OneDec(), parseCoin("20000000denom2")))
-	s.addAllowedBidder(auction.Id, s.addr(2), exchangedSellingAmount(sdk.OneDec(), parseCoin("20000000denom2")))
-	s.addAllowedBidder(auction.Id, s.addr(3), exchangedSellingAmount(sdk.OneDec(), parseCoin("15000000denom2")))
-
 	s.placeBidFixedPrice(auction.Id, s.addr(1), sdk.OneDec(), parseCoin("20000000denom2"), true)
 	s.placeBidFixedPrice(auction.Id, s.addr(2), sdk.OneDec(), parseCoin("20000000denom2"), true)
 	s.placeBidFixedPrice(auction.Id, s.addr(3), sdk.OneDec(), parseCoin("15000000denom2"), true)
@@ -116,10 +112,6 @@ func (s *KeeperTestSuite) TestIterateBids() {
 	auction, found := s.keeper.GetAuction(s.ctx, startedAuction.GetId())
 	s.Require().True(found)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
-
-	s.addAllowedBidder(auction.GetId(), s.addr(1), exchangedSellingAmount(sdk.OneDec(), parseCoin("20000000denom2")))
-	s.addAllowedBidder(auction.GetId(), s.addr(2), exchangedSellingAmount(sdk.OneDec(), parseCoin("35000000denom2")))
-	s.addAllowedBidder(auction.GetId(), s.addr(3), exchangedSellingAmount(sdk.OneDec(), parseCoin("35000000denom2")))
 
 	s.placeBidFixedPrice(auction.GetId(), s.addr(1), sdk.OneDec(), parseCoin("20000000denom2"), true)
 	s.placeBidFixedPrice(auction.GetId(), s.addr(2), sdk.OneDec(), parseCoin("20000000denom2"), true)

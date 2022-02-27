@@ -30,17 +30,17 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 
 	// this line is used by starport scaffolding # 1
 	cmd.AddCommand(
-		QueryParams(),
-		QueryAuctions(),
-		QueryAuction(),
-		QueryBids(),
-		QueryVestings(),
+		NewQueryParamsCmd(),
+		NewQueryAuctionsCmd(),
+		NewQueryAuctionCmd(),
+		NewQueryBidsCmd(),
+		NewQueryVestingsCmd(),
 	)
 
 	return cmd
 }
 
-func QueryParams() *cobra.Command {
+func NewQueryParamsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "params",
 		Args:  cobra.NoArgs,
@@ -75,7 +75,7 @@ $ %s query %s params
 	return cmd
 }
 
-func QueryAuctions() *cobra.Command {
+func NewQueryAuctionsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "auctions",
 		Args:  cobra.NoArgs,
@@ -131,7 +131,7 @@ Auction types: AUCTION_TYPE_FIXED_PRICE and AUCTION_TYPE_ENGLISH
 	return cmd
 }
 
-func QueryAuction() *cobra.Command {
+func NewQueryAuctionCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "auction [auction-id]",
 		Args:  cobra.ExactArgs(1),
@@ -173,7 +173,7 @@ $ %s query %s auction 1
 	return cmd
 }
 
-func QueryBids() *cobra.Command {
+func NewQueryBidsCmd() *cobra.Command {
 	bech32PrefixAccAddr := sdk.GetConfig().GetBech32AccountAddrPrefix()
 
 	cmd := &cobra.Command{
@@ -234,7 +234,7 @@ $ %s query %s bids 1 --winner
 	return cmd
 }
 
-func QueryVestings() *cobra.Command {
+func NewQueryVestingsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "vestings [auction-id]",
 		Args:  cobra.ExactArgs(1),

@@ -178,5 +178,3 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 // ----------------------------------------------------------------------------
 // AppModuleSimulation
 // ----------------------------------------------------------------------------
-
-// TODO: not implemented yet
