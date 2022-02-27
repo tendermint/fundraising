@@ -244,15 +244,42 @@ func (ba BaseAuction) Validate() error {
 	return nil
 }
 
-// IsAuctionStarted returns true if the start time of the auction is equal or before the given time t.
-func (ba BaseAuction) IsAuctionStarted(t time.Time) bool {
+// ShouldAuctionStarted returns true if the start time is equal or before the given time t.
+func (ba BaseAuction) ShouldAuctionStarted(t time.Time) bool {
 	return !ba.GetStartTime().After(t)
 }
 
-// IsAuctionFinished returns true if the end time of the auction is equal or before the given time t.
-func (ba BaseAuction) IsAuctionFinished(t time.Time) bool {
-	endTimes := ba.GetEndTimes()
-	return !endTimes[len(endTimes)-1].After(t)
+// ShouldAuctionFinished returns true if the end time is equal or before the given time t.
+func (ba BaseAuction) ShouldAuctionFinished(t time.Time) bool {
+	ts := ba.GetEndTimes()
+	return !ts[len(ts)-1].After(t)
+}
+
+func (ba BaseAuction) GetMaxBidAmount(bidderAddr string) sdk.Int {
+	maxBidAmt := sdk.ZeroInt()
+	for _, ab := range ba.GetAllowedBidders() {
+		if ab.Bidder == bidderAddr {
+			maxBidAmt = ab.MaxBidAmount
+		}
+	}
+	return maxBidAmt
+}
+
+func (ba BaseAuction) SetMaxBidAmount(bidderAddr string, maxBidAmt sdk.Int) error {
+	for i, ab := range ba.GetAllowedBidders() {
+		if ab.Bidder == bidderAddr {
+			ba.GetAllowedBidders()[i].MaxBidAmount = maxBidAmt
+		}
+	}
+	return nil
+}
+
+func (ba BaseAuction) GetAllowedBiddersMap() map[string]sdk.Int { // map(bidder => maxBidAmount)
+	absMap := make(map[string]sdk.Int)
+	for _, ab := range ba.GetAllowedBidders() {
+		absMap[ab.Bidder] = ab.MaxBidAmount
+	}
+	return absMap
 }
 
 // NewFixedPriceAuction returns a new fixed price auction.
@@ -324,8 +351,8 @@ type AuctionI interface {
 	GetStatus() AuctionStatus
 	SetStatus(AuctionStatus) error
 
-	IsAuctionStarted(t time.Time) bool
-	IsAuctionFinished(t time.Time) bool
+	ShouldAuctionStarted(t time.Time) bool
+	ShouldAuctionFinished(t time.Time) bool
 
 	GetAllowedBiddersMap() map[string]sdk.Int
 
@@ -446,33 +473,6 @@ func ValidateAllowedBidders(bidders []AllowedBidder) error {
 		}
 		if !bidder.MaxBidAmount.IsPositive() {
 			return ErrInvalidMaxBidAmount
-		}
-	}
-	return nil
-}
-
-func (ba BaseAuction) GetAllowedBiddersMap() map[string]sdk.Int { // map(bidder => maxBidAmount)
-	allowedBiddersMap := make(map[string]sdk.Int)
-	for _, ab := range ba.GetAllowedBidders() {
-		allowedBiddersMap[ab.Bidder] = ab.MaxBidAmount
-	}
-	return allowedBiddersMap
-}
-
-func (ba BaseAuction) GetMaxBidAmount(bidder string) sdk.Int {
-	maxBidAmt := sdk.ZeroInt()
-	for _, ab := range ba.GetAllowedBidders() {
-		if ab.Bidder == bidder {
-			maxBidAmt = ab.MaxBidAmount
-		}
-	}
-	return maxBidAmt
-}
-
-func (ba BaseAuction) SetMaxBidAmount(bidder string, maxBidAmt sdk.Int) error {
-	for i, ab := range ba.GetAllowedBidders() {
-		if ab.Bidder == bidder {
-			ba.GetAllowedBidders()[i].MaxBidAmount = maxBidAmt
 		}
 	}
 	return nil

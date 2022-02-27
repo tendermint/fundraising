@@ -16,14 +16,6 @@ func (k Keeper) GetNextBidIdWithUpdate(ctx sdk.Context, auctionId uint64) uint64
 	return id
 }
 
-// ReservePayingCoin reserves paying coin to the paying reserve account.
-func (k Keeper) ReservePayingCoin(ctx sdk.Context, auctionId uint64, bidderAddr sdk.AccAddress, payingCoin sdk.Coin) error {
-	if err := k.bankKeeper.SendCoins(ctx, bidderAddr, types.PayingReserveAddress(auctionId), sdk.NewCoins(payingCoin)); err != nil {
-		return sdkerrors.Wrap(err, "failed to reserve paying coin")
-	}
-	return nil
-}
-
 // PlaceBid places a bid for the auction.
 func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, error) {
 	auction, found := k.GetAuction(ctx, msg.AuctionId)
@@ -86,7 +78,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 			return types.Bid{}, types.ErrIncorrectCoinDenom
 		}
 
-		reserveAmt := msg.Coin.Amount.ToDec().Mul(msg.Price).TruncateInt()
+		reserveAmt := msg.Coin.Amount.ToDec().Mul(msg.Price).Ceil().TruncateInt()
 		reserveCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), reserveAmt)
 
 		if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), reserveCoin); err != nil {
@@ -132,8 +124,7 @@ func (k Keeper) ValidateFixedPriceBid(ctx sdk.Context, auction types.AuctionI, b
 	totalBidAmt := sdk.ZeroInt()
 	for _, b := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
 		if b.Bidder == bid.Bidder {
-			exchangedSellingAmt := b.Coin.Amount.ToDec().QuoTruncate(b.Price).TruncateInt()
-			totalBidAmt = totalBidAmt.Add(exchangedSellingAmt)
+			totalBidAmt = totalBidAmt.Add(b.GetExchangedSellingAmount())
 		}
 	}
 

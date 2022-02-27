@@ -1,6 +1,7 @@
 package types
 
 import (
+	"sort"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -29,4 +30,12 @@ func DeriveAddress(addressType AddressType, moduleName, name string) sdk.AccAddr
 	default:
 		return sdk.AccAddress{}
 	}
+}
+
+// SortByBidPrice sorts bid array by bid price in descending order.
+func SortByBidPrice(bids []Bid) []Bid {
+	sort.SliceStable(bids, func(i, j int) bool {
+		return bids[i].Price.GT(bids[j].Price)
+	})
+	return bids
 }
