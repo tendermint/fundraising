@@ -46,7 +46,7 @@ func (k Keeper) AllocateSellingCoin(ctx sdk.Context, auction types.AuctionI, mIn
 			outputs = append(outputs, banktypes.NewOutput(bidderAddr, allocateCoins))
 
 			// Refund the unmatched bid amount back to the bidder
-			if alloc.ReserveAmount.Sub(alloc.AllocateAmount).IsPositive() {
+			if alloc.ReserveAmount.GT(alloc.AllocateAmount) {
 				refundAmt := alloc.ReserveAmount.Sub(alloc.AllocateAmount)
 				refundCoins := sdk.NewCoins(sdk.NewCoin(sellingCoinDenom, refundAmt))
 
@@ -347,8 +347,11 @@ func (k Keeper) UpdateAllowedBidder(ctx sdk.Context, auctionId uint64, bidder sd
 }
 
 func (k Keeper) ExtendRound(ctx sdk.Context, ba *types.BatchAuction) {
+	params := k.GetParams(ctx)
+	extendedPeriod := ctx.BlockTime().AddDate(0, 0, int(params.ExtendedPeriod))
+
 	endTimes := ba.GetEndTimes()
-	endTimes = append(endTimes, ctx.BlockTime())
+	endTimes = append(endTimes, extendedPeriod)
 
 	_ = ba.SetEndTimes(endTimes)
 	k.SetAuction(ctx, ba)
@@ -378,37 +381,36 @@ func (k Keeper) FinishBatchAuction(ctx sdk.Context, auction types.AuctionI) {
 		if err := k.ApplyVestingSchedules(ctx, auction); err != nil {
 			panic(err)
 		}
+		return
+	}
 
-	} else {
-		currMatchedLen := mInfo.MatchedLen
-		lastMatchedLen := k.GetMatchedBidsLen(ctx, ba.Id)
+	currMatchedLen := mInfo.MatchedLen
+	lastMatchedLen := k.GetMatchedBidsLen(ctx, ba.Id)
 
-		// Extend round since there is no last matched length to compare with
-		if lastMatchedLen == 0 {
-			k.ExtendRound(ctx, ba)
-			return
-		}
+	// Extend round since there is no last matched length to compare with
+	if lastMatchedLen == 0 {
+		k.ExtendRound(ctx, ba)
+		return
+	}
 
-		// Compare with the last matched bids length anddetermine if it needs another round
-		currDec := sdk.NewDec(currMatchedLen)
-		lastDec := sdk.NewDec(lastMatchedLen)
+	// To prevent from auction sniping technique, compare the extended round rate with
+	// the current and the last length of matched bids to determine
+	// if the auction needs another extended round
+	currDec := sdk.NewDec(currMatchedLen)
+	lastDec := sdk.NewDec(lastMatchedLen)
+	diff := sdk.OneDec().Sub(currDec.Quo(lastDec)) // 1 - (CurrentMatchedLenDec / LastMatchedLenDec)
 
-		// 1 - (currentMatchedLenDec / lastMatchedLenDec)
-		diff := sdk.OneDec().Sub(currDec.Quo(lastDec))
+	if diff.GTE(ba.ExtendedRoundRate) {
+		k.ExtendRound(ctx, ba)
+		return
+	}
 
-		// Extend another round if the diff is greater than or equal to the extended round rate
-		if diff.GTE(ba.ExtendedRoundRate) {
-			k.ExtendRound(ctx, ba)
-			return
-		}
+	if err := k.AllocateSellingCoin(ctx, auction, mInfo); err != nil {
+		panic(err)
+	}
 
-		if err := k.AllocateSellingCoin(ctx, auction, mInfo); err != nil {
-			panic(err)
-		}
-
-		if err := k.ApplyVestingSchedules(ctx, auction); err != nil {
-			panic(err)
-		}
+	if err := k.ApplyVestingSchedules(ctx, auction); err != nil {
+		panic(err)
 	}
 }
 
@@ -461,6 +463,11 @@ func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI
 	bids := k.GetBidsByAuctionId(ctx, auction.GetId())
 	bids = types.SortByBidPrice(bids)
 
+	allowedBidders := auction.GetAllowedBidders()
+	if len(allowedBidders) == 0 {
+		panic("This can't occur since the allowed bidders must exist")
+	}
+
 	mInfo := MatchingInfo{
 		MatchedLen:         0,
 		MatchedPrice:       sdk.ZeroDec(),
@@ -479,7 +486,7 @@ func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI
 
 		// Add all allowed bidders to the maps for the matching price
 		// Accumulated and reserved amounts must be initialized per matching price
-		for _, ab := range auction.GetAllowedBidders() {
+		for _, ab := range allowedBidders {
 			accumulatedMap[ab.Bidder] = sdk.ZeroInt()
 			reservedMap[ab.Bidder] = sdk.ZeroInt()
 		}
