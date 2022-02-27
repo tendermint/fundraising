@@ -149,7 +149,7 @@ func AuctionStatusStatesInvariant(k Keeper) sdk.Invariant {
 					count++
 				}
 			case types.AuctionStatusStarted:
-				if !auction.IsAuctionStarted(ctx.BlockTime()) {
+				if !auction.ShouldAuctionStarted(ctx.BlockTime()) {
 					msg += fmt.Sprintf("expected auction status is %s", types.AuctionStatusStarted)
 					count++
 				}
@@ -163,7 +163,7 @@ func AuctionStatusStatesInvariant(k Keeper) sdk.Invariant {
 				}
 			case types.AuctionStatusFinished:
 				if auction.GetType() == types.AuctionTypeFixedPrice {
-					if !auction.IsAuctionFinished(ctx.BlockTime()) {
+					if !auction.ShouldAuctionFinished(ctx.BlockTime()) {
 						msg += fmt.Sprintf("expected auction status is %s", types.AuctionStatusFinished)
 						count++
 					}

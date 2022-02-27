@@ -61,10 +61,10 @@ func (s *KeeperTestSuite) TestPayingPoolReserveAmountInvariant() {
 	s.addAllowedBidder(auction.Id, s.addr(2), exchangedSellingAmount(parseDec("1"), parseCoin("35000000denom4")))
 	s.addAllowedBidder(auction.Id, s.addr(3), exchangedSellingAmount(parseDec("1"), parseCoin("35000000denom4")))
 
-	s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom4"), true)
-	s.placeBid(auction.GetId(), s.addr(2), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom4"), true)
-	s.placeBid(auction.GetId(), s.addr(2), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("15000000denom4"), true)
-	s.placeBid(auction.GetId(), s.addr(3), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("35000000denom4"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(1), sdk.OneDec(), parseCoin("20000000denom4"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(2), sdk.OneDec(), parseCoin("20000000denom4"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(2), sdk.OneDec(), parseCoin("15000000denom4"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(3), sdk.OneDec(), parseCoin("35000000denom4"), true)
 
 	_, broken := keeper.PayingPoolReserveAmountInvariant(k)(ctx)
 	s.Require().False(broken)
@@ -120,10 +120,10 @@ func (s *KeeperTestSuite) TestVestingPoolReserveAmountInvariant() {
 	s.addAllowedBidder(auction.Id, s.addr(2), exchangedSellingAmount(parseDec("1"), parseCoin("35000000denom4")))
 	s.addAllowedBidder(auction.Id, s.addr(3), exchangedSellingAmount(parseDec("1"), parseCoin("35000000denom4")))
 
-	s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom4"), true)
-	s.placeBid(auction.GetId(), s.addr(2), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("20000000denom4"), true)
-	s.placeBid(auction.GetId(), s.addr(2), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("15000000denom4"), true)
-	s.placeBid(auction.GetId(), s.addr(3), types.BidTypeFixedPrice, sdk.OneDec(), parseCoin("35000000denom4"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(1), sdk.OneDec(), parseCoin("20000000denom4"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(2), sdk.OneDec(), parseCoin("20000000denom4"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(2), sdk.OneDec(), parseCoin("15000000denom4"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(3), sdk.OneDec(), parseCoin("35000000denom4"), true)
 
 	// Make the auction ended
 	ctx = ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, 1))

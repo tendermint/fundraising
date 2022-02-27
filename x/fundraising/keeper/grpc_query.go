@@ -123,10 +123,10 @@ func (k Querier) Bids(c context.Context, req *types.QueryBidsRequest) (*types.Qu
 	switch {
 	case req.Bidder != "" && req.IsWinner == "":
 		bids, pageRes, err = queryBidsByBidder(ctx, k, store, req)
-	case req.Bidder != "" && req.IsWinner != "":
-		bids, pageRes, err = queryBidsByBidder(ctx, k, store, req)
 	case req.Bidder == "" && req.IsWinner != "":
 		bids, pageRes, err = queryBidsByIsWinner(ctx, k, store, req)
+	case req.Bidder != "" && req.IsWinner != "":
+		bids, pageRes, err = queryBidsByBidder(ctx, k, store, req)
 	default:
 		bids, pageRes, err = queryAllBids(ctx, k, store, req)
 	}
@@ -207,13 +207,17 @@ func queryBidsByBidder(ctx sdk.Context, k Querier, store sdk.KVStore, req *types
 		auctionId, bidId := types.SplitAuctionIdBidIdKey(key)
 		bid, _ := k.GetBid(ctx, auctionId, bidId)
 
+		if req.Bidder != bid.Bidder {
+			return false, nil
+		}
+
 		if req.IsWinner != "" {
-			eligible, err := strconv.ParseBool(req.IsWinner)
+			isWinner, err := strconv.ParseBool(req.IsWinner)
 			if err != nil {
 				return false, err
 			}
 
-			if bid.IsWinner != eligible {
+			if bid.IsWinner != isWinner {
 				return false, nil
 			}
 		}

@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -80,7 +81,7 @@ func (s *KeeperTestSuite) TestBatchAuction_AuctionStatus() {
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 }
 
-func (s *KeeperTestSuite) TestDistributeSellingCoin() {
+func (s *KeeperTestSuite) TestAllocateSellingCoin_FixedPriceAuction() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("1"),
@@ -95,17 +96,13 @@ func (s *KeeperTestSuite) TestDistributeSellingCoin() {
 	_, found := s.keeper.GetAuction(s.ctx, auction.Id)
 	s.Require().True(found)
 
-	s.addAllowedBidder(auction.Id, s.addr(1), exchangedSellingAmount(parseDec("1"), parseCoin("100000000denom2")))
-	s.addAllowedBidder(auction.Id, s.addr(2), exchangedSellingAmount(parseDec("1"), parseCoin("200000000denom2")))
-	s.addAllowedBidder(auction.Id, s.addr(3), exchangedSellingAmount(parseDec("1"), parseCoin("200000000denom2")))
-
 	// Place bids
-	s.placeBid(auction.Id, s.addr(1), types.BidTypeFixedPrice, parseDec("1"), parseCoin("100000000denom2"), true)
-	s.placeBid(auction.Id, s.addr(2), types.BidTypeFixedPrice, parseDec("1"), parseCoin("200000000denom2"), true)
-	s.placeBid(auction.Id, s.addr(3), types.BidTypeFixedPrice, parseDec("1"), parseCoin("200000000denom2"), true)
+	s.placeBidFixedPrice(auction.Id, s.addr(1), parseDec("1"), parseCoin("100000000denom2"), true)
+	s.placeBidFixedPrice(auction.Id, s.addr(2), parseDec("1"), parseCoin("200000000denom2"), true)
+	s.placeBidFixedPrice(auction.Id, s.addr(3), parseDec("1"), parseCoin("200000000denom2"), true)
 
 	// Distribute selling coin
-	err := s.keeper.DistributeSellingCoin(s.ctx, auction)
+	err := s.keeper.AllocateSellingCoin(s.ctx, auction)
 	s.Require().NoError(err)
 
 	// The selling reserve account balance must be zero
@@ -117,7 +114,11 @@ func (s *KeeperTestSuite) TestDistributeSellingCoin() {
 	s.Require().False(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).IsZero())
 }
 
-func (s *KeeperTestSuite) TestDistributePayingCoin() {
+func (s *KeeperTestSuite) TestAllocateSellingCoin_BatchAuction() {
+	// TODO: not implementd yet
+}
+
+func (s *KeeperTestSuite) TestAllocatePayingCoin() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("1"),
@@ -147,19 +148,17 @@ func (s *KeeperTestSuite) TestDistributePayingCoin() {
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	s.addAllowedBidder(auction.Id, s.addr(1), exchangedSellingAmount(parseDec("1"), parseCoin("500000000denom2")))
-
 	// Place bids
-	s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, parseDec("1"), parseCoin("100000000denom2"), true)
-	s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, parseDec("1"), parseCoin("200000000denom2"), true)
-	s.placeBid(auction.GetId(), s.addr(1), types.BidTypeFixedPrice, parseDec("1"), parseCoin("200000000denom2"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(1), parseDec("1"), parseCoin("100000000denom2"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(1), parseDec("1"), parseCoin("200000000denom2"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(1), parseDec("1"), parseCoin("200000000denom2"), true)
 
 	// Distribute selling coin
-	err := s.keeper.DistributeSellingCoin(s.ctx, auction)
+	err := s.keeper.AllocateSellingCoin(s.ctx, auction)
 	s.Require().NoError(err)
 
-	// Set vesting schedules
-	err = s.keeper.SetVestingSchedules(s.ctx, auction)
+	// Apply vesting schedules
+	err = s.keeper.ApplyVestingSchedules(s.ctx, auction)
 	s.Require().NoError(err)
 
 	// All of the vesting queues must not be released yet
@@ -174,7 +173,7 @@ func (s *KeeperTestSuite) TestDistributePayingCoin() {
 	fundraising.EndBlocker(s.ctx, s.keeper)
 
 	// Distribute paying coin
-	err = s.keeper.DistributePayingCoin(s.ctx, auction)
+	err = s.keeper.AllocatePayingCoin(s.ctx, auction)
 	s.Require().NoError(err)
 
 	// First two vesting queues must be released
@@ -189,7 +188,7 @@ func (s *KeeperTestSuite) TestDistributePayingCoin() {
 	// Change the block time
 	s.ctx = s.ctx.WithBlockTime(vqs[3].GetReleaseTime().AddDate(0, 0, 1))
 	fundraising.EndBlocker(s.ctx, s.keeper)
-	s.Require().NoError(s.keeper.DistributePayingCoin(s.ctx, auction))
+	s.Require().NoError(s.keeper.AllocatePayingCoin(s.ctx, auction))
 
 	// All of the vesting queues must be released
 	for _, vq := range s.keeper.GetVestingQueuesByAuctionId(s.ctx, auction.GetId()) {
@@ -409,5 +408,49 @@ func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 			maxBidAmt := allowedBiddersMap[tc.bidder.String()]
 			s.Require().Equal(tc.maxBidAmount, maxBidAmt)
 		})
+	}
+}
+
+func (s *KeeperTestSuite) TestCalculateAllocation() {
+	auction := s.createBatchAuction(
+		s.addr(1),
+		parseDec("1"),
+		parseCoin("300000000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		1,
+		sdk.MustNewDecFromStr("0.2"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	s.placeBidBatchWorth(auction.Id, s.addr(1), parseDec("10"), parseCoin("100000000denom2"), true)  // 100
+	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("9"), parseCoin("150000000denom2"), true)   // 150
+	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("8"), parseCoin("250000000denom2"), true)   // 250
+	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("7"), parseCoin("250000000denom2"), true)   // 250
+	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("5.5"), parseCoin("250000000denom2"), true) // 250
+	s.placeBidBatchMany(auction.Id, s.addr(4), parseDec("6"), parseCoin("400000000denom1"), true)    // 400
+	s.placeBidBatchMany(auction.Id, s.addr(5), parseDec("5"), parseCoin("150000000denom1"), true)    // 150
+	s.placeBidBatchMany(auction.Id, s.addr(6), parseDec("4.8"), parseCoin("150000000denom1"), true)  // 150
+	s.placeBidBatchMany(auction.Id, s.addr(6), parseDec("4.5"), parseCoin("150000000denom1"), true)  // 150
+	s.placeBidBatchMany(auction.Id, s.addr(7), parseDec("3.8"), parseCoin("150000000denom1"), true)  // 150
+
+	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
+	s.Require().True(found)
+
+	mInfo := s.keeper.CalculateAllocation(s.ctx, a)
+
+	fmt.Println("MatchedLen: ", mInfo.MatchedLen)
+	fmt.Println("MatchedPrice: ", mInfo.MatchedPrice)
+	fmt.Println("TotalSoldAmount: ", mInfo.TotalSoldAmount)
+	fmt.Println("")
+
+	// TODO: Verify
+	for _, alloc := range mInfo.Allocations {
+		fmt.Println("AllocateAmount: ", alloc.AllocateAmount)
+		fmt.Println("ReserveAmount: ", alloc.ReserveAmount)
+		fmt.Println("")
 	}
 }

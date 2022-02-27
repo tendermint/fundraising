@@ -1,6 +1,5 @@
 package docs
 
-import "embed"
+import "net/http"
 
-//go:embed static
-var Docs embed.FS
+var Docs http.FileSystem

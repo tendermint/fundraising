@@ -72,11 +72,11 @@ func (m msgServer) PlaceBid(goCtx context.Context, msg *types.MsgPlaceBid) (*typ
 
 // ModifyBid defines a method to modify the auctioneer's bid
 func (m msgServer) ModifyBid(goCtx context.Context, msg *types.MsgModifyBid) (*types.MsgModifyBidResponse, error) {
-	_ = sdk.UnwrapSDKContext(goCtx)
+	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// if _, err := m.Keeper.ModifyBid(ctx, msg); err != nil {
-	// 	return nil, err
-	// }
+	if _, err := m.Keeper.ModifyBid(ctx, msg); err != nil {
+		return nil, err
+	}
 
 	return &types.MsgModifyBidResponse{}, nil
 }
