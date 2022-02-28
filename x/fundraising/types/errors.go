@@ -20,6 +20,4 @@ var (
 	ErrInsufficientRemainingAmount = sdkerrors.Register(ModuleName, 11, "insufficient remaining amount")
 	ErrNotAllowedBidder            = sdkerrors.Register(ModuleName, 12, "not allowed bidder")
 	ErrIncorrectOwner              = sdkerrors.Register(ModuleName, 13, "incorrect owner")
-	ErrInvalidBidId                = sdkerrors.Register(ModuleName, 14, "incorrect bid id")
-	ErrInvalidModify               = sdkerrors.Register(ModuleName, 15, "bid price or coin amount cannot be lower: invalid request")
 )

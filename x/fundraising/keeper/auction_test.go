@@ -497,11 +497,59 @@ func (s *KeeperTestSuite) TestCalculateAllocation() {
 
 	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
 
-	fmt.Println("=================================")
-	fmt.Println("MatchedLen: ", mInfo.MatchedLen)
-	fmt.Println("MatchedPrice: ", mInfo.MatchedPrice)
-	fmt.Println("TotalSoldAmount: ", mInfo.TotalMatchedAmount)
-	fmt.Println("")
+	//fmt.Println("=================================")
+	//fmt.Println("MatchedLen: ", mInfo.MatchedLen)
+	//fmt.Println("MatchedPrice: ", mInfo.MatchedPrice)
+	//fmt.Println("TotalSoldAmount: ", mInfo.TotalMatchedAmount)
+	//fmt.Println("")
+
+	s.Require().Equal(mInfo.MatchedLen, 4)
+	s.Require().Equal(mInfo.MatchedPrice, 0.9)
+	s.Require().Equal(mInfo.TotalMatchedAmount, sdk.NewInt(1100).Add(sdk.NewInt(2000).ToDec().QuoTruncate(sdk.NewDec(0.9)).TruncateInt()))
+
+	//allocsInfo := []AllocationInfo{}
+	//for bidder, accumulatedAmt := range accumulatedMap {
+	//	allocsInfo = append(allocsInfo, AllocationInfo{
+	//		Bidder:         bidder,
+	//		AllocateAmount: accumulatedAmt,
+	//		ReserveAmount:  reservedMap[bidder],
+	//	})
+	//}
+
+	type AllocationInfo struct {
+		Bidder         string
+		AllocateAmount sdk.Int
+		ReserveAmount  sdk.Int
+	}
+	allocsInfo := []AllocationInfo{
+		{
+			s.addr(2).String(),
+			sdk.NewInt(100_000_000),
+			sdk.NewInt(1_000_000),
+		},
+		{
+			s.addr(3).String(),
+			sdk.NewInt(1_000_000),
+			sdk.NewInt(1_000_000),
+		},
+		{
+			s.addr(1).String(),
+			sdk.NewInt(1_000_000),
+			sdk.NewInt(1_000_000),
+		},
+		{
+			s.addr(4).String(),
+			sdk.NewInt(1_000_000),
+			sdk.NewInt(1_000_000),
+		},
+		{
+			s.addr(5).String(),
+			sdk.NewInt(1_000_000),
+			sdk.NewInt(1_000_000),
+		},
+	}
+
+	s.Require().Equal(mInfo.Allocations, allocsInfo)
 
 	// TODO: Verify
 	// for _, alloc := range mInfo.Allocations {
