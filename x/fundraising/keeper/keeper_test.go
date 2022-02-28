@@ -153,16 +153,14 @@ func (s *KeeperTestSuite) placeBidBatchWorth(
 	bidder sdk.AccAddress,
 	price sdk.Dec,
 	coin sdk.Coin,
+	maxBidAmt sdk.Int,
 	fund bool,
 ) types.Bid {
-	fundAmt := coin.Amount
-	fundCoin := coin
-
 	if fund {
-		s.fundAddr(bidder, sdk.NewCoins(fundCoin))
+		s.fundAddr(bidder, sdk.NewCoins(coin))
 	}
 
-	s.addAllowedBidder(auctionId, bidder, fundAmt)
+	s.addAllowedBidder(auctionId, bidder, maxBidAmt)
 
 	bid, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
 		AuctionId: auctionId,
@@ -181,19 +179,20 @@ func (s *KeeperTestSuite) placeBidBatchMany(
 	bidder sdk.AccAddress,
 	price sdk.Dec,
 	coin sdk.Coin,
+	maxBidAmt sdk.Int,
 	fund bool,
 ) types.Bid {
 	auction, found := s.keeper.GetAuction(s.ctx, auctionId)
 	s.Require().True(found)
 
-	fundAmt := coin.Amount.ToDec().Mul(price).Ceil().TruncateInt()
-	fundCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), fundAmt)
-
 	if fund {
+		fundAmt := coin.Amount.ToDec().Mul(price).Ceil().TruncateInt()
+		fundCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), fundAmt)
+
 		s.fundAddr(bidder, sdk.NewCoins(fundCoin))
 	}
 
-	s.addAllowedBidder(auctionId, bidder, fundAmt)
+	s.addAllowedBidder(auctionId, bidder, maxBidAmt)
 
 	bid, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
 		AuctionId: auctionId,
