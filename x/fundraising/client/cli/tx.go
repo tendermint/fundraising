@@ -29,10 +29,11 @@ func GetTxCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		NewCreateFixedPriceAuction(),
-		NewCreateBatchAuction(),
-		NewCancelAuction(),
-		NewPlaceBid(),
+		NewCreateFixedPriceAuctionCmd(),
+		NewCreateBatchAuctionCmd(),
+		NewCancelAuctionCmd(),
+		NewPlaceBidCmd(),
+		NewModifyBidCmd(),
 	)
 	if keeper.EnableAddAllowedBidder {
 		cmd.AddCommand(NewAddAllowedBidderCmd())
@@ -40,7 +41,7 @@ func GetTxCmd() *cobra.Command {
 	return cmd
 }
 
-func NewCreateFixedPriceAuction() *cobra.Command {
+func NewCreateFixedPriceAuctionCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create-fixed-price-auction [file]",
 		Args:  cobra.ExactArgs(1),
@@ -121,7 +122,7 @@ Description of the parameters:
 	return cmd
 }
 
-func NewCreateBatchAuction() *cobra.Command {
+func NewCreateBatchAuctionCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create-batch-auction [file]",
 		Args:  cobra.ExactArgs(1),
@@ -203,7 +204,7 @@ Description of the parameters:
 	return cmd
 }
 
-func NewCancelAuction() *cobra.Command {
+func NewCancelAuctionCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cancel [auction-id]",
 		Args:  cobra.ExactArgs(1),
@@ -242,7 +243,7 @@ $ %s tx %s cancel 1 --from mykey
 	return cmd
 }
 
-func NewPlaceBid() *cobra.Command {
+func NewPlaceBidCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "bid [auction-id] [bid-type] [price] [coin]",
 		Args:  cobra.ExactArgs(4),
@@ -256,9 +257,9 @@ Bid Type Options
 3. batch-many  (bm or m)
 
 Example:
-$ %s tx %s bid 1 fixed-price 1.0 100000000denom2--from mykey 
-$ %s tx %s bid 1 batch-worth 1.0 100000000denom2--from mykey 
-$ %s tx %s bid 1 batch-many 1.0 100000000denom1--from mykey 
+$ %s tx %s bid 1 fixed-price 1.0 100000000denom2 --from mykey 
+$ %s tx %s bid 1 batch-worth 1.0 100000000denom2 --from mykey 
+$ %s tx %s bid 1 batch-many 1.0 100000000denom1 --from mykey 
 
 Note:
 In case of placing a bid for a fixed price auction, you must provide [price] argument with the same price of the auction. 
@@ -300,6 +301,64 @@ in our technical spec docs. https://github.com/tendermint/fundraising/blob/main/
 				auctionId,
 				clientCtx.GetFromAddress().String(),
 				bidType,
+				price,
+				coin,
+			)
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func NewModifyBidCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "modify-bid [auction-id] [bid-id] [price] [coin]",
+		Args:  cobra.ExactArgs(4),
+		Short: "Modify the bid",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Modify the bid with new price and coin.
+Either price or coin must be higher than the existing bid.
+
+Example:
+$ %s tx %s bid 1 1 1.0 100000000denom2 --from mykey
+`,
+				version.AppName, types.ModuleName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			auctionId, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return err
+			}
+
+			bidId, err := strconv.ParseUint(args[1], 10, 64)
+			if err != nil {
+				return err
+			}
+
+			price, err := sdk.NewDecFromStr(args[2])
+			if err != nil {
+				return err
+			}
+
+			coin, err := sdk.ParseCoinNormalized(args[3])
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgModifyBid(
+				auctionId,
+				clientCtx.GetFromAddress().String(),
+				bidId,
 				price,
 				coin,
 			)
