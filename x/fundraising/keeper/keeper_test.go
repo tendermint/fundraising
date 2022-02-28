@@ -69,7 +69,7 @@ func (s *KeeperTestSuite) createFixedPriceAuction(
 	})
 	s.Require().NoError(err)
 
-	return auction
+	return auction.(*types.FixedPriceAuction)
 }
 
 func (s *KeeperTestSuite) createBatchAuction(
@@ -102,7 +102,7 @@ func (s *KeeperTestSuite) createBatchAuction(
 	})
 	s.Require().NoError(err)
 
-	return auction
+	return auction.(*types.BatchAuction)
 }
 
 func (s *KeeperTestSuite) addAllowedBidder(auctionId uint64, bidder sdk.AccAddress, maxBidAmt sdk.Int) {
@@ -136,7 +136,7 @@ func (s *KeeperTestSuite) placeBidFixedPrice(
 
 	s.addAllowedBidder(auctionId, bidder, fundAmt)
 
-	bid, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
+	b, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
 		AuctionId: auctionId,
 		Bidder:    bidder.String(),
 		BidType:   types.BidTypeFixedPrice,
@@ -145,7 +145,7 @@ func (s *KeeperTestSuite) placeBidFixedPrice(
 	})
 	s.Require().NoError(err)
 
-	return bid
+	return b
 }
 
 func (s *KeeperTestSuite) placeBidBatchWorth(
@@ -162,7 +162,7 @@ func (s *KeeperTestSuite) placeBidBatchWorth(
 
 	s.addAllowedBidder(auctionId, bidder, maxBidAmt)
 
-	bid, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
+	b, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
 		AuctionId: auctionId,
 		Bidder:    bidder.String(),
 		BidType:   types.BidTypeBatchWorth,
@@ -171,7 +171,7 @@ func (s *KeeperTestSuite) placeBidBatchWorth(
 	})
 	s.Require().NoError(err)
 
-	return bid
+	return b
 }
 
 func (s *KeeperTestSuite) placeBidBatchMany(
@@ -194,7 +194,7 @@ func (s *KeeperTestSuite) placeBidBatchMany(
 
 	s.addAllowedBidder(auctionId, bidder, maxBidAmt)
 
-	bid, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
+	b, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
 		AuctionId: auctionId,
 		Bidder:    bidder.String(),
 		BidType:   types.BidTypeBatchMany,
@@ -203,7 +203,7 @@ func (s *KeeperTestSuite) placeBidBatchMany(
 	})
 	s.Require().NoError(err)
 
-	return bid
+	return b
 }
 
 func (s *KeeperTestSuite) cancelAuction(auctionId uint64, auctioneer sdk.AccAddress) types.AuctionI {
