@@ -244,30 +244,38 @@ func (ba BaseAuction) Validate() error {
 	return nil
 }
 
-// ShouldAuctionStarted returns true if the start time is equal or before the given time t.
-func (ba BaseAuction) ShouldAuctionStarted(t time.Time) bool {
-	return !ba.GetStartTime().After(t)
+func (ba BaseAuction) GetMinBidAmount(addr string) sdk.Int {
+	minBidAmt := sdk.ZeroInt()
+	for _, ab := range ba.GetAllowedBidders() {
+		if ab.Bidder == addr {
+			minBidAmt = ab.MinBidAmount
+		}
+	}
+	return minBidAmt
 }
 
-// ShouldAuctionFinished returns true if the end time is equal or before the given time t.
-func (ba BaseAuction) ShouldAuctionFinished(t time.Time) bool {
-	ts := ba.GetEndTimes()
-	return !ts[len(ts)-1].After(t)
+func (ba *BaseAuction) SetMinBidAmount(addr string, minBidAmt sdk.Int) error {
+	for i, ab := range ba.GetAllowedBidders() {
+		if ab.Bidder == addr {
+			ba.GetAllowedBidders()[i].MinBidAmount = minBidAmt
+		}
+	}
+	return nil
 }
 
-func (ba BaseAuction) GetMaxBidAmount(bidderAddr string) sdk.Int {
+func (ba BaseAuction) GetMaxBidAmount(addr string) sdk.Int {
 	maxBidAmt := sdk.ZeroInt()
 	for _, ab := range ba.GetAllowedBidders() {
-		if ab.Bidder == bidderAddr {
+		if ab.Bidder == addr {
 			maxBidAmt = ab.MaxBidAmount
 		}
 	}
 	return maxBidAmt
 }
 
-func (ba BaseAuction) SetMaxBidAmount(bidderAddr string, maxBidAmt sdk.Int) error {
+func (ba *BaseAuction) SetMaxBidAmount(addr string, maxBidAmt sdk.Int) error {
 	for i, ab := range ba.GetAllowedBidders() {
-		if ab.Bidder == bidderAddr {
+		if ab.Bidder == addr {
 			ba.GetAllowedBidders()[i].MaxBidAmount = maxBidAmt
 		}
 	}
@@ -280,6 +288,17 @@ func (ba BaseAuction) GetAllowedBiddersMap() map[string]sdk.Int { // map(bidder 
 		absMap[ab.Bidder] = ab.MaxBidAmount
 	}
 	return absMap
+}
+
+// ShouldAuctionStarted returns true if the start time is equal or before the given time t.
+func (ba BaseAuction) ShouldAuctionStarted(t time.Time) bool {
+	return !ba.GetStartTime().After(t)
+}
+
+// ShouldAuctionFinished returns true if the end time is equal or before the given time t.
+func (ba BaseAuction) ShouldAuctionFinished(t time.Time) bool {
+	ts := ba.GetEndTimes()
+	return !ts[len(ts)-1].After(t)
 }
 
 // NewFixedPriceAuction returns a new fixed price auction.
@@ -355,6 +374,9 @@ type AuctionI interface {
 	ShouldAuctionFinished(t time.Time) bool
 
 	GetAllowedBiddersMap() map[string]sdk.Int
+
+	GetMinBidAmount(bidder string) sdk.Int
+	SetMinBidAmount(bidder string, minBidAmt sdk.Int) error
 
 	GetMaxBidAmount(bidder string) sdk.Int
 	SetMaxBidAmount(bidder string, maxBidAmt sdk.Int) error
