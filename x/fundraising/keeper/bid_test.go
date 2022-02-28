@@ -136,18 +136,51 @@ func (s *KeeperTestSuite) TestBatchAuction_IncorrectCoinDenom() {
 
 }
 
-func (s *KeeperTestSuite) TestBatchWorth() {
+func (s *KeeperTestSuite) TestModifyBid_IncorrectCoinDenom() {
+	auction := s.createBatchAuction(
+		s.addr(1),
+		parseDec("0.5"),
+		parseCoin("1000000000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		1,
+		sdk.MustNewDecFromStr("0.2"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-}
+	s.fundAddr(s.addr(1), parseCoins("200000000denom1, 200000000denom2"))
+	s.addAllowedBidder(auction.Id, s.addr(1), parseCoin("200000000denom1").Amount)
+	s.addAllowedBidder(auction.Id, s.addr(1), parseCoin("200000000denom2").Amount)
 
-func (s *KeeperTestSuite) TestBatchMany() {
+	s.fundAddr(s.addr(2), parseCoins("200000000denom1, 200000000denom2"))
+	s.addAllowedBidder(auction.Id, s.addr(2), parseCoin("200000000denom1").Amount)
+	s.addAllowedBidder(auction.Id, s.addr(2), parseCoin("200000000denom2").Amount)
 
-}
+	bid1 := s.placeBidBatchWorth(auction.Id, s.addr(1), parseDec("1"), parseCoin("100000000denom2"), sdk.NewInt(1000000000), true)
+	bid2 := s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("1"), parseCoin("100000000denom1"), sdk.NewInt(1000000000), true)
 
-func (s *KeeperTestSuite) TestModifyBid_IncorrectAuctionType() {
-	// TODO: not implemented yet
-	// cover a case to modify a bid with higher price
-	// cover a case to modify a bid with higher coin amount
+	// Place a BidTypeBatchWorth bid with an incorrect denom (SellingCoinDenom)
+	_, err := s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{
+		AuctionId: auction.Id,
+		Bidder:    s.addr(1).String(),
+		BidId:     bid1.Id,
+		Price:     parseDec("1"),
+		Coin:      parseCoin("100000000denom1"),
+	})
+	s.Require().ErrorIs(err, types.ErrIncorrectCoinDenom)
+
+	// Place a BidTypeBatchMany bid with an incorrect denom (PayingCoinDenom)
+	_, err = s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{
+		AuctionId: auction.Id,
+		Bidder:    s.addr(2).String(),
+		BidId:     bid2.Id,
+		Price:     parseDec("1"),
+		Coin:      parseCoin("100000000denom2"),
+	})
+	s.Require().ErrorIs(err, types.ErrIncorrectCoinDenom)
 }
 
 func (s *KeeperTestSuite) TestModifyBid() {
@@ -172,7 +205,7 @@ func (s *KeeperTestSuite) TestModifyBid() {
 	_, err := s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{
 		AuctionId: a.Id,
 		Bidder:    s.addr(1).String(),
-		BidId:     5,
+		BidId:     uint64(5),
 		Price:     parseDec("0.8"),
 		Coin:      parseCoin("100000000denom2"),
 	})
@@ -218,4 +251,13 @@ func (s *KeeperTestSuite) TestModifyBid() {
 	})
 	s.Require().ErrorIs(err, sdkerrors.ErrInvalidRequest)
 
+	// Modify the bid with the same coin amount and with the same price
+	_, err = s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{
+		AuctionId: a.Id,
+		Bidder:    s.addr(1).String(),
+		BidId:     b.Id,
+		Price:     parseDec("0.6"),
+		Coin:      parseCoin("100000000denom2"),
+	})
+	s.Require().ErrorIs(err, sdkerrors.ErrInvalidRequest)
 }
