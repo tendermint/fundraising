@@ -69,7 +69,7 @@ func (s *KeeperTestSuite) createFixedPriceAuction(
 	})
 	s.Require().NoError(err)
 
-	return auction
+	return auction.(*types.FixedPriceAuction)
 }
 
 func (s *KeeperTestSuite) createBatchAuction(
@@ -102,7 +102,7 @@ func (s *KeeperTestSuite) createBatchAuction(
 	})
 	s.Require().NoError(err)
 
-	return auction
+	return auction.(*types.BatchAuction)
 }
 
 func (s *KeeperTestSuite) addAllowedBidder(auctionId uint64, bidder sdk.AccAddress, maxBidAmt sdk.Int) {
@@ -136,7 +136,7 @@ func (s *KeeperTestSuite) placeBidFixedPrice(
 
 	s.addAllowedBidder(auctionId, bidder, fundAmt)
 
-	bid, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
+	b, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
 		AuctionId: auctionId,
 		Bidder:    bidder.String(),
 		BidType:   types.BidTypeFixedPrice,
@@ -145,7 +145,7 @@ func (s *KeeperTestSuite) placeBidFixedPrice(
 	})
 	s.Require().NoError(err)
 
-	return bid
+	return b
 }
 
 func (s *KeeperTestSuite) placeBidBatchWorth(
@@ -153,18 +153,16 @@ func (s *KeeperTestSuite) placeBidBatchWorth(
 	bidder sdk.AccAddress,
 	price sdk.Dec,
 	coin sdk.Coin,
+	maxBidAmt sdk.Int,
 	fund bool,
 ) types.Bid {
-	fundAmt := coin.Amount
-	fundCoin := coin
-
 	if fund {
-		s.fundAddr(bidder, sdk.NewCoins(fundCoin))
+		s.fundAddr(bidder, sdk.NewCoins(coin))
 	}
 
-	s.addAllowedBidder(auctionId, bidder, fundAmt)
+	s.addAllowedBidder(auctionId, bidder, maxBidAmt)
 
-	bid, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
+	b, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
 		AuctionId: auctionId,
 		Bidder:    bidder.String(),
 		BidType:   types.BidTypeBatchWorth,
@@ -173,7 +171,7 @@ func (s *KeeperTestSuite) placeBidBatchWorth(
 	})
 	s.Require().NoError(err)
 
-	return bid
+	return b
 }
 
 func (s *KeeperTestSuite) placeBidBatchMany(
@@ -181,21 +179,22 @@ func (s *KeeperTestSuite) placeBidBatchMany(
 	bidder sdk.AccAddress,
 	price sdk.Dec,
 	coin sdk.Coin,
+	maxBidAmt sdk.Int,
 	fund bool,
 ) types.Bid {
 	auction, found := s.keeper.GetAuction(s.ctx, auctionId)
 	s.Require().True(found)
 
-	fundAmt := coin.Amount.ToDec().Mul(price).Ceil().TruncateInt()
-	fundCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), fundAmt)
-
 	if fund {
+		fundAmt := coin.Amount.ToDec().Mul(price).Ceil().TruncateInt()
+		fundCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), fundAmt)
+
 		s.fundAddr(bidder, sdk.NewCoins(fundCoin))
 	}
 
-	s.addAllowedBidder(auctionId, bidder, fundAmt)
+	s.addAllowedBidder(auctionId, bidder, maxBidAmt)
 
-	bid, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
+	b, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
 		AuctionId: auctionId,
 		Bidder:    bidder.String(),
 		BidType:   types.BidTypeBatchMany,
@@ -204,7 +203,7 @@ func (s *KeeperTestSuite) placeBidBatchMany(
 	})
 	s.Require().NoError(err)
 
-	return bid
+	return b
 }
 
 func (s *KeeperTestSuite) cancelAuction(auctionId uint64, auctioneer sdk.AccAddress) types.AuctionI {

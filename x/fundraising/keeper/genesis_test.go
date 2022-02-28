@@ -78,12 +78,12 @@ func (s *KeeperTestSuite) TestGenesisState() {
 	)
 	s.Require().Equal(types.AuctionStatusStarted, batchAuction.GetStatus())
 
-	s.placeBidBatchWorth(batchAuction.Id, s.addr(2), parseDec("0.5"), parseCoin("100000000denom4"), true)
-	s.placeBidBatchWorth(batchAuction.Id, s.addr(2), parseDec("0.4"), parseCoin("150000000denom4"), true)
-	s.placeBidBatchWorth(batchAuction.Id, s.addr(3), parseDec("0.66"), parseCoin("250000000denom4"), true)
-	s.placeBidBatchMany(batchAuction.Id, s.addr(4), parseDec("0.35"), parseCoin("400000000denom3"), true)
-	s.placeBidBatchMany(batchAuction.Id, s.addr(5), parseDec("0.8"), parseCoin("150000000denom3"), true)
-	s.placeBidBatchMany(batchAuction.Id, s.addr(6), parseDec("0.2"), parseCoin("150000000denom3"), true)
+	s.placeBidBatchWorth(batchAuction.Id, s.addr(2), parseDec("0.5"), parseCoin("100000000denom4"), sdk.NewInt(1000000000), true)
+	s.placeBidBatchWorth(batchAuction.Id, s.addr(2), parseDec("0.4"), parseCoin("150000000denom4"), sdk.NewInt(1000000000), true)
+	s.placeBidBatchWorth(batchAuction.Id, s.addr(3), parseDec("0.66"), parseCoin("250000000denom4"), sdk.NewInt(1000000000), true)
+	s.placeBidBatchMany(batchAuction.Id, s.addr(4), parseDec("0.35"), parseCoin("400000000denom3"), sdk.NewInt(1000000000), true)
+	s.placeBidBatchMany(batchAuction.Id, s.addr(5), parseDec("0.8"), parseCoin("150000000denom3"), sdk.NewInt(1000000000), true)
+	s.placeBidBatchMany(batchAuction.Id, s.addr(6), parseDec("0.2"), parseCoin("150000000denom3"), sdk.NewInt(1000000000), true)
 
 	// Modify the current block time a day after the end time
 	s.ctx = s.ctx.WithBlockTime(fixedAuction.GetEndTimes()[0].AddDate(0, 0, 1))
