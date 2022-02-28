@@ -35,6 +35,9 @@ type AuctionI interface {
 	GetStartPrice() sdk.Dec
 	SetStartPrice(sdk.Dec) error
 
+	GetMinBidPrice() sdk.Dec 
+	SetMinBidPrice(sdk.Dec) error
+
 	GetSellingCoin() sdk.Coin
 	SetSellingCoin(sdk.Coin) error
 
@@ -47,13 +50,13 @@ type AuctionI interface {
 	GetVestingSchedules() []VestingSchedule
 	SetVestingSchedules([]VestingSchedule) error
 	
-	GetWinningPrice() sdk.Dec  // To load WinningPrice at the current time 
-	SetWinningPrice(sdk.Dec) error
+	GetMatchedPrice() sdk.Dec 
+	SetMatchedPrice(sdk.Dec) error
 	
 	GetNumberWinningBidders() uint64
 	SetNumberWinningBidders(uint64) error
 	
-	GetRemainingSellingCoin() sdk.Coin // To calculate RemainingSellingCoin 
+	GetRemainingSellingCoin() sdk.Coin
 	SetRemainingSellingCoin(sdk.Coin) error
 	
 	GetStartTime() time.Time

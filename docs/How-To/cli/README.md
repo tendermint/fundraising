@@ -39,6 +39,7 @@ In this JSON example, an auctioneer plans to create a fixed price auction that p
 ```json
 {
   "start_price": "1.000000000000000000",
+  "min_bid_price": "0.100000000000000000",
   "selling_coin": {
     "denom": "denom1",
     "amount": "1000000000000"
@@ -64,6 +65,7 @@ Reference the description of each field:
 | **Field**         |  **Description**                                                                    |
 | :---------------- | :---------------------------------------------------------------------------------- |
 | start_price       | The starting price of the selling coin; it is proportional to the paying coin denom | 
+| min_bid_price     | The minimum bid price                                                               |
 | selling_coin      | The selling amount of coin for the auction                                          | 
 | paying_coin_denom | The paying coin denom that bidders use to bid with                                  | 
 | vesting_schedules | The vesting schedules that release the paying coins to the autioneer                | 
@@ -95,6 +97,7 @@ Result:
         "@type": "/tendermint.fundraising.MsgCreateFixedPriceAuction",
         "auctioneer": "cosmos1dncsflcfknkmlmt3t6836tkd3mu742e2wh4r70",
         "start_price": "1.000000000000000000",
+        "min_bid_price": "0.100000000000000000",
         "selling_coin": {
           "denom": "denom1",
           "amount": "1000000000000"
@@ -155,7 +158,8 @@ JSON example:
 
 ```json
 {
-  "start_price": "0.100000000000000000",
+  "start_price": "0.500000000000000000",
+  "min_bid_price": "0.100000000000000000",
   "selling_coin": {
     "denom": "denom1",
     "amount": "1000000000000"
@@ -183,6 +187,7 @@ Reference the description of each field:
 | **Field**           |  **Description**                                                                    |
 | :------------------ | :---------------------------------------------------------------------------------- |
 | start_price         | The starting price of the selling coin; it is proportional to the paying coin denom | 
+| min_bid_price       | The minimum bid price                                                               |
 | selling_coin        | The selling amount of coin for the auction                                          | 
 | paying_coin_denom   | The paying coin denom that bidders use to bid with                                  | 
 | vesting_schedules   | The vesting schedules that release the paying coins to the autioneer                | 
@@ -217,6 +222,7 @@ Result:
         "@type": "/tendermint.fundraising.MsgCreateBatchAuction",
         "auctioneer": "cosmos1ygsq4lnaernkz02un4fyksdzhzm6aazqpktj9p",
         "start_price": "0.100000000000000000",
+        "min_bid_price": "0.100000000000000000",
         "selling_coin": {
           "denom": "denom1",
           "amount": "1000000000000"
