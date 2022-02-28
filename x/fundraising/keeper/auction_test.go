@@ -462,7 +462,7 @@ func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 
 func (s *KeeperTestSuite) TestCalculateAllocation() {
 	auction := s.createBatchAuction(
-		s.addr(1),
+		s.addr(0),
 		parseDec("1"),
 		parseCoin("6700000000denom1"),
 		"denom2",

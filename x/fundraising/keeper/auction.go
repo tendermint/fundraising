@@ -505,7 +505,7 @@ func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI
 				// MinInt(bidAmt, MaxBidAmt-AccumulatedBidAmt)
 				matchingAmt := sdk.MinInt(bidAmt, maxBidAmt.Sub(accumulatedAmt))
 
-				reservedMap[b.Bidder] = reservedMap[b.Bidder].Add(bidAmt)
+				reservedMap[b.Bidder] = reservedMap[b.Bidder].Add(b.Coin.Amount)
 				accumulatedMap[b.Bidder] = accumulatedMap[b.Bidder].Add(matchingAmt)
 				totalMatchedAmt = totalMatchedAmt.Add(matchingAmt)
 			} else {
@@ -516,6 +516,7 @@ func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI
 				// MinInt(BidAmt, MaxBidAmount-AccumulatedBidAmount)
 				matchingAmt := sdk.MinInt(bidAmt, maxBidAmt.Sub(accumulatedAmt))
 
+				bidAmt = b.Coin.Amount.ToDec().Mul(b.Price).Ceil().TruncateInt()
 				reservedMap[b.Bidder] = reservedMap[b.Bidder].Add(bidAmt)
 				accumulatedMap[b.Bidder] = accumulatedMap[b.Bidder].Add(matchingAmt)
 				totalMatchedAmt = totalMatchedAmt.Add(matchingAmt)
@@ -537,10 +538,6 @@ func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI
 	// Store allocation info from the maps
 	allocsInfo := []AllocationInfo{}
 	for bidder, accumulatedAmt := range accumulatedMap {
-		if accumulatedAmt.IsZero() {
-			continue
-		}
-
 		allocsInfo = append(allocsInfo, AllocationInfo{
 			Bidder:         bidder,
 			AllocateAmount: accumulatedAmt,
@@ -548,6 +545,21 @@ func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI
 		})
 	}
 	mInfo.Allocations = allocsInfo
+
+	// 100  000000
+	// 3250 000000
+	// 1000 000000
+	// 2500 000000
+	// 100  000000
+	// Total: 3211 111111
+
+	for _, alloc := range mInfo.Allocations {
+		fmt.Println("MatchedPrice: ", mInfo.MatchedPrice)
+		fmt.Println("Bidder: ", alloc.Bidder)
+		fmt.Println("AllocateAmt: ", alloc.AllocateAmount)
+		fmt.Println("ReservedAmt: ", alloc.ReserveAmount)
+		fmt.Println("")
+	}
 
 	k.SetMatchedBidsLen(ctx, auction.GetId(), mInfo.MatchedLen)
 
