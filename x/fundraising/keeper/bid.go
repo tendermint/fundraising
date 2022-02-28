@@ -159,15 +159,24 @@ func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) (types.MsgMo
 		return types.MsgModifyBid{}, sdkerrors.Wrap(sdkerrors.ErrNotFound, "bid not found")
 	}
 
+	if bid.Bidder != msg.Bidder {
+		return types.MsgModifyBid{}, types.ErrIncorrectOwner
+	}
+
 	// Modifying bid type is not allowed
 	if bid.Coin.Denom != msg.Coin.Denom {
 		return types.MsgModifyBid{}, types.ErrIncorrectCoinDenom
 	}
 
 	// The bid price or coin amount must be higher than the modifying bid one
-	if msg.Price.LTE(bid.Price) && msg.Coin.Amount.LTE(bid.Coin.Amount) {
+	if msg.Price.LT(bid.Price) || msg.Coin.Amount.LT(bid.Coin.Amount) {
 		return types.MsgModifyBid{},
 			sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "bid price or coin amount cannot be lower")
+	}
+
+	if msg.Price.Equal(bid.Price) && msg.Coin.Amount.Equal(bid.Coin.Amount) {
+		return types.MsgModifyBid{},
+			sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "bid price and coin amount must be changed")
 	}
 
 	// Reserve bid amount difference
