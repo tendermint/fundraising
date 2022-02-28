@@ -226,8 +226,14 @@ message AllowedBidder {
   // bidder specifies the bech32-encoded address that bids for the auction
   string bidder = 1;
 
+  // min_bid_amount specifies the minibum bid amount that the bidder can bid
+  string min_bid_amount = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+
   // max_bid_amount specifies the maximum bid amount that the bidder can bid
-  string max_bid_amount = 2 [
+  string max_bid_amount = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];

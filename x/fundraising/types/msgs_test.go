@@ -556,6 +556,7 @@ func TestAddAllowedBidder(t *testing.T) {
 				uint64(1),
 				types.AllowedBidder{
 					sdk.AccAddress(crypto.AddressHash([]byte("Bidder"))).String(),
+					sdk.NewInt(100_000),
 					sdk.NewInt(100_000_000),
 				},
 			),
