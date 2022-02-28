@@ -22,7 +22,8 @@ func (s *KeeperTestSuite) TestDefaultGenesis() {
 func (s *KeeperTestSuite) TestGenesisState() {
 	fixedAuction := s.createFixedPriceAuction(
 		s.addr(0),
-		sdk.OneDec(),
+		parseDec("1.0"),
+		parseDec("0.1"),
 		parseCoin("200000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{
@@ -57,6 +58,7 @@ func (s *KeeperTestSuite) TestGenesisState() {
 
 	batchAuction := s.createBatchAuction(
 		s.addr(1),
+		parseDec("0.1"),
 		parseDec("0.1"),
 		parseCoin("1000000000000denom3"),
 		"denom4",

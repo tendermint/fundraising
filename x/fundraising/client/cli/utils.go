@@ -15,6 +15,7 @@ import (
 // FixedPriceAuctionRequest defines CLI request for a fixed price auction.
 type FixedPriceAuctionRequest struct {
 	StartPrice       sdk.Dec                 `json:"start_price"`
+	MinBidPrice      sdk.Dec                 `json:"min_bid_price"`
 	SellingCoin      sdk.Coin                `json:"selling_coin"`
 	PayingCoinDenom  string                  `json:"paying_coin_denom"`
 	VestingSchedules []types.VestingSchedule `json:"vesting_schedules"`
@@ -48,6 +49,7 @@ func (req FixedPriceAuctionRequest) String() string {
 // BatchAuctionRequest defines CLI request for an batch auction.
 type BatchAuctionRequest struct {
 	StartPrice        sdk.Dec                 `json:"start_price"`
+	MinBidPrice       sdk.Dec                 `json:"min_bid_price"`
 	SellingCoin       sdk.Coin                `json:"selling_coin"`
 	PayingCoinDenom   string                  `json:"paying_coin_denom"`
 	MaxExtendedRound  uint32                  `json:"max_extended_round"`

@@ -15,6 +15,7 @@ func (s *KeeperTestSuite) TestSellingPoolReserveAmountInvariant() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		sdk.MustNewDecFromStr("0.5"),
+		parseDec("0.1"),
 		sdk.NewInt64Coin("denom1", 500_000_000_000),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -48,6 +49,7 @@ func (s *KeeperTestSuite) TestPayingPoolReserveAmountInvariant() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		sdk.OneDec(),
+		parseDec("0.1"),
 		sdk.NewInt64Coin("denom3", 500_000_000_000),
 		"denom4",
 		[]types.VestingSchedule{},
@@ -86,6 +88,7 @@ func (s *KeeperTestSuite) TestVestingPoolReserveAmountInvariant() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		sdk.OneDec(),
+		parseDec("0.1"),
 		sdk.NewInt64Coin("denom3", 500_000_000_000),
 		"denom4",
 		[]types.VestingSchedule{
@@ -149,6 +152,7 @@ func (s *KeeperTestSuite) TestAuctionStatusStatesInvariant() {
 	standByAuction := s.createFixedPriceAuction(
 		s.addr(0),
 		sdk.MustNewDecFromStr("0.35"),
+		parseDec("0.1"),
 		sdk.NewInt64Coin("denom1", 500_000_000_000),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -164,6 +168,7 @@ func (s *KeeperTestSuite) TestAuctionStatusStatesInvariant() {
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(1),
 		sdk.MustNewDecFromStr("0.5"),
+		parseDec("0.1"),
 		sdk.NewInt64Coin("denom3", 500_000_000_000),
 		"denom4",
 		[]types.VestingSchedule{

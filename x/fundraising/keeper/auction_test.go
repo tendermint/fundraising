@@ -17,6 +17,7 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_AuctionStatus() {
 	standByAuction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("0.5"),
+		parseDec("0.1"),
 		parseCoin("5000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -32,6 +33,7 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_AuctionStatus() {
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(1),
 		parseDec("0.5"),
+		parseDec("0.1"),
 		parseCoin("1000000000000denom3"),
 		"denom4",
 		[]types.VestingSchedule{},
@@ -49,6 +51,7 @@ func (s *KeeperTestSuite) TestBatchAuction_AuctionStatus() {
 	standByAuction := s.createBatchAuction(
 		s.addr(0),
 		parseDec("1"),
+		parseDec("0.1"),
 		parseCoin("5000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -66,6 +69,7 @@ func (s *KeeperTestSuite) TestBatchAuction_AuctionStatus() {
 	startedAuction := s.createBatchAuction(
 		s.addr(1),
 		parseDec("0.5"),
+		parseDec("0.1"),
 		parseCoin("5000000000denom3"),
 		"denom4",
 		[]types.VestingSchedule{},
@@ -85,6 +89,7 @@ func (s *KeeperTestSuite) TestAllocateSellingCoin_FixedPriceAuction() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("1"),
+		parseDec("0.1"),
 		parseCoin("1000000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -120,6 +125,7 @@ func (s *KeeperTestSuite) TestAllocateSellingCoin_FixedPriceAuction() {
 func (s *KeeperTestSuite) TestAllocateSellingCoin_BatchAuction() {
 	a := s.createBatchAuction(
 		s.addr(0),
+		parseDec("0.1"),
 		parseDec("0.1"),
 		parseCoin("1000000000denom1"),
 		"denom2",
@@ -168,6 +174,7 @@ func (s *KeeperTestSuite) TestAllocatePayingCoin() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("1"),
+		parseDec("0.1"),
 		parseCoin("1000000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{
@@ -253,6 +260,7 @@ func (s *KeeperTestSuite) TestCancelAuction() {
 	standByAuction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("1"),
+		parseDec("0.1"),
 		parseCoin("500000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -276,6 +284,7 @@ func (s *KeeperTestSuite) TestAddAllowedBidders() {
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("0.5"),
+		parseDec("0.1"),
 		parseCoin("500000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -346,6 +355,7 @@ func (s *KeeperTestSuite) TestAddAllowedBidders_Length() {
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("0.5"),
+		parseDec("0.1"),
 		parseCoin("500000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -384,6 +394,7 @@ func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("0.5"),
+		parseDec("0.1"),
 		parseCoin("500000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -464,6 +475,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation() {
 	auction := s.createBatchAuction(
 		s.addr(0),
 		parseDec("1"),
+		parseDec("0.1"),
 		parseCoin("6700000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
