@@ -133,11 +133,11 @@ func (s *KeeperTestSuite) TestAllocateSellingCoin_BatchAuction() {
 	s.Require().Equal(types.AuctionStatusStarted, a.GetStatus())
 
 	// Place bids
-	s.placeBidBatchWorth(a.Id, s.addr(1), parseDec("0.21"), parseCoin("100000000denom2"), true)
-	s.placeBidBatchWorth(a.Id, s.addr(2), parseDec("0.25"), parseCoin("150000000denom2"), true)
-	s.placeBidBatchWorth(a.Id, s.addr(3), parseDec("0.27"), parseCoin("250000000denom2"), true)
-	s.placeBidBatchMany(a.Id, s.addr(4), parseDec("0.23"), parseCoin("400000000denom1"), true)
-	s.placeBidBatchMany(a.Id, s.addr(5), parseDec("0.35"), parseCoin("150000000denom1"), true)
+	s.placeBidBatchWorth(a.Id, s.addr(1), parseDec("0.21"), parseCoin("100000000denom2"), sdk.NewInt(1000000000), true)
+	s.placeBidBatchWorth(a.Id, s.addr(2), parseDec("0.25"), parseCoin("150000000denom2"), sdk.NewInt(1000000000), true)
+	s.placeBidBatchWorth(a.Id, s.addr(3), parseDec("0.27"), parseCoin("250000000denom2"), sdk.NewInt(1000000000), true)
+	s.placeBidBatchMany(a.Id, s.addr(4), parseDec("0.23"), parseCoin("400000000denom1"), sdk.NewInt(1000000000), true)
+	s.placeBidBatchMany(a.Id, s.addr(5), parseDec("0.35"), parseCoin("150000000denom1"), sdk.NewInt(1000000000), true)
 
 	auction, found := s.keeper.GetAuction(s.ctx, a.Id)
 	s.Require().True(found)
@@ -462,9 +462,9 @@ func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 
 func (s *KeeperTestSuite) TestCalculateAllocation() {
 	auction := s.createBatchAuction(
-		s.addr(1),
+		s.addr(0),
 		parseDec("1"),
-		parseCoin("1000000000denom1"),
+		parseCoin("6700000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
 		1,
@@ -475,16 +475,22 @@ func (s *KeeperTestSuite) TestCalculateAllocation() {
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	s.placeBidBatchWorth(auction.Id, s.addr(1), parseDec("10"), parseCoin("100000000denom2"), true)  // 100
-	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("9"), parseCoin("150000000denom2"), true)   // 150
-	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("8"), parseCoin("250000000denom2"), true)   // 250
-	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("7"), parseCoin("250000000denom2"), true)   // 250
-	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("5.5"), parseCoin("250000000denom2"), true) // 250
-	s.placeBidBatchMany(auction.Id, s.addr(4), parseDec("6"), parseCoin("400000000denom1"), true)    // 400
-	s.placeBidBatchMany(auction.Id, s.addr(5), parseDec("5"), parseCoin("150000000denom1"), true)    // 150
-	s.placeBidBatchMany(auction.Id, s.addr(6), parseDec("4.8"), parseCoin("150000000denom1"), true)  // 150
-	s.placeBidBatchMany(auction.Id, s.addr(6), parseDec("4.5"), parseCoin("150000000denom1"), true)  // 150
-	s.placeBidBatchMany(auction.Id, s.addr(7), parseDec("3.8"), parseCoin("150000000denom1"), true)  // 150
+	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("1"), parseCoin("100000000denom1"), sdk.NewInt(100000000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("0.8"), parseCoin("1000000000denom1"), sdk.NewInt(100000000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(4), parseDec("0.9"), parseCoin("1000000000denom2"), sdk.NewInt(100000000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("1.1"), parseCoin("1000000000denom2"), sdk.NewInt(100000000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("1.2"), parseCoin("1000000000denom1"), sdk.NewInt(100000000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(5), parseDec("0.8"), parseCoin("100000000denom2"), sdk.NewInt(100000000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("0.7"), parseCoin("100000000denom1"), sdk.NewInt(100000000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("0.5"), parseCoin("100000000denom1"), sdk.NewInt(100000000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("0.8"), parseCoin("1000000000denom2"), sdk.NewInt(100000000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.2"), parseCoin("1000000000denom2"), sdk.NewInt(100000000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("0.3"), parseCoin("1000000000denom1"), sdk.NewInt(100000000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.6"), parseCoin("1000000000denom2"), sdk.NewInt(100000000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("0.5"), parseCoin("1000000000denom2"), sdk.NewInt(100000000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("0.6"), parseCoin("100000000denom1"), sdk.NewInt(100000000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("0.7"), parseCoin("1000000000denom1"), sdk.NewInt(100000000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("1000000000denom2"), sdk.NewInt(100000000), true)
 
 	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
 	s.Require().True(found)
