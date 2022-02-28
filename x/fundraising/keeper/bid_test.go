@@ -4,6 +4,7 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/tendermint/fundraising/x/fundraising/types"
 
 	_ "github.com/stretchr/testify/suite"
@@ -147,4 +148,74 @@ func (s *KeeperTestSuite) TestModifyBid_IncorrectAuctionType() {
 	// TODO: not implemented yet
 	// cover a case to modify a bid with higher price
 	// cover a case to modify a bid with higher coin amount
+}
+
+func (s *KeeperTestSuite) TestModifyBid() {
+	a := s.createBatchAuction(
+		s.addr(0),
+		parseDec("0.1"),
+		parseCoin("1000000000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		1,
+		sdk.MustNewDecFromStr("0.2"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, a.GetStatus())
+
+	// Place a bid
+	b := s.placeBidBatchWorth(a.Id, s.addr(1), parseDec("0.6"), parseCoin("100000000denom2"), true)
+
+	// Modify the bid with not existing bid
+	_, err := s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{
+		AuctionId: a.Id,
+		Bidder:    s.addr(1).String(),
+		BidId:     5,
+		Price:     parseDec("0.8"),
+		Coin:      parseCoin("100000000denom2"),
+	})
+	s.Require().ErrorIs(err, sdkerrors.ErrNotFound)
+
+	// Modify the bid with an incorrect owner
+	_, err = s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{
+		AuctionId: a.Id,
+		Bidder:    s.addr(0).String(),
+		BidId:     b.Id,
+		Price:     parseDec("0.8"),
+		Coin:      parseCoin("100000000denom2"),
+	})
+	s.Require().ErrorIs(err, types.ErrIncorrectOwner)
+
+	// Modify the bid with an incorrect denom
+	_, err = s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{
+		AuctionId: a.Id,
+		Bidder:    s.addr(1).String(),
+		BidId:     b.Id,
+		Price:     parseDec("0.8"),
+		Coin:      parseCoin("100000000denom1"),
+	})
+	s.Require().ErrorIs(err, types.ErrIncorrectCoinDenom)
+
+	// Modify the bid with lower bid price
+	_, err = s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{
+		AuctionId: a.Id,
+		Bidder:    s.addr(1).String(),
+		BidId:     b.Id,
+		Price:     parseDec("0.3"),
+		Coin:      parseCoin("100000000denom2"),
+	})
+	s.Require().ErrorIs(err, sdkerrors.ErrInvalidRequest)
+
+	// Modify the bid with lower coin amount
+	_, err = s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{
+		AuctionId: a.Id,
+		Bidder:    s.addr(1).String(),
+		BidId:     b.Id,
+		Price:     parseDec("0.8"),
+		Coin:      parseCoin("100denom2"),
+	})
+	s.Require().ErrorIs(err, sdkerrors.ErrInvalidRequest)
+
 }

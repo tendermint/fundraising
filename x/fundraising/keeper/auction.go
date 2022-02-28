@@ -104,19 +104,19 @@ func (k Keeper) AllocatePayingCoin(ctx sdk.Context, auction types.AuctionI) erro
 }
 
 // CreateFixedPriceAuction sets fixed price auction.
-func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFixedPriceAuction) (*types.FixedPriceAuction, error) {
+func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFixedPriceAuction) (types.AuctionI, error) {
 	if ctx.BlockTime().After(msg.EndTime) {
-		return &types.FixedPriceAuction{}, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be set prior to the current time")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be set prior to the current time")
 	}
 
 	nextId := k.GetNextAuctionIdWithUpdate(ctx)
 
 	if err := k.ReserveCreationFee(ctx, msg.GetAuctioneer()); err != nil {
-		return &types.FixedPriceAuction{}, err
+		return nil, err
 	}
 
 	if err := k.ReserveSellingCoin(ctx, nextId, msg.GetAuctioneer(), msg.SellingCoin); err != nil {
-		return &types.FixedPriceAuction{}, err
+		return nil, err
 	}
 
 	allowedBidders := []types.AllowedBidder{} // it is nil when an auction is created
@@ -174,19 +174,19 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 }
 
 // CreateBatchAuction sets batch auction.
-func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuction) (*types.BatchAuction, error) {
+func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuction) (types.AuctionI, error) {
 	if ctx.BlockTime().After(msg.EndTime) {
-		return &types.BatchAuction{}, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be set prior to the current time")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be set prior to the current time")
 	}
 
 	nextId := k.GetNextAuctionIdWithUpdate(ctx)
 
 	if err := k.ReserveCreationFee(ctx, msg.GetAuctioneer()); err != nil {
-		return &types.BatchAuction{}, err
+		return nil, err
 	}
 
 	if err := k.ReserveSellingCoin(ctx, nextId, msg.GetAuctioneer(), msg.SellingCoin); err != nil {
-		return &types.BatchAuction{}, err
+		return nil, err
 	}
 
 	allowedBidders := []types.AllowedBidder{} // it is nil when an auction is created
