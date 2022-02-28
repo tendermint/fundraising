@@ -166,7 +166,7 @@ func (s *KeeperTestSuite) TestModifyBid() {
 	s.Require().Equal(types.AuctionStatusStarted, a.GetStatus())
 
 	// Place a bid
-	b := s.placeBidBatchWorth(a.Id, s.addr(1), parseDec("0.6"), parseCoin("100000000denom2"), true)
+	b := s.placeBidBatchWorth(a.Id, s.addr(1), parseDec("0.6"), parseCoin("100000000denom2"), sdk.NewInt(1000000000), true)
 
 	// Modify the bid with not existing bid
 	_, err := s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{
