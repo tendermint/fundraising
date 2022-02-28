@@ -70,7 +70,7 @@ func (s *ModuleTestSuite) createFixedPriceAuction(
 	})
 	s.Require().NoError(err)
 
-	return auction
+	return auction.(*types.FixedPriceAuction)
 }
 
 func (s *ModuleTestSuite) addAllowedBidder(auctionId uint64, bidder sdk.AccAddress, maxBidAmount sdk.Int) {
