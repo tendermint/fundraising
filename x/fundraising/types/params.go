@@ -6,19 +6,16 @@ import (
 	"gopkg.in/yaml.v2"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/address"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 // Parameter store keys.
 var (
-	KeyAuctionCreationFee  = []byte("AuctionCreationFee")
-	KeyExtendedPeriod      = []byte("ExtendedPeriod")
-	KeyFeeCollectorAddress = []byte("FeeCollectorAddress")
+	KeyAuctionCreationFee = []byte("AuctionCreationFee")
+	KeyExtendedPeriod     = []byte("ExtendedPeriod")
 
-	DefaultAuctionCreationFee  = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100_000_000)))
-	DefaultExtendedPeriod      = uint32(1)
-	DefaultFeeCollectorAddress = sdk.AccAddress(address.Module(ModuleName, []byte("FeeCollector")))
+	DefaultAuctionCreationFee = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100_000_000)))
+	DefaultExtendedPeriod     = uint32(1)
 )
 
 var _ paramstypes.ParamSet = (*Params)(nil)
@@ -31,9 +28,8 @@ func ParamKeyTable() paramstypes.KeyTable {
 // DefaultParams returns the default fundraising module parameters.
 func DefaultParams() Params {
 	return Params{
-		AuctionCreationFee:  DefaultAuctionCreationFee,
-		ExtendedPeriod:      DefaultExtendedPeriod,
-		FeeCollectorAddress: DefaultFeeCollectorAddress.String(),
+		AuctionCreationFee: DefaultAuctionCreationFee,
+		ExtendedPeriod:     DefaultExtendedPeriod,
 	}
 }
 
@@ -42,7 +38,6 @@ func (p *Params) ParamSetPairs() paramstypes.ParamSetPairs {
 	return paramstypes.ParamSetPairs{
 		paramstypes.NewParamSetPair(KeyAuctionCreationFee, &p.AuctionCreationFee, validateAuctionCreationFee),
 		paramstypes.NewParamSetPair(KeyExtendedPeriod, &p.ExtendedPeriod, validateExtendedPeriod),
-		paramstypes.NewParamSetPair(KeyFeeCollectorAddress, &p.FeeCollectorAddress, validateFeeCollector),
 	}
 }
 
@@ -60,7 +55,6 @@ func (p Params) Validate() error {
 	}{
 		{p.AuctionCreationFee, validateAuctionCreationFee},
 		{p.ExtendedPeriod, validateExtendedPeriod},
-		{p.FeeCollectorAddress, validateFeeCollector},
 	} {
 		if err := v.validator(v.value); err != nil {
 			return err
@@ -86,24 +80,6 @@ func validateExtendedPeriod(i interface{}) error {
 	_, ok := i.(uint32)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	return nil
-}
-
-func validateFeeCollector(i interface{}) error {
-	v, ok := i.(string)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if v == "" {
-		return fmt.Errorf("auction fee collector address must not be empty")
-	}
-
-	_, err := sdk.AccAddressFromBech32(v)
-	if err != nil {
-		return fmt.Errorf("invalid account address: %v", v)
 	}
 
 	return nil
