@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -27,24 +29,24 @@ func (s *KeeperTestSuite) TestMsgCreateFixedPriceAuction() {
 				"denom2",
 				[]types.VestingSchedule{
 					{
-						ReleaseTime: types.MustParseRFC3339("2023-01-01T00:00:00Z"),
+						ReleaseTime: time.Now().AddDate(1, 0, 0),
 						Weight:      sdk.MustNewDecFromStr("0.25"),
 					},
 					{
-						ReleaseTime: types.MustParseRFC3339("2023-05-01T00:00:00Z"),
+						ReleaseTime: time.Now().AddDate(1, 3, 0),
 						Weight:      sdk.MustNewDecFromStr("0.25"),
 					},
 					{
-						ReleaseTime: types.MustParseRFC3339("2023-09-01T00:00:00Z"),
+						ReleaseTime: time.Now().AddDate(1, 6, 0),
 						Weight:      sdk.MustNewDecFromStr("0.25"),
 					},
 					{
-						ReleaseTime: types.MustParseRFC3339("2023-12-01T00:00:00Z"),
+						ReleaseTime: time.Now().AddDate(1, 9, 0),
 						Weight:      sdk.MustNewDecFromStr("0.25"),
 					},
 				},
-				types.MustParseRFC3339("2022-05-01T00:00:00Z"),
-				types.MustParseRFC3339("2023-06-01T00:00:00Z"),
+				time.Now(),
+				time.Now().AddDate(0, 1, 0),
 			),
 			nil,
 		},
@@ -83,26 +85,26 @@ func (s *KeeperTestSuite) TestMsgCreateBatchAuction() {
 				"denom2",
 				[]types.VestingSchedule{
 					{
-						ReleaseTime: types.MustParseRFC3339("2023-01-01T00:00:00Z"),
+						ReleaseTime: time.Now().AddDate(1, 0, 0),
 						Weight:      sdk.MustNewDecFromStr("0.25"),
 					},
 					{
-						ReleaseTime: types.MustParseRFC3339("2023-05-01T00:00:00Z"),
+						ReleaseTime: time.Now().AddDate(1, 3, 0),
 						Weight:      sdk.MustNewDecFromStr("0.25"),
 					},
 					{
-						ReleaseTime: types.MustParseRFC3339("2023-09-01T00:00:00Z"),
+						ReleaseTime: time.Now().AddDate(1, 6, 0),
 						Weight:      sdk.MustNewDecFromStr("0.25"),
 					},
 					{
-						ReleaseTime: types.MustParseRFC3339("2023-12-01T00:00:00Z"),
+						ReleaseTime: time.Now().AddDate(1, 9, 0),
 						Weight:      sdk.MustNewDecFromStr("0.25"),
 					},
 				},
 				1,
 				sdk.MustNewDecFromStr("0.2"),
-				types.MustParseRFC3339("2022-05-01T00:00:00Z"),
-				types.MustParseRFC3339("2023-12-01T00:00:00Z"),
+				time.Now(),
+				time.Now().AddDate(0, 1, 0),
 			),
 			nil,
 		},
@@ -133,7 +135,7 @@ func (s *KeeperTestSuite) TestMsgCancelAuction() {
 		auctioneer.String(),
 		uint64(1),
 	))
-	s.Require().ErrorIs(err, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", uint64(1)))
+	s.Require().ErrorIs(err, sdkerrors.ErrNotFound)
 
 	// Create a fixed price auction that has started status
 	startedAuction := s.createFixedPriceAuction(
@@ -142,8 +144,8 @@ func (s *KeeperTestSuite) TestMsgCancelAuction() {
 		sdk.NewInt64Coin("denom1", 500_000_000_000),
 		"denom2",
 		[]types.VestingSchedule{},
-		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2022-03-01T00:00:00Z"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 1, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, startedAuction.GetStatus())
@@ -153,14 +155,14 @@ func (s *KeeperTestSuite) TestMsgCancelAuction() {
 		s.addr(1).String(),
 		startedAuction.GetId(),
 	))
-	s.Require().ErrorIs(err, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "failed to verify ownership of the auction"))
+	s.Require().ErrorIs(err, sdkerrors.ErrInvalidRequest)
 
 	// Try to cancel with the auction that is already started
 	_, err = s.msgServer.CancelAuction(ctx, types.NewMsgCancelAuction(
 		startedAuction.GetAuctioneer().String(),
 		startedAuction.GetId(),
 	))
-	s.Require().ErrorIs(err, sdkerrors.Wrap(types.ErrInvalidAuctionStatus, "auction cannot be canceled due to current status"))
+	s.Require().ErrorIs(err, types.ErrInvalidAuctionStatus)
 
 	// Create another fixed price auction that is stand by status
 	// Create a fixed price auction that has started status
@@ -170,8 +172,8 @@ func (s *KeeperTestSuite) TestMsgCancelAuction() {
 		sdk.NewInt64Coin("denom3", 500_000_000_000),
 		"denom4",
 		[]types.VestingSchedule{},
-		types.MustParseRFC3339("2030-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2030-03-01T00:00:00Z"),
+		time.Now().AddDate(0, 3, 0),
+		time.Now().AddDate(0, 4, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStandBy, standByAuction.GetStatus())
@@ -198,8 +200,8 @@ func (s *KeeperTestSuite) TestMsgPlaceBid() {
 		sdk.NewInt64Coin("denom1", 500_000_000_000),
 		"denom2",
 		[]types.VestingSchedule{},
-		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2022-06-01T00:00:00Z"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 1, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
@@ -277,8 +279,8 @@ func (s *KeeperTestSuite) TestMsgAddAllowedBidder() {
 		sdk.NewInt64Coin("denom1", 500_000_000_000),
 		"denom2",
 		[]types.VestingSchedule{},
-		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2022-06-01T00:00:00Z"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 1, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
