@@ -238,7 +238,7 @@ func (ba BaseAuction) Validate() error {
 	if err := ValidateVestingSchedules(ba.VestingSchedules, ba.EndTimes[len(ba.EndTimes)-1]); err != nil {
 		return err
 	}
-	if err := ValidateAllowedBidders(ba.AllowedBidders); err != nil {
+	if err := ValidateAllowedBidders(ba.AllowedBidders, ba.SellingCoin.Amount); err != nil {
 		return err
 	}
 	return nil
@@ -466,12 +466,15 @@ func VestingReserveAddress(auctionId uint64) sdk.AccAddress {
 }
 
 // ValidateAllowedBidders validates allowed bidders.
-func ValidateAllowedBidders(bidders []AllowedBidder) error {
-	for _, bidder := range bidders {
-		if bidder.MaxBidAmount.IsNil() {
+func ValidateAllowedBidders(bidders []AllowedBidder, totalSellingAmt sdk.Int) error {
+	for _, b := range bidders {
+		if b.MaxBidAmount.IsNil() {
 			return ErrInvalidMaxBidAmount
 		}
-		if !bidder.MaxBidAmount.IsPositive() {
+		if !b.MaxBidAmount.IsPositive() {
+			return ErrInvalidMaxBidAmount
+		}
+		if b.MaxBidAmount.GT(totalSellingAmt) {
 			return ErrInvalidMaxBidAmount
 		}
 	}
