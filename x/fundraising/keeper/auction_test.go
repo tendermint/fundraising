@@ -317,18 +317,25 @@ func (s *KeeperTestSuite) TestAddAllowedBidders() {
 			types.ErrEmptyAllowedBidders,
 		},
 		{
-			"zero maximum bid amount value",
+			"zero maximum bid amount",
 			[]types.AllowedBidder{
 				{Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(0)},
 			},
 			types.ErrInvalidMaxBidAmount,
 		},
 		{
-			"negative maximum bid amount value",
+			"negative maximum bid amount",
 			[]types.AllowedBidder{
 				{Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(-1)},
 			},
 			types.ErrInvalidMaxBidAmount,
+		},
+		{
+			"exceed the total selling amount",
+			[]types.AllowedBidder{
+				{Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(500000000001)},
+			},
+			types.ErrInsufficientRemainingAmount,
 		},
 	} {
 		s.Run(tc.name, func() {
