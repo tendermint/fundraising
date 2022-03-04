@@ -302,7 +302,7 @@ func (k Keeper) AddAllowedBidders(ctx sdk.Context, auctionId uint64, bidders []t
 		return types.ErrEmptyAllowedBidders
 	}
 
-	if err := types.ValidateAllowedBidders(bidders); err != nil {
+	if err := types.ValidateAllowedBidders(bidders, auction.GetSellingCoin().Amount); err != nil {
 		return err
 	}
 
