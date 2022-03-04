@@ -217,7 +217,7 @@ func (s *KeeperTestSuite) TestMsgPlaceBid() {
 				auction.GetId(),
 				s.addr(1).String(),
 				types.BidTypeFixedPrice,
-				sdk.MustNewDecFromStr("0.5"),
+				auction.StartPrice,
 				parseCoin("1000000denom2"),
 			),
 			nil,
@@ -239,25 +239,14 @@ func (s *KeeperTestSuite) TestMsgPlaceBid() {
 				auction.GetId(),
 				s.addr(1).String(),
 				types.BidTypeFixedPrice,
-				sdk.MustNewDecFromStr("0.5"),
+				auction.StartPrice,
 				parseCoin("1000000denom1"),
 			),
 			types.ErrIncorrectCoinDenom,
 		},
-		{
-			"insufficient funds",
-			types.NewMsgPlaceBid(
-				auction.GetId(),
-				s.addr(1).String(),
-				types.BidTypeFixedPrice,
-				sdk.MustNewDecFromStr("0.5"),
-				parseCoin("50000000000000000denom2"),
-			),
-			types.ErrInsufficientRemainingAmount,
-		},
 	} {
 		s.Run(tc.name, func() {
-			s.fundAddr(tc.msg.GetBidder(), sdk.NewCoins(parseCoin("5000000denom2"), parseCoin("1000000denom1")))
+			s.fundAddr(tc.msg.GetBidder(), sdk.NewCoins(tc.msg.Coin))
 			s.addAllowedBidder(auction.Id, tc.msg.GetBidder(), exchangedSellingAmount(tc.msg.Price, tc.msg.Coin))
 
 			_, err := s.msgServer.PlaceBid(ctx, tc.msg)

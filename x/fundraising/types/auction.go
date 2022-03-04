@@ -475,7 +475,7 @@ func ValidateAllowedBidders(bidders []AllowedBidder, totalSellingAmt sdk.Int) er
 			return ErrInvalidMaxBidAmount
 		}
 		if b.MaxBidAmount.GT(totalSellingAmt) {
-			return ErrInvalidMaxBidAmount
+			return ErrInsufficientRemainingAmount
 		}
 	}
 	return nil

@@ -335,7 +335,7 @@ func (s *KeeperTestSuite) TestAddAllowedBidders() {
 			[]types.AllowedBidder{
 				{Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(500000000001)},
 			},
-			types.ErrInvalidMaxBidAmount,
+			types.ErrInsufficientRemainingAmount,
 		},
 	} {
 		s.Run(tc.name, func() {
