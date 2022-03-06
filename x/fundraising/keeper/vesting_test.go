@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/tendermint/fundraising/x/fundraising/types"
@@ -17,20 +19,20 @@ func (s *KeeperTestSuite) TestVestingQueue_RemainingCoin() {
 		"denom2",
 		[]types.VestingSchedule{
 			{
-				ReleaseTime: types.MustParseRFC3339("2022-01-01T22:00:00+00:00"),
+				ReleaseTime: time.Now().AddDate(0, 0, -1).AddDate(0, 6, 0),
 				Weight:      sdk.MustNewDecFromStr("0.3"),
 			},
 			{
-				ReleaseTime: types.MustParseRFC3339("2022-04-01T22:00:00+00:00"),
+				ReleaseTime: time.Now().AddDate(0, 0, -1).AddDate(0, 9, 0),
 				Weight:      sdk.MustNewDecFromStr("0.3"),
 			},
 			{
-				ReleaseTime: types.MustParseRFC3339("2022-08-01T22:00:00+00:00"),
+				ReleaseTime: time.Now().AddDate(0, 0, -1).AddDate(1, 0, 0),
 				Weight:      sdk.MustNewDecFromStr("0.4"),
 			},
 		},
-		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2022-03-01T00:00:00Z"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 1, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())

@@ -361,7 +361,7 @@ func New(
 		app.GetSubspace(fundraisingtypes.ModuleName),
 		app.AccountKeeper,
 		app.BankKeeper,
-		app.ModuleAccountAddrs(),
+		app.DistrKeeper,
 	)
 
 	// Create static IBC router, add transfer route, then set and seal it
@@ -401,7 +401,7 @@ func New(
 		params.NewAppModule(app.ParamsKeeper),
 		transferModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
-		fundraising.NewAppModule(appCodec, app.FundraisingKeeper, app.AccountKeeper, app.BankKeeper),
+		fundraising.NewAppModule(appCodec, app.FundraisingKeeper, app.AccountKeeper, app.BankKeeper, app.DistrKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that

@@ -30,6 +30,10 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_AuctionStatus() {
 	s.Require().True(found)
 	s.Require().Equal(types.AuctionStatusStandBy, auction.GetStatus())
 
+	feePool := s.app.DistrKeeper.GetFeePool(s.ctx)
+	auctionCreationFee := s.keeper.GetParams(s.ctx).AuctionCreationFee
+	s.Require().True(feePool.CommunityPool.IsEqual(sdk.NewDecCoinsFromCoins(auctionCreationFee...)))
+
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(1),
 		parseDec("0.5"),
@@ -65,6 +69,10 @@ func (s *KeeperTestSuite) TestBatchAuction_AuctionStatus() {
 	auction, found := s.keeper.GetAuction(s.ctx, standByAuction.GetId())
 	s.Require().True(found)
 	s.Require().Equal(types.AuctionStatusStandBy, auction.GetStatus())
+
+	feePool := s.app.DistrKeeper.GetFeePool(s.ctx)
+	auctionCreationFee := s.keeper.GetParams(s.ctx).AuctionCreationFee
+	s.Require().True(feePool.CommunityPool.IsEqual(sdk.NewDecCoinsFromCoins(auctionCreationFee...)))
 
 	startedAuction := s.createBatchAuction(
 		s.addr(1),
@@ -326,18 +334,25 @@ func (s *KeeperTestSuite) TestAddAllowedBidders() {
 			types.ErrEmptyAllowedBidders,
 		},
 		{
-			"zero maximum bid amount value",
+			"zero maximum bid amount",
 			[]types.AllowedBidder{
 				{Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(0)},
 			},
 			types.ErrInvalidMaxBidAmount,
 		},
 		{
-			"negative maximum bid amount value",
+			"negative maximum bid amount",
 			[]types.AllowedBidder{
 				{Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(-1)},
 			},
 			types.ErrInvalidMaxBidAmount,
+		},
+		{
+			"exceed the total selling amount",
+			[]types.AllowedBidder{
+				{Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(500000000001)},
+			},
+			types.ErrInsufficientRemainingAmount,
 		},
 	} {
 		s.Run(tc.name, func() {

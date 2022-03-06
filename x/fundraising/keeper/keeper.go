@@ -38,8 +38,7 @@ type Keeper struct {
 
 	accountKeeper types.AccountKeeper
 	bankKeeper    types.BankKeeper
-
-	blockedAddrs map[string]bool
+	distrKeeper   types.DistrKeeper
 }
 
 func NewKeeper(
@@ -49,7 +48,7 @@ func NewKeeper(
 	paramSpace paramtypes.Subspace,
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
-	blockedAddrs map[string]bool,
+	distrKeeper types.DistrKeeper,
 ) *Keeper {
 	// Ensure fundraising module account is set
 	if addr := accountKeeper.GetModuleAddress(types.ModuleName); addr == nil {
@@ -68,7 +67,7 @@ func NewKeeper(
 		paramSpace:    paramSpace,
 		accountKeeper: accountKeeper,
 		bankKeeper:    bankKeeper,
-		blockedAddrs:  blockedAddrs,
+		distrKeeper:   distrKeeper,
 	}
 }
 
@@ -97,14 +96,10 @@ func (k Keeper) GetCodec() codec.BinaryCodec {
 func (k Keeper) ReserveCreationFee(ctx sdk.Context, auctioneerAddr sdk.AccAddress) error {
 	params := k.GetParams(ctx)
 
-	feeCollectorAddr, err := sdk.AccAddressFromBech32(params.FeeCollectorAddress)
-	if err != nil {
-		return err
+	if err := k.distrKeeper.FundCommunityPool(ctx, params.AuctionCreationFee, auctioneerAddr); err != nil {
+		return sdkerrors.Wrap(err, "failed to reserve auction creation fee to the community pool")
 	}
 
-	if err := k.bankKeeper.SendCoins(ctx, auctioneerAddr, feeCollectorAddr, params.AuctionCreationFee); err != nil {
-		return sdkerrors.Wrap(err, "failed to reserve auction creation fee")
-	}
 	return nil
 }
 

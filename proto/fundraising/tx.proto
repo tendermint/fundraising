@@ -50,7 +50,7 @@ message MsgCreateFixedPriceAuction {
     (gogoproto.nullable) = false
   ];
 
-  // min_bid_price specifies the minibum bid price 
+  // min_bid_price specifies the minibum bid price
   string min_bid_price = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
@@ -100,7 +100,7 @@ message MsgCreateBatchAuction {
     (gogoproto.nullable) = false
   ];
 
-    // min_bid_price specifies the minibum bid price 
+  // min_bid_price specifies the minibum bid price
   string min_bid_price = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false

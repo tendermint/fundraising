@@ -26,11 +26,6 @@ message Params {
   // the extended auction round lasts.
   uint32 extended_period = 2
       [ (gogoproto.moretags) = "yaml:\"extended_period\"" ];
-
-  // fee_collector_address is the module account address to collect fees within
-  // the module
-  string fee_collector_address = 3
-      [ (gogoproto.moretags) = "yaml:\"fee_collector_address\"" ];
 }
 
 // BaseAuction defines a base auction type. It contains all the necessary fields
@@ -71,7 +66,7 @@ message BaseAuction {
     (gogoproto.nullable) = false
   ];
 
-  // min_bid_price specifies the minibum bid price 
+  // min_bid_price specifies the minibum bid price
   string min_bid_price = 8 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false

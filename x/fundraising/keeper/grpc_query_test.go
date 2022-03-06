@@ -373,16 +373,16 @@ func (s *KeeperTestSuite) TestGRPCVestings() {
 		"denom2",
 		[]types.VestingSchedule{
 			{
-				ReleaseTime: types.MustParseRFC3339("2022-06-01T00:00:00Z"),
+				ReleaseTime: time.Now().AddDate(1, 0, 0),
 				Weight:      sdk.MustNewDecFromStr("0.5"),
 			},
 			{
-				ReleaseTime: types.MustParseRFC3339("2022-12-01T00:00:00Z"),
+				ReleaseTime: time.Now().AddDate(1, 6, 0),
 				Weight:      sdk.MustNewDecFromStr("0.5"),
 			},
 		},
-		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2022-03-01T00:00:00Z"),
+		time.Now().AddDate(0, -1, 0),
+		time.Now().AddDate(0, -1, 0).AddDate(0, 3, 0),
 		true,
 	)
 

@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/tendermint/fundraising/x/fundraising"
@@ -19,8 +21,8 @@ func (s *KeeperTestSuite) TestSellingPoolReserveAmountInvariant() {
 		sdk.NewInt64Coin("denom1", 500_000_000_000),
 		"denom2",
 		[]types.VestingSchedule{},
-		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2022-06-10T00:00:00Z"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 3, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
@@ -53,8 +55,8 @@ func (s *KeeperTestSuite) TestPayingPoolReserveAmountInvariant() {
 		sdk.NewInt64Coin("denom3", 500_000_000_000),
 		"denom4",
 		[]types.VestingSchedule{},
-		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2022-03-10T00:00:00Z"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 3, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
@@ -93,24 +95,24 @@ func (s *KeeperTestSuite) TestVestingPoolReserveAmountInvariant() {
 		"denom4",
 		[]types.VestingSchedule{
 			{
-				ReleaseTime: types.MustParseRFC3339("2023-01-01T00:00:00Z"),
+				ReleaseTime: time.Now().AddDate(1, 0, 0),
 				Weight:      sdk.MustNewDecFromStr("0.25"),
 			},
 			{
-				ReleaseTime: types.MustParseRFC3339("2023-05-01T00:00:00Z"),
+				ReleaseTime: time.Now().AddDate(1, 3, 0),
 				Weight:      sdk.MustNewDecFromStr("0.25"),
 			},
 			{
-				ReleaseTime: types.MustParseRFC3339("2023-09-01T00:00:00Z"),
+				ReleaseTime: time.Now().AddDate(1, 6, 0),
 				Weight:      sdk.MustNewDecFromStr("0.25"),
 			},
 			{
-				ReleaseTime: types.MustParseRFC3339("2023-12-01T00:00:00Z"),
+				ReleaseTime: time.Now().AddDate(1, 9, 0),
 				Weight:      sdk.MustNewDecFromStr("0.25"),
 			},
 		},
-		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2022-03-10T00:00:00Z"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 3, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
@@ -156,8 +158,8 @@ func (s *KeeperTestSuite) TestAuctionStatusStatesInvariant() {
 		sdk.NewInt64Coin("denom1", 500_000_000_000),
 		"denom2",
 		[]types.VestingSchedule{},
-		types.MustParseRFC3339("2023-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2023-03-01T00:00:00Z"),
+		time.Now().AddDate(0, 1, 0),
+		time.Now().AddDate(0, 3, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStandBy, standByAuction.GetStatus())
@@ -173,24 +175,24 @@ func (s *KeeperTestSuite) TestAuctionStatusStatesInvariant() {
 		"denom4",
 		[]types.VestingSchedule{
 			{
-				ReleaseTime: types.MustParseRFC3339("2023-01-01T00:00:00Z"),
+				ReleaseTime: time.Now().AddDate(1, 0, 0),
 				Weight:      sdk.MustNewDecFromStr("0.25"),
 			},
 			{
-				ReleaseTime: types.MustParseRFC3339("2023-05-01T00:00:00Z"),
+				ReleaseTime: time.Now().AddDate(1, 3, 0),
 				Weight:      sdk.MustNewDecFromStr("0.25"),
 			},
 			{
-				ReleaseTime: types.MustParseRFC3339("2023-09-01T00:00:00Z"),
+				ReleaseTime: time.Now().AddDate(1, 6, 0),
 				Weight:      sdk.MustNewDecFromStr("0.25"),
 			},
 			{
-				ReleaseTime: types.MustParseRFC3339("2023-12-01T00:00:00Z"),
+				ReleaseTime: time.Now().AddDate(1, 9, 0),
 				Weight:      sdk.MustNewDecFromStr("0.25"),
 			},
 		},
-		types.MustParseRFC3339("2022-01-01T00:00:00Z"),
-		types.MustParseRFC3339("2022-03-01T00:00:00Z"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 1, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, startedAuction.GetStatus())
