@@ -29,6 +29,10 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_AuctionStatus() {
 	s.Require().True(found)
 	s.Require().Equal(types.AuctionStatusStandBy, auction.GetStatus())
 
+	feePool := s.app.DistrKeeper.GetFeePool(s.ctx)
+	auctionCreationFee := s.keeper.GetParams(s.ctx).AuctionCreationFee
+	s.Require().True(feePool.CommunityPool.IsEqual(sdk.NewDecCoinsFromCoins(auctionCreationFee...)))
+
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(1),
 		parseDec("0.5"),
@@ -62,6 +66,10 @@ func (s *KeeperTestSuite) TestBatchAuction_AuctionStatus() {
 	auction, found := s.keeper.GetAuction(s.ctx, standByAuction.GetId())
 	s.Require().True(found)
 	s.Require().Equal(types.AuctionStatusStandBy, auction.GetStatus())
+
+	feePool := s.app.DistrKeeper.GetFeePool(s.ctx)
+	auctionCreationFee := s.keeper.GetParams(s.ctx).AuctionCreationFee
+	s.Require().True(feePool.CommunityPool.IsEqual(sdk.NewDecCoinsFromCoins(auctionCreationFee...)))
 
 	startedAuction := s.createBatchAuction(
 		s.addr(1),
