@@ -65,7 +65,7 @@ Reference the description of each field:
 | **Field**         |  **Description**                                                                    |
 | :---------------- | :---------------------------------------------------------------------------------- |
 | start_price       | The starting price of the selling coin; it is proportional to the paying coin denom | 
-| min_bid_price     | The minimum bid price                                                               |
+| min_bid_price     | The minimum bid price that bidders must provide                                     |
 | selling_coin      | The selling amount of coin for the auction                                          | 
 | paying_coin_denom | The paying coin denom that bidders use to bid with                                  | 
 | vesting_schedules | The vesting schedules that release the paying coins to the autioneer                | 
@@ -187,7 +187,7 @@ Reference the description of each field:
 | **Field**           |  **Description**                                                                    |
 | :------------------ | :---------------------------------------------------------------------------------- |
 | start_price         | The starting price of the selling coin; it is proportional to the paying coin denom | 
-| min_bid_price       | The minimum bid price                                                               |
+| min_bid_price       | The minimum bid price that bidders must provide                                     |
 | selling_coin        | The selling amount of coin for the auction                                          | 
 | paying_coin_denom   | The paying coin denom that bidders use to bid with                                  | 
 | vesting_schedules   | The vesting schedules that release the paying coins to the autioneer                | 

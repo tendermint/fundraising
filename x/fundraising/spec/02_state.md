@@ -93,7 +93,7 @@ type BaseAuction struct {
 	SellingReserveAddress string            // the reserve account to collect selling coins from the auctioneer
 	PayingReserveAddress  string            // the reserve account to collect paying coins from the bidders
 	StartPrice            sdk.Dec           // the starting price
-	MinBidPrice           sdk.Dec           // the minimum bid price
+	MinBidPrice           sdk.Dec           // the minimum bid price that bidders must provide
 	SellingCoin           sdk.Coin          // the selling amount of coin
 	PayingCoinDenom       string            // the denom that the auctioneer receives to raise funds
 	VestingReserveAddress string            // the reserve account that releases the accumulated paying coins based on the schedules
