@@ -57,6 +57,7 @@ Where auction.json contains:
 
 {
   "start_price": "1.000000000000000000",
+  "min_bid_price": "0.100000000000000000",
   "selling_coin": {
     "denom": "denom1",
     "amount": "1000000000000"
@@ -106,6 +107,7 @@ Description of the parameters:
 			msg := types.NewMsgCreateFixedPriceAuction(
 				clientCtx.GetFromAddress().String(),
 				auction.StartPrice,
+				auction.MinBidPrice,
 				auction.SellingCoin,
 				auction.PayingCoinDenom,
 				auction.VestingSchedules,
@@ -136,7 +138,8 @@ $ %s tx %s create-batch-auction <path/to/auction.json> --from mykey
 
 Where auction.json contains:
 {
-  "start_price": "0.100000000000000000",
+  "start_price": "0.500000000000000000",
+  "min_bid_price": "0.100000000000000000",
   "selling_coin": {
     "denom": "denom1",
     "amount": "1000000000000"
@@ -186,6 +189,7 @@ Description of the parameters:
 			msg := types.NewMsgCreateBatchAuction(
 				clientCtx.GetFromAddress().String(),
 				auction.StartPrice,
+				auction.MinBidPrice,
 				auction.SellingCoin,
 				auction.PayingCoinDenom,
 				auction.VestingSchedules,

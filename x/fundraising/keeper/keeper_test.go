@@ -46,6 +46,7 @@ func (s *KeeperTestSuite) SetupTest() {
 func (s *KeeperTestSuite) createFixedPriceAuction(
 	auctioneer sdk.AccAddress,
 	startPrice sdk.Dec,
+	minBidPrice sdk.Dec,
 	sellingCoin sdk.Coin,
 	payingCoinDenom string,
 	vestingSchedules []types.VestingSchedule,
@@ -61,6 +62,7 @@ func (s *KeeperTestSuite) createFixedPriceAuction(
 	auction, err := s.keeper.CreateFixedPriceAuction(s.ctx, &types.MsgCreateFixedPriceAuction{
 		Auctioneer:       auctioneer.String(),
 		StartPrice:       startPrice,
+		MinBidPrice:      minBidPrice,
 		SellingCoin:      sellingCoin,
 		PayingCoinDenom:  payingCoinDenom,
 		VestingSchedules: vestingSchedules,
@@ -75,6 +77,7 @@ func (s *KeeperTestSuite) createFixedPriceAuction(
 func (s *KeeperTestSuite) createBatchAuction(
 	auctioneer sdk.AccAddress,
 	startPrice sdk.Dec,
+	minBidPrice sdk.Dec,
 	sellingCoin sdk.Coin,
 	payingCoinDenom string,
 	vestingSchedules []types.VestingSchedule,
@@ -92,6 +95,7 @@ func (s *KeeperTestSuite) createBatchAuction(
 	auction, err := s.keeper.CreateBatchAuction(s.ctx, &types.MsgCreateBatchAuction{
 		Auctioneer:        auctioneer.String(),
 		StartPrice:        startPrice,
+		MinBidPrice:       minBidPrice,
 		SellingCoin:       sellingCoin,
 		PayingCoinDenom:   payingCoinDenom,
 		VestingSchedules:  vestingSchedules,

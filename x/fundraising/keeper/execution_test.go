@@ -12,6 +12,7 @@ func (s *KeeperTestSuite) TestExecuteStartedAuction_BatchAuction() {
 	ba := s.createBatchAuction(
 		s.addr(1),
 		parseDec("1"),
+		parseDec("0.1"),
 		parseCoin("10000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},

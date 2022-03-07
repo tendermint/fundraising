@@ -35,6 +35,9 @@ type AuctionI interface {
 	GetStartPrice() sdk.Dec
 	SetStartPrice(sdk.Dec) error
 
+	GetMinBidPrice() sdk.Dec 
+	SetMinBidPrice(sdk.Dec) error
+
 	GetSellingCoin() sdk.Coin
 	SetSellingCoin(sdk.Coin) error
 
@@ -47,13 +50,13 @@ type AuctionI interface {
 	GetVestingSchedules() []VestingSchedule
 	SetVestingSchedules([]VestingSchedule) error
 	
-	GetWinningPrice() sdk.Dec  // To load WinningPrice at the current time 
-	SetWinningPrice(sdk.Dec) error
+	GetMatchedPrice() sdk.Dec 
+	SetMatchedPrice(sdk.Dec) error
 	
 	GetNumberWinningBidders() uint64
 	SetNumberWinningBidders(uint64) error
 	
-	GetRemainingSellingCoin() sdk.Coin // To calculate RemainingSellingCoin 
+	GetRemainingSellingCoin() sdk.Coin
 	SetRemainingSellingCoin(sdk.Coin) error
 	
 	GetStartTime() time.Time
@@ -85,20 +88,21 @@ A base auction stores all requisite fields directly in a struct.
 type BaseAuction struct {
 	Id                    uint64            // id of the auction
 	Type                  AuctionType       // the auction type; currently FixedPrice and English are supported
-	AllowedBidders        []AllowedBidder   // the bidders who are allowed to bid for the auction
+	AllowedBidders        []AllowedBidder   // the bidders who are allowed to bid
 	Auctioneer            string            // the owner of the auction
 	SellingReserveAddress string            // the reserve account to collect selling coins from the auctioneer
 	PayingReserveAddress  string            // the reserve account to collect paying coins from the bidders
-	StartPrice            sdk.Dec           // the starting price for the auction
-	SellingCoin           sdk.Coin          // the selling coin for the auction
+	StartPrice            sdk.Dec           // the starting price
+	MinBidPrice           sdk.Dec           // the minimum bid price that bidders must provide
+	SellingCoin           sdk.Coin          // the selling amount of coin
 	PayingCoinDenom       string            // the denom that the auctioneer receives to raise funds
 	VestingReserveAddress string            // the reserve account that releases the accumulated paying coins based on the schedules
 	VestingSchedules      []VestingSchedule // the vesting schedules for the auction
 	WinningPrice          sdk.Dec           // the winning price of the auction
-	NumberWinningBidders    uint64       // current number of winning bidders    
-	RemainingSellingCoin         sdk.Coin          // the remaining amount of coin to sell
+	NumberWinningBidders  uint64            // current number of winning bidders
+	RemainingSellingCoin  sdk.Coin          // the remaining amount of coin to sell
 	StartTime             time.Time         // the start time of the auction
-	EndTimes               []time.Time       // the end times of the auction; it is an array since extended round(s) can occur
+	EndTimes              []time.Time       // the end times of the auction; it is an array since extended round(s) can occur
 	Status                AuctionStatus     // the auction status
 }
 
@@ -156,7 +160,6 @@ type BatchAuction struct {
     MaxExtendedRound    uint32  // a maximum number of extended rounds
     ExtendedRate        sdk.Dec // rate that determines if the auction needs another round, compared to the number of winning bidders at the previous end time.
 }
-
 ```
 
 ## Auction Status
@@ -188,12 +191,12 @@ const (
 type Bid struct {
 	AuctionId uint64   // id of the auction
 	Bidder    string   // the account that bids for the auction
-	Id        uint64    // id of the bid of the bidder
-	Type      BidType   // the bid type; currently How-Much-Worth-To-Buy and How-Many-Coins-To-Buy are supported.  
+	Id        uint64   // id of the bid of the bidder
+	Type      BidType  // the bid type; currently How-Much-Worth-To-Buy and How-Many-Coins-To-Buy are supported.
 	Price     sdk.Dec  // the price for the bid
 	Coin      sdk.Coin // targeted amount of coin that the bidder bids; the denom must be either the denom or SellingCoin or PayingCoinDenom
-	Height          uint64   // block height
-	isWinner        bool     // the bid that is determined to be a winner when an auction ends; default value is false
+	Height    uint64   // block height
+	isWinner  bool     // the bid that is determined to be a winner when an auction ends; default value is false
 }
 ```
 

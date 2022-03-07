@@ -120,8 +120,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 	}
 
 	allowedBidders := []types.AllowedBidder{} // it is nil when an auction is created
-	winningPrice := msg.StartPrice            // it is start price
-	numWinningBidders := uint64(0)            // initial value is 0
+	matchedPrice := msg.StartPrice            // it is start price
 	remainingSellingCoin := msg.SellingCoin   // it is starting with selling coin amount
 	endTimes := []time.Time{msg.EndTime}      // it is an array data type to handle BatchAuction
 
@@ -133,12 +132,12 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		types.SellingReserveAddress(nextId).String(),
 		types.PayingReserveAddress(nextId).String(),
 		msg.StartPrice,
+		msg.MinBidPrice,
 		msg.SellingCoin,
 		msg.PayingCoinDenom,
 		types.VestingReserveAddress(nextId).String(),
 		msg.VestingSchedules,
-		winningPrice,
-		numWinningBidders,
+		matchedPrice,
 		remainingSellingCoin,
 		msg.StartTime,
 		endTimes,
@@ -190,8 +189,7 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 	}
 
 	allowedBidders := []types.AllowedBidder{} // it is nil when an auction is created
-	winningPrice := sdk.ZeroDec()             // TODO: makes sense to have start price?
-	numWinningBidders := uint64(0)            // initial value is 0
+	matchedPrice := sdk.ZeroDec()             // TODO: makes sense to have start price?
 	remainingSellingCoin := msg.SellingCoin   // it is starting with selling coin amount
 	endTimes := []time.Time{msg.EndTime}      // it is an array data type to handle BatchAuction
 
@@ -203,12 +201,12 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 		types.SellingReserveAddress(nextId).String(),
 		types.PayingReserveAddress(nextId).String(),
 		msg.StartPrice,
+		msg.MinBidPrice,
 		msg.SellingCoin,
 		msg.PayingCoinDenom,
 		types.VestingReserveAddress(nextId).String(),
 		msg.VestingSchedules,
-		winningPrice,
-		numWinningBidders,
+		matchedPrice,
 		remainingSellingCoin,
 		msg.StartTime,
 		endTimes,

@@ -14,7 +14,8 @@ import (
 func (s *ModuleTestSuite) TestEndBlockerStandByStatus() {
 	standByAuction := s.createFixedPriceAuction(
 		s.addr(0),
-		sdk.MustNewDecFromStr("0.5"),
+		parseDec("0.5"),
+		parseDec("0.1"),
 		parseCoin("500000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -37,7 +38,8 @@ func (s *ModuleTestSuite) TestEndBlockerStartedStatus() {
 	auctioneer := s.addr(0)
 	auction := s.createFixedPriceAuction(
 		auctioneer,
-		sdk.OneDec(),
+		parseDec("1"),
+		parseDec("0.1"),
 		parseCoin("500000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{
@@ -80,7 +82,8 @@ func (s *ModuleTestSuite) TestEndBlockerVestingStatus() {
 	auctioneer := s.addr(0)
 	auction := s.createFixedPriceAuction(
 		auctioneer,
-		sdk.OneDec(),
+		parseDec("1"),
+		parseDec("0.1"),
 		sdk.NewInt64Coin("denom1", 500_000_000_000),
 		"denom2",
 		[]types.VestingSchedule{

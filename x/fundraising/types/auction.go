@@ -32,10 +32,10 @@ var (
 //nolint:interfacer
 func NewBaseAuction(
 	id uint64, typ AuctionType, allowedBidders []AllowedBidder, auctioneerAddr string,
-	sellingPoolAddr string, payingPoolAddr string, startPrice sdk.Dec, sellingCoin sdk.Coin,
-	payingCoinDenom string, vestingPoolAddr string, vestingSchedules []VestingSchedule,
-	winningPrice sdk.Dec, numWinningBidders uint64, remainingSellingCoin sdk.Coin, startTime time.Time,
-	endTimes []time.Time, status AuctionStatus,
+	sellingPoolAddr string, payingPoolAddr string, startPrice sdk.Dec, minBidPrice sdk.Dec,
+	sellingCoin sdk.Coin, payingCoinDenom string, vestingPoolAddr string,
+	vestingSchedules []VestingSchedule, matchedPrice sdk.Dec, remainingSellingCoin sdk.Coin,
+	startTime time.Time, endTimes []time.Time, status AuctionStatus,
 ) *BaseAuction {
 	return &BaseAuction{
 		Id:                    id,
@@ -45,12 +45,12 @@ func NewBaseAuction(
 		SellingReserveAddress: sellingPoolAddr,
 		PayingReserveAddress:  payingPoolAddr,
 		StartPrice:            startPrice,
+		MinBidPrice:           minBidPrice,
 		SellingCoin:           sellingCoin,
 		PayingCoinDenom:       payingCoinDenom,
 		VestingReserveAddress: vestingPoolAddr,
 		VestingSchedules:      vestingSchedules,
-		WinningPrice:          winningPrice,
-		NumWinningBidders:     numWinningBidders,
+		MatchedPrice:          matchedPrice,
 		RemainingSellingCoin:  remainingSellingCoin,
 		StartTime:             startTime,
 		EndTimes:              endTimes,
@@ -124,6 +124,15 @@ func (ba *BaseAuction) SetStartPrice(price sdk.Dec) error {
 	return nil
 }
 
+func (ba BaseAuction) GetMinBidPrice() sdk.Dec {
+	return ba.MinBidPrice
+}
+
+func (ba *BaseAuction) SetMinBidPrice(price sdk.Dec) error {
+	ba.MinBidPrice = price
+	return nil
+}
+
 func (ba BaseAuction) GetSellingCoin() sdk.Coin {
 	return ba.SellingCoin
 }
@@ -161,12 +170,12 @@ func (ba *BaseAuction) SetVestingSchedules(schedules []VestingSchedule) error {
 	return nil
 }
 
-func (ba BaseAuction) GetWinningPrice() sdk.Dec {
-	return ba.WinningPrice
+func (ba BaseAuction) GetMatchedPrice() sdk.Dec {
+	return ba.MatchedPrice
 }
 
-func (ba *BaseAuction) SetWinningPrice(price sdk.Dec) error {
-	ba.WinningPrice = price
+func (ba *BaseAuction) SetMatchedPrice(price sdk.Dec) error {
+	ba.MatchedPrice = price
 	return nil
 }
 
@@ -224,7 +233,10 @@ func (ba BaseAuction) Validate() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid vesting pool address %q: %v", ba.VestingReserveAddress, err)
 	}
 	if !ba.StartPrice.IsPositive() {
-		return sdkerrors.Wrapf(ErrInvalidStartPrice, "invalid start price: %f", ba.StartPrice)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid start price: %f", ba.StartPrice)
+	}
+	if !ba.MinBidPrice.IsPositive() {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid minimum bid price: %f", ba.MinBidPrice)
 	}
 	if err := ba.SellingCoin.Validate(); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "invalid selling coin: %v", ba.SellingCoin)
@@ -244,30 +256,19 @@ func (ba BaseAuction) Validate() error {
 	return nil
 }
 
-// ShouldAuctionStarted returns true if the start time is equal or before the given time t.
-func (ba BaseAuction) ShouldAuctionStarted(t time.Time) bool {
-	return !ba.GetStartTime().After(t)
-}
-
-// ShouldAuctionFinished returns true if the end time is equal or before the given time t.
-func (ba BaseAuction) ShouldAuctionFinished(t time.Time) bool {
-	ts := ba.GetEndTimes()
-	return !ts[len(ts)-1].After(t)
-}
-
-func (ba BaseAuction) GetMaxBidAmount(bidderAddr string) sdk.Int {
+func (ba BaseAuction) GetMaxBidAmount(addr string) sdk.Int {
 	maxBidAmt := sdk.ZeroInt()
 	for _, ab := range ba.GetAllowedBidders() {
-		if ab.Bidder == bidderAddr {
+		if ab.Bidder == addr {
 			maxBidAmt = ab.MaxBidAmount
 		}
 	}
 	return maxBidAmt
 }
 
-func (ba BaseAuction) SetMaxBidAmount(bidderAddr string, maxBidAmt sdk.Int) error {
+func (ba *BaseAuction) SetMaxBidAmount(addr string, maxBidAmt sdk.Int) error {
 	for i, ab := range ba.GetAllowedBidders() {
-		if ab.Bidder == bidderAddr {
+		if ab.Bidder == addr {
 			ba.GetAllowedBidders()[i].MaxBidAmount = maxBidAmt
 		}
 	}
@@ -280,6 +281,17 @@ func (ba BaseAuction) GetAllowedBiddersMap() map[string]sdk.Int { // map(bidder 
 		absMap[ab.Bidder] = ab.MaxBidAmount
 	}
 	return absMap
+}
+
+// ShouldAuctionStarted returns true if the start time is equal or before the given time t.
+func (ba BaseAuction) ShouldAuctionStarted(t time.Time) bool {
+	return !ba.GetStartTime().After(t)
+}
+
+// ShouldAuctionFinished returns true if the end time is equal or before the given time t.
+func (ba BaseAuction) ShouldAuctionFinished(t time.Time) bool {
+	ts := ba.GetEndTimes()
+	return !ts[len(ts)-1].After(t)
 }
 
 // NewFixedPriceAuction returns a new fixed price auction.
@@ -324,6 +336,9 @@ type AuctionI interface {
 	GetStartPrice() sdk.Dec
 	SetStartPrice(sdk.Dec) error
 
+	GetMinBidPrice() sdk.Dec
+	SetMinBidPrice(sdk.Dec) error
+
 	GetSellingCoin() sdk.Coin
 	SetSellingCoin(sdk.Coin) error
 
@@ -336,8 +351,8 @@ type AuctionI interface {
 	GetVestingSchedules() []VestingSchedule
 	SetVestingSchedules([]VestingSchedule) error
 
-	GetWinningPrice() sdk.Dec
-	SetWinningPrice(sdk.Dec) error
+	GetMatchedPrice() sdk.Dec
+	SetMatchedPrice(sdk.Dec) error
 
 	GetRemainingSellingCoin() sdk.Coin
 	SetRemainingSellingCoin(sdk.Coin) error

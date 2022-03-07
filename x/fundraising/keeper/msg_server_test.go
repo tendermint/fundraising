@@ -25,6 +25,7 @@ func (s *KeeperTestSuite) TestMsgCreateFixedPriceAuction() {
 			types.NewMsgCreateFixedPriceAuction(
 				s.addr(0).String(),
 				sdk.OneDec(),
+				parseDec("0.1"),
 				sdk.NewInt64Coin("denom1", 1_000_000_000_000),
 				"denom2",
 				[]types.VestingSchedule{
@@ -81,6 +82,7 @@ func (s *KeeperTestSuite) TestMsgCreateBatchAuction() {
 			types.NewMsgCreateBatchAuction(
 				s.addr(0).String(),
 				sdk.MustNewDecFromStr("0.1"),
+				parseDec("0.1"),
 				sdk.NewInt64Coin("denom1", 1_000_000_000_000),
 				"denom2",
 				[]types.VestingSchedule{
@@ -141,6 +143,7 @@ func (s *KeeperTestSuite) TestMsgCancelAuction() {
 	startedAuction := s.createFixedPriceAuction(
 		auctioneer,
 		sdk.MustNewDecFromStr("0.5"),
+		parseDec("0.1"),
 		sdk.NewInt64Coin("denom1", 500_000_000_000),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -169,6 +172,7 @@ func (s *KeeperTestSuite) TestMsgCancelAuction() {
 	standByAuction := s.createFixedPriceAuction(
 		auctioneer,
 		sdk.MustNewDecFromStr("0.5"),
+		parseDec("0.1"),
 		sdk.NewInt64Coin("denom3", 500_000_000_000),
 		"denom4",
 		[]types.VestingSchedule{},
@@ -197,6 +201,7 @@ func (s *KeeperTestSuite) TestMsgPlaceBid() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		sdk.MustNewDecFromStr("0.5"),
+		parseDec("0.1"),
 		sdk.NewInt64Coin("denom1", 500_000_000_000),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -265,6 +270,7 @@ func (s *KeeperTestSuite) TestMsgAddAllowedBidder() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		sdk.MustNewDecFromStr("0.5"),
+		parseDec("0.1"),
 		sdk.NewInt64Coin("denom1", 500_000_000_000),
 		"denom2",
 		[]types.VestingSchedule{},

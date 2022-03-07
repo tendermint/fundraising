@@ -50,26 +50,32 @@ message MsgCreateFixedPriceAuction {
     (gogoproto.nullable) = false
   ];
 
+  // min_bid_price specifies the minibum bid price
+  string min_bid_price = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
   // selling_coin specifies the selling coin for the auction
-  cosmos.base.v1beta1.Coin selling_coin = 3 [
+  cosmos.base.v1beta1.Coin selling_coin = 4 [
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
   ];
 
   // paying_coin_denom specifies the paying coin denom that bidders use to bid
   // for
-  string paying_coin_denom = 4;
+  string paying_coin_denom = 5;
 
   // vesting_schedules specifies the vesting schedules for the auction
-  repeated VestingSchedule vesting_schedules = 5
+  repeated VestingSchedule vesting_schedules = 6
       [ (gogoproto.nullable) = false ];
 
   // start_time specifies the start time of the plan
-  google.protobuf.Timestamp start_time = 6
+  google.protobuf.Timestamp start_time = 7
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // end_time specifies the end time of the plan
-  google.protobuf.Timestamp end_time = 7
+  google.protobuf.Timestamp end_time = 8
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 }
 
@@ -94,37 +100,43 @@ message MsgCreateBatchAuction {
     (gogoproto.nullable) = false
   ];
 
+  // min_bid_price specifies the minibum bid price
+  string min_bid_price = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
   // selling_coin specifies the selling coin for the auction
-  cosmos.base.v1beta1.Coin selling_coin = 3 [
+  cosmos.base.v1beta1.Coin selling_coin = 4 [
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin",
     (gogoproto.nullable) = false
   ];
 
   // paying_coin_denom specifies the paying coin denom that bidders use to bid
   // for
-  string paying_coin_denom = 4;
+  string paying_coin_denom = 5;
 
   // vesting_schedules specifies the vesting schedules for the auction
-  repeated VestingSchedule vesting_schedules = 5
+  repeated VestingSchedule vesting_schedules = 6
       [ (gogoproto.nullable) = false ];
 
   // maximum_extended_round specifies the maximum number of extended rounds for
   // the auction
-  uint32 max_extended_round = 6;
+  uint32 max_extended_round = 7;
 
   // extended_round_rate specifies the rate that decides if the auction needs
   // another round
-  string extended_round_rate = 7 [
+  string extended_round_rate = 8 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // start_time specifies the start time of the plan
-  google.protobuf.Timestamp start_time = 8
+  google.protobuf.Timestamp start_time = 9
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // end_time specifies the end time of the plan
-  google.protobuf.Timestamp end_time = 9
+  google.protobuf.Timestamp end_time = 10
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 }
 
