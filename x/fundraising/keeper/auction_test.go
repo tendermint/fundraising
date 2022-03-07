@@ -121,6 +121,9 @@ func (s *KeeperTestSuite) TestAllocateSellingCoin_FixedPriceAuction() {
 	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
+	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
+	s.Require().NoError(err)
+
 	// The selling reserve account balance must be zero
 	s.Require().True(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).IsZero())
 
@@ -162,20 +165,15 @@ func (s *KeeperTestSuite) TestAllocateSellingCoin_BatchAuction() {
 	// Calculate allocation
 	// mInfo := s.keeper.CalculateBatchAllocation(s.ctx, auction)
 
-	// fmt.Println("MatchedLen: ", mInfo.MatchedLen)
-	// fmt.Println("MatchedPrice: ", mInfo.MatchedPrice)
-	// fmt.Println("TotalMatchedAmount: ", mInfo.TotalMatchedAmount)
-	// fmt.Println("")
-	// for _, alloc := range mInfo.Allocations {
-	// 	fmt.Println("Bidder: ", alloc.Bidder)
-	// 	fmt.Println("AllocateAmount: ", alloc.AllocateAmount)
-	// 	fmt.Println("ReserveAmount: ", alloc.ReserveAmount)
-	// }
-
 	// Distribute selling coin
 	// err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	// s.Require().NoError(err)
 
+	// err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
+	// s.Require().NoError(err)
+
+	// // The selling reserve account balance must be zero
+	// s.Require().True(s.getBalance(auction.GetSellingReserveAddress(), auction.GetRemainingSellingCoin().Denom).IsZero())
 }
 
 func (s *KeeperTestSuite) TestAllocateVestingPayingCoin() {
