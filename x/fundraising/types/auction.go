@@ -233,7 +233,7 @@ func (ba BaseAuction) Validate() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid vesting pool address %q: %v", ba.VestingReserveAddress, err)
 	}
 	if !ba.StartPrice.IsPositive() {
-		return sdkerrors.Wrapf(ErrInvalidStartPrice, "invalid start price: %f", ba.StartPrice)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid start price: %f", ba.StartPrice)
 	}
 	if !ba.MinBidPrice.IsPositive() {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid minimum bid price: %f", ba.MinBidPrice)
