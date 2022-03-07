@@ -225,7 +225,7 @@ message AllowedBidder {
   string bidder = 1;
 
   // max_bid_amount specifies the maximum bid amount that the bidder can bid
-  string max_bid_amount = 3 [
+  string max_bid_amount = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
