@@ -121,6 +121,9 @@ func (s *KeeperTestSuite) TestAllocateSellingCoin_FixedPriceAuction() {
 	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
+	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
+	s.Require().NoError(err)
+
 	// The selling reserve account balance must be zero
 	s.Require().True(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).IsZero())
 
@@ -162,23 +165,18 @@ func (s *KeeperTestSuite) TestAllocateSellingCoin_BatchAuction() {
 	// Calculate allocation
 	// mInfo := s.keeper.CalculateBatchAllocation(s.ctx, auction)
 
-	// fmt.Println("MatchedLen: ", mInfo.MatchedLen)
-	// fmt.Println("MatchedPrice: ", mInfo.MatchedPrice)
-	// fmt.Println("TotalMatchedAmount: ", mInfo.TotalMatchedAmount)
-	// fmt.Println("")
-	// for _, alloc := range mInfo.Allocations {
-	// 	fmt.Println("Bidder: ", alloc.Bidder)
-	// 	fmt.Println("AllocateAmount: ", alloc.AllocateAmount)
-	// 	fmt.Println("ReserveAmount: ", alloc.ReserveAmount)
-	// }
-
 	// Distribute selling coin
 	// err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	// s.Require().NoError(err)
 
+	// err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
+	// s.Require().NoError(err)
+
+	// // The selling reserve account balance must be zero
+	// s.Require().True(s.getBalance(auction.GetSellingReserveAddress(), auction.GetRemainingSellingCoin().Denom).IsZero())
 }
 
-func (s *KeeperTestSuite) TestAllocatePayingCoin() {
+func (s *KeeperTestSuite) TestAllocateVestingPayingCoin() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("1"),
@@ -237,7 +235,7 @@ func (s *KeeperTestSuite) TestAllocatePayingCoin() {
 	fundraising.EndBlocker(s.ctx, s.keeper)
 
 	// Distribute paying coin
-	err = s.keeper.AllocatePayingCoin(s.ctx, auction)
+	err = s.keeper.AllocateVestingPayingCoin(s.ctx, auction)
 	s.Require().NoError(err)
 
 	// First two vesting queues must be released
@@ -252,7 +250,7 @@ func (s *KeeperTestSuite) TestAllocatePayingCoin() {
 	// Change the block time
 	s.ctx = s.ctx.WithBlockTime(vqs[3].GetReleaseTime().AddDate(0, 0, 1))
 	fundraising.EndBlocker(s.ctx, s.keeper)
-	s.Require().NoError(s.keeper.AllocatePayingCoin(s.ctx, auction))
+	s.Require().NoError(s.keeper.AllocateVestingPayingCoin(s.ctx, auction))
 
 	// All of the vesting queues must be released
 	for _, vq := range s.keeper.GetVestingQueuesByAuctionId(s.ctx, auction.GetId()) {
@@ -491,7 +489,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation() {
 		s.addr(0),
 		parseDec("1"),
 		parseDec("0.1"),
-		parseCoin("6700000000denom1"),
+		parseCoin("1000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
 		1,
@@ -502,22 +500,9 @@ func (s *KeeperTestSuite) TestCalculateAllocation() {
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("1"), parseCoin("100000000denom1"), sdk.NewInt(100000000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("0.8"), parseCoin("1000000000denom1"), sdk.NewInt(100000000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(4), parseDec("0.9"), parseCoin("1000000000denom2"), sdk.NewInt(100000000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("1.1"), parseCoin("1000000000denom2"), sdk.NewInt(100000000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("1.2"), parseCoin("1000000000denom1"), sdk.NewInt(100000000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(5), parseDec("0.8"), parseCoin("100000000denom2"), sdk.NewInt(100000000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("0.7"), parseCoin("100000000denom1"), sdk.NewInt(100000000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("0.5"), parseCoin("100000000denom1"), sdk.NewInt(100000000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("0.8"), parseCoin("1000000000denom2"), sdk.NewInt(100000000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.2"), parseCoin("1000000000denom2"), sdk.NewInt(100000000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("0.3"), parseCoin("1000000000denom1"), sdk.NewInt(100000000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.6"), parseCoin("1000000000denom2"), sdk.NewInt(100000000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("0.5"), parseCoin("1000000000denom2"), sdk.NewInt(100000000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("0.6"), parseCoin("100000000denom1"), sdk.NewInt(100000000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("0.7"), parseCoin("1000000000denom1"), sdk.NewInt(100000000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("1000000000denom2"), sdk.NewInt(100000000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("1"), parseCoin("500000000denom1"), sdk.NewInt(1000000000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("0.9"), parseCoin("500000000denom1"), sdk.NewInt(1000000000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("500000000denom1"), sdk.NewInt(1000000000), true)
 
 	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
 	s.Require().True(found)
@@ -528,12 +513,9 @@ func (s *KeeperTestSuite) TestCalculateAllocation() {
 	fmt.Println("MatchedLen: ", mInfo.MatchedLen)
 	fmt.Println("MatchedPrice: ", mInfo.MatchedPrice)
 	fmt.Println("TotalSoldAmount: ", mInfo.TotalMatchedAmount)
+	fmt.Println("AllocationMap", mInfo.AllocationMap)
+	fmt.Println("ReservedMatchedMap", mInfo.ReservedMatchedMap)
+	fmt.Println("RefundMap", mInfo.RefundMap)
 	fmt.Println("")
 
-	// TODO: Verify
-	// for _, alloc := range mInfo.Allocations {
-	// 	fmt.Println("AllocateAmount: ", alloc.AllocateAmount)
-	// 	fmt.Println("ReserveAmount: ", alloc.ReserveAmount)
-	// 	fmt.Println("")
-	// }
 }

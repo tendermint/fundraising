@@ -196,7 +196,7 @@ func (k Keeper) IterateBidsByBidder(ctx sdk.Context, bidderAddr sdk.AccAddress, 
 	}
 }
 
-func (k Keeper) GetMatchedBidsLen(ctx sdk.Context, auctionId uint64) int64 {
+func (k Keeper) GetLastMatchedBidsLen(ctx sdk.Context, auctionId uint64) int64 {
 	var len int64
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetLastMatchedBidsLenKey(auctionId))
@@ -210,9 +210,9 @@ func (k Keeper) GetMatchedBidsLen(ctx sdk.Context, auctionId uint64) int64 {
 	return len
 }
 
-func (k Keeper) SetMatchedBidsLen(ctx sdk.Context, auctionId uint64, lastWinningBidsLen int64) {
+func (k Keeper) SetMatchedBidsLen(ctx sdk.Context, auctionId uint64, matchedLen int64) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshal(&gogotypes.Int64Value{Value: lastWinningBidsLen})
+	bz := k.cdc.MustMarshal(&gogotypes.Int64Value{Value: matchedLen})
 	store.Set(types.GetLastMatchedBidsLenKey(auctionId), bz)
 }
 

@@ -19,6 +19,7 @@ func (s *KeeperTestSuite) TestDefaultGenesis() {
 	s.Require().Equal(genState, got)
 }
 
+// TODO: add simple and complex cases
 func (s *KeeperTestSuite) TestGenesisState() {
 	fixedAuction := s.createFixedPriceAuction(
 		s.addr(0),
@@ -28,24 +29,24 @@ func (s *KeeperTestSuite) TestGenesisState() {
 		"denom2",
 		[]types.VestingSchedule{
 			{
-				ReleaseTime: time.Now().AddDate(0, 0, -1).AddDate(0, 6, 0),
+				ReleaseTime: time.Now().AddDate(0, 3, 0),
 				Weight:      sdk.MustNewDecFromStr("0.25"),
 			},
 			{
-				ReleaseTime: time.Now().AddDate(0, 0, -1).AddDate(0, 9, 0),
+				ReleaseTime: time.Now().AddDate(0, 6, 0),
 				Weight:      sdk.MustNewDecFromStr("0.25"),
 			},
 			{
-				ReleaseTime: time.Now().AddDate(0, 0, -1).AddDate(1, 0, 0),
+				ReleaseTime: time.Now().AddDate(0, 9, 0),
 				Weight:      sdk.MustNewDecFromStr("0.25"),
 			},
 			{
-				ReleaseTime: time.Now().AddDate(0, 0, -1).AddDate(1, 3, 0),
+				ReleaseTime: time.Now().AddDate(1, 0, 0),
 				Weight:      sdk.MustNewDecFromStr("0.25"),
 			},
 		},
-		time.Now().AddDate(0, -6, 0),
-		time.Now().AddDate(0, 0, 10),
+		time.Now().AddDate(0, -2, 0),
+		time.Now().AddDate(0, 0, 1),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, fixedAuction.GetStatus())
@@ -53,43 +54,40 @@ func (s *KeeperTestSuite) TestGenesisState() {
 	// Place bids
 	s.placeBidFixedPrice(fixedAuction.Id, s.addr(1), sdk.OneDec(), parseCoin("20000000denom2"), true)
 	s.placeBidFixedPrice(fixedAuction.Id, s.addr(2), sdk.OneDec(), parseCoin("30000000denom2"), true)
-	s.placeBidFixedPrice(fixedAuction.Id, s.addr(3), sdk.OneDec(), parseCoin("15000000denom2"), true)
-	s.placeBidFixedPrice(fixedAuction.Id, s.addr(4), sdk.OneDec(), parseCoin("35000000denom2"), true)
+
+	// Modify the current block time a day after the end time
+	s.ctx = s.ctx.WithBlockTime(fixedAuction.GetEndTimes()[0].AddDate(0, 0, 1))
+	fundraising.EndBlocker(s.ctx, s.keeper)
 
 	batchAuction := s.createBatchAuction(
-		s.addr(1),
+		s.addr(3),
 		parseDec("0.1"),
 		parseDec("0.1"),
 		parseCoin("1000000000000denom3"),
 		"denom4",
 		[]types.VestingSchedule{
 			{
-				ReleaseTime: time.Now().AddDate(0, 1, 0).AddDate(0, 6, 0),
+				ReleaseTime: time.Now().AddDate(2, 0, 0),
 				Weight:      sdk.MustNewDecFromStr("0.5"),
 			},
 			{
-				ReleaseTime: time.Now().AddDate(0, 1, 0).AddDate(1, 0, 0),
+				ReleaseTime: time.Now().AddDate(3, 0, 0),
 				Weight:      sdk.MustNewDecFromStr("0.5"),
 			},
 		},
 		3,
 		parseDec("0.3"),
 		time.Now().AddDate(0, -1, 0),
-		time.Now().AddDate(0, 1, 0),
+		time.Now().AddDate(0, 3, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, batchAuction.GetStatus())
 
-	s.placeBidBatchWorth(batchAuction.Id, s.addr(2), parseDec("0.5"), parseCoin("100000000denom4"), sdk.NewInt(1000000000), true)
-	s.placeBidBatchWorth(batchAuction.Id, s.addr(2), parseDec("0.4"), parseCoin("150000000denom4"), sdk.NewInt(1000000000), true)
-	s.placeBidBatchWorth(batchAuction.Id, s.addr(3), parseDec("0.66"), parseCoin("250000000denom4"), sdk.NewInt(1000000000), true)
-	s.placeBidBatchMany(batchAuction.Id, s.addr(4), parseDec("0.35"), parseCoin("400000000denom3"), sdk.NewInt(1000000000), true)
-	s.placeBidBatchMany(batchAuction.Id, s.addr(5), parseDec("0.8"), parseCoin("150000000denom3"), sdk.NewInt(1000000000), true)
-	s.placeBidBatchMany(batchAuction.Id, s.addr(6), parseDec("0.2"), parseCoin("150000000denom3"), sdk.NewInt(1000000000), true)
-
-	// Modify the current block time a day after the end time
-	s.ctx = s.ctx.WithBlockTime(fixedAuction.GetEndTimes()[0].AddDate(0, 0, 1))
-	fundraising.EndBlocker(s.ctx, s.keeper)
+	s.placeBidBatchWorth(batchAuction.Id, s.addr(4), parseDec("0.5"), parseCoin("100000000denom4"), sdk.NewInt(1000000000), true)
+	s.placeBidBatchWorth(batchAuction.Id, s.addr(4), parseDec("0.4"), parseCoin("150000000denom4"), sdk.NewInt(1000000000), true)
+	s.placeBidBatchWorth(batchAuction.Id, s.addr(5), parseDec("0.66"), parseCoin("250000000denom4"), sdk.NewInt(1000000000), true)
+	s.placeBidBatchMany(batchAuction.Id, s.addr(6), parseDec("0.8"), parseCoin("150000000denom3"), sdk.NewInt(1000000000), true)
+	s.placeBidBatchMany(batchAuction.Id, s.addr(7), parseDec("0.2"), parseCoin("150000000denom3"), sdk.NewInt(1000000000), true)
 
 	// Modify the time to make the first and second vesting queues over
 	s.ctx = s.ctx.WithBlockTime(fixedAuction.VestingSchedules[1].ReleaseTime.AddDate(0, 0, 1))

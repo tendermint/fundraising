@@ -14369,13 +14369,6 @@ paths:
                       determines how long
 
                       the extended auction round lasts.
-                  feeCollectorAddress:
-                    type: string
-                    title: >-
-                      fee_collector_address is the module account address to
-                      collect fees within
-
-                      the module
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -22066,13 +22059,6 @@ definitions:
         description: |-
           extended_period specifies the extended period that determines how long
           the extended auction round lasts.
-      feeCollectorAddress:
-        type: string
-        title: >-
-          fee_collector_address is the module account address to collect fees
-          within
-
-          the module
     description: Params defines the set of params for the fundraising module.
   tendermint.fundraising.QueryAuctionResponse:
     type: object
@@ -22652,13 +22638,6 @@ definitions:
               long
 
               the extended auction round lasts.
-          feeCollectorAddress:
-            type: string
-            title: >-
-              fee_collector_address is the module account address to collect
-              fees within
-
-              the module
     description: QueryParamsResponse is response type for the Query/Params RPC method.
   tendermint.fundraising.QueryVestingsResponse:
     type: object
