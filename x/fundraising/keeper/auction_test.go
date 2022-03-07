@@ -491,7 +491,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation() {
 		s.addr(0),
 		parseDec("1"),
 		parseDec("0.1"),
-		parseCoin("6700000000denom1"),
+		parseCoin("1000000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
 		1,
@@ -528,12 +528,9 @@ func (s *KeeperTestSuite) TestCalculateAllocation() {
 	fmt.Println("MatchedLen: ", mInfo.MatchedLen)
 	fmt.Println("MatchedPrice: ", mInfo.MatchedPrice)
 	fmt.Println("TotalSoldAmount: ", mInfo.TotalMatchedAmount)
+	fmt.Println("AllocationMap", mInfo.AllocationMap)
+	fmt.Println("ReservedMatchedMap", mInfo.ReservedMatchedMap)
+	fmt.Println("RefundMap", mInfo.RefundMap)
 	fmt.Println("")
 
-	// TODO: Verify
-	// for _, alloc := range mInfo.Allocations {
-	// 	fmt.Println("AllocateAmount: ", alloc.AllocateAmount)
-	// 	fmt.Println("ReserveAmount: ", alloc.ReserveAmount)
-	// 	fmt.Println("")
-	// }
 }

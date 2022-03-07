@@ -22,48 +22,44 @@ func (k Keeper) GetNextAuctionIdWithUpdate(ctx sdk.Context) uint64 {
 // AllocateSellingCoin releases designated selling coin from the selling reserve account.
 func (k Keeper) AllocateSellingCoin(ctx sdk.Context, auction types.AuctionI, mInfo MatchingInfo) error {
 	sellingReserveAddr := auction.GetSellingReserveAddress()
+	payingReserveAddr := auction.GetPayingReserveAddress()
 	sellingCoinDenom := auction.GetSellingCoin().Denom
+	payingCoinDenom := auction.GetPayingCoinDenom()
 
 	inputs := []banktypes.Input{}
 	outputs := []banktypes.Output{}
 
-	// Loop through all bids and set the allocated coins in transaction inputs and outputs
-	// from the selling reserve account
-	for _, alloc := range mInfo.Allocations {
-		switch auction.GetType() {
-		case types.AuctionTypeFixedPrice:
-			allocateCoins := sdk.NewCoins(sdk.NewCoin(sellingCoinDenom, alloc.AllocateAmount))
-			bidderAddr, _ := sdk.AccAddressFromBech32(alloc.Bidder)
+	// Allocate coins to all matched bidders in AllocationMap and
+	// set the amounts in trasnaction inputs and outputs from the selling reserve account
+	for bidder, allocAmt := range mInfo.AllocationMap {
+		allocateCoins := sdk.NewCoins(sdk.NewCoin(sellingCoinDenom, allocAmt))
+		bidderAddr, _ := sdk.AccAddressFromBech32(bidder)
 
-			inputs = append(inputs, banktypes.NewInput(sellingReserveAddr, allocateCoins))
-			outputs = append(outputs, banktypes.NewOutput(bidderAddr, allocateCoins))
-
-		case types.AuctionTypeBatch:
-			allocateCoins := sdk.NewCoins(sdk.NewCoin(sellingCoinDenom, alloc.AllocateAmount))
-			bidderAddr, _ := sdk.AccAddressFromBech32(alloc.Bidder)
-
-			inputs = append(inputs, banktypes.NewInput(sellingReserveAddr, allocateCoins))
-			outputs = append(outputs, banktypes.NewOutput(bidderAddr, allocateCoins))
-
-			// Refund the unmatched bid amount back to the bidder
-			if alloc.ReserveAmount.GT(alloc.AllocateAmount) {
-				refundAmt := alloc.ReserveAmount.Sub(alloc.AllocateAmount)
-				refundCoins := sdk.NewCoins(sdk.NewCoin(sellingCoinDenom, refundAmt))
-
-				inputs = append(inputs, banktypes.NewInput(sellingReserveAddr, refundCoins))
-				outputs = append(outputs, banktypes.NewOutput(bidderAddr, refundCoins))
-			}
-		}
+		inputs = append(inputs, banktypes.NewInput(sellingReserveAddr, allocateCoins))
+		outputs = append(outputs, banktypes.NewOutput(bidderAddr, allocateCoins))
 	}
 
-	// Refund all the remaining coins back to the auctioneer
-	if auction.GetType() == types.AuctionTypeFixedPrice {
+	switch auction.GetType() {
+	case types.AuctionTypeFixedPrice:
+		// Refund all the remaining selling coins back to the auctioneer
 		reserveCoin := k.bankKeeper.GetBalance(ctx, sellingReserveAddr, sellingCoinDenom)
 		totalAmt := sdk.NewCoin(sellingCoinDenom, mInfo.TotalMatchedAmount)
 		refundAmt := reserveCoin.Sub(totalAmt)
 
 		inputs = append(inputs, banktypes.NewInput(sellingReserveAddr, sdk.NewCoins(refundAmt)))
 		outputs = append(outputs, banktypes.NewOutput(auction.GetAuctioneer(), sdk.NewCoins(refundAmt)))
+	case types.AuctionTypeBatch:
+		// Refund the unmatched bid amount back to the bidder
+		for bidder, refundAmt := range mInfo.RefundMap {
+			bidderAddr, err := sdk.AccAddressFromBech32(bidder)
+			if err != nil {
+				return err
+			}
+			refundCoins := sdk.NewCoins(sdk.NewCoin(payingCoinDenom, refundAmt))
+
+			inputs = append(inputs, banktypes.NewInput(payingReserveAddr, refundCoins))
+			outputs = append(outputs, banktypes.NewOutput(bidderAddr, refundCoins))
+		}
 	}
 
 	// Send all at once
@@ -368,9 +364,18 @@ func (k Keeper) FinishFixedPriceAuction(ctx sdk.Context, auction types.AuctionI)
 }
 
 func (k Keeper) FinishBatchAuction(ctx sdk.Context, auction types.AuctionI) {
+	ba := auction.(*types.BatchAuction)
+
+	// Extend round since there is no last matched length to compare with
+	lastMatchedLen := k.GetLastMatchedBidsLen(ctx, ba.GetId())
+	if lastMatchedLen == 0 {
+		k.CalculateBatchAllocation(ctx, auction)
+		k.ExtendRound(ctx, ba)
+		return
+	}
+
 	mInfo := k.CalculateBatchAllocation(ctx, auction)
 
-	ba := auction.(*types.BatchAuction)
 	if ba.MaxExtendedRound == 0 {
 		if err := k.AllocateSellingCoin(ctx, auction, mInfo); err != nil {
 			panic(err)
@@ -382,19 +387,10 @@ func (k Keeper) FinishBatchAuction(ctx sdk.Context, auction types.AuctionI) {
 		return
 	}
 
-	currMatchedLen := mInfo.MatchedLen
-	lastMatchedLen := k.GetMatchedBidsLen(ctx, ba.Id)
-
-	// Extend round since there is no last matched length to compare with
-	if lastMatchedLen == 0 {
-		k.ExtendRound(ctx, ba)
-		return
-	}
-
 	// To prevent from auction sniping technique, compare the extended round rate with
 	// the current and the last length of matched bids to determine
 	// if the auction needs another extended round
-	currDec := sdk.NewDec(currMatchedLen)
+	currDec := sdk.NewDec(mInfo.MatchedLen)
 	lastDec := sdk.NewDec(lastMatchedLen)
 	diff := sdk.OneDec().Sub(currDec.Quo(lastDec)) // 1 - (CurrentMatchedLenDec / LastMatchedLenDec)
 
@@ -414,17 +410,12 @@ func (k Keeper) FinishBatchAuction(ctx sdk.Context, auction types.AuctionI) {
 
 // MatchingInfo holds information about a batch auction matching info.
 type MatchingInfo struct {
-	MatchedLen         int64   // the length of matched bids
-	MatchedPrice       sdk.Dec // the final matched price
-	TotalMatchedAmount sdk.Int // the total sold amount
-	Allocations        []AllocationInfo
-}
-
-// AllocationInfo holds information about a bidder's allocation.
-type AllocationInfo struct {
-	Bidder         string
-	AllocateAmount sdk.Int
-	ReserveAmount  sdk.Int
+	MatchedLen         int64              // the length of matched bids
+	MatchedPrice       sdk.Dec            // the final matched price
+	TotalMatchedAmount sdk.Int            // the total sold amount
+	AllocationMap      map[string]sdk.Int // the allocation map that holds allocate amount information for each bidder
+	ReservedMatchedMap map[string]sdk.Int
+	RefundMap          map[string]sdk.Int // the refund map that holds refund amount information for each bidder
 }
 
 func (k Keeper) CalculateFixedPriceAllocation(ctx sdk.Context, auction types.AuctionI) MatchingInfo {
@@ -432,27 +423,24 @@ func (k Keeper) CalculateFixedPriceAllocation(ctx sdk.Context, auction types.Auc
 		MatchedLen:         0,
 		MatchedPrice:       sdk.ZeroDec(),
 		TotalMatchedAmount: sdk.ZeroInt(),
-		Allocations:        []AllocationInfo{},
+		AllocationMap:      nil,
+		RefundMap:          nil,
 	}
 
 	totalMatchedAmt := sdk.ZeroInt()
-	allocations := []AllocationInfo{}
+	allocMap := map[string]sdk.Int{}
 
 	for _, b := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
 		bidAmt := b.Coin.Amount.ToDec().QuoTruncate(b.Price).TruncateInt()
 
-		allocations = append(allocations, AllocationInfo{
-			Bidder:         b.Bidder,
-			AllocateAmount: bidAmt,
-		})
-
+		allocMap[b.Bidder] = bidAmt
 		totalMatchedAmt = totalMatchedAmt.Add(bidAmt)
 		mInfo.MatchedLen = mInfo.MatchedLen + 1
 	}
 
 	mInfo.MatchedPrice = auction.GetStartPrice()
 	mInfo.TotalMatchedAmount = totalMatchedAmt
-	mInfo.Allocations = allocations
+	mInfo.AllocationMap = allocMap
 
 	return mInfo
 }
@@ -461,103 +449,115 @@ func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI
 	bids := k.GetBidsByAuctionId(ctx, auction.GetId())
 	bids = types.SortByBidPrice(bids)
 
-	allowedBidders := auction.GetAllowedBidders()
-	if len(allowedBidders) == 0 {
-		panic("This can't occur since the allowed bidders must exist")
-	}
-
 	mInfo := MatchingInfo{
 		MatchedLen:         0,
 		MatchedPrice:       sdk.ZeroDec(),
 		TotalMatchedAmount: sdk.ZeroInt(),
-		Allocations:        []AllocationInfo{},
 	}
 	allowedBiddersMap := auction.GetAllowedBiddersMap() // map(bidder => maxBidAmt)
-	accumulatedMap := make(map[string]sdk.Int)          // map(bidder => accumulatedAmt)
-	reservedMap := make(map[string]sdk.Int)             // map(bidder => reservedAmt)
+	allocationMap := map[string]sdk.Int{}               // map(bidder => allocatedAmt)
+	reservedMatchedMap := map[string]sdk.Int{}          // map(bidder => reservedMatchedAmt)
 
-	// Iterate from the highest matching bid price and find the matching information
-	// to store them in MatchingInfo object
-	for _, b := range bids {
-		matchingPrice := b.Price
+	// Iterate from the highest matching bid price and stop until it finds
+	// the matching information to store them into MatchingInfo object
+	for _, bid := range bids {
+		matchingPrice := bid.Price
 		totalMatchedAmt := sdk.ZeroInt()
 
-		// Add all allowed bidders to the maps for the matching price
-		// Accumulated and reserved amounts must be initialized per matching price
-		for _, ab := range allowedBidders {
-			accumulatedMap[ab.Bidder] = sdk.ZeroInt()
-			reservedMap[ab.Bidder] = sdk.ZeroInt()
+		// Add all allowed bidders for the matching price
+		for _, ab := range auction.GetAllowedBidders() {
+			allocationMap[ab.Bidder] = sdk.ZeroInt()
+			reservedMatchedMap[ab.Bidder] = sdk.ZeroInt()
 		}
 
+		// Iterate all bids and execute the logics when the bid price is
+		// higher than the current matching price
 		for _, b := range bids {
 			if b.Price.LT(matchingPrice) {
 				continue
 			}
 
+			maxBidAmt := allowedBiddersMap[b.Bidder]
+			allocateAmt := allocationMap[b.Bidder]
+
 			// Uses minimum of the two amounts to prevent from exceeding the bidder's maximum bid amount
 			if b.Type == types.BidTypeBatchWorth {
-				maxBidAmt := allowedBiddersMap[b.Bidder]
-				accumulatedAmt := accumulatedMap[b.Bidder]
+				// Accumulate how much reserved paying coin amount is matched
+				if reservedMatchedAmt, ok := reservedMatchedMap[b.Bidder]; ok {
+					reserverAmt := b.Coin.Amount
+					reservedMatchedMap[b.Bidder] = reservedMatchedAmt.Add(reserverAmt)
+				}
+
 				bidAmt := b.Coin.Amount.ToDec().QuoTruncate(matchingPrice).TruncateInt()
 
-				// MinInt(bidAmt, MaxBidAmt-AccumulatedBidAmt)
-				matchingAmt := sdk.MinInt(bidAmt, maxBidAmt.Sub(accumulatedAmt))
+				// MinInt(BidAmt, MaxBidAmt-AccumulatedBidAmt)
+				matchingAmt := sdk.MinInt(bidAmt, maxBidAmt.Sub(allocateAmt))
 
-				reservedMap[b.Bidder] = reservedMap[b.Bidder].Add(b.Coin.Amount)
-				accumulatedMap[b.Bidder] = accumulatedMap[b.Bidder].Add(matchingAmt)
+				// Accumulate matching amount since a bidder can have multiple bids
+				if alloc, ok := allocationMap[b.Bidder]; ok {
+					allocationMap[b.Bidder] = alloc.Add(matchingAmt)
+				}
+
 				totalMatchedAmt = totalMatchedAmt.Add(matchingAmt)
 			} else {
-				maxBidAmt := allowedBiddersMap[b.Bidder]
-				accumulatedAmt := accumulatedMap[b.Bidder]
+				// Accumulate how much reserved paying coin amount is matched
+				if reservedMatchedAmt, ok := reservedMatchedMap[b.Bidder]; ok {
+					reserverAmt := b.Coin.Amount.ToDec().Mul(b.Price).Ceil().TruncateInt()
+					reservedMatchedMap[b.Bidder] = reservedMatchedAmt.Add(reserverAmt)
+				}
+
 				bidAmt := b.Coin.Amount
 
 				// MinInt(BidAmt, MaxBidAmount-AccumulatedBidAmount)
-				matchingAmt := sdk.MinInt(bidAmt, maxBidAmt.Sub(accumulatedAmt))
+				matchingAmt := sdk.MinInt(bidAmt, maxBidAmt.Sub(allocateAmt))
 
-				bidAmt = b.Coin.Amount.ToDec().Mul(b.Price).Ceil().TruncateInt()
-				reservedMap[b.Bidder] = reservedMap[b.Bidder].Add(bidAmt)
-				accumulatedMap[b.Bidder] = accumulatedMap[b.Bidder].Add(matchingAmt)
+				// Accumulate matching amount since a bidder can have multiple bids
+				if alloc, ok := allocationMap[b.Bidder]; ok {
+					allocationMap[b.Bidder] = alloc.Add(matchingAmt)
+				}
+
 				totalMatchedAmt = totalMatchedAmt.Add(matchingAmt)
 			}
 		}
 
+		// Exit the iteration when the total matched amount is greater than the total selling coin amount
 		if totalMatchedAmt.GT(auction.GetSellingCoin().Amount) {
 			break
 		}
 
-		b.SetWinner(true)
-		k.SetBid(ctx, b)
-
 		mInfo.MatchedLen = mInfo.MatchedLen + 1
 		mInfo.MatchedPrice = matchingPrice
 		mInfo.TotalMatchedAmount = totalMatchedAmt
+		mInfo.AllocationMap = allocationMap
+		mInfo.ReservedMatchedMap = reservedMatchedMap
+
+		bid.SetWinner(true)
+		k.SetBid(ctx, bid)
 	}
 
-	// Store allocation info from the maps
-	allocsInfo := []AllocationInfo{}
-	for bidder, accumulatedAmt := range accumulatedMap {
-		allocsInfo = append(allocsInfo, AllocationInfo{
-			Bidder:         bidder,
-			AllocateAmount: accumulatedAmt,
-			ReserveAmount:  reservedMap[bidder],
-		})
-	}
-	mInfo.Allocations = allocsInfo
+	// Iterate all bids to get refund amount for each bidder
+	// Calculate the refund amount by substracting allocate amount from
+	// how much a bidder reserved to place a bid for the auction
+	refundMap := map[string]sdk.Int{}
+	for _, b := range bids {
+		refundMap[b.Bidder] = sdk.ZeroInt()
+		reservedAmt := sdk.ZeroInt()
 
-	// 100  000000
-	// 3250 000000
-	// 1000 000000
-	// 2500 000000
-	// 100  000000
-	// Total: 3211 111111
+		if b.Type == types.BidTypeBatchWorth {
+			reservedAmt = reservedAmt.Add(b.Coin.Amount)
+		} else {
+			bidAmt := b.Coin.Amount.ToDec().Mul(b.Price).Ceil().TruncateInt()
+			reservedAmt = reservedAmt.Add(bidAmt)
+		}
 
-	for _, alloc := range mInfo.Allocations {
-		fmt.Println("MatchedPrice: ", mInfo.MatchedPrice)
-		fmt.Println("Bidder: ", alloc.Bidder)
-		fmt.Println("AllocateAmt: ", alloc.AllocateAmount)
-		fmt.Println("ReservedAmt: ", alloc.ReserveAmount)
-		fmt.Println("")
+		reservedMatchedAmt, ok := mInfo.ReservedMatchedMap[b.Bidder]
+		if ok {
+			reservedAmt = reservedAmt.Sub(reservedMatchedAmt)
+		}
+
+		refundMap[b.Bidder] = reservedAmt
 	}
+	mInfo.RefundMap = refundMap
 
 	k.SetMatchedBidsLen(ctx, auction.GetId(), mInfo.MatchedLen)
 
