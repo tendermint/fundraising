@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"fmt"
+	"reflect"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -507,25 +508,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Many() {
 	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
 	s.Require().True(found)
 
-	fmt.Println("addr(1): ", s.addr(1).String())
-	fmt.Println("addr(2): ", s.addr(2).String())
-	fmt.Println("addr(3): ", s.addr(3).String())
-	fmt.Println("")
-
 	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
-
-	fmt.Println("MatchedLen: ", mInfo.MatchedLen)
-	fmt.Println("MatchedPrice: ", mInfo.MatchedPrice)
-	fmt.Println("TotalMatchedAmount: ", mInfo.TotalMatchedAmount)
-	fmt.Println("AllocationMap(addr1): ", mInfo.AllocationMap[s.addr(1).String()])
-	fmt.Println("AllocationMap(addr2): ", mInfo.AllocationMap[s.addr(2).String()])
-	fmt.Println("AllocationMap(addr3): ", mInfo.AllocationMap[s.addr(3).String()])
-	fmt.Println("ReservedMatchedMap(addr1): ", mInfo.ReservedMatchedMap[s.addr(1).String()])
-	fmt.Println("ReservedMatchedMap(addr2): ", mInfo.ReservedMatchedMap[s.addr(2).String()])
-	fmt.Println("ReservedMatchedMap(addr3): ", mInfo.ReservedMatchedMap[s.addr(3).String()])
-	fmt.Println("RefundMap(addr1): ", mInfo.RefundMap[s.addr(1).String()])
-	fmt.Println("RefundMap(addr2): ", mInfo.RefundMap[s.addr(2).String()])
-	fmt.Println("RefundMap(addr3): ", mInfo.RefundMap[s.addr(3).String()])
 
 	// Checking
 	s.Require().Equal(mInfo.MatchedLen, int64(2))
@@ -537,8 +520,14 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Many() {
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(1).String()], sdk.NewInt(450_000_000))
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], sdk.NewInt(450_000_000))
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(3).String()], sdk.NewInt(0))
-	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()], sdk.NewInt(500_000_000))
-	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()], sdk.NewInt(0_000_000))
+	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()], sdk.NewInt(50_000_000))
+
+	fmt.Println(mInfo.RefundMap[s.addr(2).String()])
+	fmt.Println(sdk.NewInt(0))
+	fmt.Println(reflect.TypeOf(mInfo.RefundMap[s.addr(2).String()]))
+	fmt.Println(reflect.TypeOf(sdk.NewInt(0)))
+
+	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()], sdk.NewInt(0))
 	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()], sdk.NewInt(400_000_000))
 
 }
