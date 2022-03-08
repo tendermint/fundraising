@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	"fmt"
-	"reflect"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -485,6 +484,7 @@ func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 	}
 }
 
+// Example of "JH_ex0" in Sheet
 func (s *KeeperTestSuite) TestCalculateAllocation_Many() {
 	auction := s.createBatchAuction(
 		s.addr(0),
@@ -521,13 +521,221 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Many() {
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], sdk.NewInt(450_000_000))
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(3).String()], sdk.NewInt(0))
 	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()], sdk.NewInt(50_000_000))
-
-	fmt.Println(mInfo.RefundMap[s.addr(2).String()])
-	fmt.Println(sdk.NewInt(0))
-	fmt.Println(reflect.TypeOf(mInfo.RefundMap[s.addr(2).String()]))
-	fmt.Println(reflect.TypeOf(sdk.NewInt(0)))
-
-	//s.Require().Equal(mInfo.RefundMap[s.addr(2).String()], sdk.NewInt(0))
+	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()].Abs(), sdk.NewInt(0).Abs())
 	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()], sdk.NewInt(400_000_000))
 
+	// s.Require().NoError(s.keeper.AllocateSellingCoin(s.ctx, a, mInfo))
+	// s.Require().NoError(s.keeper.ReleaseRemainingSellingCoin(s.ctx, a))
+	// s.Require().NoError(s.keeper.ApplyVestingSchedules(s.ctx, a))
+}
+
+// Example of "JH_ex0.1" in Sheet
+func (s *KeeperTestSuite) TestCalculateAllocation_Worth() {
+	auction := s.createBatchAuction(
+		s.addr(0),
+		parseDec("1"),
+		parseDec("0.1"),
+		parseCoin("1500_000_000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		1,
+		sdk.MustNewDecFromStr("0.2"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	s.placeBidBatchWorth(auction.Id, s.addr(1), parseDec("1"), parseCoin("500_000_000denom2"), sdk.NewInt(1500_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("0.9"), parseCoin("500_000_000denom2"), sdk.NewInt(1500_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("500_000_000denom2"), sdk.NewInt(1500_000_000), true)
+
+	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
+	s.Require().True(found)
+
+	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
+
+	// Checking
+	s.Require().Equal(mInfo.MatchedLen, int64(2))
+	s.Require().Equal(mInfo.MatchedPrice, parseDec("0.9"))
+	matchingPrice := parseDec("0.9")
+	MatchedAmt := sdk.NewInt(500_000_000).ToDec().QuoTruncate(matchingPrice).TruncateInt()
+
+	s.Require().Equal(mInfo.TotalMatchedAmount, MatchedAmt.Add(MatchedAmt))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(1).String()], MatchedAmt)
+	s.Require().Equal(mInfo.AllocationMap[s.addr(2).String()], MatchedAmt)
+	s.Require().Equal(mInfo.AllocationMap[s.addr(3).String()], sdk.NewInt(0))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(1).String()], sdk.NewInt(500_000_000))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], sdk.NewInt(500_000_000))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(3).String()], sdk.NewInt(0))
+	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()].Abs(), sdk.NewInt(0).Abs())
+	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()].Abs(), sdk.NewInt(0).Abs())
+	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()], sdk.NewInt(500_000_000))
+}
+
+// Example of "JH_ex0.2" in Sheet
+func (s *KeeperTestSuite) TestCalculateAllocation_Mixed() {
+	auction := s.createBatchAuction(
+		s.addr(0),
+		parseDec("1"),
+		parseDec("0.1"),
+		parseCoin("1700_000_000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		1,
+		sdk.MustNewDecFromStr("0.2"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("1"), parseCoin("500_000_000denom1"), sdk.NewInt(1500_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("0.9"), parseCoin("500_000_000denom2"), sdk.NewInt(1500_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("500_000_000denom2"), sdk.NewInt(1500_000_000), true)
+
+	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
+	s.Require().True(found)
+
+	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
+
+	// Checking
+	s.Require().Equal(mInfo.MatchedLen, int64(2))
+	s.Require().Equal(mInfo.MatchedPrice, parseDec("0.9"))
+	matchingPrice := parseDec("0.9")
+	MatchedAmt2 := sdk.NewInt(500_000_000).ToDec().QuoTruncate(matchingPrice).TruncateInt()
+
+	s.Require().Equal(mInfo.TotalMatchedAmount, sdk.NewInt(500_000_000).Add(MatchedAmt2))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(1).String()], sdk.NewInt(500_000_000))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(2).String()], MatchedAmt2)
+	s.Require().Equal(mInfo.AllocationMap[s.addr(3).String()], sdk.NewInt(0))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(1).String()], sdk.NewInt(450_000_000))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], sdk.NewInt(500_000_000))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(3).String()], sdk.NewInt(0))
+	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()], sdk.NewInt(50_000_000))
+	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()].Abs(), sdk.NewInt(0).Abs())
+	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()], sdk.NewInt(500_000_000))
+}
+
+// Example of "JH_ex0" in Sheet for MaxBidAmountLimit
+func (s *KeeperTestSuite) TestCalculateAllocation_Many_Limited() {
+	auction := s.createBatchAuction(
+		s.addr(0),
+		parseDec("1"),
+		parseDec("0.1"),
+		parseCoin("1000_000_000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		1,
+		sdk.MustNewDecFromStr("0.2"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("1"), parseCoin("500_000_000denom1"), sdk.NewInt(400_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("0.9"), parseCoin("500_000_000denom1"), sdk.NewInt(400_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("500_000_000denom1"), sdk.NewInt(400_000_000), true)
+
+	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
+	s.Require().True(found)
+
+	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
+
+	// Checking
+	s.Require().Equal(mInfo.MatchedLen, int64(2))
+	s.Require().Equal(mInfo.MatchedPrice, parseDec("0.9"))
+	s.Require().Equal(mInfo.TotalMatchedAmount, sdk.NewInt(800_000_000))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(1).String()], sdk.NewInt(400_000_000))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(2).String()], sdk.NewInt(400_000_000))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(3).String()], sdk.NewInt(0))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(1).String()], sdk.NewInt(360_000_000))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], sdk.NewInt(360_000_000))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(3).String()], sdk.NewInt(0))
+	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()], sdk.NewInt(140_000_000))
+	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()], sdk.NewInt(90_000_000))
+	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()], sdk.NewInt(400_000_000))
+}
+
+// Example of "JH_ex0.1" in Sheet for MaxBidAmountLimit
+func (s *KeeperTestSuite) TestCalculateAllocation_Worth_Limited() {
+	auction := s.createBatchAuction(
+		s.addr(0),
+		parseDec("1"),
+		parseDec("0.1"),
+		parseCoin("1500_000_000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		1,
+		sdk.MustNewDecFromStr("0.2"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	s.placeBidBatchWorth(auction.Id, s.addr(1), parseDec("1"), parseCoin("500_000_000denom2"), sdk.NewInt(400_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("0.9"), parseCoin("500_000_000denom2"), sdk.NewInt(400_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("500_000_000denom2"), sdk.NewInt(400_000_000), true)
+
+	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
+	s.Require().True(found)
+
+	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
+
+	// Checking
+	s.Require().Equal(mInfo.MatchedLen, int64(3))
+	s.Require().Equal(mInfo.MatchedPrice, parseDec("0.8"))
+	s.Require().Equal(mInfo.TotalMatchedAmount, sdk.NewInt(1200_000_000))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(1).String()], sdk.NewInt(400_000_000))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(2).String()], sdk.NewInt(400_000_000))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(3).String()], sdk.NewInt(400_000_000))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(1).String()], sdk.NewInt(320_000_000))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], sdk.NewInt(320_000_000))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(3).String()], sdk.NewInt(320_000_000))
+	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()], sdk.NewInt(180_000_000))
+	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()], sdk.NewInt(180_000_000))
+	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()], sdk.NewInt(180_000_000))
+}
+
+// Example of "JH_ex0.2" in Sheet for MaxBidAmountLimit
+func (s *KeeperTestSuite) TestCalculateAllocation_Mixed_Limited() {
+	auction := s.createBatchAuction(
+		s.addr(0),
+		parseDec("1"),
+		parseDec("0.1"),
+		parseCoin("1700_000_000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		1,
+		sdk.MustNewDecFromStr("0.2"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("1"), parseCoin("500_000_000denom1"), sdk.NewInt(600_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("0.9"), parseCoin("500_000_000denom2"), sdk.NewInt(600_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("500_000_000denom2"), sdk.NewInt(600_000_000), true)
+
+	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
+	s.Require().True(found)
+
+	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
+
+	// Checking
+	s.Require().Equal(mInfo.MatchedLen, int64(3))
+	s.Require().Equal(mInfo.MatchedPrice, parseDec("0.8"))
+	s.Require().Equal(mInfo.TotalMatchedAmount, sdk.NewInt(1700_000_000))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(1).String()], sdk.NewInt(500_000_000))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(2).String()], sdk.NewInt(600_000_000))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(3).String()], sdk.NewInt(600_000_000))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(1).String()], sdk.NewInt(400_000_000))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], sdk.NewInt(480_000_000))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(3).String()], sdk.NewInt(480_000_000))
+	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()], sdk.NewInt(100_000_000))
+	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()], sdk.NewInt(20_000_000))
+	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()], sdk.NewInt(20_000_000))
 }
