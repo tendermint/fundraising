@@ -739,3 +739,111 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed_Limited() {
 	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()], sdk.NewInt(20_000_000))
 	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()], sdk.NewInt(20_000_000))
 }
+
+// Example of "JH_ex1" in Sheet
+func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2() {
+	auction := s.createBatchAuction(
+		s.addr(0),
+		parseDec("1"),
+		parseDec("0.1"),
+		parseCoin("5000_000_000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		1,
+		sdk.MustNewDecFromStr("0.2"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("1"), parseCoin("200_000_000denom1"), sdk.NewInt(2500_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("0.8"), parseCoin("500_000_000denom2"), sdk.NewInt(2500_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(3), parseDec("0.9"), parseCoin("500_000_000denom1"), sdk.NewInt(600_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(1), parseDec("1.1"), parseCoin("300_000_000denom2"), sdk.NewInt(2500_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(5), parseDec("1.2"), parseCoin("300_000_000denom1"), sdk.NewInt(2500_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(4), parseDec("0.8"), parseCoin("100_000_000denom1"), sdk.NewInt(2500_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("0.7"), parseCoin("100_000_000denom1"), sdk.NewInt(2500_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(6), parseDec("0.5"), parseCoin("100_000_000denom1"), sdk.NewInt(2500_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("300_000_000denom2"), sdk.NewInt(1200_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(7), parseDec("0.6"), parseCoin("500_000_000denom2"), sdk.NewInt(2500_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(8), parseDec("0.8"), parseCoin("500_000_000denom1"), sdk.NewInt(2500_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(9), parseDec("0.6"), parseCoin("600_000_000denom1"), sdk.NewInt(2500_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(6), parseDec("0.5"), parseCoin("500_000_000denom2"), sdk.NewInt(2500_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(10), parseDec("0.6"), parseCoin("100_000_000denom1"), sdk.NewInt(2500_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.7"), parseCoin("800_000_000denom2"), sdk.NewInt(2500_000_000), true)
+
+	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
+	s.Require().True(found)
+
+	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
+
+	// Checking
+	s.Require().Equal(mInfo.MatchedLen, int64(10))
+	s.Require().Equal(mInfo.MatchedPrice, parseDec("0.7"))
+
+	matchingPrice := parseDec("0.7")
+	MatchedAmt1 := sdk.NewInt(300_000_000).ToDec().QuoTruncate(matchingPrice).TruncateInt().Add(sdk.NewInt(200_000_000))
+	MatchedAmt2 := sdk.NewInt(500_000_000).ToDec().QuoTruncate(matchingPrice).TruncateInt().Add(sdk.NewInt(100_000_000))
+	tMatchedAmt3 := sdk.NewInt(300_000_000).ToDec().QuoTruncate(matchingPrice).TruncateInt().Add(sdk.NewInt(500_000_000))
+	MatchedAmt3 := tMatchedAmt3.Add(sdk.NewInt(800_000_000).ToDec().QuoTruncate(matchingPrice).TruncateInt())
+
+	MatchedAmt4 := sdk.NewInt(100_000_000)
+	MatchedAmt5 := sdk.NewInt(300_000_000)
+	MatchedAmt8 := sdk.NewInt(500_000_000)
+	MatchedAmt_Zero := sdk.NewInt(0)
+	TotalMatchedAmt := MatchedAmt1.Add(MatchedAmt2).Add(MatchedAmt3).Add(MatchedAmt4).Add(MatchedAmt5).Add(MatchedAmt8)
+
+	s.Require().Equal(mInfo.TotalMatchedAmount, TotalMatchedAmt)
+	s.Require().Equal(mInfo.AllocationMap[s.addr(1).String()], MatchedAmt1)
+	s.Require().Equal(mInfo.AllocationMap[s.addr(2).String()], MatchedAmt2)
+	s.Require().Equal(mInfo.AllocationMap[s.addr(3).String()], MatchedAmt3)
+	s.Require().Equal(mInfo.AllocationMap[s.addr(4).String()], MatchedAmt4)
+	s.Require().Equal(mInfo.AllocationMap[s.addr(5).String()], MatchedAmt5)
+	s.Require().Equal(mInfo.AllocationMap[s.addr(6).String()], MatchedAmt_Zero)
+	s.Require().Equal(mInfo.AllocationMap[s.addr(7).String()], MatchedAmt_Zero)
+	s.Require().Equal(mInfo.AllocationMap[s.addr(8).String()], MatchedAmt8)
+	s.Require().Equal(mInfo.AllocationMap[s.addr(9).String()], MatchedAmt_Zero)
+	s.Require().Equal(mInfo.AllocationMap[s.addr(10).String()], MatchedAmt_Zero)
+
+	ReservedMatchedAmt1 := sdk.NewInt(200_000_000).ToDec().Mul(matchingPrice).Ceil().TruncateInt().Add(sdk.NewInt(300_000_000))
+	ReservedMatchedAmt2 := sdk.NewInt(100_000_000).ToDec().Mul(matchingPrice).Ceil().TruncateInt().Add(sdk.NewInt(500_000_000))
+	ReservedMatchedAmt3 := sdk.NewInt(500_000_000).ToDec().Mul(matchingPrice).Ceil().TruncateInt().Add(sdk.NewInt(1100_000_000))
+	ReservedMatchedAmt4 := sdk.NewInt(100_000_000).ToDec().Mul(matchingPrice).Ceil().TruncateInt()
+	ReservedMatchedAmt5 := sdk.NewInt(300_000_000).ToDec().Mul(matchingPrice).Ceil().TruncateInt()
+	ReservedMatchedAmt8 := sdk.NewInt(500_000_000).ToDec().Mul(matchingPrice).Ceil().TruncateInt()
+	ReservedMatchedAmt_Zero := sdk.NewInt(0)
+
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(1).String()], ReservedMatchedAmt1)
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], ReservedMatchedAmt2)
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(3).String()], ReservedMatchedAmt3)
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(4).String()], ReservedMatchedAmt4)
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(5).String()], ReservedMatchedAmt5)
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(6).String()], ReservedMatchedAmt_Zero)
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(7).String()], ReservedMatchedAmt_Zero)
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(8).String()], ReservedMatchedAmt8)
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(9).String()], ReservedMatchedAmt_Zero)
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(10).String()], ReservedMatchedAmt_Zero)
+
+	RefundAmt1 := sdk.NewInt(60_000_000)
+	RefundAmt2 := sdk.NewInt(0)
+	RefundAmt3 := sdk.NewInt(100_000_000)
+	RefundAmt4 := sdk.NewInt(10_000_000)
+	RefundAmt5 := sdk.NewInt(150_000_000)
+	RefundAmt6 := sdk.NewInt(550_000_000)
+	RefundAmt7 := sdk.NewInt(500_000_000)
+	RefundAmt8 := sdk.NewInt(50_000_000)
+	RefundAmt9 := sdk.NewInt(360_000_000)
+	RefundAmt10 := sdk.NewInt(60_000_000)
+
+	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()].Abs(), RefundAmt1.Abs())
+	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()].Abs(), RefundAmt2.Abs())
+	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()].Abs(), RefundAmt3.Abs())
+	s.Require().Equal(mInfo.RefundMap[s.addr(4).String()].Abs(), RefundAmt4.Abs())
+	s.Require().Equal(mInfo.RefundMap[s.addr(5).String()].Abs(), RefundAmt5.Abs())
+	s.Require().Equal(mInfo.RefundMap[s.addr(6).String()].Abs(), RefundAmt6.Abs())
+	s.Require().Equal(mInfo.RefundMap[s.addr(7).String()].Abs(), RefundAmt7.Abs())
+	s.Require().Equal(mInfo.RefundMap[s.addr(8).String()].Abs(), RefundAmt8.Abs())
+	s.Require().Equal(mInfo.RefundMap[s.addr(9).String()].Abs(), RefundAmt9.Abs())
+	s.Require().Equal(mInfo.RefundMap[s.addr(10).String()].Abs(), RefundAmt10.Abs())
+}
