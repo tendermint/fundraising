@@ -489,7 +489,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Many() {
 		s.addr(0),
 		parseDec("1"),
 		parseDec("0.1"),
-		parseCoin("1000000000denom1"),
+		parseCoin("1000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
 		1,
@@ -500,9 +500,9 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Many() {
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("1"), parseCoin("500000000denom1"), sdk.NewInt(1000000000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("0.9"), parseCoin("500000000denom1"), sdk.NewInt(1000000000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("500000000denom1"), sdk.NewInt(1000000000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("1"), parseCoin("500_000_000denom1"), sdk.NewInt(1000_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("0.9"), parseCoin("500_000_000denom1"), sdk.NewInt(1000_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("500_000_000denom1"), sdk.NewInt(1000_000_000), true)
 
 	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
 	s.Require().True(found)
@@ -510,18 +510,9 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Many() {
 	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
 
 	// Checking
-	s.Require().Equal(mInfo.MatchedLen, 4)
-	s.Require().Equal(mInfo.MatchedPrice, 0.9)
-	s.Require().Equal(mInfo.TotalMatchedAmount, sdk.NewInt(1100).Add(sdk.NewInt(2000).ToDec().QuoTruncate(sdk.NewDec(0.9)).TruncateInt()))
-	s.Require().Equal(mInfo.AllocationMap["1"], 500)
+	s.Require().Equal(mInfo.MatchedLen, int64(2))
+	s.Require().Equal(mInfo.MatchedPrice, parseDec("0.9"))
+	s.Require().Equal(mInfo.TotalMatchedAmount, sdk.NewInt(1000_000_000))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(1).String()], sdk.NewInt(500_000_000))
 
 }
-
-//ype MatchingInfo struct {
-//MatchedLen         int64
-//MatchedPrice       types.Dec
-//TotalMatchedAmount types.Int
-//AllocationMap      map[string]types.Int
-//ReservedMatchedMap map[string]types.Int
-//RefundMap          map[string]types.Int
-//}
