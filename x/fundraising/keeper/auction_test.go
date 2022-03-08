@@ -484,7 +484,7 @@ func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 	}
 }
 
-func (s *KeeperTestSuite) TestCalculateAllocation() {
+func (s *KeeperTestSuite) TestCalculateAllocation_Many() {
 	auction := s.createBatchAuction(
 		s.addr(0),
 		parseDec("1"),
@@ -509,13 +509,19 @@ func (s *KeeperTestSuite) TestCalculateAllocation() {
 
 	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
 
-	fmt.Println("=================================")
-	fmt.Println("MatchedLen: ", mInfo.MatchedLen)
-	fmt.Println("MatchedPrice: ", mInfo.MatchedPrice)
-	fmt.Println("TotalSoldAmount: ", mInfo.TotalMatchedAmount)
-	fmt.Println("AllocationMap", mInfo.AllocationMap)
-	fmt.Println("ReservedMatchedMap", mInfo.ReservedMatchedMap)
-	fmt.Println("RefundMap", mInfo.RefundMap)
-	fmt.Println("")
+	// Checking
+	s.Require().Equal(mInfo.MatchedLen, 4)
+	s.Require().Equal(mInfo.MatchedPrice, 0.9)
+	s.Require().Equal(mInfo.TotalMatchedAmount, sdk.NewInt(1100).Add(sdk.NewInt(2000).ToDec().QuoTruncate(sdk.NewDec(0.9)).TruncateInt()))
+	s.Require().Equal(mInfo.AllocationMap["1"], 500)
 
 }
+
+//ype MatchingInfo struct {
+//MatchedLen         int64
+//MatchedPrice       types.Dec
+//TotalMatchedAmount types.Int
+//AllocationMap      map[string]types.Int
+//ReservedMatchedMap map[string]types.Int
+//RefundMap          map[string]types.Int
+//}
