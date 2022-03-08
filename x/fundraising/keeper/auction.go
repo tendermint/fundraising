@@ -490,10 +490,18 @@ func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI
 		MatchedLen:         0,
 		MatchedPrice:       sdk.ZeroDec(),
 		TotalMatchedAmount: sdk.ZeroInt(),
+		AllocationMap:      map[string]sdk.Int{},
+		ReservedMatchedMap: map[string]sdk.Int{},
+		RefundMap:          map[string]sdk.Int{},
 	}
 	allowedBiddersMap := auction.GetAllowedBiddersMap() // map(bidder => maxBidAmt)
 	allocationMap := map[string]sdk.Int{}               // map(bidder => allocatedAmt)
 	reservedMatchedMap := map[string]sdk.Int{}          // map(bidder => reservedMatchedAmt)
+
+	for _, ab := range auction.GetAllowedBidders() {
+		mInfo.AllocationMap[ab.Bidder] = sdk.ZeroInt()
+		mInfo.ReservedMatchedMap[ab.Bidder] = sdk.ZeroInt()
+	}
 
 	// Iterate from the highest matching bid price and stop until it finds
 	// the matching information to store them into MatchingInfo object
@@ -562,7 +570,7 @@ func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI
 
 				// test
 				fmt.Println(b.Bidder, ": ", bidAmt, allocationMap[b.Bidder], reservedMatchedMap[b.Bidder], totalMatchedAmt)
-				fmt.Println(b.Bidder, ": ", mInfo.AllocationMap[b.Bidder], mInfo.ReservedMatchedMap[b.Bidder], totalMatchedAmt)
+				// fmt.Println(b.Bidder, ": ", mInfo.AllocationMap[b.Bidder], mInfo.ReservedMatchedMap[b.Bidder], totalMatchedAmt)
 			}
 		}
 
@@ -574,8 +582,11 @@ func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI
 		mInfo.MatchedLen = mInfo.MatchedLen + 1
 		mInfo.MatchedPrice = matchingPrice
 		mInfo.TotalMatchedAmount = totalMatchedAmt
-		mInfo.AllocationMap = allocationMap
-		mInfo.ReservedMatchedMap = reservedMatchedMap
+
+		for _, ab := range auction.GetAllowedBidders() {
+			mInfo.AllocationMap[ab.Bidder] = allocationMap[ab.Bidder]
+			mInfo.ReservedMatchedMap[ab.Bidder] = reservedMatchedMap[ab.Bidder]
+		}
 
 		bid.SetWinner(true)
 		k.SetBid(ctx, bid)

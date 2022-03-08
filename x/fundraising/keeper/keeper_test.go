@@ -257,7 +257,7 @@ func exchangedSellingAmount(price sdk.Dec, coin sdk.Coin) sdk.Int {
 
 // parseCoin parses and returns sdk.Coin.
 func parseCoin(s string) sdk.Coin {
-	s = strings.Replace(s, "_", "", 100)
+	s = strings.ReplaceAll(s, "_", "")
 	coin, err := sdk.ParseCoinNormalized(s)
 	if err != nil {
 		panic(err)
