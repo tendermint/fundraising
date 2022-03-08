@@ -533,6 +533,12 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Many() {
 	s.Require().Equal(mInfo.TotalMatchedAmount, sdk.NewInt(1000_000_000))
 	s.Require().Equal(mInfo.AllocationMap[s.addr(1).String()], sdk.NewInt(500_000_000))
 	s.Require().Equal(mInfo.AllocationMap[s.addr(2).String()], sdk.NewInt(500_000_000))
-	//s.Require().Equal(mInfo.AllocationMap[s.addr(3).String()], sdk.NewInt(0))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(3).String()], sdk.NewInt(0))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(1).String()], sdk.NewInt(450_000_000))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], sdk.NewInt(450_000_000))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(3).String()], sdk.NewInt(0))
+	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()], sdk.NewInt(500_000_000))
+	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()], sdk.NewInt(0_000_000))
+	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()], sdk.NewInt(400_000_000))
 
 }

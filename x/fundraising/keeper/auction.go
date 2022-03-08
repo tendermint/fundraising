@@ -567,10 +567,6 @@ func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI
 				}
 
 				totalMatchedAmt = totalMatchedAmt.Add(matchingAmt)
-
-				// test
-				fmt.Println(b.Bidder, ": ", bidAmt, allocationMap[b.Bidder], reservedMatchedMap[b.Bidder], totalMatchedAmt)
-				// fmt.Println(b.Bidder, ": ", mInfo.AllocationMap[b.Bidder], mInfo.ReservedMatchedMap[b.Bidder], totalMatchedAmt)
 			}
 		}
 
