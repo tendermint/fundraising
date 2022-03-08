@@ -509,10 +509,22 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Many() {
 
 	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
 
+	fmt.Println(mInfo.MatchedLen)
+	fmt.Println(mInfo.MatchedPrice)
+	fmt.Println(mInfo.TotalMatchedAmount)
+	fmt.Println(mInfo.AllocationMap[s.addr(1).String()])
+	fmt.Println(mInfo.ReservedMatchedMap[s.addr(1).String()])
+	fmt.Println(mInfo.AllocationMap[s.addr(2).String()])
+	fmt.Println(mInfo.ReservedMatchedMap[s.addr(2).String()])
+	fmt.Println(mInfo.AllocationMap[s.addr(3).String()])
+	fmt.Println(mInfo.ReservedMatchedMap[s.addr(3).String()])
+
 	// Checking
 	s.Require().Equal(mInfo.MatchedLen, int64(2))
 	s.Require().Equal(mInfo.MatchedPrice, parseDec("0.9"))
 	s.Require().Equal(mInfo.TotalMatchedAmount, sdk.NewInt(1000_000_000))
 	s.Require().Equal(mInfo.AllocationMap[s.addr(1).String()], sdk.NewInt(500_000_000))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(2).String()], sdk.NewInt(500_000_000))
+	//s.Require().Equal(mInfo.AllocationMap[s.addr(3).String()], sdk.NewInt(0))
 
 }

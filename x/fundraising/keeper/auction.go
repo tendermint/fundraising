@@ -497,7 +497,7 @@ func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI
 
 	// Iterate from the highest matching bid price and stop until it finds
 	// the matching information to store them into MatchingInfo object
-	for _, bid := range bids {
+	for _, bid := range bids { // (1, 500), (0.9, 500), (0.8, 500)
 		matchingPrice := bid.Price
 		totalMatchedAmt := sdk.ZeroInt()
 
@@ -559,6 +559,10 @@ func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI
 				}
 
 				totalMatchedAmt = totalMatchedAmt.Add(matchingAmt)
+
+				// test
+				fmt.Println(b.Bidder, ": ", bidAmt, allocationMap[b.Bidder], reservedMatchedMap[b.Bidder], totalMatchedAmt)
+				fmt.Println(b.Bidder, ": ", mInfo.AllocationMap[b.Bidder], mInfo.ReservedMatchedMap[b.Bidder], totalMatchedAmt)
 			}
 		}
 
