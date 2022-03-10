@@ -524,9 +524,20 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Many() {
 	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()].Abs(), sdk.NewInt(0).Abs())
 	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()], sdk.NewInt(400_000_000))
 
-	// s.Require().NoError(s.keeper.AllocateSellingCoin(s.ctx, a, mInfo))
-	// s.Require().NoError(s.keeper.ReleaseRemainingSellingCoin(s.ctx, a))
-	// s.Require().NoError(s.keeper.ApplyVestingSchedules(s.ctx, a))
+	// Distribute selling coin
+	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
+	s.Require().NoError(err)
+
+	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
+	s.Require().NoError(err)
+
+	// The selling reserve account balance must be zero
+	s.Require().True(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).IsZero())
+
+	// The bidders must have the selling coin
+	s.Require().False(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).IsZero())
+	s.Require().False(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).IsZero())
+	s.Require().True(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).IsZero())
 }
 
 // Example of "JH_ex0.1" in Sheet
@@ -1074,7 +1085,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2_LimitedDifferent() {
 }
 
 // Example of "JH_ex2" in Sheet without MaxBidAmountLimit value
-func (s *KeeperTestSuite) TestCalculateAllocation_Mixed3_LimitedSame() {
+func (s *KeeperTestSuite) TestCalculateAllocation_Mixed3() {
 	auction := s.createBatchAuction(
 		s.addr(0),
 		parseDec("10"),

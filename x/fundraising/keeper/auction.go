@@ -71,11 +71,17 @@ func (k Keeper) AllocateSellingCoin(ctx sdk.Context, auction types.AuctionI, mIn
 	// Allocate coins to all matched bidders in AllocationMap and
 	// set the amounts in trasnaction inputs and outputs from the selling reserve account
 	for bidder, allocAmt := range mInfo.AllocationMap {
+		if allocAmt.IsZero() {
+			continue
+		}
 		allocateCoins := sdk.NewCoins(sdk.NewCoin(sellingCoinDenom, allocAmt))
 		bidderAddr, _ := sdk.AccAddressFromBech32(bidder)
 
 		inputs = append(inputs, banktypes.NewInput(sellingReserveAddr, allocateCoins))
 		outputs = append(outputs, banktypes.NewOutput(bidderAddr, allocateCoins))
+
+		fmt.Println(banktypes.NewInput(sellingReserveAddr, allocateCoins))
+		fmt.Println(banktypes.NewOutput(bidderAddr, allocateCoins))
 	}
 
 	// Send all at once
@@ -505,7 +511,7 @@ func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI
 
 	// Iterate from the highest matching bid price and stop until it finds
 	// the matching information to store them into MatchingInfo object
-	for _, bid := range bids { // (1, 500), (0.9, 500), (0.8, 500)
+	for _, bid := range bids {
 		matchingPrice := bid.Price
 		totalMatchedAmt := sdk.ZeroInt()
 
