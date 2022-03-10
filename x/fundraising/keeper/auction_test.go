@@ -528,21 +528,25 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Many() {
 	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
+	s.Require().Equal(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).Amount.Abs(), auction.SellingCoin.Amount.Sub(mInfo.TotalMatchedAmount).Abs())
+
 	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
 	s.Require().NoError(err)
 
-	// The selling reserve account balance must be sellingCoin.Amount - TotalMatchedAmount
-	s.Require().Equal(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).Amount.Abs(), auction.SellingCoin.Amount.Sub(mInfo.TotalMatchedAmount).Abs())
+	// The selling reserve account balance must be zero
 	s.Require().True(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).IsZero())
 
-	// Refund payingCoin
-	err = s.keeper.RefundPayingCoin(s.ctx, auction, mInfo)
-	s.Require().NoError(err)
+	// The auctioneer must have sellingCoin.Amount - TotalMatchedAmount
+	s.Require().Equal(s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount, auction.SellingCoin.Amount.Sub(mInfo.TotalMatchedAmount).Abs())
 
 	// The bidders must have the matched selling coin
 	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(500_000_000))
 	s.Require().Equal(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(500_000_000))
 	s.Require().True(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).IsZero())
+
+	// Refund payingCoin
+	err = s.keeper.RefundPayingCoin(s.ctx, auction, mInfo)
+	s.Require().NoError(err)
 }
 
 // Example of "JH_ex0.1" in Sheet
@@ -587,6 +591,28 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Worth() {
 	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()].Abs(), sdk.NewInt(0).Abs())
 	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()].Abs(), sdk.NewInt(0).Abs())
 	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()], sdk.NewInt(500_000_000))
+
+	// Distribute selling coin
+	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
+	s.Require().NoError(err)
+
+	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
+	s.Require().NoError(err)
+
+	// The selling reserve account balance must be zero
+	s.Require().True(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).IsZero())
+
+	// The auctioneer must have sellingCoin.Amount - TotalMatchedAmount
+	s.Require().Equal(s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount, auction.SellingCoin.Amount.Sub(mInfo.TotalMatchedAmount).Abs())
+
+	// The bidders must have the matched selling coin
+	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount, MatchedAmt)
+	s.Require().Equal(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).Amount, MatchedAmt)
+	s.Require().True(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).IsZero())
+
+	// Refund payingCoin
+	err = s.keeper.RefundPayingCoin(s.ctx, auction, mInfo)
+	s.Require().NoError(err)
 }
 
 // Example of "JH_ex0.2" in Sheet
@@ -619,10 +645,11 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed() {
 	s.Require().Equal(mInfo.MatchedLen, int64(2))
 	s.Require().Equal(mInfo.MatchedPrice, parseDec("0.9"))
 	matchingPrice := parseDec("0.9")
+	MatchedAmt1 := sdk.NewInt(500_000_000)
 	MatchedAmt2 := sdk.NewInt(500_000_000).ToDec().QuoTruncate(matchingPrice).TruncateInt()
 
 	s.Require().Equal(mInfo.TotalMatchedAmount, sdk.NewInt(500_000_000).Add(MatchedAmt2))
-	s.Require().Equal(mInfo.AllocationMap[s.addr(1).String()], sdk.NewInt(500_000_000))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(1).String()], MatchedAmt1)
 	s.Require().Equal(mInfo.AllocationMap[s.addr(2).String()], MatchedAmt2)
 	s.Require().Equal(mInfo.AllocationMap[s.addr(3).String()], sdk.NewInt(0))
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(1).String()], sdk.NewInt(450_000_000))
@@ -631,6 +658,28 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed() {
 	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()], sdk.NewInt(50_000_000))
 	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()].Abs(), sdk.NewInt(0).Abs())
 	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()], sdk.NewInt(500_000_000))
+
+	// Distribute selling coin
+	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
+	s.Require().NoError(err)
+
+	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
+	s.Require().NoError(err)
+
+	// The selling reserve account balance must be zero
+	s.Require().True(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).IsZero())
+
+	// The auctioneer must have sellingCoin.Amount - TotalMatchedAmount
+	s.Require().Equal(s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount, auction.SellingCoin.Amount.Sub(mInfo.TotalMatchedAmount).Abs())
+
+	// The bidders must have the matched selling coin
+	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount, MatchedAmt1)
+	s.Require().Equal(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).Amount, MatchedAmt2)
+	s.Require().True(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).IsZero())
+
+	// Refund payingCoin
+	err = s.keeper.RefundPayingCoin(s.ctx, auction, mInfo)
+	s.Require().NoError(err)
 }
 
 // Example of "JH_ex0" in Sheet for MaxBidAmountLimit
@@ -672,6 +721,28 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Many_Limited() {
 	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()], sdk.NewInt(140_000_000))
 	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()], sdk.NewInt(90_000_000))
 	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()], sdk.NewInt(400_000_000))
+
+	// Distribute selling coin
+	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
+	s.Require().NoError(err)
+
+	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
+	s.Require().NoError(err)
+
+	// The selling reserve account balance must be zero
+	s.Require().True(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).IsZero())
+
+	// The auctioneer must have sellingCoin.Amount - TotalMatchedAmount
+	s.Require().Equal(s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(200_000_000))
+
+	// The bidders must have the matched selling coin
+	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(400_000_000))
+	s.Require().Equal(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(400_000_000))
+	s.Require().True(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).IsZero())
+
+	// Refund payingCoin
+	err = s.keeper.RefundPayingCoin(s.ctx, auction, mInfo)
+	s.Require().NoError(err)
 }
 
 // Example of "JH_ex0.1" in Sheet for MaxBidAmountLimit
@@ -713,6 +784,28 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Worth_Limited() {
 	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()], sdk.NewInt(180_000_000))
 	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()], sdk.NewInt(180_000_000))
 	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()], sdk.NewInt(180_000_000))
+
+	// Distribute selling coin
+	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
+	s.Require().NoError(err)
+
+	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
+	s.Require().NoError(err)
+
+	// The selling reserve account balance must be zero
+	s.Require().True(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).IsZero())
+
+	// The auctioneer must have sellingCoin.Amount - TotalMatchedAmount
+	s.Require().Equal(s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(300_000_000))
+
+	// The bidders must have the matched selling coin
+	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(400_000_000))
+	s.Require().Equal(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(400_000_000))
+	s.Require().Equal(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(400_000_000))
+
+	// Refund payingCoin
+	err = s.keeper.RefundPayingCoin(s.ctx, auction, mInfo)
+	s.Require().NoError(err)
 }
 
 // Example of "JH_ex0.2" in Sheet for MaxBidAmountLimit
@@ -754,6 +847,28 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed_Limited() {
 	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()], sdk.NewInt(100_000_000))
 	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()], sdk.NewInt(20_000_000))
 	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()], sdk.NewInt(20_000_000))
+
+	// Distribute selling coin
+	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
+	s.Require().NoError(err)
+
+	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
+	s.Require().NoError(err)
+
+	// The selling reserve account balance must be zero
+	s.Require().True(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).IsZero())
+
+	// The auctioneer must have sellingCoin.Amount - TotalMatchedAmount
+	s.Require().Equal(s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount.Abs(), sdk.NewInt(0).Abs())
+
+	// The bidders must have the matched selling coin
+	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(500_000_000))
+	s.Require().Equal(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(600_000_000))
+	s.Require().Equal(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(600_000_000))
+
+	// Refund payingCoin
+	err = s.keeper.RefundPayingCoin(s.ctx, auction, mInfo)
+	s.Require().NoError(err)
 }
 
 // Example of "JH_ex1" in Sheet
@@ -861,6 +976,35 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2() {
 	s.Require().Equal(mInfo.RefundMap[s.addr(8).String()].Abs(), RefundAmt8.Abs())
 	s.Require().Equal(mInfo.RefundMap[s.addr(9).String()].Abs(), RefundAmt9.Abs())
 	s.Require().Equal(mInfo.RefundMap[s.addr(10).String()].Abs(), RefundAmt10.Abs())
+
+	// Distribute selling coin
+	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
+	s.Require().NoError(err)
+
+	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
+	s.Require().NoError(err)
+
+	// The selling reserve account balance must be zero
+	s.Require().True(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).IsZero())
+
+	// The auctioneer must have sellingCoin.Amount - TotalMatchedAmount
+	s.Require().Equal(s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount, auction.SellingCoin.Amount.Sub(mInfo.TotalMatchedAmount))
+
+	// The bidders must have the matched selling coin
+	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount, MatchedAmt1)
+	s.Require().Equal(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).Amount, MatchedAmt2)
+	s.Require().Equal(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).Amount, MatchedAmt3)
+	s.Require().Equal(s.getBalance(s.addr(4), auction.GetSellingCoin().Denom).Amount, MatchedAmt4)
+	s.Require().Equal(s.getBalance(s.addr(5), auction.GetSellingCoin().Denom).Amount, MatchedAmt5)
+	s.Require().Equal(s.getBalance(s.addr(6), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt_Zero.Abs())
+	s.Require().Equal(s.getBalance(s.addr(7), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt_Zero.Abs())
+	s.Require().Equal(s.getBalance(s.addr(8), auction.GetSellingCoin().Denom).Amount, MatchedAmt8)
+	s.Require().Equal(s.getBalance(s.addr(9), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt_Zero.Abs())
+	s.Require().Equal(s.getBalance(s.addr(10), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt_Zero.Abs())
+
+	// Refund payingCoin
+	err = s.keeper.RefundPayingCoin(s.ctx, auction, mInfo)
+	s.Require().NoError(err)
 }
 
 // Example of "JH_ex1" in Sheet for the same MaxBidAmountLimit value
@@ -974,6 +1118,35 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2_LimitedSame() {
 	s.Require().Equal(mInfo.RefundMap[s.addr(8).String()].Abs(), RefundAmt8.Abs())
 	s.Require().Equal(mInfo.RefundMap[s.addr(9).String()].Abs(), RefundAmt9.Abs())
 	s.Require().Equal(mInfo.RefundMap[s.addr(10).String()].Abs(), RefundAmt10.Abs())
+
+	// Distribute selling coin
+	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
+	s.Require().NoError(err)
+
+	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
+	s.Require().NoError(err)
+
+	// The selling reserve account balance must be zero
+	s.Require().True(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).IsZero())
+
+	// The auctioneer must have sellingCoin.Amount - TotalMatchedAmount
+	s.Require().Equal(s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(600_000_000))
+
+	// The bidders must have the matched selling coin
+	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount, MatchedAmt1)
+	s.Require().Equal(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).Amount, MatchedAmt2)
+	s.Require().Equal(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).Amount, MatchedAmt3)
+	s.Require().Equal(s.getBalance(s.addr(4), auction.GetSellingCoin().Denom).Amount, MatchedAmt4)
+	s.Require().Equal(s.getBalance(s.addr(5), auction.GetSellingCoin().Denom).Amount, MatchedAmt5)
+	s.Require().Equal(s.getBalance(s.addr(6), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt6.Abs())
+	s.Require().Equal(s.getBalance(s.addr(7), auction.GetSellingCoin().Denom).Amount, MatchedAmt7)
+	s.Require().Equal(s.getBalance(s.addr(8), auction.GetSellingCoin().Denom).Amount, MatchedAmt8)
+	s.Require().Equal(s.getBalance(s.addr(9), auction.GetSellingCoin().Denom).Amount, MatchedAmt9)
+	s.Require().Equal(s.getBalance(s.addr(10), auction.GetSellingCoin().Denom).Amount, MatchedAmt10)
+
+	// Refund payingCoin
+	err = s.keeper.RefundPayingCoin(s.ctx, auction, mInfo)
+	s.Require().NoError(err)
 }
 
 // Example of "JH_ex1.1" in Sheet for different MaxBidAmountLimit values
@@ -1087,6 +1260,35 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2_LimitedDifferent() {
 	s.Require().Equal(mInfo.RefundMap[s.addr(8).String()].Abs(), RefundAmt8.Abs())
 	s.Require().Equal(mInfo.RefundMap[s.addr(9).String()].Abs(), RefundAmt9.Abs())
 	s.Require().Equal(mInfo.RefundMap[s.addr(10).String()].Abs(), RefundAmt10.Abs())
+
+	// Distribute selling coin
+	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
+	s.Require().NoError(err)
+
+	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
+	s.Require().NoError(err)
+
+	// The selling reserve account balance must be zero
+	s.Require().True(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).IsZero())
+
+	// The auctioneer must have sellingCoin.Amount - TotalMatchedAmount
+	s.Require().Equal(s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(300_000_000))
+
+	// The bidders must have the matched selling coin
+	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount, MatchedAmt1)
+	s.Require().Equal(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).Amount, MatchedAmt2)
+	s.Require().Equal(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).Amount, MatchedAmt3)
+	s.Require().Equal(s.getBalance(s.addr(4), auction.GetSellingCoin().Denom).Amount, MatchedAmt4)
+	s.Require().Equal(s.getBalance(s.addr(5), auction.GetSellingCoin().Denom).Amount, MatchedAmt5)
+	s.Require().Equal(s.getBalance(s.addr(6), auction.GetSellingCoin().Denom).Amount, MatchedAmt6)
+	s.Require().Equal(s.getBalance(s.addr(7), auction.GetSellingCoin().Denom).Amount, MatchedAmt7)
+	s.Require().Equal(s.getBalance(s.addr(8), auction.GetSellingCoin().Denom).Amount, MatchedAmt8)
+	s.Require().Equal(s.getBalance(s.addr(9), auction.GetSellingCoin().Denom).Amount, MatchedAmt9)
+	s.Require().Equal(s.getBalance(s.addr(10), auction.GetSellingCoin().Denom).Amount, MatchedAmt10)
+
+	// Refund payingCoin
+	err = s.keeper.RefundPayingCoin(s.ctx, auction, mInfo)
+	s.Require().NoError(err)
 }
 
 // Example of "JH_ex2" in Sheet without MaxBidAmountLimit value
@@ -1247,6 +1449,42 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed3() {
 	s.Require().Equal(mInfo.RefundMap[s.addr(15).String()].Abs(), RefundAmt15.Abs())
 	s.Require().Equal(mInfo.RefundMap[s.addr(16).String()].Abs(), RefundAmt16.Abs())
 	s.Require().Equal(mInfo.RefundMap[s.addr(17).String()].Abs(), RefundAmt17.Abs())
+
+	// Distribute selling coin
+	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
+	s.Require().NoError(err)
+
+	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
+	s.Require().NoError(err)
+
+	// The selling reserve account balance must be zero
+	s.Require().True(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).IsZero())
+
+	// The auctioneer must have sellingCoin.Amount - TotalMatchedAmount
+	s.Require().Equal(s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount, auction.SellingCoin.Amount.Sub(mInfo.TotalMatchedAmount))
+
+	// The bidders must have the matched selling coin
+	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt1.Abs())
+	s.Require().Equal(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt2.Abs())
+	s.Require().Equal(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt3.Abs())
+	s.Require().Equal(s.getBalance(s.addr(4), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt4.Abs())
+	s.Require().Equal(s.getBalance(s.addr(5), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt5.Abs())
+	s.Require().Equal(s.getBalance(s.addr(6), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt6.Abs())
+	s.Require().Equal(s.getBalance(s.addr(7), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt7.Abs())
+	s.Require().Equal(s.getBalance(s.addr(8), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt8.Abs())
+	s.Require().Equal(s.getBalance(s.addr(9), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt9.Abs())
+	s.Require().Equal(s.getBalance(s.addr(10), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt10.Abs())
+	s.Require().Equal(s.getBalance(s.addr(11), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt11.Abs())
+	s.Require().Equal(s.getBalance(s.addr(12), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt12.Abs())
+	s.Require().Equal(s.getBalance(s.addr(13), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt13.Abs())
+	s.Require().Equal(s.getBalance(s.addr(14), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt14.Abs())
+	s.Require().Equal(s.getBalance(s.addr(15), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt15.Abs())
+	s.Require().Equal(s.getBalance(s.addr(16), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt16.Abs())
+	s.Require().Equal(s.getBalance(s.addr(17), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt17.Abs())
+
+	// Refund payingCoin
+	err = s.keeper.RefundPayingCoin(s.ctx, auction, mInfo)
+	s.Require().NoError(err)
 }
 
 // Example of "JH_ex2" in Sheet for different MaxBidAmountLimit values
@@ -1407,4 +1645,40 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed3_LimitedDifferent() {
 	s.Require().Equal(mInfo.RefundMap[s.addr(15).String()].Abs(), RefundAmt15.Abs())
 	s.Require().Equal(mInfo.RefundMap[s.addr(16).String()].Abs(), RefundAmt16.Abs())
 	s.Require().Equal(mInfo.RefundMap[s.addr(17).String()].Abs(), RefundAmt17.Abs())
+
+	// Distribute selling coin
+	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
+	s.Require().NoError(err)
+
+	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
+	s.Require().NoError(err)
+
+	// The selling reserve account balance must be zero
+	s.Require().True(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).IsZero())
+
+	// The auctioneer must have sellingCoin.Amount - TotalMatchedAmount
+	s.Require().Equal(s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount, auction.SellingCoin.Amount.Sub(mInfo.TotalMatchedAmount))
+
+	// The bidders must have the matched selling coin
+	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt1.Abs())
+	s.Require().Equal(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt2.Abs())
+	s.Require().Equal(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt3.Abs())
+	s.Require().Equal(s.getBalance(s.addr(4), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt4.Abs())
+	s.Require().Equal(s.getBalance(s.addr(5), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt5.Abs())
+	s.Require().Equal(s.getBalance(s.addr(6), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt6.Abs())
+	s.Require().Equal(s.getBalance(s.addr(7), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt7.Abs())
+	s.Require().Equal(s.getBalance(s.addr(8), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt8.Abs())
+	s.Require().Equal(s.getBalance(s.addr(9), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt9.Abs())
+	s.Require().Equal(s.getBalance(s.addr(10), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt10.Abs())
+	s.Require().Equal(s.getBalance(s.addr(11), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt11.Abs())
+	s.Require().Equal(s.getBalance(s.addr(12), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt12.Abs())
+	s.Require().Equal(s.getBalance(s.addr(13), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt13.Abs())
+	s.Require().Equal(s.getBalance(s.addr(14), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt14.Abs())
+	s.Require().Equal(s.getBalance(s.addr(15), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt15.Abs())
+	s.Require().Equal(s.getBalance(s.addr(16), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt16.Abs())
+	s.Require().Equal(s.getBalance(s.addr(17), auction.GetSellingCoin().Denom).Amount.Abs(), MatchedAmt17.Abs())
+
+	// Refund payingCoin
+	err = s.keeper.RefundPayingCoin(s.ctx, auction, mInfo)
+	s.Require().NoError(err)
 }
