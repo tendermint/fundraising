@@ -531,12 +531,17 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Many() {
 	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
 	s.Require().NoError(err)
 
-	// The selling reserve account balance must be zero
+	// The selling reserve account balance must be sellingCoin.Amount - TotalMatchedAmount
+	s.Require().Equal(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).Amount.Abs(), auction.SellingCoin.Amount.Sub(mInfo.TotalMatchedAmount).Abs())
 	s.Require().True(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).IsZero())
 
-	// The bidders must have the selling coin
-	s.Require().False(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).IsZero())
-	s.Require().False(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).IsZero())
+	// Refund payingCoin
+	err = s.keeper.RefundPayingCoin(s.ctx, auction, mInfo)
+	s.Require().NoError(err)
+
+	// The bidders must have the matched selling coin
+	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(500_000_000))
+	s.Require().Equal(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(500_000_000))
 	s.Require().True(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).IsZero())
 }
 

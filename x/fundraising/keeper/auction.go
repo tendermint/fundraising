@@ -42,6 +42,10 @@ func (k Keeper) RefundPayingCoin(ctx sdk.Context, auction types.AuctionI, mInfo 
 
 	// Refund the unmatched bid amount back to the bidder
 	for bidder, refundAmt := range mInfo.RefundMap {
+		if refundAmt.IsZero() {
+			continue
+		}
+
 		bidderAddr, err := sdk.AccAddressFromBech32(bidder)
 		if err != nil {
 			return err
