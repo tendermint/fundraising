@@ -79,9 +79,6 @@ func (k Keeper) AllocateSellingCoin(ctx sdk.Context, auction types.AuctionI, mIn
 
 		inputs = append(inputs, banktypes.NewInput(sellingReserveAddr, allocateCoins))
 		outputs = append(outputs, banktypes.NewOutput(bidderAddr, allocateCoins))
-
-		fmt.Println(banktypes.NewInput(sellingReserveAddr, allocateCoins))
-		fmt.Println(banktypes.NewOutput(bidderAddr, allocateCoins))
 	}
 
 	// Send all at once
