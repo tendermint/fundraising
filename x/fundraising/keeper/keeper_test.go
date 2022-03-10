@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"encoding/binary"
+	"strings"
 	"testing"
 	"time"
 
@@ -256,6 +257,7 @@ func exchangedSellingAmount(price sdk.Dec, coin sdk.Coin) sdk.Int {
 
 // parseCoin parses and returns sdk.Coin.
 func parseCoin(s string) sdk.Coin {
+	s = strings.ReplaceAll(s, "_", "")
 	coin, err := sdk.ParseCoinNormalized(s)
 	if err != nil {
 		panic(err)
@@ -265,6 +267,7 @@ func parseCoin(s string) sdk.Coin {
 
 // parseCoins parses and returns sdk.Coins.
 func parseCoins(s string) sdk.Coins {
+	s = strings.ReplaceAll(s, "_", "")
 	coins, err := sdk.ParseCoinsNormalized(s)
 	if err != nil {
 		panic(err)
