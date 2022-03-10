@@ -140,18 +140,68 @@ func (s *KeeperTestSuite) TestBatchAuction_IncorrectCoinDenom() {
 
 }
 
-func (s *KeeperTestSuite) TestBatchWorth() {
+func (s *KeeperTestSuite) TestBatchWorth_OverMaxBidAmountLimit() {
+	auction := s.createBatchAuction(
+		s.addr(1),
+		parseDec("0.5"),
+		parseDec("0.1"),
+		parseCoin("1000_000_000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		1,
+		sdk.MustNewDecFromStr("0.2"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
+	s.placeBidBatchWorth(auction.Id, s.addr(1), parseDec("0.5"), parseCoin("500_000_000denom2"), sdk.NewInt(1000_000_000), true)
+
+	s.fundAddr(s.addr(2), parseCoins("1000_000_000denom2"))
+	s.addAllowedBidder(auction.Id, s.addr(2), parseCoin("800_000_000denom1").Amount)
+
+	// Place a BidTypeBatchWorth bid with more than maxBidAmount
+	_, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
+		AuctionId: auction.Id,
+		Bidder:    s.addr(2).String(),
+		BidType:   types.BidTypeBatchWorth,
+		Price:     parseDec("0.5"),
+		Coin:      parseCoin("500_000_000denom2"),
+	})
+	s.Require().ErrorIs(err, types.ErrOverMaxBidAmountLimit)
 }
 
-func (s *KeeperTestSuite) TestBatchMany() {
+func (s *KeeperTestSuite) TestBatchMany_OverMaxBidAmountLimit() {
+	auction := s.createBatchAuction(
+		s.addr(1),
+		parseDec("0.5"),
+		parseDec("0.1"),
+		parseCoin("1000_000_000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		1,
+		sdk.MustNewDecFromStr("0.2"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-}
+	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("0.5"), parseCoin("500_000_000denom1"), sdk.NewInt(800_000_000), true)
 
-func (s *KeeperTestSuite) TestModifyBid_IncorrectAuctionType() {
-	// TODO: not implemented yet
-	// cover a case to modify a bid with higher price
-	// cover a case to modify a bid with higher coin amount
+	s.fundAddr(s.addr(2), parseCoins("1000_000_000denom2"))
+	s.addAllowedBidder(auction.Id, s.addr(2), parseCoin("400_000_000denom1").Amount)
+
+	// Place a BidTypeBatchMany bid with more than maxBidAmount
+	_, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
+		AuctionId: auction.Id,
+		Bidder:    s.addr(2).String(),
+		BidType:   types.BidTypeBatchMany,
+		Price:     parseDec("0.5"),
+		Coin:      parseCoin("500_000_000denom1"),
+	})
+	s.Require().ErrorIs(err, types.ErrOverMaxBidAmountLimit)
 }
 
 func (s *KeeperTestSuite) TestModifyBid() {
