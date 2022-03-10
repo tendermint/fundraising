@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,7 +17,7 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_AuctionStatus() {
 		s.addr(0),
 		parseDec("0.5"),
 		parseDec("0.1"),
-		parseCoin("5000000000denom1"),
+		parseCoin("5000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
 		time.Now().AddDate(0, 6, 0),
@@ -38,7 +37,7 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_AuctionStatus() {
 		s.addr(1),
 		parseDec("0.5"),
 		parseDec("0.1"),
-		parseCoin("1000000000000denom3"),
+		parseCoin("1000_000_000_000denom3"),
 		"denom4",
 		[]types.VestingSchedule{},
 		time.Now().AddDate(0, 0, -1),
@@ -56,7 +55,7 @@ func (s *KeeperTestSuite) TestBatchAuction_AuctionStatus() {
 		s.addr(0),
 		parseDec("1"),
 		parseDec("0.1"),
-		parseCoin("5000000000denom1"),
+		parseCoin("5000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
 		1,
@@ -78,7 +77,7 @@ func (s *KeeperTestSuite) TestBatchAuction_AuctionStatus() {
 		s.addr(1),
 		parseDec("0.5"),
 		parseDec("0.1"),
-		parseCoin("5000000000denom3"),
+		parseCoin("5000_000_000denom3"),
 		"denom4",
 		[]types.VestingSchedule{},
 		1,
@@ -98,7 +97,7 @@ func (s *KeeperTestSuite) TestAllocateSellingCoin_FixedPriceAuction() {
 		s.addr(0),
 		parseDec("1"),
 		parseDec("0.1"),
-		parseCoin("1000000000000denom1"),
+		parseCoin("1000_000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
 		time.Now().AddDate(0, 0, -1),
@@ -110,9 +109,9 @@ func (s *KeeperTestSuite) TestAllocateSellingCoin_FixedPriceAuction() {
 	s.Require().True(found)
 
 	// Place bids
-	s.placeBidFixedPrice(auction.Id, s.addr(1), parseDec("1"), parseCoin("100000000denom2"), true)
-	s.placeBidFixedPrice(auction.Id, s.addr(2), parseDec("1"), parseCoin("200000000denom2"), true)
-	s.placeBidFixedPrice(auction.Id, s.addr(3), parseDec("1"), parseCoin("200000000denom2"), true)
+	s.placeBidFixedPrice(auction.Id, s.addr(1), parseDec("1"), parseCoin("100_000_000denom2"), true)
+	s.placeBidFixedPrice(auction.Id, s.addr(2), parseDec("1"), parseCoin("200_000_000denom2"), true)
+	s.placeBidFixedPrice(auction.Id, s.addr(3), parseDec("1"), parseCoin("200_000_000denom2"), true)
 
 	// Calculate allocation
 	mInfo := s.keeper.CalculateFixedPriceAllocation(s.ctx, auction)
@@ -133,55 +132,12 @@ func (s *KeeperTestSuite) TestAllocateSellingCoin_FixedPriceAuction() {
 	s.Require().False(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).IsZero())
 }
 
-func (s *KeeperTestSuite) TestAllocateSellingCoin_BatchAuction() {
-	a := s.createBatchAuction(
-		s.addr(0),
-		parseDec("0.1"),
-		parseDec("0.1"),
-		parseCoin("1000000000denom1"),
-		"denom2",
-		[]types.VestingSchedule{},
-		2,
-		sdk.MustNewDecFromStr("0.2"),
-		time.Now().AddDate(0, 0, -1),
-		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
-		true,
-	)
-	s.Require().Equal(types.AuctionStatusStarted, a.GetStatus())
-
-	// Place bids
-	s.placeBidBatchWorth(a.Id, s.addr(1), parseDec("0.21"), parseCoin("100000000denom2"), sdk.NewInt(1000000000), true)
-	s.placeBidBatchWorth(a.Id, s.addr(2), parseDec("0.25"), parseCoin("150000000denom2"), sdk.NewInt(1000000000), true)
-	s.placeBidBatchWorth(a.Id, s.addr(3), parseDec("0.27"), parseCoin("250000000denom2"), sdk.NewInt(1000000000), true)
-	s.placeBidBatchMany(a.Id, s.addr(4), parseDec("0.23"), parseCoin("400000000denom1"), sdk.NewInt(1000000000), true)
-	s.placeBidBatchMany(a.Id, s.addr(5), parseDec("0.35"), parseCoin("150000000denom1"), sdk.NewInt(1000000000), true)
-
-	auction, found := s.keeper.GetAuction(s.ctx, a.Id)
-	s.Require().True(found)
-
-	reserve := s.getBalance(auction.GetPayingReserveAddress(), auction.GetPayingCoinDenom())
-	fmt.Println("reserve: ", reserve) // 644,500,000denom2
-
-	// Calculate allocation
-	// mInfo := s.keeper.CalculateBatchAllocation(s.ctx, auction)
-
-	// Distribute selling coin
-	// err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
-	// s.Require().NoError(err)
-
-	// err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
-	// s.Require().NoError(err)
-
-	// // The selling reserve account balance must be zero
-	// s.Require().True(s.getBalance(auction.GetSellingReserveAddress(), auction.GetRemainingSellingCoin().Denom).IsZero())
-}
-
 func (s *KeeperTestSuite) TestAllocateVestingPayingCoin() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("1"),
 		parseDec("0.1"),
-		parseCoin("1000000000000denom1"),
+		parseCoin("1000_000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{
 			{
@@ -208,9 +164,9 @@ func (s *KeeperTestSuite) TestAllocateVestingPayingCoin() {
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
 	// Place bids
-	s.placeBidFixedPrice(auction.GetId(), s.addr(1), parseDec("1"), parseCoin("100000000denom2"), true)
-	s.placeBidFixedPrice(auction.GetId(), s.addr(1), parseDec("1"), parseCoin("200000000denom2"), true)
-	s.placeBidFixedPrice(auction.GetId(), s.addr(1), parseDec("1"), parseCoin("200000000denom2"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(1), parseDec("1"), parseCoin("100_000_000denom2"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(1), parseDec("1"), parseCoin("200_000_000denom2"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(1), parseDec("1"), parseCoin("200_000_000denom2"), true)
 
 	// Calculate allocation
 	mInfo := s.keeper.CalculateFixedPriceAllocation(s.ctx, auction)
@@ -267,7 +223,7 @@ func (s *KeeperTestSuite) TestCancelAuction() {
 		s.addr(0),
 		parseDec("1"),
 		parseDec("0.1"),
-		parseCoin("500000000000denom1"),
+		parseCoin("500_000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
 		time.Now().AddDate(0, 1, 0),
@@ -291,7 +247,7 @@ func (s *KeeperTestSuite) TestAddAllowedBidders() {
 		s.addr(0),
 		parseDec("0.5"),
 		parseDec("0.1"),
-		parseCoin("500000000000denom1"),
+		parseCoin("500_000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
 		time.Now().AddDate(0, 0, -1),
@@ -348,7 +304,7 @@ func (s *KeeperTestSuite) TestAddAllowedBidders() {
 		{
 			"exceed the total selling amount",
 			[]types.AllowedBidder{
-				{Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(500000000001)},
+				{Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(500_000_000_001)},
 			},
 			types.ErrInsufficientRemainingAmount,
 		},
@@ -369,7 +325,7 @@ func (s *KeeperTestSuite) TestAddAllowedBidders_Length() {
 		s.addr(0),
 		parseDec("0.5"),
 		parseDec("0.1"),
-		parseCoin("500000000000denom1"),
+		parseCoin("500_000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
 		time.Now().AddDate(0, 0, -1),
@@ -408,7 +364,7 @@ func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 		s.addr(0),
 		parseDec("0.5"),
 		parseDec("0.1"),
-		parseCoin("500000000000denom1"),
+		parseCoin("500_000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
 		time.Now().AddDate(0, 0, -1),
