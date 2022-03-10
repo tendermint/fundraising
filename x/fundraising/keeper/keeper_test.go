@@ -267,6 +267,7 @@ func parseCoin(s string) sdk.Coin {
 
 // parseCoins parses and returns sdk.Coins.
 func parseCoins(s string) sdk.Coins {
+	s = strings.ReplaceAll(s, "_", "")
 	coins, err := sdk.ParseCoinsNormalized(s)
 	if err != nil {
 		panic(err)
