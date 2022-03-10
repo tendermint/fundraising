@@ -69,8 +69,8 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		bid.SetWinner(true)
 
 	case types.BidTypeBatchWorth:
-		if bid.Coin.Denom != auction.GetPayingCoinDenom() {
-			return types.Bid{}, types.ErrIncorrectCoinDenom
+		if err := k.ValidateBatchWorthBid(ctx, auction, bid); err != nil {
+			return types.Bid{}, err
 		}
 
 		if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), msg.Coin); err != nil {
@@ -78,8 +78,8 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		}
 
 	case types.BidTypeBatchMany:
-		if bid.Coin.Denom != auction.GetSellingCoin().Denom {
-			return types.Bid{}, types.ErrIncorrectCoinDenom
+		if err := k.ValidateBatchManyBid(ctx, auction, bid); err != nil {
+			return types.Bid{}, err
 		}
 
 		reserveAmt := msg.Coin.Amount.ToDec().Mul(msg.Price).Ceil().TruncateInt()
@@ -137,6 +137,40 @@ func (k Keeper) ValidateFixedPriceBid(ctx sdk.Context, auction types.AuctionI, b
 
 	// The  sum of total bid amount can't be more than the bidder's maximum bid amount
 	if totalBidAmt.GT(maxBidAmt) {
+		return types.ErrOverMaxBidAmountLimit
+	}
+
+	return nil
+}
+
+func (k Keeper) ValidateBatchWorthBid(ctx sdk.Context, auction types.AuctionI, bid types.Bid) error {
+	if bid.Coin.Denom != auction.GetPayingCoinDenom() {
+		return types.ErrIncorrectCoinDenom
+	}
+
+	// Get the bid amount by the bidder with bid_price
+	bidAmt := bid.Coin.Amount.ToDec().QuoTruncate(bid.Price).TruncateInt()
+	maxBidAmt := auction.GetMaxBidAmount(bid.Bidder)
+
+	// The  sum of total bid amount can't be more than the bidder's maximum bid amount
+	if bidAmt.GT(maxBidAmt) {
+		return types.ErrOverMaxBidAmountLimit
+	}
+
+	return nil
+}
+
+func (k Keeper) ValidateBatchManyBid(ctx sdk.Context, auction types.AuctionI, bid types.Bid) error {
+	if bid.Coin.Denom != auction.GetSellingCoin().Denom {
+		return types.ErrIncorrectCoinDenom
+	}
+
+	// Get the bid amount by the bidder with bid_price
+	bidAmt := bid.Coin.Amount
+	maxBidAmt := auction.GetMaxBidAmount(bid.Bidder)
+
+	// The  sum of total bid amount can't be more than the bidder's maximum bid amount
+	if bidAmt.GT(maxBidAmt) {
 		return types.ErrOverMaxBidAmountLimit
 	}
 
