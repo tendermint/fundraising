@@ -42,6 +42,10 @@ func (k Keeper) RefundPayingCoin(ctx sdk.Context, auction types.AuctionI, mInfo 
 
 	// Refund the unmatched bid amount back to the bidder
 	for bidder, refundAmt := range mInfo.RefundMap {
+		if refundAmt.IsZero() {
+			continue
+		}
+
 		bidderAddr, err := sdk.AccAddressFromBech32(bidder)
 		if err != nil {
 			return err
@@ -71,6 +75,9 @@ func (k Keeper) AllocateSellingCoin(ctx sdk.Context, auction types.AuctionI, mIn
 	// Allocate coins to all matched bidders in AllocationMap and
 	// set the amounts in trasnaction inputs and outputs from the selling reserve account
 	for bidder, allocAmt := range mInfo.AllocationMap {
+		if allocAmt.IsZero() {
+			continue
+		}
 		allocateCoins := sdk.NewCoins(sdk.NewCoin(sellingCoinDenom, allocAmt))
 		bidderAddr, _ := sdk.AccAddressFromBech32(bidder)
 
@@ -490,10 +497,18 @@ func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI
 		MatchedLen:         0,
 		MatchedPrice:       sdk.ZeroDec(),
 		TotalMatchedAmount: sdk.ZeroInt(),
+		AllocationMap:      map[string]sdk.Int{},
+		ReservedMatchedMap: map[string]sdk.Int{},
+		RefundMap:          map[string]sdk.Int{},
 	}
 	allowedBiddersMap := auction.GetAllowedBiddersMap() // map(bidder => maxBidAmt)
 	allocationMap := map[string]sdk.Int{}               // map(bidder => allocatedAmt)
 	reservedMatchedMap := map[string]sdk.Int{}          // map(bidder => reservedMatchedAmt)
+
+	for _, ab := range auction.GetAllowedBidders() {
+		mInfo.AllocationMap[ab.Bidder] = sdk.ZeroInt()
+		mInfo.ReservedMatchedMap[ab.Bidder] = sdk.ZeroInt()
+	}
 
 	// Iterate from the highest matching bid price and stop until it finds
 	// the matching information to store them into MatchingInfo object
@@ -570,8 +585,11 @@ func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI
 		mInfo.MatchedLen = mInfo.MatchedLen + 1
 		mInfo.MatchedPrice = matchingPrice
 		mInfo.TotalMatchedAmount = totalMatchedAmt
-		mInfo.AllocationMap = allocationMap
-		mInfo.ReservedMatchedMap = reservedMatchedMap
+
+		for _, ab := range auction.GetAllowedBidders() {
+			mInfo.AllocationMap[ab.Bidder] = allocationMap[ab.Bidder]
+			mInfo.ReservedMatchedMap[ab.Bidder] = reservedMatchedMap[ab.Bidder]
+		}
 
 		bid.SetWinner(true)
 		k.SetBid(ctx, bid)
