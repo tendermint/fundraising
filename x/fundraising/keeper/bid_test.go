@@ -241,7 +241,7 @@ func (s *KeeperTestSuite) TestModifyBid() {
 		Price:     parseDec("0.8"),
 		Coin:      parseCoin("100_000_000denom2"),
 	})
-	s.Require().ErrorIs(err, types.ErrIncorrectOwner)
+	s.Require().ErrorIs(err, sdkerrors.ErrUnauthorized)
 
 	// Modify the bid with an incorrect denom
 	_, err = s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{

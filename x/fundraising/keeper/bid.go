@@ -197,8 +197,10 @@ func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) (types.MsgMo
 		return types.MsgModifyBid{}, sdkerrors.Wrap(sdkerrors.ErrNotFound, "bid not found")
 	}
 
-	if bid.Bidder != msg.Bidder {
-		return types.MsgModifyBid{}, types.ErrIncorrectOwner
+	// TODO: Do we need to return MsgModifyBid? Can we just receive args? Otherwise msg server is just a proxy...
+
+	if !bid.GetBidder().Equals(msg.GetBidder()) {
+		return types.MsgModifyBid{}, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "only the bid creator can modify the bid")
 	}
 
 	if msg.Price.LT(auction.GetMinBidPrice()) {
