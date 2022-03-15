@@ -508,10 +508,15 @@ func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI
 	allowedBiddersMap := auction.GetAllowedBiddersMap() // map(bidder => maxBidAmt)
 	allocationMap := map[string]sdk.Int{}               // map(bidder => allocatedAmt)
 	reservedMatchedMap := map[string]sdk.Int{}          // map(bidder => reservedMatchedAmt)
+	reservedMap := map[string]sdk.Int{}                 // map(bidder => reservedAmt)
+	refundMap := map[string]sdk.Int{}                   // map(bidder => refundAmt)
 
+	// Initialize value for all maps
 	for _, ab := range auction.GetAllowedBidders() {
 		mInfo.AllocationMap[ab.Bidder] = sdk.ZeroInt()
 		mInfo.ReservedMatchedMap[ab.Bidder] = sdk.ZeroInt()
+		refundMap[ab.Bidder] = sdk.ZeroInt()
+		reservedMap[ab.Bidder] = sdk.ZeroInt()
 	}
 
 	// Iterate from the highest matching bid price and stop until it finds
@@ -602,14 +607,6 @@ func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI
 	// Iterate all bids to get refund amount for each bidder
 	// Calculate the refund amount by substracting allocate amount from
 	// how much a bidder reserved to place a bid for the auction
-	refundMap := map[string]sdk.Int{}
-	reservedMap := map[string]sdk.Int{}
-
-	for _, ab := range auction.GetAllowedBidders() {
-		refundMap[ab.Bidder] = sdk.ZeroInt()
-		reservedMap[ab.Bidder] = sdk.ZeroInt()
-	}
-
 	for _, b := range bids {
 		if b.Type == types.BidTypeBatchWorth {
 			reservedMap[b.Bidder] = reservedMap[b.Bidder].Add(b.Coin.Amount)
