@@ -1,6 +1,8 @@
 package types
 
 import (
+	time "time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -24,4 +26,38 @@ type BankKeeper interface {
 // DistrKeeper is the keeper of the distribution store
 type DistrKeeper interface {
 	FundCommunityPool(ctx sdk.Context, amount sdk.Coins, sender sdk.AccAddress) error
+}
+
+// Event Hooks
+// These can be utilized to communicate between a fundraising keeper and another keeper
+// The second keeper must implement this interface, which then the fundraising keeper can call.
+
+// FundraisingHooks event hooks
+type FundraisingHooks interface {
+	BeforeAuctionCreated(
+		ctx sdk.Context, auctioneer string, startPrice,
+		minBidPrice sdk.Dec, sellingCoin sdk.Coin, payingCoinDenom string,
+		vestingSchedules []VestingSchedule, startTime, endTime time.Time) error
+
+	BeforeAuctionCanceled(ctx sdk.Context, auctioneer string, auctionID uint64) error
+
+	BeforeBidPlaced(
+		ctx sdk.Context, auctionID uint64, bidder string,
+		bidType BidType, price sdk.Dec, coin sdk.Coin,
+	) error
+
+	BeforeBidModified(
+		ctx sdk.Context,
+		auctionID uint64,
+		bidder string,
+		bidType BidType,
+		price sdk.Dec,
+		coin sdk.Coin,
+	) error
+
+	BeforeAllowedBidderAdded(
+		ctx sdk.Context,
+		auctionID uint64,
+		allowedBidder AllowedBidder,
+	) error
 }
