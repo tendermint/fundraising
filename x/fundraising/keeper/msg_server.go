@@ -52,7 +52,7 @@ func (m msgServer) CreateBatchAuction(goCtx context.Context, msg *types.MsgCreat
 func (m msgServer) CancelAuction(goCtx context.Context, msg *types.MsgCancelAuction) (*types.MsgCancelAuctionResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if _, err := m.Keeper.CancelAuction(ctx, msg); err != nil {
+	if err := m.Keeper.CancelAuction(ctx, msg); err != nil {
 		return nil, err
 	}
 
@@ -74,7 +74,7 @@ func (m msgServer) PlaceBid(goCtx context.Context, msg *types.MsgPlaceBid) (*typ
 func (m msgServer) ModifyBid(goCtx context.Context, msg *types.MsgModifyBid) (*types.MsgModifyBidResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if _, err := m.Keeper.ModifyBid(ctx, msg); err != nil {
+	if err := m.Keeper.ModifyBid(ctx, msg); err != nil {
 		return nil, err
 	}
 

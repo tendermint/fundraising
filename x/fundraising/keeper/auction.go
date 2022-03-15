@@ -24,8 +24,9 @@ func (k Keeper) ReleaseRemainingSellingCoin(ctx sdk.Context, auction types.Aucti
 	sellingCoinDenom := auction.GetSellingCoin().Denom
 
 	// Send all the remaining selling coins back to the auctioneer
-	releaseCoin := k.bankKeeper.GetBalance(ctx, sellingReserveAddr, sellingCoinDenom)
-	releaseCoins := sdk.NewCoins(releaseCoin)
+	spendableCoins := k.bankKeeper.SpendableCoins(ctx, sellingReserveAddr)
+	releaseAmt := spendableCoins.AmountOf(sellingCoinDenom)
+	releaseCoins := sdk.NewCoins(sdk.NewCoin(sellingCoinDenom, releaseAmt))
 
 	if err := k.bankKeeper.SendCoins(ctx, sellingReserveAddr, auction.GetAuctioneer(), releaseCoins); err != nil {
 		return err
@@ -268,30 +269,33 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 
 // CancelAuction cancels the auction in an event when the auctioneer needs to modify the auction.
 // However, it can only be canceled when the auction has not started yet.
-func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) (types.AuctionI, error) {
+func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) error {
 	auction, found := k.GetAuction(ctx, msg.AuctionId)
 	if !found {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrNotFound, "auction not found")
+		return sdkerrors.Wrap(sdkerrors.ErrNotFound, "auction not found")
 	}
 
 	if auction.GetAuctioneer().String() != msg.Auctioneer {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "failed to verify ownership of the auction")
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "only the autioneer can cancel the auction")
 	}
 
 	if auction.GetStatus() != types.AuctionStatusStandBy {
-		return nil, sdkerrors.Wrap(types.ErrInvalidAuctionStatus, "auction cannot be canceled due to current status")
+		return sdkerrors.Wrap(types.ErrInvalidAuctionStatus, "auction cannot be cancelled due to current status")
 	}
 
 	sellingReserveAddr := auction.GetSellingReserveAddress()
 	auctioneerAddr := auction.GetAuctioneer()
-	releaseCoin := k.bankKeeper.GetBalance(ctx, sellingReserveAddr, auction.GetSellingCoin().Denom)
+	sellingCoinDenom := auction.GetSellingCoin().Denom
+
+	spendableCoins := k.bankKeeper.SpendableCoins(ctx, sellingReserveAddr)
+	releaseCoin := sdk.NewCoin(sellingCoinDenom, spendableCoins.AmountOf(sellingCoinDenom))
 
 	// Release the selling coin back to the auctioneer
 	if err := k.bankKeeper.SendCoins(ctx, sellingReserveAddr, auctioneerAddr, sdk.NewCoins(releaseCoin)); err != nil {
-		return nil, sdkerrors.Wrap(err, "failed to release the selling coin")
+		return sdkerrors.Wrap(err, "failed to release the selling coin")
 	}
 
-	_ = auction.SetRemainingSellingCoin(sdk.NewCoin(auction.GetSellingCoin().Denom, sdk.ZeroInt()))
+	_ = auction.SetRemainingSellingCoin(sdk.NewCoin(sellingCoinDenom, sdk.ZeroInt()))
 	_ = auction.SetStatus(types.AuctionStatusCancelled)
 
 	k.SetAuction(ctx, auction)
@@ -303,7 +307,7 @@ func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) (typ
 		),
 	})
 
-	return auction, nil
+	return nil
 }
 
 // AddAllowedBidders is a function for an external module and it simply adds new bidder(s) to AllowedBidder list.

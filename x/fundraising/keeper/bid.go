@@ -177,61 +177,58 @@ func (k Keeper) ValidateBatchManyBid(ctx sdk.Context, auction types.AuctionI, bi
 	return nil
 }
 
-// ModifyBid modifies the auctioneer's bid
-func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) (types.MsgModifyBid, error) {
+// ModifyBid handles types.MsgModifyBid and stores the modified bid.
+// A bidder must provide either greater bid price or coin amount.
+// They are not permitted to modify with less bid price or coin amount.
+func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) error {
 	auction, found := k.GetAuction(ctx, msg.AuctionId)
 	if !found {
-		return types.MsgModifyBid{}, sdkerrors.Wrap(sdkerrors.ErrNotFound, "auction not found")
+		return sdkerrors.Wrap(sdkerrors.ErrNotFound, "auction not found")
 	}
 
 	if auction.GetStatus() != types.AuctionStatusStarted {
-		return types.MsgModifyBid{}, types.ErrInvalidAuctionStatus
+		return types.ErrInvalidAuctionStatus
 	}
 
 	if auction.GetType() != types.AuctionTypeBatch {
-		return types.MsgModifyBid{}, types.ErrIncorrectAuctionType
+		return types.ErrIncorrectAuctionType
 	}
 
 	bid, found := k.GetBid(ctx, msg.AuctionId, msg.BidId)
 	if !found {
-		return types.MsgModifyBid{}, sdkerrors.Wrap(sdkerrors.ErrNotFound, "bid not found")
+		return sdkerrors.Wrap(sdkerrors.ErrNotFound, "bid not found")
 	}
-
-	// TODO: Do we need to return MsgModifyBid? Can we just receive args? Otherwise msg server is just a proxy...
 
 	if !bid.GetBidder().Equals(msg.GetBidder()) {
-		return types.MsgModifyBid{}, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "only the bid creator can modify the bid")
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "only the bid creator can modify the bid")
 	}
 
+	// Not allowed to modify with less bid price
 	if msg.Price.LT(auction.GetMinBidPrice()) {
-		return types.MsgModifyBid{}, types.ErrInsufficientMinBidPrice
+		return types.ErrInsufficientMinBidPrice
 	}
 
 	// Modifying bid type is not allowed
 	if bid.Coin.Denom != msg.Coin.Denom {
-		return types.MsgModifyBid{}, types.ErrIncorrectCoinDenom
+		return sdkerrors.Wrap(types.ErrIncorrectCoinDenom, "modifying bid type is not allowed")
 	}
 
-	// The bid price or coin amount must be higher than the modifying bid one
+	// Either bid price or coin amount must be greater than the modifying values
 	if msg.Price.LT(bid.Price) || msg.Coin.Amount.LT(bid.Coin.Amount) {
-		return types.MsgModifyBid{},
-			sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "bid price or coin amount cannot be lower")
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "bid price or coin amount cannot be lower")
 	}
 
 	if msg.Price.Equal(bid.Price) && msg.Coin.Amount.Equal(bid.Coin.Amount) {
-		return types.MsgModifyBid{},
-			sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "bid price and coin amount must be changed")
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "bid price and coin amount must be changed")
 	}
 
 	// Reserve bid amount difference
 	switch bid.Type {
 	case types.BidTypeBatchWorth:
 		diffBidCoin := msg.Coin.Sub(bid.Coin)
-
 		if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), diffBidCoin); err != nil {
-			return types.MsgModifyBid{}, err
+			return err
 		}
-
 	case types.BidTypeBatchMany:
 		prevBidAmt := msg.Coin.Amount.ToDec().Mul(msg.Price)
 		currBidAmt := bid.Coin.Amount.ToDec().Mul(bid.Price)
@@ -239,7 +236,7 @@ func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) (types.MsgMo
 		diffBidCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), diffBidAmt)
 
 		if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), diffBidCoin); err != nil {
-			return types.MsgModifyBid{}, err
+			return err
 		}
 	}
 
@@ -249,5 +246,5 @@ func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) (types.MsgMo
 
 	k.SetBid(ctx, bid)
 
-	return types.MsgModifyBid{}, nil
+	return nil
 }

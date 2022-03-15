@@ -233,7 +233,10 @@ func (s *KeeperTestSuite) TestCancelAuction() {
 	s.Require().Equal(types.AuctionStatusStandBy, standByAuction.GetStatus())
 
 	// Cancel the auction
-	auction := s.cancelAuction(standByAuction.GetId(), s.addr(0))
+	s.cancelAuction(standByAuction.GetId(), s.addr(0))
+
+	auction, found := s.keeper.GetAuction(s.ctx, standByAuction.GetId())
+	s.Require().True(found)
 	s.Require().Equal(types.AuctionStatusCancelled, auction.GetStatus())
 
 	// The selling reserve balance must be zero

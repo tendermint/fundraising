@@ -158,7 +158,7 @@ func (s *KeeperTestSuite) TestMsgCancelAuction() {
 		s.addr(1).String(),
 		startedAuction.GetId(),
 	))
-	s.Require().ErrorIs(err, sdkerrors.ErrInvalidRequest)
+	s.Require().ErrorIs(err, sdkerrors.ErrUnauthorized)
 
 	// Try to cancel with the auction that is already started
 	_, err = s.msgServer.CancelAuction(ctx, types.NewMsgCancelAuction(
