@@ -24,8 +24,9 @@ func (k Keeper) ReleaseRemainingSellingCoin(ctx sdk.Context, auction types.Aucti
 	sellingCoinDenom := auction.GetSellingCoin().Denom
 
 	// Send all the remaining selling coins back to the auctioneer
-	releaseCoin := k.bankKeeper.GetBalance(ctx, sellingReserveAddr, sellingCoinDenom)
-	releaseCoins := sdk.NewCoins(releaseCoin)
+	spendableCoins := k.bankKeeper.SpendableCoins(ctx, sellingReserveAddr)
+	releaseAmt := spendableCoins.AmountOf(sellingCoinDenom)
+	releaseCoins := sdk.NewCoins(sdk.NewCoin(sellingCoinDenom, releaseAmt))
 
 	if err := k.bankKeeper.SendCoins(ctx, sellingReserveAddr, auction.GetAuctioneer(), releaseCoins); err != nil {
 		return err
@@ -268,30 +269,33 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 
 // CancelAuction cancels the auction in an event when the auctioneer needs to modify the auction.
 // However, it can only be canceled when the auction has not started yet.
-func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) (types.AuctionI, error) {
+func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) error {
 	auction, found := k.GetAuction(ctx, msg.AuctionId)
 	if !found {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrNotFound, "auction not found")
+		return sdkerrors.Wrap(sdkerrors.ErrNotFound, "auction not found")
 	}
 
 	if auction.GetAuctioneer().String() != msg.Auctioneer {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "failed to verify ownership of the auction")
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "only the autioneer can cancel the auction")
 	}
 
 	if auction.GetStatus() != types.AuctionStatusStandBy {
-		return nil, sdkerrors.Wrap(types.ErrInvalidAuctionStatus, "auction cannot be canceled due to current status")
+		return sdkerrors.Wrap(types.ErrInvalidAuctionStatus, "auction cannot be cancelled due to current status")
 	}
 
 	sellingReserveAddr := auction.GetSellingReserveAddress()
 	auctioneerAddr := auction.GetAuctioneer()
-	releaseCoin := k.bankKeeper.GetBalance(ctx, sellingReserveAddr, auction.GetSellingCoin().Denom)
+	sellingCoinDenom := auction.GetSellingCoin().Denom
+
+	spendableCoins := k.bankKeeper.SpendableCoins(ctx, sellingReserveAddr)
+	releaseCoin := sdk.NewCoin(sellingCoinDenom, spendableCoins.AmountOf(sellingCoinDenom))
 
 	// Release the selling coin back to the auctioneer
 	if err := k.bankKeeper.SendCoins(ctx, sellingReserveAddr, auctioneerAddr, sdk.NewCoins(releaseCoin)); err != nil {
-		return nil, sdkerrors.Wrap(err, "failed to release the selling coin")
+		return sdkerrors.Wrap(err, "failed to release the selling coin")
 	}
 
-	_ = auction.SetRemainingSellingCoin(sdk.NewCoin(auction.GetSellingCoin().Denom, sdk.ZeroInt()))
+	_ = auction.SetRemainingSellingCoin(sdk.NewCoin(sellingCoinDenom, sdk.ZeroInt()))
 	_ = auction.SetStatus(types.AuctionStatusCancelled)
 
 	k.SetAuction(ctx, auction)
@@ -303,7 +307,7 @@ func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) (typ
 		),
 	})
 
-	return auction, nil
+	return nil
 }
 
 // AddAllowedBidders is a function for an external module and it simply adds new bidder(s) to AllowedBidder list.
@@ -464,11 +468,9 @@ type MatchingInfo struct {
 
 func (k Keeper) CalculateFixedPriceAllocation(ctx sdk.Context, auction types.AuctionI) MatchingInfo {
 	mInfo := MatchingInfo{
-		MatchedLen:         0,
 		MatchedPrice:       sdk.ZeroDec(),
 		TotalMatchedAmount: sdk.ZeroInt(),
-		AllocationMap:      nil,
-		RefundMap:          nil,
+		AllocationMap:      map[string]sdk.Int{},
 	}
 
 	totalMatchedAmt := sdk.ZeroInt()
@@ -477,7 +479,12 @@ func (k Keeper) CalculateFixedPriceAllocation(ctx sdk.Context, auction types.Auc
 	for _, b := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
 		bidAmt := b.Coin.Amount.ToDec().QuoTruncate(b.Price).TruncateInt()
 
-		allocMap[b.Bidder] = bidAmt
+		// Accumulate bid amount if the bidder has other bid(s)
+		if allocatedAmt, ok := allocMap[b.Bidder]; ok {
+			allocMap[b.Bidder] = allocatedAmt.Add(bidAmt)
+		} else {
+			allocMap[b.Bidder] = bidAmt
+		}
 		totalMatchedAmt = totalMatchedAmt.Add(bidAmt)
 		mInfo.MatchedLen = mInfo.MatchedLen + 1
 	}
@@ -504,10 +511,15 @@ func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI
 	allowedBiddersMap := auction.GetAllowedBiddersMap() // map(bidder => maxBidAmt)
 	allocationMap := map[string]sdk.Int{}               // map(bidder => allocatedAmt)
 	reservedMatchedMap := map[string]sdk.Int{}          // map(bidder => reservedMatchedAmt)
+	reservedMap := map[string]sdk.Int{}                 // map(bidder => reservedAmt)
+	refundMap := map[string]sdk.Int{}                   // map(bidder => refundAmt)
 
+	// Initialize value for all maps
 	for _, ab := range auction.GetAllowedBidders() {
 		mInfo.AllocationMap[ab.Bidder] = sdk.ZeroInt()
 		mInfo.ReservedMatchedMap[ab.Bidder] = sdk.ZeroInt()
+		refundMap[ab.Bidder] = sdk.ZeroInt()
+		reservedMap[ab.Bidder] = sdk.ZeroInt()
 	}
 
 	// Iterate from the highest matching bid price and stop until it finds
@@ -598,14 +610,6 @@ func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI
 	// Iterate all bids to get refund amount for each bidder
 	// Calculate the refund amount by substracting allocate amount from
 	// how much a bidder reserved to place a bid for the auction
-	refundMap := map[string]sdk.Int{}
-	reservedMap := map[string]sdk.Int{}
-
-	for _, ab := range auction.GetAllowedBidders() {
-		refundMap[ab.Bidder] = sdk.ZeroInt()
-		reservedMap[ab.Bidder] = sdk.ZeroInt()
-	}
-
 	for _, b := range bids {
 		if b.Type == types.BidTypeBatchWorth {
 			reservedMap[b.Bidder] = reservedMap[b.Bidder].Add(b.Coin.Amount)
