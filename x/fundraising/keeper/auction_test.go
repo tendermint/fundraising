@@ -50,6 +50,35 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_AuctionStatus() {
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 }
 
+func (s *KeeperTestSuite) TestFixedPriceAuction_CalculateAllocation() {
+	startedAuction := s.createFixedPriceAuction(
+		s.addr(0),
+		parseDec("1"),
+		parseDec("0.1"),
+		parseCoin("1_000_000_000_000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+		true,
+	)
+
+	a, found := s.keeper.GetAuction(s.ctx, startedAuction.GetId())
+	s.Require().True(found)
+
+	bidder := s.addr(1)
+	s.addAllowedBidder(a.GetId(), bidder, parseInt("1_000_000_000"))
+
+	s.placeBidFixedPrice(a.GetId(), bidder, a.GetStartPrice(), parseCoin("1_000_000denom2"), true)
+	s.placeBidFixedPrice(a.GetId(), bidder, a.GetStartPrice(), parseCoin("1_000_000denom2"), true)
+	s.placeBidFixedPrice(a.GetId(), bidder, a.GetStartPrice(), parseCoin("1_000_000denom2"), true)
+
+	// Make sure allocate amount is equal to the total bid amount made by the same bidder
+	mInfo := s.keeper.CalculateFixedPriceAllocation(s.ctx, a)
+	allocateAmt := mInfo.AllocationMap[bidder.String()]
+	s.Require().Equal(allocateAmt, parseCoin("3_000_000denom2"))
+}
+
 func (s *KeeperTestSuite) TestBatchAuction_AuctionStatus() {
 	standByAuction := s.createBatchAuction(
 		s.addr(0),

@@ -468,11 +468,9 @@ type MatchingInfo struct {
 
 func (k Keeper) CalculateFixedPriceAllocation(ctx sdk.Context, auction types.AuctionI) MatchingInfo {
 	mInfo := MatchingInfo{
-		MatchedLen:         0,
 		MatchedPrice:       sdk.ZeroDec(),
 		TotalMatchedAmount: sdk.ZeroInt(),
-		AllocationMap:      nil,
-		RefundMap:          nil,
+		AllocationMap:      map[string]sdk.Int{},
 	}
 
 	totalMatchedAmt := sdk.ZeroInt()
@@ -481,7 +479,12 @@ func (k Keeper) CalculateFixedPriceAllocation(ctx sdk.Context, auction types.Auc
 	for _, b := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
 		bidAmt := b.Coin.Amount.ToDec().QuoTruncate(b.Price).TruncateInt()
 
-		allocMap[b.Bidder] = bidAmt
+		// Accumulate bid amount if the bidder has other bid(s)
+		if allocatedAmt, ok := allocMap[b.Bidder]; ok {
+			allocMap[b.Bidder] = allocatedAmt.Add(bidAmt)
+		} else {
+			allocMap[b.Bidder] = bidAmt
+		}
 		totalMatchedAmt = totalMatchedAmt.Add(bidAmt)
 		mInfo.MatchedLen = mInfo.MatchedLen + 1
 	}
