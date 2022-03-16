@@ -76,7 +76,7 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_CalculateAllocation() {
 	// Make sure allocate amount is equal to the total bid amount made by the same bidder
 	mInfo := s.keeper.CalculateFixedPriceAllocation(s.ctx, a)
 	allocateAmt := mInfo.AllocationMap[bidder.String()]
-	s.Require().Equal(allocateAmt, parseCoin("3_000_000denom2"))
+	s.Require().Equal(allocateAmt, parseCoin("3_000_000denom2").Amount)
 }
 
 func (s *KeeperTestSuite) TestBatchAuction_AuctionStatus() {
