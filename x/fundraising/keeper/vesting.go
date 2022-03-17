@@ -11,8 +11,11 @@ import (
 func (k Keeper) ApplyVestingSchedules(ctx sdk.Context, auction types.AuctionI) error {
 	payingReserveAddr := auction.GetPayingReserveAddress()
 	vestingReserveAddr := auction.GetVestingReserveAddress()
-	reserveCoin := k.bankKeeper.GetBalance(ctx, payingReserveAddr, auction.GetPayingCoinDenom())
-	reserveCoins := sdk.NewCoins(reserveCoin)
+	payingCoinDenom := auction.GetPayingCoinDenom()
+
+	spendableCoins := k.bankKeeper.SpendableCoins(ctx, payingReserveAddr)
+	reserveCoin := sdk.NewCoin(payingCoinDenom, spendableCoins.AmountOf(payingCoinDenom))
+	reserveCoins := sdk.NewCoins(sdk.NewCoin(payingCoinDenom, reserveCoin.Amount))
 
 	vsLen := len(auction.GetVestingSchedules())
 	if vsLen == 0 {
