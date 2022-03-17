@@ -47,7 +47,9 @@ func SellingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 		for _, auction := range k.GetAuctions(ctx) {
 			if auction.GetStatus() == types.AuctionStatusStarted {
 				sellingReserveAddr := auction.GetSellingReserveAddress()
-				sellingReserve := k.bankKeeper.GetBalance(ctx, sellingReserveAddr, auction.GetSellingCoin().Denom)
+				sellingCoinDenom := auction.GetSellingCoin().Denom
+				spendable := k.bankKeeper.SpendableCoins(ctx, sellingReserveAddr)
+				sellingReserve := sdk.NewCoin(sellingCoinDenom, spendable.AmountOf(sellingCoinDenom))
 				if !sellingReserve.IsGTE(auction.GetSellingCoin()) {
 					msg += fmt.Sprintf("\tselling reserve balance %s\n"+
 						"\tselling pool reserve: %v\n"+
@@ -80,7 +82,9 @@ func PayingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 			}
 
 			payingReserveAddr := auction.GetPayingReserveAddress()
-			payingReserve := k.bankKeeper.GetBalance(ctx, payingReserveAddr, auction.GetPayingCoinDenom())
+			payingCoinDenom := auction.GetPayingCoinDenom()
+			spendable := k.bankKeeper.SpendableCoins(ctx, payingReserveAddr)
+			payingReserve := sdk.NewCoin(payingCoinDenom, spendable.AmountOf(payingCoinDenom))
 			if !payingReserve.IsGTE(totalBidCoin) {
 				msg += fmt.Sprintf("\tpaying reserve balance %s\n"+
 					"\tpaying pool reserve: %v\n"+
@@ -114,7 +118,9 @@ func VestingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 			}
 
 			vestingReserveAddr := auction.GetVestingReserveAddress()
-			vestingReserve := k.bankKeeper.GetBalance(ctx, vestingReserveAddr, auction.GetPayingCoinDenom())
+			payingCoinDenom := auction.GetPayingCoinDenom()
+			spendable := k.bankKeeper.SpendableCoins(ctx, vestingReserveAddr)
+			vestingReserve := sdk.NewCoin(payingCoinDenom, spendable.AmountOf(payingCoinDenom))
 			if !vestingReserve.IsGTE(totalPayingCoin) {
 				msg += fmt.Sprintf("\tvesting reserve balance %s\n"+
 					"\tvesting pool reserve: %v\n"+

@@ -210,14 +210,12 @@ func (s *KeeperTestSuite) placeBidBatchMany(
 	return b
 }
 
-func (s *KeeperTestSuite) cancelAuction(auctionId uint64, auctioneer sdk.AccAddress) types.AuctionI {
-	auction, err := s.keeper.CancelAuction(s.ctx, &types.MsgCancelAuction{
+func (s *KeeperTestSuite) cancelAuction(auctionId uint64, auctioneer sdk.AccAddress) {
+	err := s.keeper.CancelAuction(s.ctx, &types.MsgCancelAuction{
 		Auctioneer: auctioneer.String(),
 		AuctionId:  auctionId,
 	})
 	s.Require().NoError(err)
-
-	return auction
 }
 
 //
@@ -253,7 +251,7 @@ func exchangedSellingAmount(price sdk.Dec, coin sdk.Coin) sdk.Int {
 	return coin.Amount.ToDec().QuoTruncate(price).TruncateInt()
 }
 
-// parseCoin parses and returns sdk.Coin.
+// parseCoin parses string and returns sdk.Coin.
 func parseCoin(s string) sdk.Coin {
 	s = strings.ReplaceAll(s, "_", "")
 	coin, err := sdk.ParseCoinNormalized(s)
@@ -263,7 +261,7 @@ func parseCoin(s string) sdk.Coin {
 	return coin
 }
 
-// parseCoins parses and returns sdk.Coins.
+// parseCoins parses string and returns sdk.Coins.
 func parseCoins(s string) sdk.Coins {
 	s = strings.ReplaceAll(s, "_", "")
 	coins, err := sdk.ParseCoinsNormalized(s)
@@ -273,7 +271,17 @@ func parseCoins(s string) sdk.Coins {
 	return coins
 }
 
-// parseDec is a shortcut for sdk.MustNewDecFromStr.
+// parseInt parses string and returns sdk.Int.
+func parseInt(s string) sdk.Int {
+	s = strings.ReplaceAll(s, "_", "")
+	amt, ok := sdk.NewIntFromString(s)
+	if !ok {
+		panic("failed to convert string to sdk.Int")
+	}
+	return amt
+}
+
+// parseDec parses string and returns sdk.Dec.
 func parseDec(s string) sdk.Dec {
 	return sdk.MustNewDecFromStr(s)
 }

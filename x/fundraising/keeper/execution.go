@@ -10,7 +10,9 @@ import (
 // if the auction is ready to get started.
 func (k Keeper) ExecuteStandByStatus(ctx sdk.Context, auction types.AuctionI) {
 	if auction.ShouldAuctionStarted(ctx.BlockTime()) { // BlockTime >= StartTime
-		_ = auction.SetStatus(types.AuctionStatusStarted)
+		if err := auction.SetStatus(types.AuctionStatusStarted); err != nil {
+			panic(err)
+		}
 		k.SetAuction(ctx, auction)
 	}
 }

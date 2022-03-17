@@ -206,7 +206,7 @@ func (s *KeeperTestSuite) TestModifyBid() {
 		s.addr(0),
 		parseDec("0.1"),
 		parseDec("0.1"),
-		parseCoin("1000_000_000denom1"),
+		parseCoin("1_000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
 		1,
@@ -221,7 +221,7 @@ func (s *KeeperTestSuite) TestModifyBid() {
 	b := s.placeBidBatchWorth(a.Id, s.addr(1), parseDec("0.6"), parseCoin("100_000_000denom2"), sdk.NewInt(1000_000_000), true)
 
 	// Modify the bid with not existing bid
-	_, err := s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{
+	err := s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{
 		AuctionId: a.Id,
 		Bidder:    s.addr(1).String(),
 		BidId:     5,
@@ -231,17 +231,17 @@ func (s *KeeperTestSuite) TestModifyBid() {
 	s.Require().ErrorIs(err, sdkerrors.ErrNotFound)
 
 	// Modify the bid with an incorrect owner
-	_, err = s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{
+	err = s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{
 		AuctionId: a.Id,
 		Bidder:    s.addr(0).String(),
 		BidId:     b.Id,
 		Price:     parseDec("0.8"),
 		Coin:      parseCoin("100_000_000denom2"),
 	})
-	s.Require().ErrorIs(err, types.ErrIncorrectOwner)
+	s.Require().ErrorIs(err, sdkerrors.ErrUnauthorized)
 
 	// Modify the bid with an incorrect denom
-	_, err = s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{
+	err = s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{
 		AuctionId: a.Id,
 		Bidder:    s.addr(1).String(),
 		BidId:     b.Id,
@@ -251,23 +251,22 @@ func (s *KeeperTestSuite) TestModifyBid() {
 	s.Require().ErrorIs(err, types.ErrIncorrectCoinDenom)
 
 	// Modify the bid with lower bid price
-	_, err = s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{
+	err = s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{
 		AuctionId: a.Id,
 		Bidder:    s.addr(1).String(),
 		BidId:     b.Id,
 		Price:     parseDec("0.3"),
 		Coin:      parseCoin("100_000_000denom2"),
 	})
-	s.Require().ErrorIs(err, sdkerrors.ErrInvalidRequest)
+	s.Require().ErrorIs(err, sdkerrors.ErrUnauthorized)
 
 	// Modify the bid with lower coin amount
-	_, err = s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{
+	err = s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{
 		AuctionId: a.Id,
 		Bidder:    s.addr(1).String(),
 		BidId:     b.Id,
 		Price:     parseDec("0.8"),
 		Coin:      parseCoin("100denom2"),
 	})
-	s.Require().ErrorIs(err, sdkerrors.ErrInvalidRequest)
-
+	s.Require().ErrorIs(err, sdkerrors.ErrUnauthorized)
 }
