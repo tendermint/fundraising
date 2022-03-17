@@ -63,7 +63,6 @@ func (s *ModuleTestSuite) createFixedPriceAuction(
 	auction, err := s.keeper.CreateFixedPriceAuction(s.ctx, &types.MsgCreateFixedPriceAuction{
 		Auctioneer:       auctioneer.String(),
 		StartPrice:       startPrice,
-		MinBidPrice:      minBidPrice,
 		SellingCoin:      sellingCoin,
 		PayingCoinDenom:  payingCoinDenom,
 		VestingSchedules: vestingSchedules,

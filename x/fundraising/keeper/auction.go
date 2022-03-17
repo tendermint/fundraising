@@ -139,7 +139,6 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 	}
 
 	allowedBidders := []types.AllowedBidder{} // it is nil when an auction is created
-	matchedPrice := msg.StartPrice            // it is start price
 	remainingSellingCoin := msg.SellingCoin   // it is starting with selling coin amount
 	endTimes := []time.Time{msg.EndTime}      // it is an array data type to handle BatchAuction
 
@@ -151,12 +150,10 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		types.SellingReserveAddress(nextId).String(),
 		types.PayingReserveAddress(nextId).String(),
 		msg.StartPrice,
-		msg.MinBidPrice,
 		msg.SellingCoin,
 		msg.PayingCoinDenom,
 		types.VestingReserveAddress(nextId).String(),
 		msg.VestingSchedules,
-		matchedPrice,
 		remainingSellingCoin,
 		msg.StartTime,
 		endTimes,
@@ -220,12 +217,10 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 		types.SellingReserveAddress(nextId).String(),
 		types.PayingReserveAddress(nextId).String(),
 		msg.StartPrice,
-		msg.MinBidPrice,
 		msg.SellingCoin,
 		msg.PayingCoinDenom,
 		types.VestingReserveAddress(nextId).String(),
 		msg.VestingSchedules,
-		matchedPrice,
 		remainingSellingCoin,
 		msg.StartTime,
 		endTimes,
@@ -239,6 +234,8 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 
 	auction := types.NewBatchAuction(
 		baseAuction,
+		msg.MinBidPrice,
+		matchedPrice,
 		msg.MaxExtendedRound,
 		msg.ExtendedRoundRate,
 	)
@@ -258,6 +255,8 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 			sdk.NewAttribute(types.AttributeKeyStartTime, auction.GetStartTime().String()),
 			sdk.NewAttribute(types.AttributeKeyEndTime, msg.EndTime.String()),
 			sdk.NewAttribute(types.AttributeKeyAuctionStatus, auction.GetStatus().String()),
+			sdk.NewAttribute(types.AttributeKeyMinBidPrice, msg.MinBidPrice.String()),
+			sdk.NewAttribute(types.AttributeKeyMatchedPrice, matchedPrice.String()),
 			sdk.NewAttribute(types.AttributeKeyMaxExtendedRound, fmt.Sprint(msg.MaxExtendedRound)),
 			sdk.NewAttribute(types.AttributeKeyExtendedRoundRate, msg.ExtendedRoundRate.String()),
 		),

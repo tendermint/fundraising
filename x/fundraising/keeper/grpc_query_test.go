@@ -21,7 +21,6 @@ func (s *KeeperTestSuite) TestGRPCAuctions() {
 	s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("1"),
-		parseDec("0.1"),
 		parseCoin("5000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -33,7 +32,6 @@ func (s *KeeperTestSuite) TestGRPCAuctions() {
 	s.createFixedPriceAuction(
 		s.addr(1),
 		sdk.MustNewDecFromStr("0.5"),
-		parseDec("0.1"),
 		parseCoin("1000000000000denom3"),
 		"denom4",
 		[]types.VestingSchedule{},
@@ -113,7 +111,6 @@ func (s *KeeperTestSuite) TestGRPCAuction() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		sdk.MustNewDecFromStr("0.5"),
-		parseDec("0.1"),
 		parseCoin("500000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -177,7 +174,6 @@ func (s *KeeperTestSuite) TestGRPCBids() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("1"),
-		parseDec("0.1"),
 		parseCoin("500000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -295,7 +291,6 @@ func (s *KeeperTestSuite) TestGRPCBid() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("1"),
-		parseDec("0.1"),
 		parseCoin("500000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -368,7 +363,6 @@ func (s *KeeperTestSuite) TestGRPCVestings() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("1"),
-		parseDec("0.1"),
 		parseCoin("1000000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{

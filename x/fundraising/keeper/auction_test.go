@@ -16,7 +16,6 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_AuctionStatus() {
 	standByAuction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("0.5"),
-		parseDec("0.1"),
 		parseCoin("5000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -36,7 +35,6 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_AuctionStatus() {
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(1),
 		parseDec("0.5"),
-		parseDec("0.1"),
 		parseCoin("1000_000_000_000denom3"),
 		"denom4",
 		[]types.VestingSchedule{},
@@ -96,7 +94,6 @@ func (s *KeeperTestSuite) TestAllocateSellingCoin_FixedPriceAuction() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("1"),
-		parseDec("0.1"),
 		parseCoin("1000_000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -136,7 +133,6 @@ func (s *KeeperTestSuite) TestAllocateVestingPayingCoin() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("1"),
-		parseDec("0.1"),
 		parseCoin("1000_000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{
@@ -222,7 +218,6 @@ func (s *KeeperTestSuite) TestCancelAuction() {
 	standByAuction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("1"),
-		parseDec("0.1"),
 		parseCoin("500_000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -246,7 +241,6 @@ func (s *KeeperTestSuite) TestAddAllowedBidders() {
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("0.5"),
-		parseDec("0.1"),
 		parseCoin("500_000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -324,7 +318,6 @@ func (s *KeeperTestSuite) TestAddAllowedBidders_Length() {
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("0.5"),
-		parseDec("0.1"),
 		parseCoin("500_000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -363,7 +356,6 @@ func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("0.5"),
-		parseDec("0.1"),
 		parseCoin("500_000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},

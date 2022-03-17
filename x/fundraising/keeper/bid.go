@@ -27,8 +27,10 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		return types.Bid{}, types.ErrInvalidAuctionStatus
 	}
 
-	if msg.Price.LT(auction.GetMinBidPrice()) {
-		return types.Bid{}, types.ErrInsufficientMinBidPrice
+	if auction.GetType() == types.AuctionTypeBatch {
+		if msg.Price.LT(auction.(*types.BatchAuction).MinBidPrice) {
+			return types.Bid{}, types.ErrInsufficientMinBidPrice
+		}
 	}
 
 	_, found = auction.GetAllowedBiddersMap()[msg.Bidder]
@@ -201,7 +203,7 @@ func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) (types.MsgMo
 		return types.MsgModifyBid{}, types.ErrIncorrectOwner
 	}
 
-	if msg.Price.LT(auction.GetMinBidPrice()) {
+	if msg.Price.LT(auction.(*types.BatchAuction).MinBidPrice) {
 		return types.MsgModifyBid{}, types.ErrInsufficientMinBidPrice
 	}
 

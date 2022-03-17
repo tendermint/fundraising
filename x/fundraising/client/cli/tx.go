@@ -107,7 +107,6 @@ Description of the parameters:
 			msg := types.NewMsgCreateFixedPriceAuction(
 				clientCtx.GetFromAddress().String(),
 				auction.StartPrice,
-				auction.MinBidPrice,
 				auction.SellingCoin,
 				auction.PayingCoinDenom,
 				auction.VestingSchedules,

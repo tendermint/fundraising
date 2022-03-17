@@ -21,7 +21,6 @@ func (s *KeeperTestSuite) TestLastAuctionId() {
 	s.createFixedPriceAuction(
 		s.addr(0),
 		sdk.MustNewDecFromStr("1.0"),
-		parseDec("0.1"),
 		parseCoin("1000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -38,7 +37,6 @@ func (s *KeeperTestSuite) TestLastAuctionId() {
 	s.createFixedPriceAuction(
 		s.addr(1),
 		sdk.MustNewDecFromStr("0.5"),
-		parseDec("0.1"),
 		parseCoin("5000000000denom3"),
 		"denom4",
 		[]types.VestingSchedule{},
@@ -57,7 +55,6 @@ func (s *KeeperTestSuite) TestLastBidId() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		sdk.OneDec(),
-		parseDec("0.1"),
 		parseCoin("500000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -84,7 +81,6 @@ func (s *KeeperTestSuite) TestLastBidId() {
 	auction2 := s.createFixedPriceAuction(
 		s.addr(0),
 		sdk.MustNewDecFromStr("0.5"),
-		parseDec("0.1"),
 		parseCoin("1000000000000denom3"),
 		"denom4",
 		[]types.VestingSchedule{},
@@ -105,7 +101,6 @@ func (s *KeeperTestSuite) TestIterateBids() {
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(0),
 		sdk.OneDec(),
-		parseDec("0.1"),
 		parseCoin("500000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},

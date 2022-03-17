@@ -32,9 +32,9 @@ var (
 //nolint:interfacer
 func NewBaseAuction(
 	id uint64, typ AuctionType, allowedBidders []AllowedBidder, auctioneerAddr string,
-	sellingPoolAddr string, payingPoolAddr string, startPrice sdk.Dec, minBidPrice sdk.Dec,
+	sellingPoolAddr string, payingPoolAddr string, startPrice sdk.Dec,
 	sellingCoin sdk.Coin, payingCoinDenom string, vestingPoolAddr string,
-	vestingSchedules []VestingSchedule, matchedPrice sdk.Dec, remainingSellingCoin sdk.Coin,
+	vestingSchedules []VestingSchedule, remainingSellingCoin sdk.Coin,
 	startTime time.Time, endTimes []time.Time, status AuctionStatus,
 ) *BaseAuction {
 	return &BaseAuction{
@@ -45,12 +45,10 @@ func NewBaseAuction(
 		SellingReserveAddress: sellingPoolAddr,
 		PayingReserveAddress:  payingPoolAddr,
 		StartPrice:            startPrice,
-		MinBidPrice:           minBidPrice,
 		SellingCoin:           sellingCoin,
 		PayingCoinDenom:       payingCoinDenom,
 		VestingReserveAddress: vestingPoolAddr,
 		VestingSchedules:      vestingSchedules,
-		MatchedPrice:          matchedPrice,
 		RemainingSellingCoin:  remainingSellingCoin,
 		StartTime:             startTime,
 		EndTimes:              endTimes,
@@ -124,15 +122,6 @@ func (ba *BaseAuction) SetStartPrice(price sdk.Dec) error {
 	return nil
 }
 
-func (ba BaseAuction) GetMinBidPrice() sdk.Dec {
-	return ba.MinBidPrice
-}
-
-func (ba *BaseAuction) SetMinBidPrice(price sdk.Dec) error {
-	ba.MinBidPrice = price
-	return nil
-}
-
 func (ba BaseAuction) GetSellingCoin() sdk.Coin {
 	return ba.SellingCoin
 }
@@ -167,15 +156,6 @@ func (ba BaseAuction) GetVestingSchedules() []VestingSchedule {
 
 func (ba *BaseAuction) SetVestingSchedules(schedules []VestingSchedule) error {
 	ba.VestingSchedules = schedules
-	return nil
-}
-
-func (ba BaseAuction) GetMatchedPrice() sdk.Dec {
-	return ba.MatchedPrice
-}
-
-func (ba *BaseAuction) SetMatchedPrice(price sdk.Dec) error {
-	ba.MatchedPrice = price
 	return nil
 }
 
@@ -234,9 +214,6 @@ func (ba BaseAuction) Validate() error {
 	}
 	if !ba.StartPrice.IsPositive() {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid start price: %f", ba.StartPrice)
-	}
-	if !ba.MinBidPrice.IsPositive() {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid minimum bid price: %f", ba.MinBidPrice)
 	}
 	if err := ba.SellingCoin.Validate(); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "invalid selling coin: %v", ba.SellingCoin)
@@ -302,9 +279,11 @@ func NewFixedPriceAuction(baseAuction *BaseAuction) *FixedPriceAuction {
 }
 
 // NewBatchAuction returns a new batch auction.
-func NewBatchAuction(baseAuction *BaseAuction, maxExtendedRound uint32, extendedRoundRate sdk.Dec) *BatchAuction {
+func NewBatchAuction(baseAuction *BaseAuction, minBidPrice sdk.Dec, matchedPrice sdk.Dec, maxExtendedRound uint32, extendedRoundRate sdk.Dec) *BatchAuction {
 	return &BatchAuction{
 		BaseAuction:       baseAuction,
+		MinBidPrice:       minBidPrice,
+		MatchedPrice:      matchedPrice,
 		MaxExtendedRound:  maxExtendedRound,
 		ExtendedRoundRate: extendedRoundRate,
 	}
@@ -336,9 +315,6 @@ type AuctionI interface {
 	GetStartPrice() sdk.Dec
 	SetStartPrice(sdk.Dec) error
 
-	GetMinBidPrice() sdk.Dec
-	SetMinBidPrice(sdk.Dec) error
-
 	GetSellingCoin() sdk.Coin
 	SetSellingCoin(sdk.Coin) error
 
@@ -350,9 +326,6 @@ type AuctionI interface {
 
 	GetVestingSchedules() []VestingSchedule
 	SetVestingSchedules([]VestingSchedule) error
-
-	GetMatchedPrice() sdk.Dec
-	SetMatchedPrice(sdk.Dec) error
 
 	GetRemainingSellingCoin() sdk.Coin
 	SetRemainingSellingCoin(sdk.Coin) error
