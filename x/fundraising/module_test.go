@@ -48,7 +48,6 @@ func (s *ModuleTestSuite) SetupTest() {
 func (s *ModuleTestSuite) createFixedPriceAuction(
 	auctioneer sdk.AccAddress,
 	startPrice sdk.Dec,
-	minBidPrice sdk.Dec,
 	sellingCoin sdk.Coin,
 	payingCoinDenom string,
 	vestingSchedules []types.VestingSchedule,

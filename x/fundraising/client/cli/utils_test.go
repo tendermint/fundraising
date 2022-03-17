@@ -16,7 +16,6 @@ func TestParseFixedPriceAuction(t *testing.T) {
 	okJSON := testutil.WriteToNewTempFile(t, `
 {
   "start_price": "1.000000000000000000",
-  "min_bid_price": "0.100000000000000000",
   "selling_coin": {
     "denom": "denom1",
     "amount": "1000000000000"
@@ -60,7 +59,6 @@ func TestParseFixedPriceAuction(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, auction.String())
 	require.Equal(t, sdk.MustNewDecFromStr("1.0"), auction.StartPrice)
-	require.Equal(t, sdk.MustNewDecFromStr("0.1"), auction.MinBidPrice)
 	require.Equal(t, sdk.NewInt64Coin("denom1", 1000000000000), auction.SellingCoin)
 	require.Equal(t, "denom2", auction.PayingCoinDenom)
 	require.EqualValues(t, expSchedules, auction.VestingSchedules)

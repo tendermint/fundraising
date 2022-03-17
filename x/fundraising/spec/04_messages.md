@@ -11,7 +11,6 @@ Messages (Msg) are objects that trigger state transitions. Msgs are wrapped in t
 type MsgCreateFixedPriceAuction struct {	
 	Auctioneer          string            // the owner of the auction
 	StartPrice          sdk.Dec           // the starting price for the auction
-	MinBidPrice         sdk.Dec           // the minimum bid price that bidders must provide
 	SellingCoin         sdk.Coin          // the selling coin for the auction
 	PayingCoinDenom     string            // the denom that the auctioneer receives to raise funds
 	VestingSchedules    []VestingSchedule // the vesting schedules for the auction
