@@ -256,8 +256,6 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 			sdk.NewAttribute(types.AttributeKeyStartTime, auction.GetStartTime().String()),
 			sdk.NewAttribute(types.AttributeKeyEndTime, msg.EndTime.String()),
 			sdk.NewAttribute(types.AttributeKeyAuctionStatus, auction.GetStatus().String()),
-			sdk.NewAttribute(types.AttributeKeyMinBidPrice, msg.MinBidPrice.String()),
-			sdk.NewAttribute(types.AttributeKeyMatchedPrice, matchedPrice.String()),
 			sdk.NewAttribute(types.AttributeKeyMaxExtendedRound, fmt.Sprint(msg.MaxExtendedRound)),
 			sdk.NewAttribute(types.AttributeKeyExtendedRoundRate, msg.ExtendedRoundRate.String()),
 		),
