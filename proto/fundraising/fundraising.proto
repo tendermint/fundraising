@@ -135,11 +135,11 @@ message BatchAuction {
   ];
 
   // max_extended_round specifies a maximum number of extended rounds
-  uint32 max_extended_round = 5;
+  uint32 max_extended_round = 4;
 
   // extended_round_rate specifies the rate that decides if the auction needs
   // another round
-  string extended_round_rate = 6 [
+  string extended_round_rate = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
