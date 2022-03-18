@@ -11,18 +11,20 @@ This document provides a high-level overview of how the command line (CLI) inter
 
 To test out the following commands, you must set up a local network. By simply running `$ make localnet` under the root project directory, you can start the local network. It requires the latest [Starport](https://starport.com/). If you don't have `Starport` set up in your local machine, see this [Starport guide](https://docs.starport.network/) to install it.  
 
-- [Transaction](#Transaction)
-    * [CreateFixedPriceAuction](#CreateFixedPriceAuction)
-    * [CreateBatchAuction](#CreateBatchAuction)
-    * [CancelAuction](#CancelAuction)
-    * [AddAllowedBidder](#AddAllowedBidder)
-    * [PlaceBid](#PlaceBid)
-- [Query](#Query)
-    * [Params](#Params)
-    * [Auctions](#Auctions)
-    * [Auction](#Auction)
-    * [Bids](#Bids)
-    * [Vestings](#Vestings)
+- [CLI Reference](#cli-reference)
+  - [Command Line Interface](#command-line-interface)
+  - [Transaction](#transaction)
+    - [CreateFixedPriceAuction](#createfixedpriceauction)
+    - [CreateBatchAuction](#createbatchauction)
+    - [CancelAuction](#cancelauction)
+    - [AddAllowedBidder](#addallowedbidder)
+    - [PlaceBid](#placebid)
+  - [Query](#query)
+    - [Params](#params)
+    - [Auctions](#auctions)
+    - [Auction](#auction)
+    - [Bids](#bids)
+    - [Vestings](#vestings)
 
 ## Transaction
 
@@ -30,16 +32,24 @@ To test out the following commands, you must set up a local network. By simply r
 
 ### CreateFixedPriceAuction
 
-This command provides an opportunity for an auctioneer to create an auction to raise funds for their project. It is the most basic and simple type of an auction that has first come first served basis. When an auctioneer creates a fixed price auction, they must determine the fixed starting price. It is proportional to the paying coin denom. To give you an example, an auctioneer sells X coin and plans to receive Y coin for the auction. The price of X coin is determined by the proportion of Y coin. Let's assume that the price of Y coin is currently $30 and the auctioneer wants to sell their X coin for $15, then they must set 0.5 as the fixed starting price. Once the auction is successfully created, bidders can now start to bid. The bidders must provide the same start price when they bid. See the [spec](https://github.com/tendermint/fundraising/blob/main/x/fundraising/spec/01_concepts.md#auction-types) for a detailed and technical information about the fixed price auction type.
+An auctioneer can create a fixed price auction by setting the following parameters. In a fixed price auction, `start_price` is the matched price and bidders can buy the selling coins on a first-come, first-served basis. See the [spec](https://github.com/tendermint/fundraising/blob/main/x/fundraising/spec/01_concepts.md#auction-types) for a detailed and technical information about a fixed priced auction type.
 
-JSON example:
+| **Field**         |  **Description**                                                                    |
+| :---------------- | :---------------------------------------------------------------------------------- |
+| allowed_bidders | The list of allowed bidders that can participate in the auction, with a maximum possible bid amount for each bidder. It is empty when an auction is created. The module is designed to delegate permission to an external module to add its allowed bidders to the auction. |
+| start_price       | The starting price of the selling coin; it is proportional to the paying coin denom. This is the matched price. | 
+| selling_coin      | The selling amount of coin for the auction                                      | 
+| paying_coin_denom | The paying coin denom that bidders use to bid with                                  | 
+| vesting_schedules | The vesting schedules that release the paying coins to the autioneer                | 
+| start_time        | The start time of the auction                                                       | 
+| end_time          | The end time of the auction                                                         | 
+|                   |                                                                                     |
 
-In this JSON example, an auctioneer plans to create a fixed price auction that plans to sell `1000000000000denom1` coin, and the starting price is `1.0` which means that the price of `denom1` is the same as `denom2`. The auction starts at `2022-01-21T00:00:00Z` and ends at `2022-02-21T00:00:00Z`. As soon as the auction starts, bidders can now bid for the auction with any amount of coin they are willing bid with the fixed start price. When it ends, the paying amount of coin that is reserved for all bids is expected to be released based on the vesting schedules and if the selling coin is not entirely sold out, it transfers it back to the auctioneer.
+Example of input as JSON:
 
 ```json
 {
   "start_price": "1.000000000000000000",
-  "min_bid_price": "0.100000000000000000",
   "selling_coin": {
     "denom": "denom1",
     "amount": "1000000000000"
@@ -59,19 +69,7 @@ In this JSON example, an auctioneer plans to create a fixed price auction that p
   "end_time": "2022-03-01T00:00:00Z"
 }
 ```
-
-Reference the description of each field:
-
-| **Field**         |  **Description**                                                                    |
-| :---------------- | :---------------------------------------------------------------------------------- |
-| start_price       | The starting price of the selling coin; it is proportional to the paying coin denom | 
-| min_bid_price     | The minimum bid price that bidders must provide                                     |
-| selling_coin      | The selling amount of coin for the auction                                          | 
-| paying_coin_denom | The paying coin denom that bidders use to bid with                                  | 
-| vesting_schedules | The vesting schedules that release the paying coins to the autioneer                | 
-| start_time        | The start time of the auction                                                       | 
-| end_time          | The end time of the auction                                                         | 
-|                   |                                                                                     |
+the auctioneer can create a fixed price auction to `1000,000,000,000denom1` coin, where the starting price is `2.0` which means that the price of `1denom1` is `2denom2`. The auction starts at `2022-02-01T00:00:00Z` and ends at `2022-03-01T00:00:00Z`.
 
 Example command:
 
@@ -86,79 +84,31 @@ fundraisingd tx fundraising create-fixed-price-auction auction.json \
 --output json | jq
 ```
 
-Result:
-
-```json
-{
-  "@type": "/cosmos.tx.v1beta1.Tx",
-  "body": {
-    "messages": [
-      {
-        "@type": "/tendermint.fundraising.MsgCreateFixedPriceAuction",
-        "auctioneer": "cosmos1dncsflcfknkmlmt3t6836tkd3mu742e2wh4r70",
-        "start_price": "1.000000000000000000",
-        "min_bid_price": "0.100000000000000000",
-        "selling_coin": {
-          "denom": "denom1",
-          "amount": "1000000000000"
-        },
-        "paying_coin_denom": "denom2",
-        "vesting_schedules": [
-          {
-            "release_time": "2022-06-21T00:00:00Z",
-            "weight": "0.500000000000000000"
-          },
-          {
-            "release_time": "2022-12-21T00:00:00Z",
-            "weight": "0.500000000000000000"
-          }
-        ],
-        "start_time": "2022-02-01T00:00:00Z",
-        "end_time": "2022-03-01T00:00:00Z"
-      }
-    ],
-    "memo": "",
-    "timeout_height": "0",
-    "extension_options": [],
-    "non_critical_extension_options": []
-  },
-  "auth_info": {
-    "signer_infos": [
-      {
-        "public_key": {
-          "@type": "/cosmos.crypto.secp256k1.PubKey",
-          "key": "A3mbh7d1pTgT3xSDyXHjdpcaxm58t0azRCXeGP0EsKsQ"
-        },
-        "mode_info": {
-          "single": {
-            "mode": "SIGN_MODE_DIRECT"
-          }
-        },
-        "sequence": "0"
-      }
-    ],
-    "fee": {
-      "amount": [],
-      "gas_limit": "200000",
-      "payer": "",
-      "granter": ""
-    }
-  },
-  "signatures": [
-    "UahsRZ27hATh0xu7M/IWFvNvaFESpQ+W0RmQhQql3ERsnYdTDrFP81/MxyYxuX4WNBUv4+3FyhOwEQ7hqlU+MQ=="
-  ]
-}
-```
 
 ### CreateBatchAuction
 
-This command is another type of an auction for an auctioneer to raise funds for their project. See the [spec](https://github.com/tendermint/fundraising/blob/main/x/fundraising/spec/01_concepts.md#auction-types) for a detailed and technical information about a batch auction type.
+An auctioneer can create a batch auction by setting the following parameters. Differently from a fixed price auction,  start_price does not affect the determination of the matched price, but is provided by the auctioneer as a reference price to bidders. See the [spec](https://github.com/tendermint/fundraising/blob/main/x/fundraising/spec/01_concepts.md#auction-types) for a detailed and technical information about a batch auction type.
 
-JSON example:
+
+| **Field**         |  **Description**                                                                    |
+| :---------------- | :---------------------------------------------------------------------------------- |
+| allowed_bidders | The list of allowed bidders that can participate in the auction, with a maximum possible bid amount for each bidder. It is empty when an auction is created. The module is designed to delegate permission to an external module to add its allowed bidders to the auction. |
+| start_price       | The starting price of the selling coin; it is proportional to the paying coin denom. This is the matched price. | 
+|min_bid_price | The minimum bid price that bidders must place with.|
+| selling_coin      | The selling amount of coin for the auction                                      | 
+| paying_coin_denom | The paying coin denom that bidders use to bid with                                  | 
+| vesting_schedules | The vesting schedules that release the paying coins to the autioneer                | 
+| start_time        | The start time of the auction                                                       | 
+| end_times          | The list of the end times of the auction in consideration of the extended rounds                                                         | 
+| max_extended_round   | The maximum number of extended rounds that provides additional opportunity for the bidders to place bids when more than a certain ratio of the number of the matched bids are reduced compared to the previous end time  |
+| extended_round_rate | The threshold reduction of the number of the matched bids are reduced compared to the previous end time to decide the necessity of another extended round |              
+
+Example of input as JSON:
 
 ```json
 {
-  "start_price": "0.500000000000000000",
+  "allowed_bidders": [],
+	"start_price": "2.000000000000000000",
   "min_bid_price": "0.100000000000000000",
   "selling_coin": {
     "denom": "denom1",
@@ -167,35 +117,25 @@ JSON example:
   "paying_coin_denom": "denom2",
   "vesting_schedules": [
     {
-      "release_time": "2023-06-01T00:00:00Z",
+      "release_time": "2022-06-21T00:00:00Z",
       "weight": "0.500000000000000000"
     },
     {
-      "release_time": "2023-12-01T00:00:00Z",
+      "release_time": "2022-12-21T00:00:00Z",
       "weight": "0.500000000000000000"
     }
   ],
-  "max_extended_round": 2,
-  "extended_round_rate": "0.150000000000000000",
   "start_time": "2022-02-01T00:00:00Z",
-  "end_time": "2022-06-20T00:00:00Z"
+  "end_times": [
+		"2022-03-01T00:00:00Z",
+		"2022-03-02T00:00:00Z", 
+		"2022-03-03T00:00:00Z", 
+		"2022-03-04T00:00:00Z"
+	],
+	"max_extended_round": "3",
+	"extended_round_rate": "0.05"
 }
 ```
-
-Reference the description of each field:
-
-| **Field**           |  **Description**                                                                    |
-| :------------------ | :---------------------------------------------------------------------------------- |
-| start_price         | The starting price of the selling coin; it is proportional to the paying coin denom | 
-| min_bid_price       | The minimum bid price that bidders must provide                                     |
-| selling_coin        | The selling amount of coin for the auction                                          | 
-| paying_coin_denom   | The paying coin denom that bidders use to bid with                                  | 
-| vesting_schedules   | The vesting schedules that release the paying coins to the autioneer                | 
-| max_extended_round  | The number of extended rounds                                                       | 
-| extended_round_rate | The rate that determines if the auction needs to run another round                  | 
-| start_time          | The start time of the auction                                                       | 
-| end_time            | The end time of the auction                                                         | 
-|                     |                                                                                     |
 
 
 Example command:
@@ -211,71 +151,6 @@ fundraisingd tx fundraising create-batch-auction auction-batch.json \
 --output json | jq
 ```
 
-Result:
-
-```json
-{
-  "@type": "/cosmos.tx.v1beta1.Tx",
-  "body": {
-    "messages": [
-      {
-        "@type": "/tendermint.fundraising.MsgCreateBatchAuction",
-        "auctioneer": "cosmos1ygsq4lnaernkz02un4fyksdzhzm6aazqpktj9p",
-        "start_price": "0.100000000000000000",
-        "min_bid_price": "0.100000000000000000",
-        "selling_coin": {
-          "denom": "denom1",
-          "amount": "1000000000000"
-        },
-        "paying_coin_denom": "denom2",
-        "vesting_schedules": [
-          {
-            "release_time": "2023-06-01T00:00:00Z",
-            "weight": "0.500000000000000000"
-          },
-          {
-            "release_time": "2023-12-01T00:00:00Z",
-            "weight": "0.500000000000000000"
-          }
-        ],
-        "max_extended_round": 2,
-        "extended_round_rate": "0.150000000000000000",
-        "start_time": "2022-02-01T00:00:00Z",
-        "end_time": "2022-06-20T00:00:00Z"
-      }
-    ],
-    "memo": "",
-    "timeout_height": "0",
-    "extension_options": [],
-    "non_critical_extension_options": []
-  },
-  "auth_info": {
-    "signer_infos": [
-      {
-        "public_key": {
-          "@type": "/cosmos.crypto.secp256k1.PubKey",
-          "key": "A1NJdw96iIRrlhyrPmkWVKNcbrd8mhCRXb4InQqjU1Vm"
-        },
-        "mode_info": {
-          "single": {
-            "mode": "SIGN_MODE_DIRECT"
-          }
-        },
-        "sequence": "0"
-      }
-    ],
-    "fee": {
-      "amount": [],
-      "gas_limit": "200000",
-      "payer": "",
-      "granter": ""
-    }
-  },
-  "signatures": [
-    "UJmyeX5azpoTCmJIUhzr7UqmipUadPHlLuYSfuYZonRKiunRj6JkJQ4xWzzvE05ehsoWXODBALtp4Brmnr87WA=="
-  ]
-}
-```
 
 ### CancelAuction
 
@@ -294,51 +169,6 @@ fundraisingd tx fundraising cancel 1 \
 --output json | jq
 ```
 
-Result:
-
-```json
-{
-  "@type": "/cosmos.tx.v1beta1.Tx",
-  "body": {
-    "messages": [
-      {
-        "@type": "/tendermint.fundraising.MsgCancelAuction",
-        "auctioneer": "cosmos1xg6ngnzf9kz9606kx45z2g3eeskre7cm4effpq",
-        "auction_id": "1"
-      }
-    ],
-    "memo": "",
-    "timeout_height": "0",
-    "extension_options": [],
-    "non_critical_extension_options": []
-  },
-  "auth_info": {
-    "signer_infos": [
-      {
-        "public_key": {
-          "@type": "/cosmos.crypto.secp256k1.PubKey",
-          "key": "Aq7NW7m/FazN7NVy0bQqm3U7RD/ySZ34DDrw0RJ9rGsI"
-        },
-        "mode_info": {
-          "single": {
-            "mode": "SIGN_MODE_DIRECT"
-          }
-        },
-        "sequence": "1"
-      }
-    ],
-    "fee": {
-      "amount": [],
-      "gas_limit": "200000",
-      "payer": "",
-      "granter": ""
-    }
-  },
-  "signatures": [
-    "mvfN/nIzivLX4pRGpC2nTsHUNfucbf5oA605MLpg5ksO5kegjQ7brB5QlGM9qpRczXYxvguY1pjOivaWUCtUdw=="
-  ]
-}
-```
 
 ### AddAllowedBidder
 
@@ -359,61 +189,27 @@ fundraisingd tx fundraising add-allowed-bidder 1 1000000000 \
 --output json | jq
 ```
 
-Result:
 
-```json
-{
-  "@type": "/cosmos.tx.v1beta1.Tx",
-  "body": {
-    "messages": [
-      {
-        "@type": "/tendermint.fundraising.MsgAddAllowedBidder",
-        "auction_id": "1",
-        "allowed_bidder": {
-          "bidder": "cosmos1tfzynkllgxdpmrcknx2j5d0hj9zd82tceyfa5n",
-          "max_bid_amount": "1000000000"
-        }
-      }
-    ],
-    "memo": "",
-    "timeout_height": "0",
-    "extension_options": [],
-    "non_critical_extension_options": []
-  },
-  "auth_info": {
-    "signer_infos": [
-      {
-        "public_key": {
-          "@type": "/cosmos.crypto.secp256k1.PubKey",
-          "key": "A8VLxM/RDIlFEtOe7rfzA2Am55/Zam2n+oq1+I/Ovkbv"
-        },
-        "mode_info": {
-          "single": {
-            "mode": "SIGN_MODE_DIRECT"
-          }
-        },
-        "sequence": "0"
-      }
-    ],
-    "fee": {
-      "amount": [],
-      "gas_limit": "200000",
-      "payer": "",
-      "granter": ""
-    }
-  },
-  "signatures": [
-    "D49R49OD1YIBzdVVy5g1yIc8AvKbII6f8n3NpJDDHbY3O2vX/dwsoC2TX5eWRSXGgJ92+PfIZIek5PrsZWyfxQ=="
-  ]
-}
-```
 
 ### PlaceBid
+This is for a bidder to place a new bid to the auction, where the bidder should be in the list of the allowed bidders. 
+
+Usage
+```bash
+bid [auction-id] [bid-type] [price] [coin]
+```
+
+| **Argument**      |  **Description**                     |
+| :---------------- | :----------------------------------- |
+| auction-id        | auction ID that the bid corresponds to. | 
+| bid-type  | bid type among 1) fixed-price (fp or f), 2) batch-worth (bw or w), and 3) batch-many  (bm or m), where 1) is only for `FixedPriceAuction` and 2)&3) are only for `BatchAuction`.|
+| price     | bid price (dec type) of a selling coin as the unit of a paying coin. For fixed-price type, this price must be the same as `StartPrice` of the auction. For batch-worth and batch-many, this price must be higher than or equal to `MinBidPrice` of the auction. | 
+| coin      | how many coins to bid, where the denom should be of the paying coin for the bid types of fixed-price and batch-worth, and of the selling coin for the bid type of batch-many.|
 
 Example command:
 
 ```bash
-fundraisingd tx fundraising bid 1 1.0 5000000denom2 \
+fundraisingd tx fundraising bid 1 fixed-price 1.0 5000000denom2 \
 --chain-id fundraising \
 --from steve \
 --keyring-backend test \
@@ -422,56 +218,6 @@ fundraisingd tx fundraising bid 1 1.0 5000000denom2 \
 --output json | jq
 ```
 
-Result:
-
-```json
-{
-  "@type": "/cosmos.tx.v1beta1.Tx",
-  "body": {
-    "messages": [
-      {
-        "@type": "/tendermint.fundraising.MsgPlaceBid",
-        "auction_id": "1",
-        "bidder": "cosmos1tfzynkllgxdpmrcknx2j5d0hj9zd82tceyfa5n",
-        "price": "1.000000000000000000",
-        "coin": {
-          "denom": "denom2",
-          "amount": "5000000"
-        }
-      }
-    ],
-    "memo": "",
-    "timeout_height": "0",
-    "extension_options": [],
-    "non_critical_extension_options": []
-  },
-  "auth_info": {
-    "signer_infos": [
-      {
-        "public_key": {
-          "@type": "/cosmos.crypto.secp256k1.PubKey",
-          "key": "A8VLxM/RDIlFEtOe7rfzA2Am55/Zam2n+oq1+I/Ovkbv"
-        },
-        "mode_info": {
-          "single": {
-            "mode": "SIGN_MODE_DIRECT"
-          }
-        },
-        "sequence": "1"
-      }
-    ],
-    "fee": {
-      "amount": [],
-      "gas_limit": "200000",
-      "payer": "",
-      "granter": ""
-    }
-  },
-  "signatures": [
-    "Ahrvo4CXneHxTd0Hgyt+HdZXmrhKhm1ijo5Tf7/K7OcK4P5590UlDpoqJ7ofLB738AGt+3rJ+cHy+K09KqBFaA=="
-  ]
-}
-```
 
 ## Query
 
@@ -485,18 +231,7 @@ Result:
 fundraisingd q fundraising params --output json | jq
 ```
 
-```json
-{
-  "auction_creation_fee": [
-    {
-      "denom": "stake",
-      "amount": "100000000"
-    }
-  ],
-  "extended_period": 1,
-  "fee_collector_address": "cosmos1kxyag8zx2j9m8063m92qazaxqg63xv5h7z5jxz8yr27tuk67ne8q0lzjm9"
-}
-```
+
 
 ### Auctions
 
