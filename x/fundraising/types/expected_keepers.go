@@ -28,35 +28,54 @@ type DistrKeeper interface {
 }
 
 // Event Hooks
-// These can be utilized to communicate between a fundraising keeper and another keeper
-// The second keeper must implement this interface, which then the fundraising keeper can call.
+// These can be utilized to communicate between a fundraising keeper and other keepers.
+// The other keepers must implement this interface, which then the fundraising keeper can call.
 
-// FundraisingHooks event hooks
+// FundraisingHooks event hooks for fundraising auction and bid objects (noalias)
 type FundraisingHooks interface {
-	BeforeAuctionCreated(
-		ctx sdk.Context, auctioneer string, startPrice,
-		minBidPrice sdk.Dec, sellingCoin sdk.Coin, payingCoinDenom string,
-		vestingSchedules []VestingSchedule, startTime, endTime time.Time) error
+	BeforeFixedPriceAuctionCreated(
+		ctx sdk.Context,
+		auctioneer string,
+		startPrice sdk.Dec,
+		minBidPrice sdk.Dec,
+		sellingCoin sdk.Coin,
+		payingCoinDenom string,
+		vestingSchedules []VestingSchedule,
+		startTime time.Time,
+		endTime time.Time,
+	)
 
-	BeforeAuctionCanceled(ctx sdk.Context, auctioneer string, auctionID uint64) error
+	// BeforeBatchAuctionCreated(
+
+	// )
+
+	BeforeAuctionCanceled(
+		ctx sdk.Context,
+		auctionId uint64,
+		auctioneer string,
+	)
 
 	BeforeBidPlaced(
-		ctx sdk.Context, auctionID uint64, bidder string,
-		bidType BidType, price sdk.Dec, coin sdk.Coin,
-	) error
-
-	BeforeBidModified(
 		ctx sdk.Context,
-		auctionID uint64,
+		auctionId uint64,
 		bidder string,
 		bidType BidType,
 		price sdk.Dec,
 		coin sdk.Coin,
-	) error
+	)
+
+	BeforeBidModified(
+		ctx sdk.Context,
+		auctionId uint64,
+		bidder string,
+		bidType BidType,
+		price sdk.Dec,
+		coin sdk.Coin,
+	)
 
 	BeforeAllowedBidderAdded(
 		ctx sdk.Context,
-		auctionID uint64,
+		auctionId uint64,
 		allowedBidder AllowedBidder,
-	) error
+	)
 }

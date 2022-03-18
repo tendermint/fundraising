@@ -39,6 +39,7 @@ type Keeper struct {
 	accountKeeper types.AccountKeeper
 	bankKeeper    types.BankKeeper
 	distrKeeper   types.DistrKeeper
+	hooks         types.FundraisingHooks
 }
 
 func NewKeeper(
@@ -49,6 +50,7 @@ func NewKeeper(
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	distrKeeper types.DistrKeeper,
+	hooks types.FundraisingHooks,
 ) *Keeper {
 	// Ensure fundraising module account is set
 	if addr := accountKeeper.GetModuleAddress(types.ModuleName); addr == nil {
@@ -68,6 +70,7 @@ func NewKeeper(
 		accountKeeper: accountKeeper,
 		bankKeeper:    bankKeeper,
 		distrKeeper:   distrKeeper,
+		hooks:         hooks,
 	}
 }
 
@@ -87,9 +90,15 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 	k.paramSpace.SetParamSet(ctx, &params)
 }
 
-// GetCodec returns codec.Codec object used by the keeper.
-func (k Keeper) GetCodec() codec.BinaryCodec {
-	return k.cdc
+// SetHooks sets the fundraising hooks.
+func (k *Keeper) SetHooks(hooks types.FundraisingHooks) *Keeper {
+	if k.hooks != nil {
+		panic("cannot set fundraising hooks twice")
+	}
+
+	k.hooks = hooks
+
+	return k
 }
 
 // ReserveCreationFee reserves the auction creation fee to the fee collector account.
