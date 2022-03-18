@@ -23,6 +23,8 @@ const (
 	AttributeKeyBidPrice              = "bid_price"
 	AttributeKeyBidCoin               = "bid_coin"
 	AttributeKeyBidAmount             = "bid_amount"
+	AttributeKeyMinBidPrice           = "min_bid_price"
+	AttributeKeyMatchedPrice          = "matched_price"
 	AttributeKeyMaxExtendedRound      = "maximum_extended_round"
 	AttributeKeyExtendedRoundRate     = "extended_round_rate"
 )

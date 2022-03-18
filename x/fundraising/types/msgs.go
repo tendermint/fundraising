@@ -31,7 +31,6 @@ const (
 func NewMsgCreateFixedPriceAuction(
 	auctioneer string,
 	startPrice sdk.Dec,
-	minBidPrice sdk.Dec,
 	sellingCoin sdk.Coin,
 	payingCoinDenom string,
 	vestingSchedules []VestingSchedule,
@@ -41,7 +40,6 @@ func NewMsgCreateFixedPriceAuction(
 	return &MsgCreateFixedPriceAuction{
 		Auctioneer:       auctioneer,
 		StartPrice:       startPrice,
-		MinBidPrice:      minBidPrice,
 		SellingCoin:      sellingCoin,
 		PayingCoinDenom:  payingCoinDenom,
 		VestingSchedules: vestingSchedules,
@@ -60,9 +58,6 @@ func (msg MsgCreateFixedPriceAuction) ValidateBasic() error {
 	}
 	if !msg.StartPrice.IsPositive() {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "start price must be positve")
-	}
-	if !msg.MinBidPrice.IsPositive() {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "minimum bid price must be positive")
 	}
 	if err := msg.SellingCoin.Validate(); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid selling coin: %v", err)

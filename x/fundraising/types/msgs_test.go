@@ -23,7 +23,6 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 			types.NewMsgCreateFixedPriceAuction(
 				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0.5"),
-				sdk.MustNewDecFromStr("0.1"),
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
 				[]types.VestingSchedule{},
@@ -36,7 +35,6 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 			types.NewMsgCreateFixedPriceAuction(
 				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0"),
-				sdk.MustNewDecFromStr("0.1"),
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
 				[]types.VestingSchedule{},
@@ -49,7 +47,6 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 			types.NewMsgCreateFixedPriceAuction(
 				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0.5"),
-				sdk.MustNewDecFromStr("0.1"),
 				sdk.NewInt64Coin("denom2", 0),
 				"denom1",
 				[]types.VestingSchedule{},
@@ -62,7 +59,6 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 			types.NewMsgCreateFixedPriceAuction(
 				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0.5"),
-				sdk.MustNewDecFromStr("0.1"),
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom2",
 				[]types.VestingSchedule{},
@@ -75,7 +71,6 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 			types.NewMsgCreateFixedPriceAuction(
 				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0.5"),
-				sdk.MustNewDecFromStr("0.1"),
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
 				[]types.VestingSchedule{},
@@ -88,7 +83,6 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 			types.NewMsgCreateFixedPriceAuction(
 				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0.5"),
-				sdk.MustNewDecFromStr("0.1"),
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
 				[]types.VestingSchedule{
@@ -106,7 +100,6 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 			types.NewMsgCreateFixedPriceAuction(
 				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0.5"),
-				sdk.MustNewDecFromStr("0.1"),
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
 				[]types.VestingSchedule{
@@ -124,7 +117,6 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 			types.NewMsgCreateFixedPriceAuction(
 				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0.5"),
-				sdk.MustNewDecFromStr("0.1"),
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
 				[]types.VestingSchedule{
@@ -142,7 +134,6 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 			types.NewMsgCreateFixedPriceAuction(
 				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0.5"),
-				sdk.MustNewDecFromStr("0.1"),
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
 				[]types.VestingSchedule{
@@ -164,7 +155,6 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 			types.NewMsgCreateFixedPriceAuction(
 				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0.5"),
-				sdk.MustNewDecFromStr("0.1"),
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
 				[]types.VestingSchedule{

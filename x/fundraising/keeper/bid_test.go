@@ -14,7 +14,6 @@ func (s *KeeperTestSuite) TestFixedPrice_InvalidStartPrice() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("1"),
-		parseDec("0.1"),
 		parseCoin("1000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -42,7 +41,6 @@ func (s *KeeperTestSuite) TestFixedPrice_InsufficientRemainingAmount() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("1"),
-		parseDec("0.1"),
 		parseCoin("1000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
@@ -75,7 +73,6 @@ func (s *KeeperTestSuite) TestFixedPrice_OverMaxBidAmountLimit() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("1"),
-		parseDec("0.1"),
 		parseCoin("1000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},

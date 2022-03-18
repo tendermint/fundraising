@@ -66,52 +66,40 @@ message BaseAuction {
     (gogoproto.nullable) = false
   ];
 
-  // min_bid_price specifies the minibum bid price
-  string min_bid_price = 8 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
   // selling_coin specifies the selling coin for the auction
-  cosmos.base.v1beta1.Coin selling_coin = 9 [
+  cosmos.base.v1beta1.Coin selling_coin = 8 [
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
   ];
 
   // paying_coin_denom specifies the paying coin denom that bidders use to bid
   // for
-  string paying_coin_denom = 10;
+  string paying_coin_denom = 9;
 
   // vesting_reserve_address specifies the bech32-encoded vesting address that
   // holds vesting amounts of coin
-  string vesting_reserve_address = 11;
+  string vesting_reserve_address = 10;
 
   // vesting_schedules specifies the vesting schedules for the auction
-  repeated VestingSchedule vesting_schedules = 12
+  repeated VestingSchedule vesting_schedules = 11
       [ (gogoproto.nullable) = false ];
 
-  // matched_price specifies the matched price of the auction
-  string matched_price = 13 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
   // remaining_coin specifes the remaining amount of selling coin to sell
-  cosmos.base.v1beta1.Coin remaining_selling_coin = 14 [
+  cosmos.base.v1beta1.Coin remaining_selling_coin = 12 [
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
   ];
 
   // start_time specifies the start time of the plan
-  google.protobuf.Timestamp start_time = 15
+  google.protobuf.Timestamp start_time = 13
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // end_times specifies the end time of the plan
-  repeated google.protobuf.Timestamp end_times = 16
-      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
+  repeated google.protobuf.Timestamp end_times = 14
+      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ]; 
 
   // status specifies the auction status
-  AuctionStatus status = 17;
+  AuctionStatus status = 15;
 }
 
 // FixedPriceAuction defines the fixed price auction type. It is the most
@@ -134,12 +122,24 @@ message BatchAuction {
 
   BaseAuction base_auction = 1 [ (gogoproto.embed) = true ];
 
+  // min_bid_price specifies the minibum bid price
+  string min_bid_price = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // matched_price specifies the matched price of the auction
+  string matched_price = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
   // max_extended_round specifies a maximum number of extended rounds
-  uint32 max_extended_round = 2;
+  uint32 max_extended_round = 4;
 
   // extended_round_rate specifies the rate that decides if the auction needs
   // another round
-  string extended_round_rate = 3 [
+  string extended_round_rate = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
