@@ -11,6 +11,7 @@ import (
 // Implements FundraisingHooks interface
 var _ types.FundraisingHooks = Keeper{}
 
+// BeforeFixedPriceAuctionCreated - call hook if registered
 func (k Keeper) BeforeFixedPriceAuctionCreated(
 	ctx sdk.Context,
 	auctioneer string,
@@ -18,7 +19,7 @@ func (k Keeper) BeforeFixedPriceAuctionCreated(
 	sellingCoin sdk.Coin,
 	payingCoinDenom string,
 	vestingSchedules []types.VestingSchedule,
-	startTime,
+	startTime time.Time,
 	endTime time.Time,
 ) {
 	if k.hooks != nil {
@@ -35,6 +36,7 @@ func (k Keeper) BeforeFixedPriceAuctionCreated(
 	}
 }
 
+// BeforeBatchAuctionCreated - call hook if registered
 func (k Keeper) BeforeBatchAuctionCreated(
 	ctx sdk.Context,
 	auctioneer string,
@@ -65,6 +67,7 @@ func (k Keeper) BeforeBatchAuctionCreated(
 	}
 }
 
+// BeforeAuctionCanceled - call hook if registered
 func (k Keeper) BeforeAuctionCanceled(
 	ctx sdk.Context,
 	auctionId uint64,
@@ -75,6 +78,7 @@ func (k Keeper) BeforeAuctionCanceled(
 	}
 }
 
+// BeforeBidPlaced - call hook if registered
 func (k Keeper) BeforeBidPlaced(
 	ctx sdk.Context,
 	auctionId uint64,
@@ -88,6 +92,7 @@ func (k Keeper) BeforeBidPlaced(
 	}
 }
 
+// BeforeBidModified - call hook if registered
 func (k Keeper) BeforeBidModified(
 	ctx sdk.Context,
 	auctionId uint64,
@@ -101,12 +106,13 @@ func (k Keeper) BeforeBidModified(
 	}
 }
 
-func (k Keeper) BeforeAllowedBidderAdded(
+// BeforeAllowedBiddersAdded - call hook if registered
+func (k Keeper) BeforeAllowedBiddersAdded(
 	ctx sdk.Context,
 	auctionId uint64,
-	allowedBidder types.AllowedBidder,
+	allowedBidders []types.AllowedBidder,
 ) {
 	if k.hooks != nil {
-		k.hooks.BeforeAllowedBidderAdded(ctx, auctionId, allowedBidder)
+		k.hooks.BeforeAllowedBiddersAdded(ctx, auctionId, allowedBidders)
 	}
 }

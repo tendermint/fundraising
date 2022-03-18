@@ -31,11 +31,10 @@ func init() {
 }
 
 type Keeper struct {
-	cdc        codec.BinaryCodec
-	storeKey   sdk.StoreKey
-	memKey     sdk.StoreKey
-	paramSpace paramtypes.Subspace
-
+	cdc           codec.BinaryCodec
+	storeKey      sdk.StoreKey
+	memKey        sdk.StoreKey
+	paramSpace    paramtypes.Subspace
 	accountKeeper types.AccountKeeper
 	bankKeeper    types.BankKeeper
 	distrKeeper   types.DistrKeeper
@@ -72,6 +71,17 @@ func NewKeeper(
 	}
 }
 
+// SetHooks sets the fundraising hooks.
+func (k *Keeper) SetHooks(fk types.FundraisingHooks) *Keeper {
+	if k.hooks != nil {
+		panic("cannot set fundraising hooks twice")
+	}
+
+	k.hooks = fk
+
+	return k
+}
+
 // Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
@@ -86,17 +96,6 @@ func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 // SetParams sets the parameters for the fundraising module.
 func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 	k.paramSpace.SetParamSet(ctx, &params)
-}
-
-// SetHooks sets the fundraising hooks.
-func (k *Keeper) SetHooks(hooks types.FundraisingHooks) *Keeper {
-	if k.hooks != nil {
-		panic("cannot set fundraising hooks twice")
-	}
-
-	k.hooks = hooks
-
-	return k
 }
 
 // ReserveCreationFee reserves the auction creation fee to the fee collector account.

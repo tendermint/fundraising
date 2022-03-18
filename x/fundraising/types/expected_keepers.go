@@ -82,9 +82,9 @@ type FundraisingHooks interface {
 		coin sdk.Coin,
 	)
 
-	BeforeAllowedBidderAdded(
+	BeforeAllowedBiddersAdded(
 		ctx sdk.Context,
 		auctionId uint64,
-		allowedBidder AllowedBidder,
+		allowedBidders []AllowedBidder,
 	)
 }

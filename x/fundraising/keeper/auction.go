@@ -167,6 +167,19 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 	}
 
 	auction := types.NewFixedPriceAuction(baseAuction)
+
+	// Call the before auction created hook
+	k.BeforeFixedPriceAuctionCreated(
+		ctx,
+		auction.Auctioneer,
+		auction.StartPrice,
+		auction.SellingCoin,
+		auction.PayingCoinDenom,
+		auction.VestingSchedules,
+		auction.StartTime,
+		auction.EndTimes[0],
+	)
+
 	k.SetAuction(ctx, auction)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -240,6 +253,22 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 		msg.MaxExtendedRound,
 		msg.ExtendedRoundRate,
 	)
+
+	// Call the before auction created hook
+	k.BeforeBatchAuctionCreated(
+		ctx,
+		auction.Auctioneer,
+		auction.StartPrice,
+		auction.MinBidPrice,
+		auction.SellingCoin,
+		auction.PayingCoinDenom,
+		auction.VestingSchedules,
+		auction.MaxExtendedRound,
+		auction.ExtendedRoundRate,
+		auction.StartTime,
+		auction.EndTimes[0],
+	)
+
 	k.SetAuction(ctx, auction)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -297,6 +326,9 @@ func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) erro
 	_ = auction.SetRemainingSellingCoin(sdk.NewCoin(sellingCoinDenom, sdk.ZeroInt()))
 	_ = auction.SetStatus(types.AuctionStatusCancelled)
 
+	// Call the before auction canceled hook
+	k.BeforeAuctionCanceled(ctx, msg.AuctionId, msg.Auctioneer)
+
 	k.SetAuction(ctx, auction)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -326,6 +358,9 @@ func (k Keeper) AddAllowedBidders(ctx sdk.Context, auctionId uint64, bidders []t
 		return err
 	}
 
+	// Call the before allowed bidders added hook
+	k.BeforeAllowedBiddersAdded(ctx, auctionId, bidders)
+
 	// Append new bidders from the existing ones
 	allowedBidders := auction.GetAllowedBidders()
 	allowedBidders = append(allowedBidders, bidders...)
@@ -333,6 +368,7 @@ func (k Keeper) AddAllowedBidders(ctx sdk.Context, auctionId uint64, bidders []t
 	if err := auction.SetAllowedBidders(allowedBidders); err != nil {
 		return err
 	}
+
 	k.SetAuction(ctx, auction)
 
 	return nil
