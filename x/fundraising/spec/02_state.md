@@ -35,9 +35,6 @@ type AuctionI interface {
 	GetStartPrice() sdk.Dec
 	SetStartPrice(sdk.Dec) error
 
-	GetMinBidPrice() sdk.Dec 
-	SetMinBidPrice(sdk.Dec) error
-
 	GetSellingCoin() sdk.Coin
 	SetSellingCoin(sdk.Coin) error
 
@@ -49,12 +46,6 @@ type AuctionI interface {
 
 	GetVestingSchedules() []VestingSchedule
 	SetVestingSchedules([]VestingSchedule) error
-	
-	GetMatchedPrice() sdk.Dec 
-	SetMatchedPrice(sdk.Dec) error
-	
-	GetNumberWinningBidders() uint64
-	SetNumberWinningBidders(uint64) error
 	
 	GetRemainingSellingCoin() sdk.Coin
 	SetRemainingSellingCoin(sdk.Coin) error
@@ -93,13 +84,10 @@ type BaseAuction struct {
 	SellingReserveAddress string            // the reserve account to collect selling coins from the auctioneer
 	PayingReserveAddress  string            // the reserve account to collect paying coins from the bidders
 	StartPrice            sdk.Dec           // the starting price
-	MinBidPrice           sdk.Dec           // the minimum bid price that bidders must provide
 	SellingCoin           sdk.Coin          // the selling amount of coin
 	PayingCoinDenom       string            // the denom that the auctioneer receives to raise funds
 	VestingReserveAddress string            // the reserve account that releases the accumulated paying coins based on the schedules
 	VestingSchedules      []VestingSchedule // the vesting schedules for the auction
-	WinningPrice          sdk.Dec           // the winning price of the auction
-	NumberWinningBidders  uint64            // current number of winning bidders
 	RemainingSellingCoin  sdk.Coin          // the remaining amount of coin to sell
 	StartTime             time.Time         // the start time of the auction
 	EndTimes              []time.Time       // the end times of the auction; it is an array since extended round(s) can occur
@@ -157,6 +145,8 @@ type FixedPriceAuction struct {
 type BatchAuction struct {
     *BaseAuction
     
+	MinBidPrice           sdk.Dec           // the minimum bid price that bidders must provide
+	MatchedPrice          sdk.Dec           // the matched price of the auction (a.k.a., winning price)
     MaxExtendedRound    uint32  // a maximum number of extended rounds
     ExtendedRate        sdk.Dec // rate that determines if the auction needs another round, compared to the number of winning bidders at the previous end time.
 }

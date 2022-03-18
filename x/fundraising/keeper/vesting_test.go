@@ -14,7 +14,6 @@ func (s *KeeperTestSuite) TestVestingQueue_RemainingCoin() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("1.0"),
-		parseDec("0.1"),
 		sdk.NewInt64Coin("denom1", 1_000_000_000_000),
 		"denom2",
 		[]types.VestingSchedule{

@@ -24,7 +24,6 @@ func (s *KeeperTestSuite) TestGenesisState() {
 	fixedAuction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("1.0"),
-		parseDec("0.1"),
 		parseCoin("200000000000denom1"),
 		"denom2",
 		[]types.VestingSchedule{
