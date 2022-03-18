@@ -37,7 +37,6 @@ type FundraisingHooks interface {
 		ctx sdk.Context,
 		auctioneer string,
 		startPrice sdk.Dec,
-		minBidPrice sdk.Dec,
 		sellingCoin sdk.Coin,
 		payingCoinDenom string,
 		vestingSchedules []VestingSchedule,
@@ -45,9 +44,19 @@ type FundraisingHooks interface {
 		endTime time.Time,
 	)
 
-	// BeforeBatchAuctionCreated(
-
-	// )
+	BeforeBatchAuctionCreated(
+		ctx sdk.Context,
+		auctioneer string,
+		startPrice sdk.Dec,
+		minBidPrice sdk.Dec,
+		sellingCoin sdk.Coin,
+		payingCoinDenom string,
+		vestingSchedules []VestingSchedule,
+		maxExtendedRound uint32,
+		extendedRoundRate sdk.Dec,
+		startTime time.Time,
+		endTime time.Time,
+	)
 
 	BeforeAuctionCanceled(
 		ctx sdk.Context,

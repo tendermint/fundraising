@@ -14,8 +14,7 @@ var _ types.FundraisingHooks = Keeper{}
 func (k Keeper) BeforeFixedPriceAuctionCreated(
 	ctx sdk.Context,
 	auctioneer string,
-	startPrice,
-	minBidPrice sdk.Dec,
+	startPrice sdk.Dec,
 	sellingCoin sdk.Coin,
 	payingCoinDenom string,
 	vestingSchedules []types.VestingSchedule,
@@ -27,10 +26,39 @@ func (k Keeper) BeforeFixedPriceAuctionCreated(
 			ctx,
 			auctioneer,
 			startPrice,
+			sellingCoin,
+			payingCoinDenom,
+			vestingSchedules,
+			startTime,
+			endTime,
+		)
+	}
+}
+
+func (k Keeper) BeforeBatchAuctionCreated(
+	ctx sdk.Context,
+	auctioneer string,
+	startPrice sdk.Dec,
+	minBidPrice sdk.Dec,
+	sellingCoin sdk.Coin,
+	payingCoinDenom string,
+	vestingSchedules []types.VestingSchedule,
+	maxExtendedRound uint32,
+	extendedRoundRate sdk.Dec,
+	startTime time.Time,
+	endTime time.Time,
+) {
+	if k.hooks != nil {
+		k.hooks.BeforeBatchAuctionCreated(
+			ctx,
+			auctioneer,
+			startPrice,
 			minBidPrice,
 			sellingCoin,
 			payingCoinDenom,
 			vestingSchedules,
+			maxExtendedRound,
+			extendedRoundRate,
 			startTime,
 			endTime,
 		)

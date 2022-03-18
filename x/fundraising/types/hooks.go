@@ -17,8 +17,7 @@ func NewMultiFundraisingHooks(hooks ...FundraisingHooks) MultiFundraisingHooks {
 func (h MultiFundraisingHooks) BeforeFixedPriceAuctionCreated(
 	ctx sdk.Context,
 	auctioneer string,
-	startPrice,
-	minBidPrice sdk.Dec,
+	startPrice sdk.Dec,
 	sellingCoin sdk.Coin,
 	payingCoinDenom string,
 	vestingSchedules []VestingSchedule,
@@ -30,10 +29,39 @@ func (h MultiFundraisingHooks) BeforeFixedPriceAuctionCreated(
 			ctx,
 			auctioneer,
 			startPrice,
+			sellingCoin,
+			payingCoinDenom,
+			vestingSchedules,
+			startTime,
+			endTime,
+		)
+	}
+}
+
+func (h MultiFundraisingHooks) BeforeBatchAuctionCreated(
+	ctx sdk.Context,
+	auctioneer string,
+	startPrice sdk.Dec,
+	minBidPrice sdk.Dec,
+	sellingCoin sdk.Coin,
+	payingCoinDenom string,
+	vestingSchedules []VestingSchedule,
+	maxExtendedRound uint32,
+	extendedRoundRate sdk.Dec,
+	startTime time.Time,
+	endTime time.Time,
+) {
+	for i := range h {
+		h[i].BeforeBatchAuctionCreated(
+			ctx,
+			auctioneer,
+			startPrice,
 			minBidPrice,
 			sellingCoin,
 			payingCoinDenom,
 			vestingSchedules,
+			maxExtendedRound,
+			extendedRoundRate,
 			startTime,
 			endTime,
 		)
