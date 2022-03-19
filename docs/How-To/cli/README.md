@@ -19,6 +19,7 @@ To test out the following commands, you must set up a local network. By simply r
     - [CancelAuction](#cancelauction)
     - [AddAllowedBidder](#addallowedbidder)
     - [PlaceBid](#placebid)
+    - [ModifyBid](#modifybid)
   - [Query](#query)
     - [Params](#params)
     - [Auctions](#auctions)
@@ -33,6 +34,14 @@ To test out the following commands, you must set up a local network. By simply r
 ### CreateFixedPriceAuction
 
 An auctioneer can create a fixed price auction by setting the following parameters. In a fixed price auction, `start_price` is the matched price and bidders can buy the selling coins on a first-come, first-served basis. See the [spec](https://github.com/tendermint/fundraising/blob/main/x/fundraising/spec/01_concepts.md#auction-types) for a detailed and technical information about a fixed priced auction type.
+
+Usage
+```bash
+create-fixed-price-auction [file]
+```
+
+
+Field description of the input file
 
 | **Field**         |  **Description**                                                                    |
 | :---------------- | :---------------------------------------------------------------------------------- |
@@ -89,6 +98,13 @@ fundraisingd tx fundraising create-fixed-price-auction auction.json \
 
 An auctioneer can create a batch auction by setting the following parameters. Differently from a fixed price auction,  start_price does not affect the determination of the matched price, but is provided by the auctioneer as a reference price to bidders. See the [spec](https://github.com/tendermint/fundraising/blob/main/x/fundraising/spec/01_concepts.md#auction-types) for a detailed and technical information about a batch auction type.
 
+Usage
+```bash
+create-batch-auction [file]
+```
+
+Field description of the input file
+
 
 | **Field**         |  **Description**                                                                    |
 | :---------------- | :---------------------------------------------------------------------------------- |
@@ -101,7 +117,7 @@ An auctioneer can create a batch auction by setting the following parameters. Di
 | start_time        | The start time of the auction                                                       | 
 | end_times          | The list of the end times of the auction in consideration of the extended rounds                                                         | 
 | max_extended_round   | The maximum number of extended rounds that provides additional opportunity for the bidders to place bids when more than a certain ratio of the number of the matched bids are reduced compared to the previous end time  |
-| extended_round_rate | The threshold reduction of the number of the matched bids are reduced compared to the previous end time to decide the necessity of another extended round |              
+| extended_round_rate | The threshold reduction of the number of the matched bids are reduced compared to the previous end time to decide the necessity of another extended round | 
 
 Example of input as JSON:
 
@@ -156,6 +172,12 @@ fundraisingd tx fundraising create-batch-auction auction-batch.json \
 
 This command is useful for an auctioneer when the auctioneer made mistake(s) on some values of the auction. The module doesn't support update functionality. Instead, the module allows them to cancel an auction and recreate it with correct values. Note that it can only be cancelled when the auction has not started yet.
 
+Usage
+```bash
+cancel [auction-id]
+```
+
+
 Example command:
 
 ```bash
@@ -176,6 +198,11 @@ fundraisingd tx fundraising cancel 1 \
 
 For testing purpose, there is a custom message called `MsgAddAllowedBidder`. It adds a single allowed bidder for the auction and this message is only available when you build `fundraisingd` with `config-test.yml` file. Running `make localnet` is automatically using `config-test.yml`. Under the hood, a custom `enableAddAllowedBidder` ldflags is passed to build configuration in `config-test.yml` file.
 
+Usage
+```bash
+add-allowed-bidder [auction-id] [max-bid-amount]
+```
+
 Example command:
 
 ```bash
@@ -192,7 +219,7 @@ fundraisingd tx fundraising add-allowed-bidder 1 1000000000 \
 
 
 ### PlaceBid
-This is for a bidder to place a new bid to the auction, where the bidder should be in the list of the allowed bidders. 
+This command is used for a bidder to place a new bid to the auction, where the bidder should be in the list of the allowed bidders. 
 
 Usage
 ```bash
@@ -218,6 +245,34 @@ fundraisingd tx fundraising bid 1 fixed-price 1.0 5000000denom2 \
 --output json | jq
 ```
 
+### ModifyBid
+This is for a bidder to modify an existing bid that the bidder placed previously. Note that this `ModifyBid` is supported only for `BatchAuction`. The bidder can modify the bid only with the same bid type, and also only with either higher bid price or larger bid amount.  
+
+Usage
+```bash
+modify-bid [auction-id] [bid-id] [price] [coin]
+```
+
+| **Argument**      |  **Description**                     |
+| :---------------- | :----------------------------------- |
+| auction-id        | auction ID that the bid corresponds to. | 
+| bid-id    | bid ID that the bidder placed previously in this auction |
+| price     | bid price (dec type) of a selling coin as the unit of a paying coin.This price must be higher than or equal to the bid price of the previous bid. | 
+| coin      | how many coins to bid, where the denom should be of the paying coin for the bid types of batch-worth, and of the selling coin for the bid type of batch-many. The denom must be the same as the denom of [coin] of the previous bid. |
+
+Example command:
+
+```bash
+fundraisingd tx fundraising modify-bid 1 1 1.0 5000000denom2 \
+--chain-id fundraising \
+--from steve \
+--keyring-backend test \
+--broadcast-mode block \
+--yes \
+--output json | jq
+```
+
+
 
 ## Query
 
@@ -225,15 +280,30 @@ fundraisingd tx fundraising bid 1 fixed-price 1.0 5000000denom2 \
 
 
 ### Params 
+This command is used to query the current fundraising parameters information.
+
+Usage
+```bash
+params
+```
+
+Example commands:
 
 ```bash
 # Query the values set as fundraising parameters
-fundraisingd q fundraising params --output json | jq
+fundraisingd q fundraising params \
+--output json | jq
 ```
 
 
 
 ### Auctions
+This command is used to query the information of all auctions.
+
+Usage
+```bash
+auctions
+```
 
 Example commands:
 
@@ -255,122 +325,29 @@ fundraisingd q fundraising auctions \
 -o json | jq
 ```
 
-Result:
-
-```json
-{
-  "auctions": [
-    {
-      "@type": "/tendermint.fundraising.FixedPriceAuction",
-      "base_auction": {
-        "id": "1",
-        "type": "AUCTION_TYPE_FIXED_PRICE",
-        "allowed_bidders": [
-          {
-            "bidder": "cosmos1tfzynkllgxdpmrcknx2j5d0hj9zd82tceyfa5n",
-            "max_bid_amount": "1000000000"
-          }
-        ],
-        "auctioneer": "cosmos1dncsflcfknkmlmt3t6836tkd3mu742e2wh4r70",
-        "selling_reserve_address": "cosmos1wl90665mfk3pgg095qhmlgha934exjvv437acgq42zw0sg94flestth4zu",
-        "paying_reserve_address": "cosmos17gk7a5ys8pxuexl7tvyk3pc9tdmqjjek03zjemez4eqvqdxlu92qdhphm2",
-        "start_price": "1.000000000000000000",
-        "selling_coin": {
-          "denom": "denom1",
-          "amount": "1000000000000"
-        },
-        "paying_coin_denom": "denom2",
-        "vesting_reserve_address": "cosmos1q4x4k4qsr4jwrrugnplhlj52mfd9f8jn5ck7r4ykdpv9wczvz4dqe8vrvt",
-        "vesting_schedules": [
-          {
-            "release_time": "2022-06-21T00:00:00Z",
-            "weight": "0.500000000000000000"
-          },
-          {
-            "release_time": "2022-12-21T00:00:00Z",
-            "weight": "0.500000000000000000"
-          }
-        ],
-        "winning_price": "0.000000000000000000",
-        "remaining_coin": {
-          "denom": "denom1",
-          "amount": "999995000000"
-        },
-        "start_time": "2022-02-01T00:00:00Z",
-        "end_times": [
-          "2022-03-01T00:00:00Z"
-        ],
-        "status": "AUCTION_STATUS_STARTED"
-      }
-    }
-  ],
-  "pagination": {
-    "next_key": null,
-    "total": "1"
-  }
-}
-```
-
 ### Auction
+This command is used by an auctioneer to query the information of a specific auction.
+
+Usage
+```bash
+auction [auction-id]
+```
 
 Example command:
 
 ```bash
 # Query for the specific auction with the auction id
-fundraisingd q fundraising auction 1 -o json | jq
+fundraisingd q fundraising auction 1 \
+-o json | jq
 ```
 
-Result:
-
-```json
-{
-  "auction": {
-    "@type": "/tendermint.fundraising.FixedPriceAuction",
-    "base_auction": {
-      "id": "1",
-      "type": "AUCTION_TYPE_FIXED_PRICE",
-      "allowed_bidders": [
-        {
-          "bidder": "cosmos1tfzynkllgxdpmrcknx2j5d0hj9zd82tceyfa5n",
-          "max_bid_amount": "1000000000"
-        }
-      ],
-      "auctioneer": "cosmos1dncsflcfknkmlmt3t6836tkd3mu742e2wh4r70",
-      "selling_reserve_address": "cosmos1wl90665mfk3pgg095qhmlgha934exjvv437acgq42zw0sg94flestth4zu",
-      "paying_reserve_address": "cosmos17gk7a5ys8pxuexl7tvyk3pc9tdmqjjek03zjemez4eqvqdxlu92qdhphm2",
-      "start_price": "1.000000000000000000",
-      "selling_coin": {
-        "denom": "denom1",
-        "amount": "1000000000000"
-      },
-      "paying_coin_denom": "denom2",
-      "vesting_reserve_address": "cosmos1q4x4k4qsr4jwrrugnplhlj52mfd9f8jn5ck7r4ykdpv9wczvz4dqe8vrvt",
-      "vesting_schedules": [
-        {
-          "release_time": "2022-06-21T00:00:00Z",
-          "weight": "0.500000000000000000"
-        },
-        {
-          "release_time": "2022-12-21T00:00:00Z",
-          "weight": "0.500000000000000000"
-        }
-      ],
-      "winning_price": "0.000000000000000000",
-      "remaining_coin": {
-        "denom": "denom1",
-        "amount": "999995000000"
-      },
-      "start_time": "2022-02-01T00:00:00Z",
-      "end_times": [
-        "2022-03-01T00:00:00Z"
-      ],
-      "status": "AUCTION_STATUS_STARTED"
-    }
-  }
-}
-```
 
 ### Bids
+This command is used by an auctioneer to query the information of all the bids of a specific auction.
+
+```bash
+bids [auction-id]
+```
 
 Example command:
 
@@ -380,34 +357,13 @@ fundraisingd q fundraising bids 1 \
 -o json | jq
 ```
 
-Result:
-
-```json
-{
-  "bids": [
-    {
-      "auction_id": "1",
-      "sequence": "1",
-      "bidder": "cosmos1tfzynkllgxdpmrcknx2j5d0hj9zd82tceyfa5n",
-      "price": "1.000000000000000000",
-      "coin": {
-        "denom": "denom2",
-        "amount": "5000000"
-      },
-      "height": "1407",
-      "eligible": true
-    }
-  ],
-  "pagination": {
-    "next_key": null,
-    "total": "1"
-  }
-}
-```
-
 ### Vestings
 
-This command is used by an auctioneer to query vesting information. It only returns results when the auction is in vesting status
+This command is used by an auctioneer to query vesting information. It only returns results when the auction is in vesting status.
+
+```bash
+vestings [auction-id]
+```
 
 Example command:
 
@@ -417,25 +373,3 @@ fundraisingd q fundraising vestings 1 \
 -o json | jq
 ```
 
-Result:
-
-```json
-{
-  "vesting_queues": [
-    {
-      "auction_id": 1,
-      "auctioneer": "cosmos1m4ys0e222x45657hrg9y2gadfxtcqja270rdkg",
-      "paying_coin": "denom2",
-      "release_time": "2022-01-01T00:00:00Z",
-      "released": false
-    },
-    {
-      "auction_id": 1,
-      "auctioneer": "cosmos1m4ys0e222x45657hrg9y2gadfxtcqja270rdkg",
-      "paying_coin": "denom2",
-      "release_time": "2022-12-01T00:00:00Z",
-      "released": false
-    }
-  ]
-}
-```
