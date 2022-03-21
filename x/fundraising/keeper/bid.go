@@ -58,7 +58,9 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 			return types.Bid{}, err
 		}
 
-		if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), msg.Coin); err != nil {
+		bidPayingAmt := bid.GetBidPayingAmount(auction.GetPayingCoinDenom())
+		bidPayingCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), bidPayingAmt)
+		if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), bidPayingCoin); err != nil {
 			return types.Bid{}, err
 		}
 
