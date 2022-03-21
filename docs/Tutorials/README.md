@@ -1,17 +1,15 @@
 # Tutorials Documentation
 
-How to use the fundraising module Tutorials documentation.
+<!-- How to use the fundraising module Tutorials documentation.
 
 - [Tutorials Documentation](#tutorials-documentation)
-  - [Introduction](#introduction)
-  - [Layout](#layout)
 
 ## Introduction
 
 This section contains Tutorials documentation for fundraising module. 
 
-## Layout
+## Layout -->
 
-Tutorials Documentation will come in various forms:
+The current version of the tutorials documentation for the fundraising module is listed:
 
-* [Demo](./demo) - contains any type of demo or presentation for fundraising module
+* [Demo](./demo) - contains the examples of how the auctions are going through in the fundraising module.
