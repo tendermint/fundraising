@@ -30,7 +30,7 @@ type MsgCreateBatchAuction struct {
 	PayingCoinDenom  string            // the denom that the auctioneer receives to raise funds
 	VestingSchedules []VestingSchedule // the vesting schedules for the auction
 	MaxExtendedRound uint32            // a maximum number of extended rounds
-	ExtendedRate     sdk.Dec           // rate that determines if the auction needs another round, compared to the number of winning bidders at the previous end time.
+	ExtendedRate     sdk.Dec           // rate that determines if the auction needs another round, compared to the number of the matched bids at the previous end time.
 	StartTime        time.Time         // the start time of the auction
 	EndTimes         []time.Time       // the end times of the auction
 }

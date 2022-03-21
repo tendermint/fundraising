@@ -145,10 +145,10 @@ type FixedPriceAuction struct {
 type BatchAuction struct {
     *BaseAuction
     
-	MinBidPrice           sdk.Dec           // the minimum bid price that bidders must provide
-	MatchedPrice          sdk.Dec           // the matched price of the auction (a.k.a., winning price)
+	MinBidPrice			sdk.Dec	// the minimum bid price that bidders must provide
+	MatchedPrice		sdk.Dec	// the matched price of the auction (a.k.a., winning price)
     MaxExtendedRound    uint32  // a maximum number of extended rounds
-    ExtendedRate        sdk.Dec // rate that determines if the auction needs another round, compared to the number of winning bidders at the previous end time.
+    ExtendedRate        sdk.Dec // rate that determines if the auction needs another round, compared to the number of the matched bids at the previous end time.
 }
 ```
 
@@ -182,7 +182,7 @@ type Bid struct {
 	AuctionId uint64   // id of the auction
 	Bidder    string   // the account that bids for the auction
 	Id        uint64   // id of the bid of the bidder
-	Type      BidType  // the bid type; currently How-Much-Worth-To-Buy and How-Many-Coins-To-Buy are supported.
+	Type      BidType  // the bid type; currently Fixed-Price, How-Much-Worth-To-Buy and How-Many-Coins-To-Buy are supported.
 	Price     sdk.Dec  // the price for the bid
 	Coin      sdk.Coin // targeted amount of coin that the bidder bids; the denom must be either the denom or SellingCoin or PayingCoinDenom
 	Height    uint64   // block height

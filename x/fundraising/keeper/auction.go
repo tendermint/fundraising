@@ -244,7 +244,7 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
-			types.EventTypeCreateFixedPriceAuction,
+			types.EventTypeCreateBatchAuction,
 			sdk.NewAttribute(types.AttributeKeyAuctionId, strconv.FormatUint(nextId, 10)),
 			sdk.NewAttribute(types.AttributeKeyAuctioneerAddress, msg.Auctioneer),
 			sdk.NewAttribute(types.AttributeKeyStartPrice, auction.GetStartPrice().String()),
