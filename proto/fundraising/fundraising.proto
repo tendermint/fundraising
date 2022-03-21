@@ -266,9 +266,9 @@ message Bid {
   // height specifies the block height of the bid
   uint64 height = 7;
 
-  // isWinner specifies the bid that is a winning bid and enables the bidder to
+  // isMatched specifies the bid that is a winning bid and enables the bidder to
   // purchase the selling coin
-  bool isWinner = 8;
+  bool isMatched = 8;
 }
 
 // BidType enumerates the valid types of a bid.

@@ -246,8 +246,8 @@ func (s *KeeperTestSuite) sendCoins(fromAddr, toAddr sdk.AccAddress, coins sdk.C
 	s.Require().NoError(err)
 }
 
-// exchangedSellingAmount exchanges to selling coin amount (PayingCoinAmount/Price).
-func exchangedSellingAmount(price sdk.Dec, coin sdk.Coin) sdk.Int {
+// bodSellingAmount exchanges to selling coin amount (PayingCoinAmount/Price).
+func bidSellingAmount(price sdk.Dec, coin sdk.Coin) sdk.Int {
 	return coin.Amount.ToDec().QuoTruncate(price).TruncateInt()
 }
 

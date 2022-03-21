@@ -188,7 +188,7 @@ func (s *KeeperTestSuite) TestGRPCBids() {
 	bid4 := s.placeBidFixedPrice(auction.Id, s.addr(3), parseDec("1"), parseCoin("35000000denom2"), true)
 
 	// Make bid4 not eligible
-	bid4.SetWinner(false)
+	bid4.SetMatched(false)
 	s.keeper.SetBid(s.ctx, bid4)
 
 	for _, tc := range []struct {
@@ -232,7 +232,7 @@ func (s *KeeperTestSuite) TestGRPCBids() {
 			"query by eligible",
 			&types.QueryBidsRequest{
 				AuctionId: 1,
-				IsWinner:  "true",
+				IsMatched: "true",
 			},
 			false,
 			func(resp *types.QueryBidsResponse) {
@@ -243,7 +243,7 @@ func (s *KeeperTestSuite) TestGRPCBids() {
 			"query by eligible",
 			&types.QueryBidsRequest{
 				AuctionId: 1,
-				IsWinner:  "false",
+				IsMatched: "false",
 			},
 			false,
 			func(resp *types.QueryBidsResponse) {
@@ -251,11 +251,11 @@ func (s *KeeperTestSuite) TestGRPCBids() {
 			},
 		},
 		{
-			"query by both bidder address and isWinner #1",
+			"query by both bidder address and isMatched #1",
 			&types.QueryBidsRequest{
 				AuctionId: 1,
 				Bidder:    bid3.Bidder,
-				IsWinner:  "true",
+				IsMatched: "true",
 			},
 			false,
 			func(resp *types.QueryBidsResponse) {
@@ -263,11 +263,11 @@ func (s *KeeperTestSuite) TestGRPCBids() {
 			},
 		},
 		{
-			"query by both bidder address and isWinner #2",
+			"query by both bidder address and isMatched #2",
 			&types.QueryBidsRequest{
 				AuctionId: 1,
 				Bidder:    bid4.Bidder,
-				IsWinner:  "true",
+				IsMatched: "true",
 			},
 			false,
 			func(resp *types.QueryBidsResponse) {
@@ -299,7 +299,7 @@ func (s *KeeperTestSuite) TestGRPCBid() {
 		true,
 	)
 
-	s.addAllowedBidder(auction.Id, s.addr(1), exchangedSellingAmount(parseDec("1"), parseCoin("20000000denom2")))
+	s.addAllowedBidder(auction.Id, s.addr(1), bidSellingAmount(parseDec("1"), parseCoin("20000000denom2")))
 	bid := s.placeBidFixedPrice(auction.GetId(), s.addr(1), parseDec("1"), parseCoin("20000000denom2"), true)
 
 	for _, tc := range []struct {
@@ -343,7 +343,7 @@ func (s *KeeperTestSuite) TestGRPCBid() {
 				s.Require().Equal(bid.GetBidder(), resp.Bid.GetBidder())
 				s.Require().Equal(bid.Id, resp.Bid.Id)
 				s.Require().Equal(bid.Coin, resp.Bid.Coin)
-				s.Require().Equal(bid.IsWinner, resp.Bid.IsWinner)
+				s.Require().Equal(bid.IsMatched, resp.Bid.IsMatched)
 			},
 		},
 	} {
