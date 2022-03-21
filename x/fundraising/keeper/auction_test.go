@@ -211,12 +211,7 @@ func (s *KeeperTestSuite) TestAllocateSellingCoin_FixedPriceAuction() {
 	s.Require().Equal(s.getBalance(s.addr(0), auction.GetSellingCoin().Denom), parseCoin("500_000_000denom1"))
 	s.Require().Equal(s.getBalance(auction.GetPayingReserveAddress(), auction.GetPayingCoinDenom()), parseCoin("250_000_000denom2"))
 
-	// The bidders must have the selling coin
-	// s.Require().False(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).IsZero())
-	// s.Require().False(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).IsZero())
-	// s.Require().False(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).IsZero())
-
-	// // The bidders must have the matched selling coin
+	/ The bidders must have the matched selling coin
 	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom), parseCoin("200_000_000denom1"))
 	s.Require().Equal(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom), parseCoin("100_000_000denom1"))
 	s.Require().Equal(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom), parseCoin("200_000_000denom1"))
