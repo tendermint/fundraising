@@ -48,7 +48,7 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_AuctionStatus() {
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 }
 
-func (s *KeeperTestSuite) TestFixedPriceAuction_CalculateAllocation_denom2() {
+func (s *KeeperTestSuite) TestFixedPriceAuction_CalculateAllocation_BidwithPayingCoinDenom() {
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("0.5"),
@@ -76,7 +76,7 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_CalculateAllocation_denom2() {
 	s.Require().Equal(allocateAmt, parseCoin("6_000_000denom1").Amount)
 }
 
-func (s *KeeperTestSuite) TestFixedPriceAuction_CalculateAllocation_denom1() {
+func (s *KeeperTestSuite) TestFixedPriceAuction_CalculateAllocation_BidwithSellingCoinDenom() {
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("0.5"),
@@ -132,49 +132,7 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_CalculateAllocation_mixed() {
 	s.Require().Equal(allocateAmt, parseCoin("8_000_000denom2").Amount)
 }
 
-func (s *KeeperTestSuite) TestBatchAuction_AuctionStatus() {
-	standByAuction := s.createBatchAuction(
-		s.addr(0),
-		parseDec("1"),
-		parseDec("0.1"),
-		parseCoin("5000_000_000denom1"),
-		"denom2",
-		[]types.VestingSchedule{},
-		1,
-		sdk.MustNewDecFromStr("0.2"),
-		time.Now().AddDate(0, 6, 0),
-		time.Now().AddDate(0, 6, 0).AddDate(0, 1, 0),
-		true,
-	)
-
-	auction, found := s.keeper.GetAuction(s.ctx, standByAuction.GetId())
-	s.Require().True(found)
-	s.Require().Equal(types.AuctionStatusStandBy, auction.GetStatus())
-
-	feePool := s.app.DistrKeeper.GetFeePool(s.ctx)
-	auctionCreationFee := s.keeper.GetParams(s.ctx).AuctionCreationFee
-	s.Require().True(feePool.CommunityPool.IsEqual(sdk.NewDecCoinsFromCoins(auctionCreationFee...)))
-
-	startedAuction := s.createBatchAuction(
-		s.addr(1),
-		parseDec("0.5"),
-		parseDec("0.1"),
-		parseCoin("5000_000_000denom3"),
-		"denom4",
-		[]types.VestingSchedule{},
-		1,
-		sdk.MustNewDecFromStr("0.2"),
-		time.Now().AddDate(0, 0, -1),
-		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
-		true,
-	)
-
-	auction, found = s.keeper.GetAuction(s.ctx, startedAuction.GetId())
-	s.Require().True(found)
-	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
-}
-
-func (s *KeeperTestSuite) TestAllocateSellingCoin_FixedPriceAuction() {
+func (s *KeeperTestSuite) TestFixedPriceAuction_AllocateSellingCoin() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("0.5"),
@@ -215,6 +173,48 @@ func (s *KeeperTestSuite) TestAllocateSellingCoin_FixedPriceAuction() {
 	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom), parseCoin("200_000_000denom1"))
 	s.Require().Equal(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom), parseCoin("100_000_000denom1"))
 	s.Require().Equal(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom), parseCoin("200_000_000denom1"))
+}
+
+func (s *KeeperTestSuite) TestBatchAuction_AuctionStatus() {
+	standByAuction := s.createBatchAuction(
+		s.addr(0),
+		parseDec("1"),
+		parseDec("0.1"),
+		parseCoin("5000_000_000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		1,
+		sdk.MustNewDecFromStr("0.2"),
+		time.Now().AddDate(0, 6, 0),
+		time.Now().AddDate(0, 6, 0).AddDate(0, 1, 0),
+		true,
+	)
+
+	auction, found := s.keeper.GetAuction(s.ctx, standByAuction.GetId())
+	s.Require().True(found)
+	s.Require().Equal(types.AuctionStatusStandBy, auction.GetStatus())
+
+	feePool := s.app.DistrKeeper.GetFeePool(s.ctx)
+	auctionCreationFee := s.keeper.GetParams(s.ctx).AuctionCreationFee
+	s.Require().True(feePool.CommunityPool.IsEqual(sdk.NewDecCoinsFromCoins(auctionCreationFee...)))
+
+	startedAuction := s.createBatchAuction(
+		s.addr(1),
+		parseDec("0.5"),
+		parseDec("0.1"),
+		parseCoin("5000_000_000denom3"),
+		"denom4",
+		[]types.VestingSchedule{},
+		1,
+		sdk.MustNewDecFromStr("0.2"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+		true,
+	)
+
+	auction, found = s.keeper.GetAuction(s.ctx, startedAuction.GetId())
+	s.Require().True(found)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 }
 
 func (s *KeeperTestSuite) TestAllocateVestingPayingCoin() {
