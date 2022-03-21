@@ -177,8 +177,8 @@ func (s *KeeperTestSuite) TestBatchAuction_AuctionStatus() {
 func (s *KeeperTestSuite) TestAllocateSellingCoin_FixedPriceAuction() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
-		parseDec("1"),
-		parseCoin("1000_000_000_000denom1"),
+		parseDec("0.5"),
+		parseCoin("1000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
 		time.Now().AddDate(0, 0, -1),
@@ -190,9 +190,9 @@ func (s *KeeperTestSuite) TestAllocateSellingCoin_FixedPriceAuction() {
 	s.Require().True(found)
 
 	// Place bids
-	s.placeBidFixedPrice(auction.Id, s.addr(1), parseDec("1"), parseCoin("100_000_000denom2"), true)
-	s.placeBidFixedPrice(auction.Id, s.addr(2), parseDec("1"), parseCoin("200_000_000denom2"), true)
-	s.placeBidFixedPrice(auction.Id, s.addr(3), parseDec("1"), parseCoin("200_000_000denom2"), true)
+	s.placeBidFixedPrice(auction.Id, s.addr(1), parseDec("0.5"), parseCoin("100_000_000denom2"), true)
+	s.placeBidFixedPrice(auction.Id, s.addr(2), parseDec("0.5"), parseCoin("100_000_000denom1"), true)
+	s.placeBidFixedPrice(auction.Id, s.addr(3), parseDec("0.5"), parseCoin("200_000_000denom1"), true)
 
 	// Calculate allocation
 	mInfo := s.keeper.CalculateFixedPriceAllocation(s.ctx, auction)
@@ -207,10 +207,19 @@ func (s *KeeperTestSuite) TestAllocateSellingCoin_FixedPriceAuction() {
 	// The selling reserve account balance must be zero
 	s.Require().True(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).IsZero())
 
+	// The auctioneer must have sellingCoin.Amount - TotalMatchedAmount
+	s.Require().Equal(s.getBalance(s.addr(0), auction.GetSellingCoin().Denom), parseCoin("500_000_000denom1"))
+	s.Require().Equal(s.getBalance(auction.GetPayingReserveAddress(), auction.GetPayingCoinDenom()), parseCoin("250_000_000denom2"))
+
 	// The bidders must have the selling coin
-	s.Require().False(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).IsZero())
-	s.Require().False(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).IsZero())
-	s.Require().False(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).IsZero())
+	// s.Require().False(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).IsZero())
+	// s.Require().False(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).IsZero())
+	// s.Require().False(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).IsZero())
+
+	// // The bidders must have the matched selling coin
+	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom), parseCoin("200_000_000denom1"))
+	s.Require().Equal(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom), parseCoin("100_000_000denom1"))
+	s.Require().Equal(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom), parseCoin("200_000_000denom1"))
 }
 
 func (s *KeeperTestSuite) TestAllocateVestingPayingCoin() {

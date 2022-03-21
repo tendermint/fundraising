@@ -131,14 +131,28 @@ func (s *KeeperTestSuite) placeBidFixedPrice(
 	coin sdk.Coin,
 	fund bool,
 ) types.Bid {
-	fundAmt := coin.Amount
-	fundCoin := coin
+	auction, found := s.keeper.GetAuction(s.ctx, auctionId)
+	s.Require().True(found)
+
+	var fundAmt sdk.Int
+	var fundCoin sdk.Coin
+	var maxBidAmt sdk.Int
+
+	if coin.Denom == auction.GetPayingCoinDenom() {
+		fundAmt = coin.Amount
+		fundCoin = coin
+		maxBidAmt = coin.Amount.ToDec().QuoTruncate(price).TruncateInt()
+	} else {
+		fundAmt = coin.Amount.ToDec().Mul(price).Ceil().TruncateInt()
+		fundCoin = sdk.NewCoin(auction.GetPayingCoinDenom(), fundAmt)
+		maxBidAmt = coin.Amount
+	}
 
 	if fund {
 		s.fundAddr(bidder, sdk.NewCoins(fundCoin))
 	}
 
-	s.addAllowedBidder(auctionId, bidder, fundAmt)
+	s.addAllowedBidder(auctionId, bidder, maxBidAmt)
 
 	b, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
 		AuctionId: auctionId,
