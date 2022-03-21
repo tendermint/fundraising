@@ -199,7 +199,7 @@ $ %s query %s bids 1 --winner
 			}
 
 			bidderAddr, _ := cmd.Flags().GetString(FlagBidderAddr)
-			eligible, _ := cmd.Flags().GetString(FlagIsMatched)
+			isMatched, _ := cmd.Flags().GetString(FlagIsMatched)
 
 			auctionId, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
@@ -215,7 +215,7 @@ $ %s query %s bids 1 --winner
 			req := &types.QueryBidsRequest{
 				AuctionId:  auctionId,
 				Bidder:     bidderAddr,
-				IsMatched:  eligible,
+				IsMatched:  isMatched,
 				Pagination: pageReq,
 			}
 

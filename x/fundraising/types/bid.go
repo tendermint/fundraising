@@ -16,10 +16,10 @@ func (b *Bid) SetMatched(status bool) {
 	b.IsMatched = status
 }
 
-func (b Bid) GetBidSellingAmount(payingDenom string) sdk.Int {
+func (b Bid) GetBidSellingAmount(payingCoinDenom string) sdk.Int {
 	var bidSellingAmt sdk.Int
 
-	if b.Coin.Denom == payingDenom {
+	if b.Coin.Denom == payingCoinDenom {
 		bidSellingAmt = b.Coin.Amount.ToDec().QuoTruncate(b.Price).TruncateInt()
 	} else {
 		bidSellingAmt = b.Coin.Amount
@@ -28,10 +28,10 @@ func (b Bid) GetBidSellingAmount(payingDenom string) sdk.Int {
 	return bidSellingAmt
 }
 
-func (b Bid) GetBidPayingAmount(payingDenom string) sdk.Int {
+func (b Bid) GetBidPayingAmount(payingCoinDenom string) sdk.Int {
 	var bidPayingAmt sdk.Int
 
-	if b.Coin.Denom == payingDenom {
+	if b.Coin.Denom == payingCoinDenom {
 		bidPayingAmt = b.Coin.Amount
 	} else {
 		bidPayingAmt = b.Coin.Amount.ToDec().Mul(b.Price).Ceil().TruncateInt()
