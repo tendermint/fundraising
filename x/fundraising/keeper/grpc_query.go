@@ -121,11 +121,11 @@ func (k Querier) Bids(c context.Context, req *types.QueryBidsRequest) (*types.Qu
 
 	store := ctx.KVStore(k.storeKey)
 	switch {
-	case req.Bidder != "" && req.IsWinner == "":
+	case req.Bidder != "" && req.IsMatched == "":
 		bids, pageRes, err = queryBidsByBidder(ctx, k, store, req)
-	case req.Bidder == "" && req.IsWinner != "":
-		bids, pageRes, err = queryBidsByIsWinner(ctx, k, store, req)
-	case req.Bidder != "" && req.IsWinner != "":
+	case req.Bidder == "" && req.IsMatched != "":
+		bids, pageRes, err = queryBidsByIsMatched(ctx, k, store, req)
+	case req.Bidder != "" && req.IsMatched != "":
 		bids, pageRes, err = queryBidsByBidder(ctx, k, store, req)
 	default:
 		bids, pageRes, err = queryAllBids(ctx, k, store, req)
@@ -211,13 +211,13 @@ func queryBidsByBidder(ctx sdk.Context, k Querier, store sdk.KVStore, req *types
 			return false, nil
 		}
 
-		if req.IsWinner != "" {
-			isWinner, err := strconv.ParseBool(req.IsWinner)
+		if req.IsMatched != "" {
+			isMatched, err := strconv.ParseBool(req.IsMatched)
 			if err != nil {
 				return false, err
 			}
 
-			if bid.IsWinner != isWinner {
+			if bid.IsMatched != isMatched {
 				return false, nil
 			}
 		}
@@ -236,8 +236,8 @@ func queryBidsByBidder(ctx sdk.Context, k Querier, store sdk.KVStore, req *types
 	return bids, pageRes, err
 }
 
-func queryBidsByIsWinner(ctx sdk.Context, k Querier, store sdk.KVStore, req *types.QueryBidsRequest) (bids []types.Bid, pageRes *query.PageResponse, err error) {
-	isWinner, err := strconv.ParseBool(req.IsWinner)
+func queryBidsByIsMatched(ctx sdk.Context, k Querier, store sdk.KVStore, req *types.QueryBidsRequest) (bids []types.Bid, pageRes *query.PageResponse, err error) {
+	isMatched, err := strconv.ParseBool(req.IsMatched)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -254,7 +254,7 @@ func queryBidsByIsWinner(ctx sdk.Context, k Querier, store sdk.KVStore, req *typ
 			return false, nil
 		}
 
-		if bid.IsWinner != isWinner {
+		if bid.IsMatched != isMatched {
 			return false, nil
 		}
 

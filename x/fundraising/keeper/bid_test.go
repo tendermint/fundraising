@@ -25,7 +25,7 @@ func (s *KeeperTestSuite) TestFixedPrice_InvalidStartPrice() {
 
 	// The bid price must be the same as the start price of the auction.
 	s.fundAddr(s.addr(2), parseCoins("200_000_000denom2"))
-	s.addAllowedBidder(auction.Id, s.addr(2), exchangedSellingAmount(parseDec("1"), parseCoin("200_000_000denom2")))
+	s.addAllowedBidder(auction.Id, s.addr(2), bidSellingAmount(parseDec("1"), parseCoin("200_000_000denom2")))
 
 	_, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
 		AuctionId: auction.Id,
@@ -57,7 +57,7 @@ func (s *KeeperTestSuite) TestFixedPrice_InsufficientRemainingAmount() {
 
 	// The remaining coin amount must be insufficient
 	s.fundAddr(s.addr(5), parseCoins("300_000_000denom2"))
-	s.addAllowedBidder(auction.Id, s.addr(5), exchangedSellingAmount(parseDec("1"), parseCoin("300_000_000denom2")))
+	s.addAllowedBidder(auction.Id, s.addr(5), bidSellingAmount(parseDec("1"), parseCoin("300_000_000denom2")))
 
 	_, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
 		AuctionId: auction.Id,
@@ -93,6 +93,36 @@ func (s *KeeperTestSuite) TestFixedPrice_OverMaxBidAmountLimit() {
 		Coin:      parseCoin("100_000_001denom2"),
 	})
 	s.Require().ErrorIs(err, types.ErrOverMaxBidAmountLimit)
+}
+
+func (s *KeeperTestSuite) TestFixedPrice_IncorrectCoinDenom() {
+	auction := s.createFixedPriceAuction(
+		s.addr(0),
+		parseDec("1"),
+		parseCoin("1000_000_000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	s.placeBidFixedPrice(auction.Id, s.addr(1), parseDec("1"), parseCoin("100_000_000denom2"), true)
+	s.placeBidFixedPrice(auction.Id, s.addr(1), parseDec("1"), parseCoin("100_000_000denom1"), true)
+
+	// The remaining coin amount must be insufficient
+	s.fundAddr(s.addr(1), parseCoins("100_000_000denom2"))
+	s.addAllowedBidder(auction.Id, s.addr(1), bidSellingAmount(parseDec("1"), parseCoin("100_000_000denom2")))
+
+	_, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
+		AuctionId: auction.Id,
+		Bidder:    s.addr(1).String(),
+		BidType:   types.BidTypeFixedPrice,
+		Price:     parseDec("1"),
+		Coin:      parseCoin("10_000_000denom3"),
+	})
+	s.Require().ErrorIs(err, types.ErrIncorrectCoinDenom)
 }
 
 func (s *KeeperTestSuite) TestBatchAuction_IncorrectCoinDenom() {
