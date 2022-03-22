@@ -113,3 +113,14 @@ func (h MultiFundraisingHooks) BeforeAllowedBiddersAdded(
 		h[i].BeforeAllowedBiddersAdded(ctx, auctionId, allowedBidders)
 	}
 }
+
+func (h MultiFundraisingHooks) BeforeAllowedBidderUpdated(
+	ctx sdk.Context,
+	auctionId uint64,
+	bidder sdk.AccAddress,
+	maxBidAmount sdk.Int,
+) {
+	for i := range h {
+		h[i].BeforeAllowedBidderUpdated(ctx, auctionId, bidder, maxBidAmount)
+	}
+}

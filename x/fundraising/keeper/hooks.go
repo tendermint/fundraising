@@ -116,3 +116,15 @@ func (k Keeper) BeforeAllowedBiddersAdded(
 		k.hooks.BeforeAllowedBiddersAdded(ctx, auctionId, allowedBidders)
 	}
 }
+
+// BeforeAllowedBidderUpdated - call hook if registered
+func (k Keeper) BeforeAllowedBidderUpdated(
+	ctx sdk.Context,
+	auctionId uint64,
+	bidder sdk.AccAddress,
+	maxBidAmount sdk.Int,
+) {
+	if k.hooks != nil {
+		k.hooks.BeforeAllowedBidderUpdated(ctx, auctionId, bidder, maxBidAmount)
+	}
+}

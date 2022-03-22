@@ -397,6 +397,9 @@ func (k Keeper) UpdateAllowedBidder(ctx sdk.Context, auctionId uint64, bidder sd
 
 	_ = auction.SetMaxBidAmount(bidder.String(), maxBidAmount)
 
+	// Call the before allowed bidders updated hook
+	k.BeforeAllowedBidderUpdated(ctx, auctionId, bidder, maxBidAmount)
+
 	k.SetAuction(ctx, auction)
 
 	return nil

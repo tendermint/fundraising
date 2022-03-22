@@ -87,4 +87,11 @@ type FundraisingHooks interface {
 		auctionId uint64,
 		allowedBidders []AllowedBidder,
 	)
+
+	BeforeAllowedBidderUpdated(
+		ctx sdk.Context,
+		auctionId uint64,
+		bidder sdk.AccAddress,
+		maxBidAmount sdk.Int,
+	)
 }
