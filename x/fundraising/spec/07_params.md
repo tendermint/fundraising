@@ -4,7 +4,7 @@
 
 The `fundraising` module contains the following parameters:
 
-| Key                        | Type      | Example                                                           |
+| Key                        | Type      | Example                |
 | -------------------------- | --------- | ----------------------------------------------------------------- |
 | AuctionCreationFee         | sdk.Coins | [{"denom":"stake","amount":"100000000"}]                          |
 | ExtendedPeriod             | uint32    | 3600 * 24                                                         |

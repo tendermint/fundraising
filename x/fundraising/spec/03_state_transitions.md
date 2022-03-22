@@ -32,7 +32,7 @@ When `MsgCancelAuction` is confirmed for the auction in `AuctionStatusStandBy`,
 
 When `MsgPlaceBid` is confirmed, `PayingCoin` of the bidder is reserved in `PayingReserveAddress`.
 
-For a fixed price auction, when `MsgPlaceBid` is confirmed, `NumberWinningBidders` and `RemainingSellingCoin` are updated based on the message.
+For a fixed price auction, when `MsgPlaceBid` is confirmed, `RemainingSellingCoin` is updated based on the message.
 
 
 
