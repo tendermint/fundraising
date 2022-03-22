@@ -116,7 +116,7 @@ message FixedPriceAuction {
 // willing to bid within the auction period. They can place multiple bids with
 // different bid prices and if they want to modify their existing bid, they only
 // have an option to modify with a higher bid price. Under the hood, an order
-// book is created to record the bids to calculate winners.
+// book is created to record the bids to calculate the matched bidders.
 message BatchAuction {
   option (gogoproto.goproto_getters) = false;
 

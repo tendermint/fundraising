@@ -11,6 +11,8 @@ How to use the fundraising module Explanation Documentation.
   - [Reference](#reference)
 
 
+## Calculation of Matched Price
+
 ## Introduction
 
 This section contains **Explanation documentation** for fundraising module. This content is intended to help readers with their **understanding of fundraising module and related topics**. It is intended to be discursive, thoughtful, interesting, and occasionally educational. The content includes analysis and review of alternative approaches. 

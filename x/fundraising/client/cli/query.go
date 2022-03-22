@@ -185,7 +185,7 @@ func NewQueryBidsCmd() *cobra.Command {
 Example:
 $ %s query %s bids 1
 $ %s query %s bids 1 --bidder %s1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj
-$ %s query %s bids 1 --winner 
+$ %s query %s bids 1 --matched-bidder 
 `,
 				version.AppName, types.ModuleName,
 				version.AppName, types.ModuleName, bech32PrefixAccAddr,

@@ -229,7 +229,7 @@ func (s *KeeperTestSuite) TestGRPCBids() {
 			},
 		},
 		{
-			"query by eligible",
+			"query by isMatched",
 			&types.QueryBidsRequest{
 				AuctionId: 1,
 				IsMatched: "true",
@@ -240,7 +240,7 @@ func (s *KeeperTestSuite) TestGRPCBids() {
 			},
 		},
 		{
-			"query by eligible",
+			"query by isMatched",
 			&types.QueryBidsRequest{
 				AuctionId: 1,
 				IsMatched: "false",

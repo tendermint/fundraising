@@ -337,7 +337,7 @@ var xxx_messageInfo_FixedPriceAuction proto.InternalMessageInfo
 // willing to bid within the auction period. They can place multiple bids with
 // different bid prices and if they want to modify their existing bid, they only
 // have an option to modify with a higher bid price. Under the hood, an order
-// book is created to record the bids to calculate winners.
+// book is created to record the bids to calculate the matched bidders.
 type BatchAuction struct {
 	*BaseAuction `protobuf:"bytes,1,opt,name=base_auction,json=baseAuction,proto3,embedded=base_auction" json:"base_auction,omitempty"`
 	// min_bid_price specifies the minibum bid price
