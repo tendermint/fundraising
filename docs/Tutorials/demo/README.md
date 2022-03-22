@@ -2,7 +2,7 @@
 
 This is to provide some examples of how the auctions are going through by using the `fundraising` module.
 
-## Fixed Price Auction
+## Fixed Price Auction 
 A fixed price auction is to sell a given amount of coins on a first-come, first-served basis.
 In other words, once a bidder places a bid with the pre-determined bid price first (i.e., `StartPrice`), then the bidder can get the selling coins. 
 When all the selling coins are sold out, then the auction becomes ended. 
