@@ -29,7 +29,7 @@ The `fundraising` module emits the following events:
 | create_fixed_price_auction | auction_status        | {auctionStatus}            |
 | message                    | module                | fundraising                |
 | message                    | action                | create_fixed_price_auction |
-| message                    | auctioneer            | {auctioneerAddress}        | 
+| message                    | auctioneer            | {auctioneerAddress}        |
 
 ### MsgCreateBatchAuction
 

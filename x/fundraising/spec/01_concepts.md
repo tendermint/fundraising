@@ -30,7 +30,7 @@ In `AllowedBidders`, each bidder can be set with `MaxBidAmount`, which is the ma
 
 ### What a bidder can/cannot do:
 
-A bidder only listed in `AllowedBidders` can place a new bid with a fixed amount of paying coins. 
+A bidder only listed in `AllowedBidders` can place a new bid with a fixed amount of either paying coins or selling coins. 
 A bidder cannot modify or cancel the existing bid it previously placed.
 
 ### When the auction ends:
