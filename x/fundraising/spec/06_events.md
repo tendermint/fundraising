@@ -4,12 +4,6 @@
 
 The `fundraising` module emits the following events:
 
-## EndBlocker
-
-| Type                   | Attribute Key        | Attribute Value        |
-| ---------------------- | -------------------- | ---------------------- |
-| TBD                    | TBD                  | {TBD}                  |
-
 ## Handlers
 
 ### MsgCreateFixedPriceAuction
