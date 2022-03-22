@@ -48,7 +48,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		Price:     msg.Price,
 		Coin:      msg.Coin,
 		Height:    uint64(ctx.BlockHeader().Height),
-		IsWinner:  false,
+		IsMatched: false,
 	}
 
 	// Place a bid depending on the auction type and the bid type
@@ -58,17 +58,19 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 			return types.Bid{}, err
 		}
 
-		if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), msg.Coin); err != nil {
+		bidPayingAmt := bid.GetBidPayingAmount(auction.GetPayingCoinDenom())
+		bidPayingCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), bidPayingAmt)
+		if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), bidPayingCoin); err != nil {
 			return types.Bid{}, err
 		}
 
-		exchangedSellingAmt := bid.GetExchangedSellingAmount()
-		exchangedSellingCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, exchangedSellingAmt)
-		remaining := auction.GetRemainingSellingCoin().Sub(exchangedSellingCoin)
+		bidSellingAmt := bid.GetBidSellingAmount(auction.GetPayingCoinDenom())
+		bidSellingCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidSellingAmt)
+		remaining := auction.GetRemainingSellingCoin().Sub(bidSellingCoin)
 
 		_ = auction.SetRemainingSellingCoin(remaining)
 		k.SetAuction(ctx, auction)
-		bid.SetWinner(true)
+		bid.SetMatched(true)
 
 	case types.BidTypeBatchWorth:
 		if err := k.ValidateBatchWorthBid(ctx, auction, bid); err != nil {
@@ -111,7 +113,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 }
 
 func (k Keeper) ValidateFixedPriceBid(ctx sdk.Context, auction types.AuctionI, bid types.Bid) error {
-	if bid.Coin.Denom != auction.GetPayingCoinDenom() {
+	if bid.Coin.Denom != auction.GetPayingCoinDenom() && bid.Coin.Denom != auction.GetSellingCoin().Denom {
 		return types.ErrIncorrectCoinDenom
 	}
 
@@ -119,13 +121,13 @@ func (k Keeper) ValidateFixedPriceBid(ctx sdk.Context, auction types.AuctionI, b
 		return sdkerrors.Wrap(types.ErrInvalidStartPrice, "start price must be equal to the auction start price")
 	}
 
-	// PayingCoinAmount / Price = ExchangedSellingCoinAmount
-	exchangedSellingAmt := bid.GetExchangedSellingAmount()
-	exchangedSellingCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, exchangedSellingAmt)
+	// PayingCoinAmount / Price = BidSellingCoinAmount
+	bidSellingAmt := bid.GetBidSellingAmount(auction.GetPayingCoinDenom())
+	bidSellingCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidSellingAmt)
 
 	// The bidder can't bid more than the remaining selling coin
 	remainingSellingCoin := auction.GetRemainingSellingCoin()
-	if remainingSellingCoin.IsLT(exchangedSellingCoin) {
+	if remainingSellingCoin.IsLT(bidSellingCoin) {
 		return sdkerrors.Wrapf(types.ErrInsufficientRemainingAmount, "remaining selling coin amount %s", remainingSellingCoin)
 	}
 
@@ -133,11 +135,11 @@ func (k Keeper) ValidateFixedPriceBid(ctx sdk.Context, auction types.AuctionI, b
 	totalBidAmt := sdk.ZeroInt()
 	for _, b := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
 		if b.Bidder == bid.Bidder {
-			totalBidAmt = totalBidAmt.Add(b.GetExchangedSellingAmount())
+			totalBidAmt = totalBidAmt.Add(b.GetBidSellingAmount(auction.GetPayingCoinDenom()))
 		}
 	}
 
-	totalBidAmt = totalBidAmt.Add(exchangedSellingAmt)
+	totalBidAmt = totalBidAmt.Add(bidSellingAmt)
 	maxBidAmt := auction.GetMaxBidAmount(bid.Bidder)
 
 	// The  sum of total bid amount can't be more than the bidder's maximum bid amount

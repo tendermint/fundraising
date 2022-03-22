@@ -30,6 +30,8 @@ If the auction status is `AuctionStatusVesting` and if the last release time of 
 
 ## Calculation the Matched Price, Distribution of Selling Coins, and Refund of Paying Coins
 
+This section provides the exact mathematical calculation of the matched price. For an illustrative example, see [here](../../../docs/Tutorials/demo/README.md).
+
 The parameters to be calculated are defined as
 
 - `X` : the matched price of a selling coin; This is `MatchedPrice` of the auction.
@@ -41,7 +43,7 @@ For a fixed price auction, the above parameters for matched bids are calculated 
   - `X` = `MatchedPrice` = `BidPrice` = `StartPrice`,
   - `S_n` = `PayingCoin`/`MatchedPrice`,
   - `R_n` = 0.
-
+  
 For a batch auction, how to calculate the above parameters are described below.
 
 To calculate `X`, `S_n(X)`, and `R_n(X)`, the given parameters from the auction and the bids are:
