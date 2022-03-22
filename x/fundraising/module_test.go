@@ -92,8 +92,8 @@ func (s *ModuleTestSuite) placeBid(
 		s.fundAddr(bidder, sdk.NewCoins(coin))
 	}
 
-	exchangedSellingAmt := coin.Amount.ToDec().QuoTruncate(price).TruncateInt()
-	s.addAllowedBidder(auctionId, bidder, exchangedSellingAmt)
+	bidSellingAmt := coin.Amount.ToDec().QuoTruncate(price).TruncateInt()
+	s.addAllowedBidder(auctionId, bidder, bidSellingAmt)
 
 	bid, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
 		AuctionId: auctionId,

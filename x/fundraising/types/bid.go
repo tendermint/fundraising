@@ -12,10 +12,30 @@ func (b Bid) GetBidder() sdk.AccAddress {
 	return addr
 }
 
-func (b *Bid) SetWinner(status bool) {
-	b.IsWinner = status
+func (b *Bid) SetMatched(status bool) {
+	b.IsMatched = status
 }
 
-func (b Bid) GetExchangedSellingAmount() sdk.Int {
-	return b.Coin.Amount.ToDec().QuoTruncate(b.Price).TruncateInt()
+func (b Bid) GetBidSellingAmount(payingCoinDenom string) sdk.Int {
+	var bidSellingAmt sdk.Int
+
+	if b.Coin.Denom == payingCoinDenom {
+		bidSellingAmt = b.Coin.Amount.ToDec().QuoTruncate(b.Price).TruncateInt()
+	} else {
+		bidSellingAmt = b.Coin.Amount
+	}
+
+	return bidSellingAmt
+}
+
+func (b Bid) GetBidPayingAmount(payingCoinDenom string) sdk.Int {
+	var bidPayingAmt sdk.Int
+
+	if b.Coin.Denom == payingCoinDenom {
+		bidPayingAmt = b.Coin.Amount
+	} else {
+		bidPayingAmt = b.Coin.Amount.ToDec().Mul(b.Price).Ceil().TruncateInt()
+	}
+
+	return bidPayingAmt
 }

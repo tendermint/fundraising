@@ -186,7 +186,7 @@ type Bid struct {
 	Price     sdk.Dec  // the price for the bid
 	Coin      sdk.Coin // targeted amount of coin that the bidder bids; the denom must be either the denom or SellingCoin or PayingCoinDenom
 	Height    uint64   // block height
-	isWinner  bool     // the bid that is determined to be a winner when an auction ends; default value is false
+	IsMatched  bool     // the bid that is determined to be matched (a.k.a., winner) when an auction ends; default value is false
 }
 ```
 
