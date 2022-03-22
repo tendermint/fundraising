@@ -30,8 +30,7 @@ Regardless of the bid price, all the matched bidders can get the selling coins w
 The following illustrates how the matched price is calculated.
 ![alt text][batchAuction_cal_example]
 
-For the details on the calculation, please see [here].
-<!-- (/x/fundraising/spec/05_end_block.md). -->
+For the details on the calculation, please see [here](../../../x/fundraising/spec/05_end_block.md).
 
 
 [fixedPriceAuction_example]: ./figures/FixedPriceAuction_bid_example.gif "Example of Fixed Price Auction"
