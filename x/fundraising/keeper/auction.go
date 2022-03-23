@@ -125,8 +125,8 @@ func (k Keeper) AllocateVestingPayingCoin(ctx sdk.Context, auction types.Auction
 
 // CreateFixedPriceAuction sets fixed price auction.
 func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFixedPriceAuction) (types.AuctionI, error) {
-	if ctx.BlockTime().After(msg.EndTime) {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be set prior to the current time")
+	if ctx.BlockTime().After(msg.EndTime) { // EndTime < CurrentTime
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be set after the current time")
 	}
 
 	nextId := k.GetNextAuctionIdWithUpdate(ctx)
@@ -191,8 +191,8 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 
 // CreateBatchAuction sets batch auction.
 func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuction) (types.AuctionI, error) {
-	if ctx.BlockTime().After(msg.EndTime) {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be set prior to the current time")
+	if ctx.BlockTime().After(msg.EndTime) { // EndTime < CurrentTime
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be set after the current time")
 	}
 
 	nextId := k.GetNextAuctionIdWithUpdate(ctx)
