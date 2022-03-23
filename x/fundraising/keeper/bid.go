@@ -20,7 +20,7 @@ func (k Keeper) GetNextBidIdWithUpdate(ctx sdk.Context, auctionId uint64) uint64
 func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, error) {
 	auction, found := k.GetAuction(ctx, msg.AuctionId)
 	if !found {
-		return types.Bid{}, sdkerrors.Wrap(sdkerrors.ErrNotFound, "auction not found")
+		return types.Bid{}, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d not found", msg.AuctionId)
 	}
 
 	if auction.GetStatus() != types.AuctionStatusStarted {

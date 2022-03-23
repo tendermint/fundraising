@@ -287,13 +287,12 @@ func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) erro
 	}
 
 	sellingReserveAddr := auction.GetSellingReserveAddress()
-	auctioneerAddr := auction.GetAuctioneer()
 	sellingCoinDenom := auction.GetSellingCoin().Denom
 	spendableCoins := k.bankKeeper.SpendableCoins(ctx, sellingReserveAddr)
 	releaseCoin := sdk.NewCoin(sellingCoinDenom, spendableCoins.AmountOf(sellingCoinDenom))
 
 	// Release the selling coin back to the auctioneer
-	if err := k.bankKeeper.SendCoins(ctx, sellingReserveAddr, auctioneerAddr, sdk.NewCoins(releaseCoin)); err != nil {
+	if err := k.bankKeeper.SendCoins(ctx, sellingReserveAddr, auction.GetAuctioneer(), sdk.NewCoins(releaseCoin)); err != nil {
 		return sdkerrors.Wrap(err, "failed to release the selling coin")
 	}
 
@@ -333,9 +332,8 @@ func (k Keeper) AddAllowedBidders(ctx sdk.Context, auctionId uint64, bidders []t
 	allowedBidders := auction.GetAllowedBidders()
 	allowedBidders = append(allowedBidders, bidders...)
 
-	if err := auction.SetAllowedBidders(allowedBidders); err != nil {
-		return err
-	}
+	_ = auction.SetAllowedBidders(allowedBidders)
+
 	k.SetAuction(ctx, auction)
 
 	return nil
