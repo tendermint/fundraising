@@ -20,7 +20,7 @@ func (k Keeper) GetNextBidIdWithUpdate(ctx sdk.Context, auctionId uint64) uint64
 func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, error) {
 	auction, found := k.GetAuction(ctx, msg.AuctionId)
 	if !found {
-		return types.Bid{}, sdkerrors.Wrap(sdkerrors.ErrNotFound, "auction not found")
+		return types.Bid{}, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d not found", msg.AuctionId)
 	}
 
 	if auction.GetStatus() != types.AuctionStatusStarted {
@@ -211,12 +211,10 @@ func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) error {
 		return types.ErrInsufficientMinBidPrice
 	}
 
-	// Modifying bid type is not allowed
 	if bid.Coin.Denom != msg.Coin.Denom {
 		return sdkerrors.Wrap(types.ErrIncorrectCoinDenom, "modifying bid type is not allowed")
 	}
 
-	// Either bid price or coin amount must be greater than the modifying values
 	if msg.Price.LT(bid.Price) || msg.Coin.Amount.LT(bid.Coin.Amount) {
 		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "bid price or coin amount cannot be lower")
 	}
