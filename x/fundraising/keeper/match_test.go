@@ -579,9 +579,9 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2_LimitedSame() {
 	matchedAmt9 := sdk.NewInt(600_000_000)
 	matchedAmt10 := sdk.NewInt(100_000_000)
 
-	TotalMatchedAmt := sdk.NewInt(3700_000_000).Add(matchedAmt7)
+	totalMatchedAmt := sdk.NewInt(3700_000_000).Add(matchedAmt7)
 
-	s.Require().Equal(mInfo.TotalMatchedAmount, TotalMatchedAmt)
+	s.Require().Equal(mInfo.TotalMatchedAmount, totalMatchedAmt)
 	s.Require().Equal(mInfo.AllocationMap[s.addr(1).String()], matchedAmt1)
 	s.Require().Equal(mInfo.AllocationMap[s.addr(2).String()], matchedAmt2)
 	s.Require().Equal(mInfo.AllocationMap[s.addr(3).String()], matchedAmt3)
@@ -591,7 +591,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2_LimitedSame() {
 	s.Require().Equal(mInfo.AllocationMap[s.addr(7).String()], matchedAmt7)
 	s.Require().Equal(mInfo.AllocationMap[s.addr(8).String()], matchedAmt8)
 	s.Require().Equal(mInfo.AllocationMap[s.addr(9).String()], matchedAmt9)
-	s.Require().Equal(mInfo.AllocationMap[s.addr(10).String()], matchedAmt1)
+	s.Require().Equal(mInfo.AllocationMap[s.addr(10).String()], matchedAmt10)
 
 	reservedMatchedAmt1 := sdk.NewInt(420_000_000)
 	reservedMatchedAmt2 := sdk.NewInt(420_000_000)
@@ -720,9 +720,9 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2_LimitedDifferent() {
 	matchedAmt9 := sdk.NewInt(200_000_000)
 	matchedAmt10 := sdk.NewInt(100_000_000)
 
-	TotalMatchedAmt := sdk.NewInt(4700_000_000)
+	totalMatchedAmt := sdk.NewInt(4700_000_000)
 
-	s.Require().Equal(mInfo.TotalMatchedAmount, TotalMatchedAmt)
+	s.Require().Equal(mInfo.TotalMatchedAmount, totalMatchedAmt)
 	s.Require().Equal(mInfo.AllocationMap[s.addr(1).String()], matchedAmt1)
 	s.Require().Equal(mInfo.AllocationMap[s.addr(2).String()], matchedAmt2)
 	s.Require().Equal(mInfo.AllocationMap[s.addr(3).String()], matchedAmt3)
