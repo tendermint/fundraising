@@ -46,14 +46,17 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Many() {
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], sdk.NewInt(450_000_000))
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(3).String()], sdk.NewInt(0))
 	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()], sdk.NewInt(50_000_000))
-	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()].Abs(), sdk.NewInt(0).Abs())
 	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()], sdk.NewInt(400_000_000))
+	s.Require().True(mInfo.RefundMap[s.addr(2).String()].Equal(sdk.NewInt(0)))
 
 	// Distribute selling coin
 	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
-	s.Require().Equal(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).Amount.Abs(), auction.SellingCoin.Amount.Sub(mInfo.TotalMatchedAmount).Abs())
+	s.Require().True(
+		s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).Amount.
+			Equal(auction.SellingCoin.Amount.Sub(mInfo.TotalMatchedAmount)),
+	)
 
 	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
 	s.Require().NoError(err)
@@ -62,7 +65,9 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Many() {
 	s.Require().True(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).IsZero())
 
 	// The auctioneer must have sellingCoin.Amount - TotalMatchedAmount
-	s.Require().Equal(s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount, auction.SellingCoin.Amount.Sub(mInfo.TotalMatchedAmount).Abs())
+	s.Require().True(
+		s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount.
+			Equal(auction.SellingCoin.Amount.Sub(mInfo.TotalMatchedAmount)))
 
 	// The bidders must have the matched selling coin
 	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(500_000_000))
@@ -112,8 +117,8 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Worth() {
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(1).String()], sdk.NewInt(500_000_000))
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], sdk.NewInt(500_000_000))
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(3).String()], sdk.NewInt(0))
-	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()].Abs(), sdk.NewInt(0).Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()].Abs(), sdk.NewInt(0).Abs())
+	s.Require().True(mInfo.RefundMap[s.addr(1).String()].IsZero())
+	s.Require().True(mInfo.RefundMap[s.addr(2).String()].IsZero())
 	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()], sdk.NewInt(500_000_000))
 
 	// Distribute selling coin
@@ -127,7 +132,10 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Worth() {
 	s.Require().True(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).IsZero())
 
 	// The auctioneer must have sellingCoin.Amount - TotalMatchedAmount
-	s.Require().Equal(s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount, auction.SellingCoin.Amount.Sub(mInfo.TotalMatchedAmount).Abs())
+	s.Require().True(
+		s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount.
+			Equal(auction.SellingCoin.Amount.Sub(mInfo.TotalMatchedAmount)),
+	)
 
 	// The bidders must have the matched selling coin
 	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount, matchedAmt)
@@ -179,8 +187,8 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed() {
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], sdk.NewInt(500_000_000))
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(3).String()], sdk.NewInt(0))
 	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()], sdk.NewInt(50_000_000))
-	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()].Abs(), sdk.NewInt(0).Abs())
 	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()], sdk.NewInt(500_000_000))
+	s.Require().True(mInfo.RefundMap[s.addr(2).String()].IsZero())
 
 	// Distribute selling coin
 	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
@@ -193,7 +201,10 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed() {
 	s.Require().True(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).IsZero())
 
 	// The auctioneer must have sellingCoin.Amount - TotalMatchedAmount
-	s.Require().Equal(s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount, auction.SellingCoin.Amount.Sub(mInfo.TotalMatchedAmount).Abs())
+	s.Require().True(
+		s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount.
+			Equal(auction.SellingCoin.Amount.Sub(mInfo.TotalMatchedAmount)),
+	)
 
 	// The bidders must have the matched selling coin
 	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount, matchedAmt1)
@@ -241,7 +252,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Many_Limited() {
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], sdk.NewInt(360_000_000))
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(3).String()], sdk.NewInt(0))
 	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()], sdk.NewInt(40_000_000))
-	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()].Abs(), sdk.NewInt(0).Abs())
+	s.Require().True(mInfo.RefundMap[s.addr(2).String()].IsZero())
 	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()], sdk.NewInt(320_000_000))
 
 	// Distribute selling coin
@@ -304,7 +315,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Worth_Limited() {
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(3).String()], sdk.NewInt(320_000_000))
 	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()], sdk.NewInt(80_000_000))
 	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()], sdk.NewInt(40_000_000))
-	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()].Abs(), sdk.NewInt(0_000_000).Abs())
+	s.Require().True(mInfo.RefundMap[s.addr(3).String()].IsZero())
 
 	// Distribute selling coin
 	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
@@ -366,7 +377,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed_Limited() {
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(3).String()], sdk.NewInt(450_000_000))
 	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()], sdk.NewInt(100_000_000))
 	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()], sdk.NewInt(20_000_000))
-	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()].Abs(), sdk.NewInt(0).Abs())
+	s.Require().True(mInfo.RefundMap[s.addr(3).String()].IsZero())
 
 	// Distribute selling coin
 	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
@@ -379,7 +390,10 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed_Limited() {
 	s.Require().True(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).IsZero())
 
 	// The auctioneer must have sellingCoin.Amount - TotalMatchedAmount
-	s.Require().Equal(s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount.Abs(), sdk.NewInt(37_500_000).Abs())
+	s.Require().True(
+		s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount.
+			Equal(sdk.NewInt(37_500_000)),
+	)
 
 	// The bidders must have the matched selling coin
 	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(500_000_000))
@@ -485,16 +499,16 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2() {
 	refundAmt9 := sdk.NewInt(360_000_000)
 	refundAmt10 := sdk.NewInt(60_000_000)
 
-	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()].Abs(), refundAmt1.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()].Abs(), refundAmt2.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()].Abs(), refundAmt3.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(4).String()].Abs(), refundAmt4.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(5).String()].Abs(), refundAmt5.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(6).String()].Abs(), refundAmt6.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(7).String()].Abs(), refundAmt7.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(8).String()].Abs(), refundAmt8.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(9).String()].Abs(), refundAmt9.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(10).String()].Abs(), refundAmt10.Abs())
+	s.Require().True(mInfo.RefundMap[s.addr(1).String()].Equal(refundAmt1))
+	s.Require().True(mInfo.RefundMap[s.addr(2).String()].Equal(refundAmt2))
+	s.Require().True(mInfo.RefundMap[s.addr(3).String()].Equal(refundAmt3))
+	s.Require().True(mInfo.RefundMap[s.addr(4).String()].Equal(refundAmt4))
+	s.Require().True(mInfo.RefundMap[s.addr(5).String()].Equal(refundAmt5))
+	s.Require().True(mInfo.RefundMap[s.addr(6).String()].Equal(refundAmt6))
+	s.Require().True(mInfo.RefundMap[s.addr(7).String()].Equal(refundAmt7))
+	s.Require().True(mInfo.RefundMap[s.addr(8).String()].Equal(refundAmt8))
+	s.Require().True(mInfo.RefundMap[s.addr(9).String()].Equal(refundAmt9))
+	s.Require().True(mInfo.RefundMap[s.addr(10).String()].Equal(refundAmt10))
 
 	// Distribute selling coin
 	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
@@ -515,11 +529,11 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2() {
 	s.Require().Equal(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).Amount, matchedAmt3)
 	s.Require().Equal(s.getBalance(s.addr(4), auction.GetSellingCoin().Denom).Amount, matchedAmt4)
 	s.Require().Equal(s.getBalance(s.addr(5), auction.GetSellingCoin().Denom).Amount, matchedAmt5)
-	s.Require().Equal(s.getBalance(s.addr(6), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt_Zero.Abs())
-	s.Require().Equal(s.getBalance(s.addr(7), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt_Zero.Abs())
+	s.Require().True(s.getBalance(s.addr(6), auction.GetSellingCoin().Denom).Amount.IsZero())
+	s.Require().True(s.getBalance(s.addr(7), auction.GetSellingCoin().Denom).Amount.IsZero())
 	s.Require().Equal(s.getBalance(s.addr(8), auction.GetSellingCoin().Denom).Amount, matchedAmt8)
-	s.Require().Equal(s.getBalance(s.addr(9), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt_Zero.Abs())
-	s.Require().Equal(s.getBalance(s.addr(10), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt_Zero.Abs())
+	s.Require().True(s.getBalance(s.addr(9), auction.GetSellingCoin().Denom).Amount.IsZero())
+	s.Require().True(s.getBalance(s.addr(10), auction.GetSellingCoin().Denom).Amount.IsZero())
 
 	// Refund payingCoin
 	err = s.keeper.RefundPayingCoin(s.ctx, auction, mInfo)
@@ -626,16 +640,16 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2_LimitedSame() {
 	refundAmt9 := sdk.NewInt(0)
 	refundAmt10 := sdk.NewInt(0)
 
-	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()].Abs(), refundAmt1.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()].Abs(), refundAmt2.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()].Abs(), refundAmt3.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(4).String()].Abs(), refundAmt4.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(5).String()].Abs(), refundAmt5.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(6).String()].Abs(), refundAmt6.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(7).String()].Abs(), refundAmt7.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(8).String()].Abs(), refundAmt8.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(9).String()].Abs(), refundAmt9.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(10).String()].Abs(), refundAmt10.Abs())
+	s.Require().True(mInfo.RefundMap[s.addr(1).String()].Equal(refundAmt1))
+	s.Require().True(mInfo.RefundMap[s.addr(2).String()].Equal(refundAmt2))
+	s.Require().True(mInfo.RefundMap[s.addr(3).String()].Equal(refundAmt3))
+	s.Require().True(mInfo.RefundMap[s.addr(4).String()].Equal(refundAmt4))
+	s.Require().True(mInfo.RefundMap[s.addr(5).String()].Equal(refundAmt5))
+	s.Require().True(mInfo.RefundMap[s.addr(6).String()].Equal(refundAmt6))
+	s.Require().True(mInfo.RefundMap[s.addr(7).String()].Equal(refundAmt7))
+	s.Require().True(mInfo.RefundMap[s.addr(8).String()].Equal(refundAmt8))
+	s.Require().True(mInfo.RefundMap[s.addr(9).String()].Equal(refundAmt9))
+	s.Require().True(mInfo.RefundMap[s.addr(10).String()].Equal(refundAmt10))
 
 	// Distribute selling coin
 	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
@@ -656,7 +670,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2_LimitedSame() {
 	s.Require().Equal(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).Amount, matchedAmt3)
 	s.Require().Equal(s.getBalance(s.addr(4), auction.GetSellingCoin().Denom).Amount, matchedAmt4)
 	s.Require().Equal(s.getBalance(s.addr(5), auction.GetSellingCoin().Denom).Amount, matchedAmt5)
-	s.Require().Equal(s.getBalance(s.addr(6), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt6.Abs())
+	s.Require().True(s.getBalance(s.addr(6), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt6))
 	s.Require().Equal(s.getBalance(s.addr(7), auction.GetSellingCoin().Denom).Amount, matchedAmt7)
 	s.Require().Equal(s.getBalance(s.addr(8), auction.GetSellingCoin().Denom).Amount, matchedAmt8)
 	s.Require().Equal(s.getBalance(s.addr(9), auction.GetSellingCoin().Denom).Amount, matchedAmt9)
@@ -767,16 +781,16 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2_LimitedDifferent() {
 	refundAmt9 := sdk.NewInt(20_000_000)
 	refundAmt10 := sdk.NewInt(10_000_000)
 
-	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()].Abs(), refundAmt1.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()].Abs(), refundAmt2.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()].Abs(), refundAmt3.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(4).String()].Abs(), refundAmt4.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(5).String()].Abs(), refundAmt5.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(6).String()].Abs(), refundAmt6.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(7).String()].Abs(), refundAmt7.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(8).String()].Abs(), refundAmt8.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(9).String()].Abs(), refundAmt9.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(10).String()].Abs(), refundAmt10.Abs())
+	s.Require().True(mInfo.RefundMap[s.addr(1).String()].Equal(refundAmt1))
+	s.Require().True(mInfo.RefundMap[s.addr(2).String()].Equal(refundAmt2))
+	s.Require().True(mInfo.RefundMap[s.addr(3).String()].Equal(refundAmt3))
+	s.Require().True(mInfo.RefundMap[s.addr(4).String()].Equal(refundAmt4))
+	s.Require().True(mInfo.RefundMap[s.addr(5).String()].Equal(refundAmt5))
+	s.Require().True(mInfo.RefundMap[s.addr(6).String()].Equal(refundAmt6))
+	s.Require().True(mInfo.RefundMap[s.addr(7).String()].Equal(refundAmt7))
+	s.Require().True(mInfo.RefundMap[s.addr(8).String()].Equal(refundAmt8))
+	s.Require().True(mInfo.RefundMap[s.addr(9).String()].Equal(refundAmt9))
+	s.Require().True(mInfo.RefundMap[s.addr(10).String()].Equal(refundAmt10))
 
 	// Distribute selling coin
 	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
@@ -956,23 +970,23 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed3() {
 	refundAmt16 := sdk.NewInt(2500_000_000).Sub(reservedMatchedAmt16)
 	refundAmt17 := sdk.NewInt(180_000_000).ToDec().Mul(parseDec("10.52")).Ceil().TruncateInt().Sub(reservedMatchedAmt17)
 
-	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()].Abs(), refundAmt1.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()].Abs(), refundAmt2.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()].Abs(), refundAmt3.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(4).String()].Abs(), refundAmt4.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(5).String()].Abs(), refundAmt5.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(6).String()].Abs(), refundAmt6.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(7).String()].Abs(), refundAmt7.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(8).String()].Abs(), refundAmt8.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(9).String()].Abs(), refundAmt9.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(10).String()].Abs(), refundAmt10.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(11).String()].Abs(), refundAmt11.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(12).String()].Abs(), refundAmt12.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(13).String()].Abs(), refundAmt13.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(14).String()].Abs(), refundAmt14.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(15).String()].Abs(), refundAmt15.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(16).String()].Abs(), refundAmt16.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(17).String()].Abs(), refundAmt17.Abs())
+	s.Require().True(mInfo.RefundMap[s.addr(1).String()].Equal(refundAmt1))
+	s.Require().True(mInfo.RefundMap[s.addr(2).String()].Equal(refundAmt2))
+	s.Require().True(mInfo.RefundMap[s.addr(3).String()].Equal(refundAmt3))
+	s.Require().True(mInfo.RefundMap[s.addr(4).String()].Equal(refundAmt4))
+	s.Require().True(mInfo.RefundMap[s.addr(5).String()].Equal(refundAmt5))
+	s.Require().True(mInfo.RefundMap[s.addr(6).String()].Equal(refundAmt6))
+	s.Require().True(mInfo.RefundMap[s.addr(7).String()].Equal(refundAmt7))
+	s.Require().True(mInfo.RefundMap[s.addr(8).String()].Equal(refundAmt8))
+	s.Require().True(mInfo.RefundMap[s.addr(9).String()].Equal(refundAmt9))
+	s.Require().True(mInfo.RefundMap[s.addr(10).String()].Equal(refundAmt10))
+	s.Require().True(mInfo.RefundMap[s.addr(11).String()].Equal(refundAmt11))
+	s.Require().True(mInfo.RefundMap[s.addr(12).String()].Equal(refundAmt12))
+	s.Require().True(mInfo.RefundMap[s.addr(13).String()].Equal(refundAmt13))
+	s.Require().True(mInfo.RefundMap[s.addr(14).String()].Equal(refundAmt14))
+	s.Require().True(mInfo.RefundMap[s.addr(15).String()].Equal(refundAmt15))
+	s.Require().True(mInfo.RefundMap[s.addr(16).String()].Equal(refundAmt16))
+	s.Require().True(mInfo.RefundMap[s.addr(17).String()].Equal(refundAmt17))
 
 	// Distribute selling coin
 	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
@@ -988,23 +1002,23 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed3() {
 	s.Require().Equal(s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount, auction.SellingCoin.Amount.Sub(mInfo.TotalMatchedAmount))
 
 	// The bidders must have the matched selling coin
-	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt1.Abs())
-	s.Require().Equal(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt2.Abs())
-	s.Require().Equal(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt3.Abs())
-	s.Require().Equal(s.getBalance(s.addr(4), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt4.Abs())
-	s.Require().Equal(s.getBalance(s.addr(5), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt5.Abs())
-	s.Require().Equal(s.getBalance(s.addr(6), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt6.Abs())
-	s.Require().Equal(s.getBalance(s.addr(7), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt7.Abs())
-	s.Require().Equal(s.getBalance(s.addr(8), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt8.Abs())
-	s.Require().Equal(s.getBalance(s.addr(9), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt9.Abs())
-	s.Require().Equal(s.getBalance(s.addr(10), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt10.Abs())
-	s.Require().Equal(s.getBalance(s.addr(11), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt11.Abs())
-	s.Require().Equal(s.getBalance(s.addr(12), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt12.Abs())
-	s.Require().Equal(s.getBalance(s.addr(13), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt13.Abs())
-	s.Require().Equal(s.getBalance(s.addr(14), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt14.Abs())
-	s.Require().Equal(s.getBalance(s.addr(15), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt15.Abs())
-	s.Require().Equal(s.getBalance(s.addr(16), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt16.Abs())
-	s.Require().Equal(s.getBalance(s.addr(17), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt17.Abs())
+	s.Require().True(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt1))
+	s.Require().True(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt2))
+	s.Require().True(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt3))
+	s.Require().True(s.getBalance(s.addr(4), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt4))
+	s.Require().True(s.getBalance(s.addr(5), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt5))
+	s.Require().True(s.getBalance(s.addr(6), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt6))
+	s.Require().True(s.getBalance(s.addr(7), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt7))
+	s.Require().True(s.getBalance(s.addr(8), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt8))
+	s.Require().True(s.getBalance(s.addr(9), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt9))
+	s.Require().True(s.getBalance(s.addr(10), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt10))
+	s.Require().True(s.getBalance(s.addr(11), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt11))
+	s.Require().True(s.getBalance(s.addr(12), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt12))
+	s.Require().True(s.getBalance(s.addr(13), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt13))
+	s.Require().True(s.getBalance(s.addr(14), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt14))
+	s.Require().True(s.getBalance(s.addr(15), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt15))
+	s.Require().True(s.getBalance(s.addr(16), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt16))
+	s.Require().True(s.getBalance(s.addr(17), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt17))
 
 	// Refund payingCoin
 	err = s.keeper.RefundPayingCoin(s.ctx, auction, mInfo)
@@ -1163,23 +1177,23 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed3_LimitedDifferent() {
 	refundAmt16 := sdk.NewInt(0)
 	refundAmt17 := sdk.NewInt(42_000_000)
 
-	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()].Abs(), refundAmt1.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()].Abs(), refundAmt2.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()].Abs(), refundAmt3.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(4).String()].Abs(), refundAmt4.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(5).String()].Abs(), refundAmt5.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(6).String()].Abs(), refundAmt6.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(7).String()].Abs(), refundAmt7.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(8).String()].Abs(), refundAmt8.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(9).String()].Abs(), refundAmt9.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(10).String()].Abs(), refundAmt10.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(11).String()].Abs(), refundAmt11.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(12).String()].Abs(), refundAmt12.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(13).String()].Abs(), refundAmt13.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(14).String()].Abs(), refundAmt14.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(15).String()].Abs(), refundAmt15.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(16).String()].Abs(), refundAmt16.Abs())
-	s.Require().Equal(mInfo.RefundMap[s.addr(17).String()].Abs(), refundAmt17.Abs())
+	s.Require().True(mInfo.RefundMap[s.addr(1).String()].Equal(refundAmt1))
+	s.Require().True(mInfo.RefundMap[s.addr(2).String()].Equal(refundAmt2))
+	s.Require().True(mInfo.RefundMap[s.addr(3).String()].Equal(refundAmt3))
+	s.Require().True(mInfo.RefundMap[s.addr(4).String()].Equal(refundAmt4))
+	s.Require().True(mInfo.RefundMap[s.addr(5).String()].Equal(refundAmt5))
+	s.Require().True(mInfo.RefundMap[s.addr(6).String()].Equal(refundAmt6))
+	s.Require().True(mInfo.RefundMap[s.addr(7).String()].Equal(refundAmt7))
+	s.Require().True(mInfo.RefundMap[s.addr(8).String()].Equal(refundAmt8))
+	s.Require().True(mInfo.RefundMap[s.addr(9).String()].Equal(refundAmt9))
+	s.Require().True(mInfo.RefundMap[s.addr(10).String()].Equal(refundAmt10))
+	s.Require().True(mInfo.RefundMap[s.addr(11).String()].Equal(refundAmt11))
+	s.Require().True(mInfo.RefundMap[s.addr(12).String()].Equal(refundAmt12))
+	s.Require().True(mInfo.RefundMap[s.addr(13).String()].Equal(refundAmt13))
+	s.Require().True(mInfo.RefundMap[s.addr(14).String()].Equal(refundAmt14))
+	s.Require().True(mInfo.RefundMap[s.addr(15).String()].Equal(refundAmt15))
+	s.Require().True(mInfo.RefundMap[s.addr(16).String()].Equal(refundAmt16))
+	s.Require().True(mInfo.RefundMap[s.addr(17).String()].Equal(refundAmt17))
 
 	// Distribute selling coin
 	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
@@ -1195,23 +1209,23 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed3_LimitedDifferent() {
 	s.Require().Equal(s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount, auction.SellingCoin.Amount.Sub(mInfo.TotalMatchedAmount))
 
 	// The bidders must have the matched selling coin
-	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt1.Abs())
-	s.Require().Equal(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt2.Abs())
-	s.Require().Equal(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt3.Abs())
-	s.Require().Equal(s.getBalance(s.addr(4), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt4.Abs())
-	s.Require().Equal(s.getBalance(s.addr(5), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt5.Abs())
-	s.Require().Equal(s.getBalance(s.addr(6), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt6.Abs())
-	s.Require().Equal(s.getBalance(s.addr(7), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt7.Abs())
-	s.Require().Equal(s.getBalance(s.addr(8), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt8.Abs())
-	s.Require().Equal(s.getBalance(s.addr(9), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt9.Abs())
-	s.Require().Equal(s.getBalance(s.addr(10), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt10.Abs())
-	s.Require().Equal(s.getBalance(s.addr(11), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt11.Abs())
-	s.Require().Equal(s.getBalance(s.addr(12), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt12.Abs())
-	s.Require().Equal(s.getBalance(s.addr(13), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt13.Abs())
-	s.Require().Equal(s.getBalance(s.addr(14), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt14.Abs())
-	s.Require().Equal(s.getBalance(s.addr(15), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt15.Abs())
-	s.Require().Equal(s.getBalance(s.addr(16), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt16.Abs())
-	s.Require().Equal(s.getBalance(s.addr(17), auction.GetSellingCoin().Denom).Amount.Abs(), matchedAmt17.Abs())
+	s.Require().True(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt1))
+	s.Require().True(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt2))
+	s.Require().True(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt3))
+	s.Require().True(s.getBalance(s.addr(4), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt4))
+	s.Require().True(s.getBalance(s.addr(5), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt5))
+	s.Require().True(s.getBalance(s.addr(6), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt6))
+	s.Require().True(s.getBalance(s.addr(7), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt7))
+	s.Require().True(s.getBalance(s.addr(8), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt8))
+	s.Require().True(s.getBalance(s.addr(9), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt9))
+	s.Require().True(s.getBalance(s.addr(10), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt10))
+	s.Require().True(s.getBalance(s.addr(11), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt11))
+	s.Require().True(s.getBalance(s.addr(12), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt12))
+	s.Require().True(s.getBalance(s.addr(13), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt13))
+	s.Require().True(s.getBalance(s.addr(14), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt14))
+	s.Require().True(s.getBalance(s.addr(15), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt15))
+	s.Require().True(s.getBalance(s.addr(16), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt16))
+	s.Require().True(s.getBalance(s.addr(17), auction.GetSellingCoin().Denom).Amount.Equal(matchedAmt17))
 
 	// Refund payingCoin
 	err = s.keeper.RefundPayingCoin(s.ctx, auction, mInfo)
