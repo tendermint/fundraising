@@ -123,7 +123,7 @@ func (k Keeper) AllocateVestingPayingCoin(ctx sdk.Context, auction types.Auction
 	return nil
 }
 
-// CreateFixedPriceAuction sets fixed price auction.
+// CreateFixedPriceAuction sets a fixed price auction.
 func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFixedPriceAuction) (types.AuctionI, error) {
 	if ctx.BlockTime().After(msg.EndTime) { // EndTime < CurrentTime
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be set after the current time")
@@ -139,11 +139,13 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		return nil, err
 	}
 
-	allowedBidders := []types.AllowedBidder{} // it is nil when an auction is created
-	remainingSellingCoin := msg.SellingCoin   // it is starting with selling coin amount
-	endTimes := []time.Time{msg.EndTime}      // it is an array data type to handle BatchAuction
+	// Allowed bidder list is empty when an auction is created
+	// The module is fundamentally designed to delegate authorization
+	// to an external module to add allowed bidder list for an auction
+	allowedBidders := []types.AllowedBidder{}
+	endTimes := []time.Time{msg.EndTime} // it is an array data type to handle BatchAuction
 
-	baseAuction := types.NewBaseAuction(
+	ba := types.NewBaseAuction(
 		nextId,
 		types.AuctionTypeFixedPrice,
 		allowedBidders,
@@ -155,34 +157,35 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		msg.PayingCoinDenom,
 		types.VestingReserveAddress(nextId).String(),
 		msg.VestingSchedules,
-		remainingSellingCoin,
+		msg.SellingCoin,
 		msg.StartTime,
 		endTimes,
 		types.AuctionStatusStandBy,
 	)
 
 	// Update status if the start time is already passed over the current time
-	if baseAuction.ShouldAuctionStarted(ctx.BlockTime()) {
-		baseAuction.Status = types.AuctionStatusStarted
+	if ba.ShouldAuctionStarted(ctx.BlockTime()) {
+		ba.Status = types.AuctionStatusStarted
 	}
 
-	auction := types.NewFixedPriceAuction(baseAuction)
+	auction := types.NewFixedPriceAuction(ba)
 	k.SetAuction(ctx, auction)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeCreateFixedPriceAuction,
 			sdk.NewAttribute(types.AttributeKeyAuctionId, strconv.FormatUint(nextId, 10)),
-			sdk.NewAttribute(types.AttributeKeyAuctioneerAddress, msg.Auctioneer),
-			sdk.NewAttribute(types.AttributeKeyStartPrice, msg.StartPrice.String()),
+			sdk.NewAttribute(types.AttributeKeyAuctioneerAddress, auction.GetAuctioneer().String()),
 			sdk.NewAttribute(types.AttributeKeySellingReserveAddress, auction.GetSellingReserveAddress().String()),
 			sdk.NewAttribute(types.AttributeKeyPayingReserveAddress, auction.GetPayingReserveAddress().String()),
+			sdk.NewAttribute(types.AttributeKeyStartPrice, auction.GetStartPrice().String()),
+			sdk.NewAttribute(types.AttributeKeySellingCoin, auction.GetSellingCoin().String()),
+			sdk.NewAttribute(types.AttributeKeyPayingCoinDenom, auction.GetPayingCoinDenom()),
 			sdk.NewAttribute(types.AttributeKeyVestingReserveAddress, auction.GetVestingReserveAddress().String()),
-			sdk.NewAttribute(types.AttributeKeySellingCoin, msg.SellingCoin.String()),
-			sdk.NewAttribute(types.AttributeKeyPayingCoinDenom, msg.PayingCoinDenom),
-			sdk.NewAttribute(types.AttributeKeyStartTime, msg.StartTime.String()),
+			sdk.NewAttribute(types.AttributeKeyRemainingSellingCoin, auction.GetRemainingSellingCoin().String()),
+			sdk.NewAttribute(types.AttributeKeyStartTime, auction.GetStartTime().String()),
 			sdk.NewAttribute(types.AttributeKeyEndTime, msg.EndTime.String()),
-			sdk.NewAttribute(types.AttributeKeyAuctionStatus, types.AuctionStatusStandBy.String()),
+			sdk.NewAttribute(types.AttributeKeyAuctionStatus, auction.GetStatus().String()),
 		),
 	})
 
@@ -205,10 +208,11 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 		return nil, err
 	}
 
-	allowedBidders := []types.AllowedBidder{} // it is nil when an auction is created
-	matchedPrice := sdk.ZeroDec()             // TODO: makes sense to have start price?
-	remainingSellingCoin := msg.SellingCoin   // it is starting with selling coin amount
-	endTimes := []time.Time{msg.EndTime}      // it is an array data type to handle BatchAuction
+	// Allowed bidder list is empty when an auction is created
+	// The module is fundamentally designed to delegate authorization
+	// to an external module to add allowed bidder list for an auction
+	allowedBidders := []types.AllowedBidder{}
+	endTimes := []time.Time{msg.EndTime} // it is an array data type to handle BatchAuction
 
 	baseAuction := types.NewBaseAuction(
 		nextId,
@@ -222,7 +226,7 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 		msg.PayingCoinDenom,
 		types.VestingReserveAddress(nextId).String(),
 		msg.VestingSchedules,
-		remainingSellingCoin,
+		msg.SellingCoin,
 		msg.StartTime,
 		endTimes,
 		types.AuctionStatusStandBy,
@@ -236,7 +240,7 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 	auction := types.NewBatchAuction(
 		baseAuction,
 		msg.MinBidPrice,
-		matchedPrice,
+		sdk.ZeroDec(),
 		msg.MaxExtendedRound,
 		msg.ExtendedRoundRate,
 	)
@@ -246,20 +250,20 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 		sdk.NewEvent(
 			types.EventTypeCreateBatchAuction,
 			sdk.NewAttribute(types.AttributeKeyAuctionId, strconv.FormatUint(nextId, 10)),
-			sdk.NewAttribute(types.AttributeKeyAuctioneerAddress, msg.Auctioneer),
-			sdk.NewAttribute(types.AttributeKeyStartPrice, auction.GetStartPrice().String()),
+			sdk.NewAttribute(types.AttributeKeyAuctioneerAddress, auction.GetAuctioneer().String()),
 			sdk.NewAttribute(types.AttributeKeySellingReserveAddress, auction.GetSellingReserveAddress().String()),
 			sdk.NewAttribute(types.AttributeKeyPayingReserveAddress, auction.GetPayingReserveAddress().String()),
-			sdk.NewAttribute(types.AttributeKeyVestingReserveAddress, auction.GetVestingReserveAddress().String()),
+			sdk.NewAttribute(types.AttributeKeyStartPrice, auction.GetStartPrice().String()),
 			sdk.NewAttribute(types.AttributeKeySellingCoin, auction.GetSellingCoin().String()),
 			sdk.NewAttribute(types.AttributeKeyPayingCoinDenom, auction.GetPayingCoinDenom()),
+			sdk.NewAttribute(types.AttributeKeyVestingReserveAddress, auction.GetVestingReserveAddress().String()),
+			sdk.NewAttribute(types.AttributeKeyRemainingSellingCoin, auction.GetRemainingSellingCoin().String()),
 			sdk.NewAttribute(types.AttributeKeyStartTime, auction.GetStartTime().String()),
 			sdk.NewAttribute(types.AttributeKeyEndTime, msg.EndTime.String()),
 			sdk.NewAttribute(types.AttributeKeyAuctionStatus, auction.GetStatus().String()),
-			sdk.NewAttribute(types.AttributeKeyMinBidPrice, msg.MinBidPrice.String()),
-			sdk.NewAttribute(types.AttributeKeyMatchedPrice, matchedPrice.String()),
-			sdk.NewAttribute(types.AttributeKeyMaxExtendedRound, fmt.Sprint(msg.MaxExtendedRound)),
-			sdk.NewAttribute(types.AttributeKeyExtendedRoundRate, msg.ExtendedRoundRate.String()),
+			sdk.NewAttribute(types.AttributeKeyMinBidPrice, auction.MinBidPrice.String()),
+			sdk.NewAttribute(types.AttributeKeyMaxExtendedRound, fmt.Sprint(auction.MaxExtendedRound)),
+			sdk.NewAttribute(types.AttributeKeyExtendedRoundRate, auction.ExtendedRoundRate.String()),
 		),
 	})
 
@@ -271,7 +275,7 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) error {
 	auction, found := k.GetAuction(ctx, msg.AuctionId)
 	if !found {
-		return sdkerrors.Wrap(sdkerrors.ErrNotFound, "auction not found")
+		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d not found", msg.AuctionId)
 	}
 
 	if auction.GetAuctioneer().String() != msg.Auctioneer {
@@ -279,13 +283,12 @@ func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) erro
 	}
 
 	if auction.GetStatus() != types.AuctionStatusStandBy {
-		return sdkerrors.Wrap(types.ErrInvalidAuctionStatus, "auction cannot be cancelled due to current status")
+		return sdkerrors.Wrap(types.ErrInvalidAuctionStatus, "only the stand by auction can be cancelled")
 	}
 
 	sellingReserveAddr := auction.GetSellingReserveAddress()
 	auctioneerAddr := auction.GetAuctioneer()
 	sellingCoinDenom := auction.GetSellingCoin().Denom
-
 	spendableCoins := k.bankKeeper.SpendableCoins(ctx, sellingReserveAddr)
 	releaseCoin := sdk.NewCoin(sellingCoinDenom, spendableCoins.AmountOf(sellingCoinDenom))
 

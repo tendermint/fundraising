@@ -438,17 +438,17 @@ func UnmarshalBid(cdc codec.BinaryCodec, value []byte) (b Bid, err error) {
 	return b, err
 }
 
-// SellingReserveAddress returns an account for the selling reserve address with the given auction id.
+// SellingReserveAddress returns the selling reserve address with the given auction id.
 func SellingReserveAddress(auctionId uint64) sdk.AccAddress {
 	return DeriveAddress(ReserveAddressType, ModuleName, SellingReserveAddressPrefix+ModuleAddressNameSplitter+fmt.Sprint(auctionId))
 }
 
-// PayingReserveAddress returns an account for the paying reserve address with the given auction id.
+// PayingReserveAddress returns the paying reserve address with the given auction id.
 func PayingReserveAddress(auctionId uint64) sdk.AccAddress {
 	return DeriveAddress(ReserveAddressType, ModuleName, PayingReserveAddressPrefix+ModuleAddressNameSplitter+fmt.Sprint(auctionId))
 }
 
-// VestingReserveAddress returns an account for the vesting reserve address with the given auction id.
+// VestingReserveAddress returns the vesting reserve address with the given auction id.
 func VestingReserveAddress(auctionId uint64) sdk.AccAddress {
 	return DeriveAddress(ReserveAddressType, ModuleName, VestingReserveAddressPrefix+ModuleAddressNameSplitter+fmt.Sprint(auctionId))
 }

@@ -303,28 +303,59 @@ func (s *KeeperTestSuite) TestAllocateVestingPayingCoin() {
 }
 
 func (s *KeeperTestSuite) TestCancelAuction() {
-	standByAuction := s.createFixedPriceAuction(
+	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("1"),
 		parseCoin("500_000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
-		time.Now().AddDate(0, 1, 0),
-		time.Now().AddDate(0, 1, 0).AddDate(0, 1, 0),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 1, 0),
 		true,
 	)
-	s.Require().Equal(types.AuctionStatusStandBy, standByAuction.GetStatus())
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	// Not found auction
+	err := s.keeper.CancelAuction(s.ctx, &types.MsgCancelAuction{
+		Auctioneer: auction.Auctioneer,
+		AuctionId:  10,
+	})
+	s.Require().Error(err, sdkerrors.ErrNotFound)
+
+	// Unauthorized
+	err = s.keeper.CancelAuction(s.ctx, &types.MsgCancelAuction{
+		Auctioneer: s.addr(10).String(),
+		AuctionId:  auction.Id,
+	})
+	s.Require().Error(err, sdkerrors.ErrUnauthorized)
+
+	// Invalid auction status
+	err = s.keeper.CancelAuction(s.ctx, &types.MsgCancelAuction{
+		Auctioneer: auction.Auctioneer,
+		AuctionId:  auction.Id,
+	})
+	s.Require().Error(err, types.ErrInvalidAuctionStatus)
+
+	// Forcefully update auction status
+	err = auction.SetStatus(types.AuctionStatusStandBy)
+	s.Require().NoError(err)
+	s.keeper.SetAuction(s.ctx, auction)
 
 	// Cancel the auction
-	s.cancelAuction(standByAuction.GetId(), s.addr(0))
+	err = s.keeper.CancelAuction(s.ctx, &types.MsgCancelAuction{
+		Auctioneer: auction.Auctioneer,
+		AuctionId:  auction.Id,
+	})
+	s.Require().NoError(err)
 
-	auction, found := s.keeper.GetAuction(s.ctx, standByAuction.GetId())
+	// Verify the status
+	a, found := s.keeper.GetAuction(s.ctx, auction.GetId())
 	s.Require().True(found)
-	s.Require().Equal(types.AuctionStatusCancelled, auction.GetStatus())
+	s.Require().Equal(types.AuctionStatusCancelled, a.GetStatus())
 
 	// The selling reserve balance must be zero
-	sellingReserveAddr := auction.GetSellingReserveAddress()
-	sellingCoinDenom := auction.GetSellingCoin().Denom
+	sellingReserveAddr := a.GetSellingReserveAddress()
+	sellingCoinDenom := a.GetSellingCoin().Denom
 	s.Require().True(s.getBalance(sellingReserveAddr, sellingCoinDenom).IsZero())
 }
 
