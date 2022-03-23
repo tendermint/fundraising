@@ -211,12 +211,10 @@ func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) error {
 		return types.ErrInsufficientMinBidPrice
 	}
 
-	// Modifying bid type is not allowed
 	if bid.Coin.Denom != msg.Coin.Denom {
 		return sdkerrors.Wrap(types.ErrIncorrectCoinDenom, "modifying bid type is not allowed")
 	}
 
-	// Either bid price or coin amount must be greater than the modifying values
 	if msg.Price.LT(bid.Price) || msg.Coin.Amount.LT(bid.Coin.Amount) {
 		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "bid price or coin amount cannot be lower")
 	}
