@@ -358,9 +358,6 @@ func (k Keeper) AddAllowedBidders(ctx sdk.Context, auctionId uint64, bidders []t
 		return err
 	}
 
-	// Call the before allowed bidders added hook
-	k.BeforeAllowedBiddersAdded(ctx, auctionId, bidders)
-
 	// Append new bidders from the existing ones
 	allowedBidders := auction.GetAllowedBidders()
 	allowedBidders = append(allowedBidders, bidders...)
@@ -368,6 +365,9 @@ func (k Keeper) AddAllowedBidders(ctx sdk.Context, auctionId uint64, bidders []t
 	if err := auction.SetAllowedBidders(allowedBidders); err != nil {
 		return err
 	}
+
+	// Call the before allowed bidders added hook
+	k.BeforeAllowedBiddersAdded(ctx, auctionId, bidders)
 
 	k.SetAuction(ctx, auction)
 
