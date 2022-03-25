@@ -94,4 +94,11 @@ type FundraisingHooks interface {
 		bidder sdk.AccAddress,
 		maxBidAmount sdk.Int,
 	)
+
+	BeforeSellingCoinsDistributed(
+		ctx sdk.Context,
+		auctionId uint64,
+		allocationMap map[string]sdk.Int,
+		refundMap map[string]sdk.Int,
+	)
 }

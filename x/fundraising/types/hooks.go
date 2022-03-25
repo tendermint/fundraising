@@ -124,3 +124,14 @@ func (h MultiFundraisingHooks) BeforeAllowedBidderUpdated(
 		h[i].BeforeAllowedBidderUpdated(ctx, auctionId, bidder, maxBidAmount)
 	}
 }
+
+func (h MultiFundraisingHooks) BeforeSellingCoinsDistributed(
+	ctx sdk.Context,
+	auctionId uint64,
+	allocationMap map[string]sdk.Int,
+	refundMap map[string]sdk.Int,
+) {
+	for i := range h {
+		h[i].BeforeSellingCoinsDistributed(ctx, auctionId, allocationMap, refundMap)
+	}
+}

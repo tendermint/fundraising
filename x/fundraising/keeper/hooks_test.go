@@ -21,6 +21,7 @@ type MockFundraisingHooksReceiver struct {
 	BeforeBidModifiedValid              bool
 	BeforeAllowedBiddersAddedValid      bool
 	BeforeAllowedBidderUpdatedValid     bool
+	BeforeSellingCoinsDistributedValid  bool
 }
 
 func (h *MockFundraisingHooksReceiver) BeforeFixedPriceAuctionCreated(
@@ -99,6 +100,15 @@ func (h *MockFundraisingHooksReceiver) BeforeAllowedBidderUpdated(
 	h.BeforeAllowedBidderUpdatedValid = true
 }
 
+func (h *MockFundraisingHooksReceiver) BeforeSellingCoinsDistributed(
+	ctx sdk.Context,
+	auctionId uint64,
+	allocationMap map[string]sdk.Int,
+	refundMap map[string]sdk.Int,
+) {
+	h.BeforeSellingCoinsDistributedValid = true
+}
+
 func (s *KeeperTestSuite) TestHooks() {
 	fundraisingHooksReceiver := MockFundraisingHooksReceiver{}
 
@@ -112,6 +122,7 @@ func (s *KeeperTestSuite) TestHooks() {
 	s.Require().False(fundraisingHooksReceiver.BeforeBidModifiedValid)
 	s.Require().False(fundraisingHooksReceiver.BeforeAllowedBiddersAddedValid)
 	s.Require().False(fundraisingHooksReceiver.BeforeAllowedBidderUpdatedValid)
+	s.Require().False(fundraisingHooksReceiver.BeforeSellingCoinsDistributedValid)
 
 	// Create a fixed price auction
 	s.createFixedPriceAuction(
@@ -159,6 +170,7 @@ func (s *KeeperTestSuite) TestHooks() {
 		Auctioneer: standByAuction.Auctioneer,
 		AuctionId:  standByAuction.Id,
 	})
+	s.Require().NoError(err)
 	s.Require().True(fundraisingHooksReceiver.BeforeAuctionCanceledValid)
 
 	// Get already started batch auction
@@ -188,4 +200,12 @@ func (s *KeeperTestSuite) TestHooks() {
 	})
 	s.Require().NoError(err)
 	s.Require().True(fundraisingHooksReceiver.BeforeBidModifiedValid)
+
+	// Calculate fixed price allocation
+	mInfo := s.keeper.CalculateFixedPriceAllocation(s.ctx, auction)
+
+	// Allocate the selling coin
+	err = s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
+	s.Require().NoError(err)
+	s.Require().True(fundraisingHooksReceiver.BeforeSellingCoinsDistributedValid)
 }

@@ -19,110 +19,6 @@ func (k Keeper) GetNextAuctionIdWithUpdate(ctx sdk.Context) uint64 {
 	return id
 }
 
-func (k Keeper) ReleaseRemainingSellingCoin(ctx sdk.Context, auction types.AuctionI) error {
-	sellingReserveAddr := auction.GetSellingReserveAddress()
-	sellingCoinDenom := auction.GetSellingCoin().Denom
-
-	// Send all the remaining selling coins back to the auctioneer
-	spendableCoins := k.bankKeeper.SpendableCoins(ctx, sellingReserveAddr)
-	releaseAmt := spendableCoins.AmountOf(sellingCoinDenom)
-	releaseCoins := sdk.NewCoins(sdk.NewCoin(sellingCoinDenom, releaseAmt))
-
-	if err := k.bankKeeper.SendCoins(ctx, sellingReserveAddr, auction.GetAuctioneer(), releaseCoins); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (k Keeper) RefundPayingCoin(ctx sdk.Context, auction types.AuctionI, mInfo MatchingInfo) error {
-	payingReserveAddr := auction.GetPayingReserveAddress()
-	payingCoinDenom := auction.GetPayingCoinDenom()
-
-	inputs := []banktypes.Input{}
-	outputs := []banktypes.Output{}
-
-	// Refund the unmatched bid amount back to the bidder
-	for bidder, refundAmt := range mInfo.RefundMap {
-		if refundAmt.IsZero() {
-			continue
-		}
-
-		bidderAddr, err := sdk.AccAddressFromBech32(bidder)
-		if err != nil {
-			return err
-		}
-		refundCoins := sdk.NewCoins(sdk.NewCoin(payingCoinDenom, refundAmt))
-
-		inputs = append(inputs, banktypes.NewInput(payingReserveAddr, refundCoins))
-		outputs = append(outputs, banktypes.NewOutput(bidderAddr, refundCoins))
-	}
-
-	// Send all at once
-	if err := k.bankKeeper.InputOutputCoins(ctx, inputs, outputs); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// AllocateSellingCoin releases designated selling coin from the selling reserve account.
-func (k Keeper) AllocateSellingCoin(ctx sdk.Context, auction types.AuctionI, mInfo MatchingInfo) error {
-	sellingReserveAddr := auction.GetSellingReserveAddress()
-	sellingCoinDenom := auction.GetSellingCoin().Denom
-
-	inputs := []banktypes.Input{}
-	outputs := []banktypes.Output{}
-
-	// Allocate coins to all matched bidders in AllocationMap and
-	// set the amounts in trasnaction inputs and outputs from the selling reserve account
-	for bidder, allocAmt := range mInfo.AllocationMap {
-		if allocAmt.IsZero() {
-			continue
-		}
-		allocateCoins := sdk.NewCoins(sdk.NewCoin(sellingCoinDenom, allocAmt))
-		bidderAddr, _ := sdk.AccAddressFromBech32(bidder)
-
-		inputs = append(inputs, banktypes.NewInput(sellingReserveAddr, allocateCoins))
-		outputs = append(outputs, banktypes.NewOutput(bidderAddr, allocateCoins))
-	}
-
-	// Send all at once
-	if err := k.bankKeeper.InputOutputCoins(ctx, inputs, outputs); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// AllocateVestingPayingCoin releases the selling coin from the vesting reserve account.
-func (k Keeper) AllocateVestingPayingCoin(ctx sdk.Context, auction types.AuctionI) error {
-	vqs := k.GetVestingQueuesByAuctionId(ctx, auction.GetId())
-	vqsLen := len(vqs)
-
-	for i, vq := range vqs {
-		if vq.ShouldRelease(ctx.BlockTime()) {
-			vestingReserveAddr := auction.GetVestingReserveAddress()
-			auctioneerAddr := auction.GetAuctioneer()
-			payingCoins := sdk.NewCoins(vq.PayingCoin)
-
-			if err := k.bankKeeper.SendCoins(ctx, vestingReserveAddr, auctioneerAddr, payingCoins); err != nil {
-				return sdkerrors.Wrap(err, "failed to release paying coin to the auctioneer")
-			}
-
-			vq.SetReleased(true)
-			k.SetVestingQueue(ctx, vq)
-
-			// Update status to AuctionStatusFinished when all the amounts are released
-			if i == vqsLen-1 {
-				_ = auction.SetStatus(types.AuctionStatusFinished)
-				k.SetAuction(ctx, auction)
-			}
-		}
-	}
-
-	return nil
-}
-
 // CreateFixedPriceAuction sets a fixed price auction.
 func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFixedPriceAuction) (types.AuctionI, error) {
 	if ctx.BlockTime().After(msg.EndTime) { // EndTime < CurrentTime
@@ -403,6 +299,113 @@ func (k Keeper) UpdateAllowedBidder(ctx sdk.Context, auctionId uint64, bidder sd
 	k.BeforeAllowedBidderUpdated(ctx, auctionId, bidder, maxBidAmount)
 
 	k.SetAuction(ctx, auction)
+
+	return nil
+}
+
+// AllocateSellingCoin releases designated selling coin from the selling reserve account.
+func (k Keeper) AllocateSellingCoin(ctx sdk.Context, auction types.AuctionI, mInfo MatchingInfo) error {
+	// Call the before seling coin distributed hook
+	k.BeforeSellingCoinsDistributed(ctx, auction.GetId(), mInfo.AllocationMap, mInfo.RefundMap)
+
+	sellingReserveAddr := auction.GetSellingReserveAddress()
+	sellingCoinDenom := auction.GetSellingCoin().Denom
+
+	inputs := []banktypes.Input{}
+	outputs := []banktypes.Output{}
+
+	// Allocate coins to all matched bidders in AllocationMap and
+	// set the amounts in trasnaction inputs and outputs from the selling reserve account
+	for bidder, allocAmt := range mInfo.AllocationMap {
+		if allocAmt.IsZero() {
+			continue
+		}
+		allocateCoins := sdk.NewCoins(sdk.NewCoin(sellingCoinDenom, allocAmt))
+		bidderAddr, _ := sdk.AccAddressFromBech32(bidder)
+
+		inputs = append(inputs, banktypes.NewInput(sellingReserveAddr, allocateCoins))
+		outputs = append(outputs, banktypes.NewOutput(bidderAddr, allocateCoins))
+	}
+
+	// Send all at once
+	if err := k.bankKeeper.InputOutputCoins(ctx, inputs, outputs); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// AllocateVestingPayingCoin releases the selling coin from the vesting reserve account.
+func (k Keeper) AllocateVestingPayingCoin(ctx sdk.Context, auction types.AuctionI) error {
+	vqs := k.GetVestingQueuesByAuctionId(ctx, auction.GetId())
+	vqsLen := len(vqs)
+
+	for i, vq := range vqs {
+		if vq.ShouldRelease(ctx.BlockTime()) {
+			vestingReserveAddr := auction.GetVestingReserveAddress()
+			auctioneerAddr := auction.GetAuctioneer()
+			payingCoins := sdk.NewCoins(vq.PayingCoin)
+
+			if err := k.bankKeeper.SendCoins(ctx, vestingReserveAddr, auctioneerAddr, payingCoins); err != nil {
+				return sdkerrors.Wrap(err, "failed to release paying coin to the auctioneer")
+			}
+
+			vq.SetReleased(true)
+			k.SetVestingQueue(ctx, vq)
+
+			// Update status to AuctionStatusFinished when all the amounts are released
+			if i == vqsLen-1 {
+				_ = auction.SetStatus(types.AuctionStatusFinished)
+				k.SetAuction(ctx, auction)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (k Keeper) ReleaseRemainingSellingCoin(ctx sdk.Context, auction types.AuctionI) error {
+	sellingReserveAddr := auction.GetSellingReserveAddress()
+	sellingCoinDenom := auction.GetSellingCoin().Denom
+
+	// Send all the remaining selling coins back to the auctioneer
+	spendableCoins := k.bankKeeper.SpendableCoins(ctx, sellingReserveAddr)
+	releaseAmt := spendableCoins.AmountOf(sellingCoinDenom)
+	releaseCoins := sdk.NewCoins(sdk.NewCoin(sellingCoinDenom, releaseAmt))
+
+	if err := k.bankKeeper.SendCoins(ctx, sellingReserveAddr, auction.GetAuctioneer(), releaseCoins); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (k Keeper) RefundPayingCoin(ctx sdk.Context, auction types.AuctionI, mInfo MatchingInfo) error {
+	payingReserveAddr := auction.GetPayingReserveAddress()
+	payingCoinDenom := auction.GetPayingCoinDenom()
+
+	inputs := []banktypes.Input{}
+	outputs := []banktypes.Output{}
+
+	// Refund the unmatched bid amount back to the bidder
+	for bidder, refundAmt := range mInfo.RefundMap {
+		if refundAmt.IsZero() {
+			continue
+		}
+
+		bidderAddr, err := sdk.AccAddressFromBech32(bidder)
+		if err != nil {
+			return err
+		}
+		refundCoins := sdk.NewCoins(sdk.NewCoin(payingCoinDenom, refundAmt))
+
+		inputs = append(inputs, banktypes.NewInput(payingReserveAddr, refundCoins))
+		outputs = append(outputs, banktypes.NewOutput(bidderAddr, refundCoins))
+	}
+
+	// Send all at once
+	if err := k.bankKeeper.InputOutputCoins(ctx, inputs, outputs); err != nil {
+		return err
+	}
 
 	return nil
 }
