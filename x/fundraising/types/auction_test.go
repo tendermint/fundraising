@@ -123,3 +123,95 @@ func TestShouldAuctionFinished(t *testing.T) {
 		require.Equal(t, tc.expected, auction.ShouldAuctionFinished(types.MustParseRFC3339(tc.currentTime)))
 	}
 }
+
+func TestSellingReserveAddress(t *testing.T) {
+	for _, tc := range []struct {
+		auctionId uint64
+		expected  string
+	}{
+		{1, "cosmos1wl90665mfk3pgg095qhmlgha934exjvv437acgq42zw0sg94flestth4zu"},
+		{2, "cosmos197ewwasd96k2fh3nx5m76zvqxpzjcxuyq65rwgw0aa2edmwafgfqfa5qqz"},
+	} {
+		t.Run("", func(t *testing.T) {
+			require.Equal(t, tc.expected, types.SellingReserveAddress(tc.auctionId).String())
+		})
+	}
+}
+
+func TestPayingReserveAddress(t *testing.T) {
+	for _, tc := range []struct {
+		auctionId uint64
+		expected  string
+	}{
+		{1, "cosmos17gk7a5ys8pxuexl7tvyk3pc9tdmqjjek03zjemez4eqvqdxlu92qdhphm2"},
+		{2, "cosmos1s3cspws3lsqfvtjcz9jvpx7kjm93npmwjq8p4xfu3fcjj5jz9pks20uja6"},
+	} {
+		t.Run("", func(t *testing.T) {
+			require.Equal(t, tc.expected, types.PayingReserveAddress(tc.auctionId).String())
+		})
+	}
+}
+
+func TestVestingReserveAddress(t *testing.T) {
+	for _, tc := range []struct {
+		auctionId uint64
+		expected  string
+	}{
+		{1, "cosmos1q4x4k4qsr4jwrrugnplhlj52mfd9f8jn5ck7r4ykdpv9wczvz4dqe8vrvt"},
+		{2, "cosmos1pye9kv5f8s9n8uxnr0uznsn3klq57vqz8h2ya6u0v4w5666lqdfqjrw0qu"},
+	} {
+		t.Run("", func(t *testing.T) {
+			require.Equal(t, tc.expected, types.VestingReserveAddress(tc.auctionId).String())
+		})
+	}
+}
+
+func TestValidateAllowedBidders(t *testing.T) {
+	for _, tc := range []struct {
+		name            string
+		bidders         []types.AllowedBidder
+		totalSellingAmt sdk.Int
+		expectedErr     error
+	}{
+		{
+			"Happy case",
+			[]types.AllowedBidder{
+				{Bidder: sdk.AccAddress(crypto.AddressHash([]byte("Bidder"))).String(), MaxBidAmount: sdk.NewInt(100000)},
+			},
+			sdk.NewInt(100000),
+			nil,
+		},
+		{
+			"invalid case #1",
+			[]types.AllowedBidder{
+				{Bidder: sdk.AccAddress(crypto.AddressHash([]byte("Bidder"))).String(), MaxBidAmount: sdk.Int{}},
+			},
+			sdk.NewInt(100000),
+			types.ErrInvalidMaxBidAmount,
+		},
+		{
+			"invalid case #2",
+			[]types.AllowedBidder{
+				{Bidder: sdk.AccAddress(crypto.AddressHash([]byte("Bidder"))).String(), MaxBidAmount: sdk.ZeroInt()},
+			},
+			sdk.NewInt(100000),
+			types.ErrInvalidMaxBidAmount,
+		},
+		{
+			"invalid case #3",
+			[]types.AllowedBidder{
+				{Bidder: sdk.AccAddress(crypto.AddressHash([]byte("Bidder"))).String(), MaxBidAmount: sdk.NewInt(1000000000000000)},
+			},
+			sdk.NewInt(100000),
+			types.ErrInsufficientRemainingAmount,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			err := types.ValidateAllowedBidders(tc.bidders, tc.totalSellingAmt)
+			if tc.expectedErr == nil {
+				require.NoError(t, err)
+			}
+			require.ErrorIs(t, err, tc.expectedErr)
+		})
+	}
+}
