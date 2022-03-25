@@ -14,6 +14,7 @@ const (
 	AttributeKeyVestingReserveAddress = "vesting_pool_address"
 	AttributeKeyStartPrice            = "start_price"
 	AttributeKeySellingCoin           = "selling_coin"
+	AttributeKeyRemainingSellingCoin  = "remaining_selling_coin"
 	AttributeKeyVestingSchedules      = "vesting_schedules"
 	AttributeKeyPayingCoinDenom       = "paying_coin_denom"
 	AttributeKeyAuctionStatus         = "auction_status"
@@ -24,7 +25,6 @@ const (
 	AttributeKeyBidCoin               = "bid_coin"
 	AttributeKeyBidAmount             = "bid_amount"
 	AttributeKeyMinBidPrice           = "min_bid_price"
-	AttributeKeyMatchedPrice          = "matched_price"
 	AttributeKeyMaxExtendedRound      = "maximum_extended_round"
 	AttributeKeyExtendedRoundRate     = "extended_round_rate"
 )

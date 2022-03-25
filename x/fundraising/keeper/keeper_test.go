@@ -224,14 +224,6 @@ func (s *KeeperTestSuite) placeBidBatchMany(
 	return b
 }
 
-func (s *KeeperTestSuite) cancelAuction(auctionId uint64, auctioneer sdk.AccAddress) {
-	err := s.keeper.CancelAuction(s.ctx, &types.MsgCancelAuction{
-		Auctioneer: auctioneer.String(),
-		AuctionId:  auctionId,
-	})
-	s.Require().NoError(err)
-}
-
 //
 // Below are useful helpers to write test code easily.
 //

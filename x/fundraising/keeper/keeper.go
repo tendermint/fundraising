@@ -105,7 +105,6 @@ func (k Keeper) ReserveCreationFee(ctx sdk.Context, auctioneerAddr sdk.AccAddres
 	if err := k.distrKeeper.FundCommunityPool(ctx, params.AuctionCreationFee, auctioneerAddr); err != nil {
 		return sdkerrors.Wrap(err, "failed to reserve auction creation fee to the community pool")
 	}
-
 	return nil
 }
 
