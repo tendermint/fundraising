@@ -174,7 +174,7 @@ func TestValidateAllowedBidders(t *testing.T) {
 		expectedErr     error
 	}{
 		{
-			"Happy case",
+			"happy case",
 			[]types.AllowedBidder{
 				{Bidder: sdk.AccAddress(crypto.AddressHash([]byte("Bidder"))).String(), MaxBidAmount: sdk.NewInt(100000)},
 			},
