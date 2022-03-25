@@ -88,7 +88,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 			return types.Bid{}, err
 		}
 
-		reserveAmt := msg.Coin.Amount.ToDec().Mul(msg.Price).Ceil().TruncateInt()
+		reserveAmt := bid.ConvertToPayingAmount(auction.GetPayingCoinDenom())
 		reserveCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), reserveAmt)
 
 		if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), reserveCoin); err != nil {
@@ -123,8 +123,8 @@ func (k Keeper) ValidateFixedPriceBid(ctx sdk.Context, auction types.AuctionI, b
 	}
 
 	// For remaining coin validation, convert bid amount in selling coin denom
-	bidSellingAmt := bid.ConvertToSellingAmount(auction.GetPayingCoinDenom())
-	bidCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidSellingAmt)
+	bidAmt := bid.ConvertToSellingAmount(auction.GetPayingCoinDenom())
+	bidCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidAmt)
 	remainingCoin := auction.GetRemainingSellingCoin()
 
 	if remainingCoin.IsLT(bidCoin) {
@@ -139,7 +139,7 @@ func (k Keeper) ValidateFixedPriceBid(ctx sdk.Context, auction types.AuctionI, b
 		}
 	}
 
-	totalBidAmt = totalBidAmt.Add(bidSellingAmt)
+	totalBidAmt = totalBidAmt.Add(bidAmt)
 	maxBidAmt := auction.GetMaxBidAmount(bid.Bidder)
 
 	// The total bid amount can't be greater than the bidder's maximum bid amount
@@ -156,11 +156,10 @@ func (k Keeper) ValidateBatchWorthBid(ctx sdk.Context, auction types.AuctionI, b
 		return types.ErrIncorrectCoinDenom
 	}
 
-	// Get the bid amount by the bidder with bid_price
-	bidAmt := bid.Coin.Amount.ToDec().QuoTruncate(bid.Price).TruncateInt()
+	bidAmt := bid.ConvertToSellingAmount(auction.GetPayingCoinDenom())
 	maxBidAmt := auction.GetMaxBidAmount(bid.Bidder)
 
-	// The  sum of total bid amount can't be more than the bidder's maximum bid amount
+	// The total bid amount can't be greater than the bidder's maximum bid amount
 	if bidAmt.GT(maxBidAmt) {
 		return types.ErrOverMaxBidAmountLimit
 	}
@@ -174,11 +173,10 @@ func (k Keeper) ValidateBatchManyBid(ctx sdk.Context, auction types.AuctionI, bi
 		return types.ErrIncorrectCoinDenom
 	}
 
-	// Get the bid amount by the bidder with bid_price
-	bidAmt := bid.Coin.Amount
+	bidAmt := bid.ConvertToSellingAmount(auction.GetPayingCoinDenom())
 	maxBidAmt := auction.GetMaxBidAmount(bid.Bidder)
 
-	// The  sum of total bid amount can't be more than the bidder's maximum bid amount
+	// The total bid amount can't be greater than the bidder's maximum bid amount
 	if bidAmt.GT(maxBidAmt) {
 		return types.ErrOverMaxBidAmountLimit
 	}
