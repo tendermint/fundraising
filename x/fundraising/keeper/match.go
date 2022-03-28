@@ -10,9 +10,9 @@ type MatchingInfo struct {
 	MatchedLen         int64              // the length of matched bids
 	MatchedPrice       sdk.Dec            // the final matched price
 	TotalMatchedAmount sdk.Int            // the total sold amount
-	AllocationMap      map[string]sdk.Int // the allocation map that holds allocate amount information for each bidder
-	ReservedMatchedMap map[string]sdk.Int
-	RefundMap          map[string]sdk.Int // the refund map that holds refund amount information for each bidder
+	AllocationMap      map[string]sdk.Int // the map that holds allocate amount information for each bidder
+	ReservedMatchedMap map[string]sdk.Int // the map that holds each bidder's matched amount out of their total reserved amount
+	RefundMap          map[string]sdk.Int // the map that holds refund amount information for each bidder
 }
 
 func (k Keeper) CalculateFixedPriceAllocation(ctx sdk.Context, auction types.AuctionI) MatchingInfo {
