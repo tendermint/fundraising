@@ -15,3 +15,4 @@ This document specifies the fundraising module of the Cosmos SDK that serves fun
 5. **[End-Block](05_end_block.md)**
 6. **[Events](06_events.md)**
 7. **[Parameters](07_params.md)**
+8. **[Hooks](08_hooks.md)**

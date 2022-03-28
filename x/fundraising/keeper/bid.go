@@ -94,6 +94,9 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		}
 	}
 
+	// Call before bid placed hook
+	k.BeforeBidPlaced(ctx, bid.AuctionId, bid.Bidder, bid.Type, bid.Price, bid.Coin)
+
 	k.SetBid(ctx, bid)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -244,6 +247,9 @@ func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) error {
 	bid.Price = msg.Price
 	bid.Coin = msg.Coin
 	bid.Height = uint64(ctx.BlockHeader().Height)
+
+	// Call the before mid modified hook
+	k.BeforeBidModified(ctx, bid.AuctionId, bid.Bidder, bid.Type, bid.Price, bid.Coin)
 
 	k.SetBid(ctx, bid)
 
