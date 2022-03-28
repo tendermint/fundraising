@@ -26,7 +26,7 @@ func (k Keeper) CalculateFixedPriceAllocation(ctx sdk.Context, auction types.Auc
 	allocMap := map[string]sdk.Int{}
 
 	for _, b := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
-		bidAmt := b.GetBidSellingAmount(auction.GetPayingCoinDenom())
+		bidAmt := b.ConvertToSellingAmount(auction.GetPayingCoinDenom())
 
 		// Accumulate bid amount if the bidder has other bid(s)
 		if allocatedAmt, ok := allocMap[b.Bidder]; ok {

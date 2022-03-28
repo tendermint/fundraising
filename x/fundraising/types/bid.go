@@ -16,26 +16,20 @@ func (b *Bid) SetMatched(status bool) {
 	b.IsMatched = status
 }
 
-func (b Bid) GetBidSellingAmount(payingCoinDenom string) sdk.Int {
-	var bidSellingAmt sdk.Int
-
-	if b.Coin.Denom == payingCoinDenom {
-		bidSellingAmt = b.Coin.Amount.ToDec().QuoTruncate(b.Price).TruncateInt()
-	} else {
-		bidSellingAmt = b.Coin.Amount
+// ConvertToSellingAmount converts to selling amount depending on the bid coin denom.
+// Note that we take as little coins as possible to prevent from overflowing the remaining selling coin.
+func (b Bid) ConvertToSellingAmount(denom string) (amount sdk.Int) {
+	if b.Coin.Denom == denom {
+		return b.Coin.Amount.ToDec().QuoTruncate(b.Price).TruncateInt() // BidAmount / BidPrice
 	}
-
-	return bidSellingAmt
+	return b.Coin.Amount
 }
 
-func (b Bid) GetBidPayingAmount(payingCoinDenom string) sdk.Int {
-	var bidPayingAmt sdk.Int
-
-	if b.Coin.Denom == payingCoinDenom {
-		bidPayingAmt = b.Coin.Amount
-	} else {
-		bidPayingAmt = b.Coin.Amount.ToDec().Mul(b.Price).Ceil().TruncateInt()
+// ConvertToPayingAmount converts to paying amount depending on the bid coin denom.
+// Note that we take as many coins as possible by ceiling numbers from bidder.
+func (b Bid) ConvertToPayingAmount(denom string) (amount sdk.Int) {
+	if b.Coin.Denom == denom {
+		return b.Coin.Amount
 	}
-
-	return bidPayingAmt
+	return b.Coin.Amount.ToDec().Mul(b.Price).Ceil().TruncateInt() // BidAmount * BidPrice
 }

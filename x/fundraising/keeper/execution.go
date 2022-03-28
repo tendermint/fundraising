@@ -39,7 +39,7 @@ func (k Keeper) ExecuteStartedStatus(ctx sdk.Context, auction types.AuctionI) {
 // look up the release time of each vesting queue to see if the module needs to
 // distribute the paying coin to the auctioneer.
 func (k Keeper) ExecuteVestingStatus(ctx sdk.Context, auction types.AuctionI) {
-	if err := k.AllocateVestingPayingCoin(ctx, auction); err != nil {
+	if err := k.ReleaseVestingPayingCoin(ctx, auction); err != nil {
 		panic(err)
 	}
 }

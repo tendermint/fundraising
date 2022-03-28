@@ -159,7 +159,7 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_AllocateSellingCoin() {
 	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
-	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
+	err = s.keeper.RefundRemainingSellingCoin(s.ctx, auction)
 	s.Require().NoError(err)
 
 	// The selling reserve account balance must be zero
@@ -175,7 +175,7 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_AllocateSellingCoin() {
 	s.Require().Equal(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom), parseCoin("200_000_000denom1"))
 }
 
-func (s *KeeperTestSuite) TestFixedPriceAuction_AllocateVestingPayingCoin() {
+func (s *KeeperTestSuite) TestFixedPriceAuction_ReleaseVestingPayingCoin() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("1"),
@@ -233,7 +233,7 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_AllocateVestingPayingCoin() {
 	fundraising.EndBlocker(s.ctx, s.keeper)
 
 	// Distribute paying coin
-	err = s.keeper.AllocateVestingPayingCoin(s.ctx, auction)
+	err = s.keeper.ReleaseVestingPayingCoin(s.ctx, auction)
 	s.Require().NoError(err)
 
 	// First two vesting queues must be released
@@ -248,7 +248,7 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_AllocateVestingPayingCoin() {
 	// Change the block time
 	s.ctx = s.ctx.WithBlockTime(vqs[3].GetReleaseTime().AddDate(0, 0, 1))
 	fundraising.EndBlocker(s.ctx, s.keeper)
-	s.Require().NoError(s.keeper.AllocateVestingPayingCoin(s.ctx, auction))
+	s.Require().NoError(s.keeper.ReleaseVestingPayingCoin(s.ctx, auction))
 
 	// All of the vesting queues must be released
 	for _, vq := range s.keeper.GetVestingQueuesByAuctionId(s.ctx, auction.GetId()) {

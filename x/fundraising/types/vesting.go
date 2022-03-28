@@ -16,28 +16,28 @@ func ValidateVestingSchedules(schedules []VestingSchedule, endTime time.Time) er
 		return nil
 	}
 
-	// initialize timestamp with max time and total weight with zero
-	ts := MustParseRFC3339("0001-01-01T00:00:00Z")
 	totalWeight := sdk.ZeroDec()
+	prevReleaseTime := MustParseRFC3339("0001-01-01T00:00:00Z")
 
 	for _, s := range schedules {
 		if !s.Weight.IsPositive() {
 			return sdkerrors.Wrapf(ErrInvalidVestingSchedules, "vesting weight must be positive")
 		}
 
-		if s.Weight.GT(sdk.OneDec()) {
-			return sdkerrors.Wrapf(ErrInvalidVestingSchedules, "each vesting weight must not be greater than 1")
-		}
-		totalWeight = totalWeight.Add(s.Weight)
-
-		if !s.ReleaseTime.After(endTime) {
-			return sdkerrors.Wrapf(ErrInvalidVestingSchedules, "release time must be after the end time")
+		if !s.ReleaseTime.After(endTime) { // ReleaseTime <= EndTime
+			return sdkerrors.Wrapf(ErrInvalidVestingSchedules, "release time must be set after the end time")
 		}
 
-		if !s.ReleaseTime.After(ts) {
+		if !s.ReleaseTime.After(prevReleaseTime) {
 			return sdkerrors.Wrapf(ErrInvalidVestingSchedules, "release time must be chronological")
 		}
-		ts = s.ReleaseTime
+
+		if s.Weight.GT(sdk.OneDec()) {
+			return sdkerrors.Wrapf(ErrInvalidVestingSchedules, "vesting weight must not be greater than 1")
+		}
+
+		totalWeight = totalWeight.Add(s.Weight)
+		prevReleaseTime = s.ReleaseTime
 	}
 
 	if !totalWeight.Equal(sdk.OneDec()) {

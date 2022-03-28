@@ -12,15 +12,13 @@ func (k Keeper) ApplyVestingSchedules(ctx sdk.Context, auction types.AuctionI) e
 	payingReserveAddr := auction.GetPayingReserveAddress()
 	vestingReserveAddr := auction.GetVestingReserveAddress()
 	payingCoinDenom := auction.GetPayingCoinDenom()
-
 	spendableCoins := k.bankKeeper.SpendableCoins(ctx, payingReserveAddr)
 	reserveCoin := sdk.NewCoin(payingCoinDenom, spendableCoins.AmountOf(payingCoinDenom))
-	reserveCoins := sdk.NewCoins(sdk.NewCoin(payingCoinDenom, reserveCoin.Amount))
 
 	vsLen := len(auction.GetVestingSchedules())
 	if vsLen == 0 {
 		// Send reserve coins to the auctioneer from the paying reserve account
-		if err := k.bankKeeper.SendCoins(ctx, payingReserveAddr, auction.GetAuctioneer(), reserveCoins); err != nil {
+		if err := k.bankKeeper.SendCoins(ctx, payingReserveAddr, auction.GetAuctioneer(), sdk.NewCoins(reserveCoin)); err != nil {
 			return err
 		}
 
@@ -28,13 +26,12 @@ func (k Keeper) ApplyVestingSchedules(ctx sdk.Context, auction types.AuctionI) e
 		k.SetAuction(ctx, auction)
 
 	} else {
-		// Send reserve coins to the vesting reserve account from the paying reserve account
-		if err := k.bankKeeper.SendCoins(ctx, payingReserveAddr, vestingReserveAddr, reserveCoins); err != nil {
+		// Move reserve coins from the paying reserve to the vesting reserve account
+		if err := k.bankKeeper.SendCoins(ctx, payingReserveAddr, vestingReserveAddr, sdk.NewCoins(reserveCoin)); err != nil {
 			return err
 		}
 
 		remaining := reserveCoin
-
 		for i, schedule := range auction.GetVestingSchedules() {
 			payingAmt := reserveCoin.Amount.ToDec().MulTruncate(schedule.Weight).TruncateInt()
 
@@ -46,7 +43,7 @@ func (k Keeper) ApplyVestingSchedules(ctx sdk.Context, auction types.AuctionI) e
 			k.SetVestingQueue(ctx, types.VestingQueue{
 				AuctionId:   auction.GetId(),
 				Auctioneer:  auction.GetAuctioneer().String(),
-				PayingCoin:  sdk.NewCoin(auction.GetPayingCoinDenom(), payingAmt),
+				PayingCoin:  sdk.NewCoin(payingCoinDenom, payingAmt),
 				ReleaseTime: schedule.ReleaseTime,
 				Released:    false,
 			})

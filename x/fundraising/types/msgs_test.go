@@ -96,7 +96,7 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 			),
 		},
 		{
-			"each vesting weight must not be greater than 1: invalid vesting schedules",
+			"vesting weight must not be greater than 1: invalid vesting schedules",
 			types.NewMsgCreateFixedPriceAuction(
 				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0.5"),
@@ -113,7 +113,7 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 			),
 		},
 		{
-			"release time must be after the end time: invalid vesting schedules",
+			"release time must be set after the end time: invalid vesting schedules",
 			types.NewMsgCreateFixedPriceAuction(
 				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0.5"),
@@ -292,7 +292,7 @@ func TestMsgCreateBatchAuction(t *testing.T) {
 			),
 		},
 		{
-			"each vesting weight must not be greater than 1: invalid vesting schedules",
+			"vesting weight must not be greater than 1: invalid vesting schedules",
 			types.NewMsgCreateBatchAuction(
 				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0.5"),
@@ -312,7 +312,7 @@ func TestMsgCreateBatchAuction(t *testing.T) {
 			),
 		},
 		{
-			"release time must be after the end time: invalid vesting schedules",
+			"release time must be set after the end time: invalid vesting schedules",
 			types.NewMsgCreateBatchAuction(
 				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0.5"),

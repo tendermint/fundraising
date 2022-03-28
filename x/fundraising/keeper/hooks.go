@@ -129,14 +129,14 @@ func (k Keeper) BeforeAllowedBidderUpdated(
 	}
 }
 
-// BeforeSellingCoinsDistributed - call hook if registered
-func (k Keeper) BeforeSellingCoinsDistributed(
+// BeforeSellingCoinsAllocated - call hook if registered
+func (k Keeper) BeforeSellingCoinsAllocated(
 	ctx sdk.Context,
 	auctionId uint64,
 	allocationMap map[string]sdk.Int,
 	refundMap map[string]sdk.Int,
 ) {
 	if k.hooks != nil {
-		k.hooks.BeforeSellingCoinsDistributed(ctx, auctionId, allocationMap, refundMap)
+		k.hooks.BeforeSellingCoinsAllocated(ctx, auctionId, allocationMap, refundMap)
 	}
 }
