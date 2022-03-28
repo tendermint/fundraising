@@ -17,7 +17,7 @@ func (b *Bid) SetMatched(status bool) {
 }
 
 // ConvertToSellingAmount converts to selling amount depending on the bid coin denom.
-// Note that it uses QuoTruncate for conservative approach to prevent from overflowing the remaining coin amount.
+// Note that we take as little coins as possible to prevent from overflowing the remaining selling coin.
 func (b Bid) ConvertToSellingAmount(denom string) (amount sdk.Int) {
 	if b.Coin.Denom == denom {
 		return b.Coin.Amount.ToDec().QuoTruncate(b.Price).TruncateInt() // BidAmount / BidPrice
@@ -26,7 +26,7 @@ func (b Bid) ConvertToSellingAmount(denom string) (amount sdk.Int) {
 }
 
 // ConvertToPayingAmount converts to paying amount depending on the bid coin denom.
-// It is used for reserving a bidder's coin amount.
+// Note that we take as many coins as possible by ceiling numbers from bidder.
 func (b Bid) ConvertToPayingAmount(denom string) (amount sdk.Int) {
 	if b.Coin.Denom == denom {
 		return b.Coin.Amount

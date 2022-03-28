@@ -308,7 +308,7 @@ func (k Keeper) UpdateAllowedBidder(ctx sdk.Context, auctionId uint64, bidder sd
 // releases them from the selling reserve account.
 func (k Keeper) AllocateSellingCoin(ctx sdk.Context, auction types.AuctionI, mInfo MatchingInfo) error {
 	// Call the before seling coin distributed hook
-	k.BeforeSellingCoinsDistributed(ctx, auction.GetId(), mInfo.AllocationMap, mInfo.RefundMap)
+	k.BeforeSellingCoinsAllocated(ctx, auction.GetId(), mInfo.AllocationMap, mInfo.RefundMap)
 
 	sellingReserveAddr := auction.GetSellingReserveAddress()
 	sellingCoinDenom := auction.GetSellingCoin().Denom
