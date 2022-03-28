@@ -58,7 +58,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Many() {
 			Equal(auction.SellingCoin.Amount.Sub(mInfo.TotalMatchedAmount)),
 	)
 
-	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
+	err = s.keeper.RefundRemainingSellingCoin(s.ctx, auction)
 	s.Require().NoError(err)
 
 	// The selling reserve account balance must be zero
@@ -125,7 +125,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Worth() {
 	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
-	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
+	err = s.keeper.RefundRemainingSellingCoin(s.ctx, auction)
 	s.Require().NoError(err)
 
 	// The selling reserve account balance must be zero
@@ -194,7 +194,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed() {
 	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
-	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
+	err = s.keeper.RefundRemainingSellingCoin(s.ctx, auction)
 	s.Require().NoError(err)
 
 	// The selling reserve account balance must be zero
@@ -259,7 +259,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Many_Limited() {
 	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
-	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
+	err = s.keeper.RefundRemainingSellingCoin(s.ctx, auction)
 	s.Require().NoError(err)
 
 	// The selling reserve account balance must be zero
@@ -321,7 +321,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Worth_Limited() {
 	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
-	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
+	err = s.keeper.RefundRemainingSellingCoin(s.ctx, auction)
 	s.Require().NoError(err)
 
 	// The selling reserve account balance must be zero
@@ -383,7 +383,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed_Limited() {
 	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
-	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
+	err = s.keeper.RefundRemainingSellingCoin(s.ctx, auction)
 	s.Require().NoError(err)
 
 	// The selling reserve account balance must be zero
@@ -514,7 +514,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2() {
 	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
-	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
+	err = s.keeper.RefundRemainingSellingCoin(s.ctx, auction)
 	s.Require().NoError(err)
 
 	// The selling reserve account balance must be zero
@@ -655,7 +655,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2_LimitedSame() {
 	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
-	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
+	err = s.keeper.RefundRemainingSellingCoin(s.ctx, auction)
 	s.Require().NoError(err)
 
 	// The selling reserve account balance must be zero
@@ -796,7 +796,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2_LimitedDifferent() {
 	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
-	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
+	err = s.keeper.RefundRemainingSellingCoin(s.ctx, auction)
 	s.Require().NoError(err)
 
 	// The selling reserve account balance must be zero
@@ -992,7 +992,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed3() {
 	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
-	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
+	err = s.keeper.RefundRemainingSellingCoin(s.ctx, auction)
 	s.Require().NoError(err)
 
 	// The selling reserve account balance must be zero
@@ -1199,7 +1199,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed3_LimitedDifferent() {
 	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
-	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
+	err = s.keeper.RefundRemainingSellingCoin(s.ctx, auction)
 	s.Require().NoError(err)
 
 	// The selling reserve account balance must be zero

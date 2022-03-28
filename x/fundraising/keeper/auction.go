@@ -366,8 +366,9 @@ func (k Keeper) ReleaseVestingPayingCoin(ctx sdk.Context, auction types.AuctionI
 	return nil
 }
 
-// ReleaseRemainingSellingCoin releases the remaining selling coin to the auctioneer.
-func (k Keeper) ReleaseRemainingSellingCoin(ctx sdk.Context, auction types.AuctionI) error {
+// RefundRemainingSellingCoin refunds the remaining selling coin back to the auctioneer.
+// This function is called right after the selling coin is sold.
+func (k Keeper) RefundRemainingSellingCoin(ctx sdk.Context, auction types.AuctionI) error {
 	sellingReserveAddr := auction.GetSellingReserveAddress()
 	sellingCoinDenom := auction.GetSellingCoin().Denom
 	spendableCoins := k.bankKeeper.SpendableCoins(ctx, sellingReserveAddr)
@@ -431,7 +432,7 @@ func (k Keeper) FinishFixedPriceAuction(ctx sdk.Context, auction types.AuctionI)
 		panic(err)
 	}
 
-	if err := k.ReleaseRemainingSellingCoin(ctx, auction); err != nil {
+	if err := k.RefundRemainingSellingCoin(ctx, auction); err != nil {
 		panic(err)
 	}
 
@@ -451,7 +452,7 @@ func (k Keeper) FinishBatchAuction(ctx sdk.Context, auction types.AuctionI) {
 			panic(err)
 		}
 
-		if err := k.ReleaseRemainingSellingCoin(ctx, auction); err != nil {
+		if err := k.RefundRemainingSellingCoin(ctx, auction); err != nil {
 			panic(err)
 		}
 
@@ -490,7 +491,7 @@ func (k Keeper) FinishBatchAuction(ctx sdk.Context, auction types.AuctionI) {
 		panic(err)
 	}
 
-	if err := k.ReleaseRemainingSellingCoin(ctx, auction); err != nil {
+	if err := k.RefundRemainingSellingCoin(ctx, auction); err != nil {
 		panic(err)
 	}
 

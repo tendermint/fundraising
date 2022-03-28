@@ -159,7 +159,7 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_AllocateSellingCoin() {
 	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
-	err = s.keeper.ReleaseRemainingSellingCoin(s.ctx, auction)
+	err = s.keeper.RefundRemainingSellingCoin(s.ctx, auction)
 	s.Require().NoError(err)
 
 	// The selling reserve account balance must be zero

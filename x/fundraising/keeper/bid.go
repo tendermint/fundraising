@@ -134,7 +134,7 @@ func (k Keeper) ValidateFixedPriceBid(ctx sdk.Context, auction types.AuctionI, b
 		return sdkerrors.Wrapf(types.ErrInsufficientRemainingAmount, "remaining selling coin amount %s", remainingCoin)
 	}
 
-	// Get the total bid amount bid by the bidder
+	// Get the total bid amount by the bidder
 	totalBidAmt := sdk.ZeroInt()
 	for _, b := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
 		if b.Bidder == bid.Bidder {
