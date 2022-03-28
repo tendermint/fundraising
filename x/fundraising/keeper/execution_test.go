@@ -7,6 +7,8 @@ import (
 
 	"github.com/tendermint/fundraising/x/fundraising"
 	"github.com/tendermint/fundraising/x/fundraising/types"
+
+	_ "github.com/stretchr/testify/suite"
 )
 
 func (s *KeeperTestSuite) TestEndBlockerStandByStatus() {
@@ -20,13 +22,16 @@ func (s *KeeperTestSuite) TestEndBlockerStandByStatus() {
 		time.Now().AddDate(0, 5, 0),
 		true,
 	)
-	s.Require().Equal(types.AuctionStatusStandBy, standByAuction.GetStatus())
 
-	// Modify current time
+	auction, found := s.keeper.GetAuction(s.ctx, standByAuction.GetId())
+	s.Require().True(found)
+	s.Require().Equal(types.AuctionStatusStandBy, auction.GetStatus())
+
+	// Modify current time and call end blocker
 	s.ctx = s.ctx.WithBlockTime(standByAuction.StartTime.AddDate(0, 0, 1))
 	fundraising.EndBlocker(s.ctx, s.keeper)
 
-	auction, found := s.keeper.GetAuction(s.ctx, standByAuction.GetId())
+	auction, found = s.keeper.GetAuction(s.ctx, standByAuction.GetId())
 	s.Require().True(found)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 }

@@ -195,8 +195,7 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 	return auction, nil
 }
 
-// CancelAuction cancels the auction in an event when the auctioneer needs to modify the auction.
-// However, it can only be canceled when the auction has not started yet.
+// CancelAuction cancels the auction. It can only be canceled when the auction has not started yet.
 func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) error {
 	auction, found := k.GetAuction(ctx, msg.AuctionId)
 	if !found {
@@ -239,9 +238,10 @@ func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) erro
 	return nil
 }
 
-// AddAllowedBidders is a function for an external module and it simply adds new bidder(s) to AllowedBidder list.
-// Note that it doesn't do auctioneer verification because the module is generalized for broader use cases.
-// It is designed to delegate to an external module to add necessary verification and logics depending on their use case.
+// AddAllowedBidders is a function that is implemented for an external module to add
+// allowed bidders in the auction's AllowedBidders list; it doesn't do the auctioneer's verification
+// because the module is fundamentally designed to delegate authorization to an external module.
+// It is suggested for an external module to add any necessary verification and operations depending on their use cases.
 func (k Keeper) AddAllowedBidders(ctx sdk.Context, auctionId uint64, bidders []types.AllowedBidder) error {
 	auction, found := k.GetAuction(ctx, auctionId)
 	if !found {
@@ -272,9 +272,10 @@ func (k Keeper) AddAllowedBidders(ctx sdk.Context, auctionId uint64, bidders []t
 	return nil
 }
 
-// UpdateAllowedBidder is a function for an external module and it simply updates the bidder's maximum bid amount.
-// Note that it doesn't do auctioneer verification because the module is generalized for broader use cases.
-// It is designed to delegate to an external module to add necessary verification and logics depending on their use case.
+// UpdateAllowedBidder is a function that is implemented for an external module to update
+// allowed bidders in the auction's AllowedBidders list; it simply updates the bidder's maximum bid amount.
+// It doesn't do the auctioneer's verification because the module is fundamentally designed to delegate authorization to an external module.
+// It is suggested for an external module to add any necessary verification and operations depending on their use cases.
 func (k Keeper) UpdateAllowedBidder(ctx sdk.Context, auctionId uint64, bidder sdk.AccAddress, maxBidAmount sdk.Int) error {
 	auction, found := k.GetAuction(ctx, auctionId)
 	if !found {
@@ -303,7 +304,8 @@ func (k Keeper) UpdateAllowedBidder(ctx sdk.Context, auctionId uint64, bidder sd
 	return nil
 }
 
-// AllocateSellingCoin releases designated selling coin from the selling reserve account.
+// AllocateSellingCoin allocates allocated selling coin for all matched bids in MatchingInfo and
+// releases them from the selling reserve account.
 func (k Keeper) AllocateSellingCoin(ctx sdk.Context, auction types.AuctionI, mInfo MatchingInfo) error {
 	// Call the before seling coin distributed hook
 	k.BeforeSellingCoinsDistributed(ctx, auction.GetId(), mInfo.AllocationMap, mInfo.RefundMap)
@@ -335,8 +337,8 @@ func (k Keeper) AllocateSellingCoin(ctx sdk.Context, auction types.AuctionI, mIn
 	return nil
 }
 
-// AllocateVestingPayingCoin releases the selling coin from the vesting reserve account.
-func (k Keeper) AllocateVestingPayingCoin(ctx sdk.Context, auction types.AuctionI) error {
+// ReleaseVestingPayingCoin releases the vested selling coin to the auctioneer from the vesting reserve account.
+func (k Keeper) ReleaseVestingPayingCoin(ctx sdk.Context, auction types.AuctionI) error {
 	vqs := k.GetVestingQueuesByAuctionId(ctx, auction.GetId())
 	vqsLen := len(vqs)
 
@@ -364,14 +366,12 @@ func (k Keeper) AllocateVestingPayingCoin(ctx sdk.Context, auction types.Auction
 	return nil
 }
 
+// ReleaseRemainingSellingCoin releases the remaining selling coin to the auctioneer.
 func (k Keeper) ReleaseRemainingSellingCoin(ctx sdk.Context, auction types.AuctionI) error {
 	sellingReserveAddr := auction.GetSellingReserveAddress()
 	sellingCoinDenom := auction.GetSellingCoin().Denom
-
-	// Send all the remaining selling coins back to the auctioneer
 	spendableCoins := k.bankKeeper.SpendableCoins(ctx, sellingReserveAddr)
-	releaseAmt := spendableCoins.AmountOf(sellingCoinDenom)
-	releaseCoins := sdk.NewCoins(sdk.NewCoin(sellingCoinDenom, releaseAmt))
+	releaseCoins := sdk.NewCoins(sdk.NewCoin(sellingCoinDenom, spendableCoins.AmountOf(sellingCoinDenom)))
 
 	if err := k.bankKeeper.SendCoins(ctx, sellingReserveAddr, auction.GetAuctioneer(), releaseCoins); err != nil {
 		return err
@@ -379,6 +379,7 @@ func (k Keeper) ReleaseRemainingSellingCoin(ctx sdk.Context, auction types.Aucti
 	return nil
 }
 
+// RefundPayingCoin refunds paying coin back to the bidders.
 func (k Keeper) RefundPayingCoin(ctx sdk.Context, auction types.AuctionI, mInfo MatchingInfo) error {
 	payingReserveAddr := auction.GetPayingReserveAddress()
 	payingCoinDenom := auction.GetPayingCoinDenom()
@@ -410,6 +411,7 @@ func (k Keeper) RefundPayingCoin(ctx sdk.Context, auction types.AuctionI, mInfo 
 	return nil
 }
 
+// ExtendRound extends another round of ExtendedPeriod value for the auction.
 func (k Keeper) ExtendRound(ctx sdk.Context, ba *types.BatchAuction) {
 	params := k.GetParams(ctx)
 	extendedPeriod := ctx.BlockTime().AddDate(0, 0, int(params.ExtendedPeriod))
@@ -421,6 +423,7 @@ func (k Keeper) ExtendRound(ctx sdk.Context, ba *types.BatchAuction) {
 	k.SetAuction(ctx, ba)
 }
 
+// FinishFixedPriceAuction finishes a fixed price auction.
 func (k Keeper) FinishFixedPriceAuction(ctx sdk.Context, auction types.AuctionI) {
 	mInfo := k.CalculateFixedPriceAllocation(ctx, auction)
 
@@ -437,6 +440,7 @@ func (k Keeper) FinishFixedPriceAuction(ctx sdk.Context, auction types.AuctionI)
 	}
 }
 
+// FinishBatchAuction finishes a batch auction.
 func (k Keeper) FinishBatchAuction(ctx sdk.Context, auction types.AuctionI) {
 	ba := auction.(*types.BatchAuction)
 
