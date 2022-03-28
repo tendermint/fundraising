@@ -4,7 +4,7 @@
 
 ## Abstract
 
-This document specifies the fundraising module of the Cosmos SDK that serves fundraising feature. The fundraising module provides an oppotunity for new projects to onboard the ecosystem. It does not only allow projects to raise funds, but also increase their brand awareness before launching their projects.
+This document specifies the `fundraising` module that provides an oppotunity for a new project to onboard the ecosystem. It helps them to increase their brand awareness before launching a project. 
 
 ## Contents
 

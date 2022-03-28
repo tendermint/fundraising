@@ -4,18 +4,26 @@
 
 ## Fundraising Module
 
-The `x/fundraising` Cosmos SDK module is a module to raise funds as an auction of coins. This fundraising module provides an opportunity for a new project to onboard the ecosystem. It does not only allow the project to raise funds, but also increase its brand awareness before launching the project.
+The `x/fundraising` module is a Cosmos SDK module that provides a functionality to raise funds for a new project to onboard the ecosystem. It helps them to increase their brand awareness before launching a project. 
 
-## Auction Types
+## Important Design Decision
 
-This fundraising module provides two different types of auctions: 1) Fixed Price Auction and 2) Batch Auction.
+The module is fundamentally designed to delegate authorization to an external module to add allowed bidder list `AllowedBidders` for an auction. When an auction is created, it is always closed state. It means that there is no single bidder who is authorized to place a bid for the selling coin unless they are added in the auction's allowed bidders list.
+
+## Auction Type
+
+The module allows the creation of two different types of an auction. 
+
+* `FixedPriceAuction` 
+* `BatchAuction`
 
 ## Fixed Price Auction
 
-This fixed price auction is to sell a given amount of coins on a first-come, first-served basis.
+A fixed price auction is to sell a given amount of coins on a first-come and first-served basis. An external module creates a fixed price auction by setting parameters, such as start price for each coin, how many coins they are selling, what coin they are accepting in return, vesting schedules for them to receive paying coin, when to start and end, and so forth. When the auction is created successfully, the external module needs to add allowed bidders by using the implemented `AddAllowedBidders` function. During this step, they can limit a bidder’s maximum bid amount `MaxBidAmount`.
 
 ### What an auctioneer does:
-When an auctioneer creates a fixed price auction, it must determine the following parameters.
+
+A fixed price auction must determine the following parameters:
 
 - `AllowedBidders`: the list of the bidders to be allowed to participate in the auction,
 - `StartPrice`: fixed amount of the paying coins to get a selling coins (i.e., amount of paying coins per selling coin),
@@ -26,6 +34,7 @@ When an auctioneer creates a fixed price auction, it must determine the followin
 - `VestingSchedules`: the vesting schedules to allocate the sold amounts of paying coins to the auctioneer.
 
 The auctioneer can cancel the auction before `StartTime`.
+
 In `AllowedBidders`, each bidder can be set with `MaxBidAmount`, which is the maximum number of selling coins that the bidder can get.
 
 ### What a bidder can/cannot do:
