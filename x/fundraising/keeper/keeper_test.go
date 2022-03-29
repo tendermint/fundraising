@@ -272,7 +272,7 @@ func (s *KeeperTestSuite) fullString(auctionId uint64, mInfo keeper.MatchingInfo
 	for _, bid := range bids {
 		reserveAmt := bid.ConvertToPayingAmount(payingCoinDenom)
 		bidAmt := bid.ConvertToSellingAmount(payingCoinDenom)
-		_, _ = fmt.Fprintf(&b, "| %2d | %21s | %14s | %22s | %22s |\n", bid.Id, bid.Price.String(), bid.Type, reserveAmt, bidAmt)
+		_, _ = fmt.Fprintf(&b, "| %2d | %21s | %20s | %22s | %22s |\n", bid.Id, bid.Price.String(), bid.Type, reserveAmt, bidAmt)
 	}
 	b.WriteString("+----+-----------------------+----------------------+------------------------+------------------------+\n\n")
 
