@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -9,6 +10,58 @@ import (
 
 	_ "github.com/stretchr/testify/suite"
 )
+
+func (s *KeeperTestSuite) TestExampleFullString() {
+	startedAuction := s.createFixedPriceAuction(
+		s.addr(0),
+		parseDec("0.5"),
+		parseCoin("1_000_000_000_000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+		true,
+	)
+
+	a, found := s.keeper.GetAuction(s.ctx, startedAuction.GetId())
+	s.Require().True(found)
+
+	s.placeBidFixedPrice(a.GetId(), s.addr(1), a.GetStartPrice(), parseCoin("15_000_000denom2"), true)
+	s.placeBidFixedPrice(a.GetId(), s.addr(2), a.GetStartPrice(), parseCoin("22_000_000denom2"), true)
+	s.placeBidFixedPrice(a.GetId(), s.addr(3), a.GetStartPrice(), parseCoin("33_000_000denom2"), true)
+	s.placeBidFixedPrice(a.GetId(), s.addr(4), a.GetStartPrice(), parseCoin("11_000_000denom1"), true)
+	s.placeBidFixedPrice(a.GetId(), s.addr(5), a.GetStartPrice(), parseCoin("55_000_000denom1"), true)
+	s.placeBidFixedPrice(a.GetId(), s.addr(6), a.GetStartPrice(), parseCoin("22_000_000denom1"), true)
+
+	mInfo := s.keeper.CalculateFixedPriceAllocation(s.ctx, a)
+	fmt.Println(s.fullString(a.GetId(), mInfo))
+
+	// Output:
+	// [Bids]
+	// +-id-+---------price---------+---------type---------+-----reserve-amount-----+-------bid-amount-------+
+	// |  1 |  0.500000000000000000 | BID_TYPE_FIXED_PRICE |               15000000 |               30000000 |
+	// |  2 |  0.500000000000000000 | BID_TYPE_FIXED_PRICE |               22000000 |               44000000 |
+	// |  3 |  0.500000000000000000 | BID_TYPE_FIXED_PRICE |               33000000 |               66000000 |
+	// |  4 |  0.500000000000000000 | BID_TYPE_FIXED_PRICE |                5500000 |               11000000 |
+	// |  5 |  0.500000000000000000 | BID_TYPE_FIXED_PRICE |               27500000 |               55000000 |
+	// |  6 |  0.500000000000000000 | BID_TYPE_FIXED_PRICE |               11000000 |               22000000 |
+	// +----+-----------------------+----------------------+------------------------+------------------------+
+
+	// [Allocation]
+	// +--------------------bidder---------------------+------allocated-amount------+
+	// | cosmos1qcqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqh7jn9h |                   66000000 |
+	// | cosmos1pqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqvzjng6 |                   11000000 |
+	// | cosmos1pgqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqhfuh3u |                   55000000 |
+	// | cosmos1psqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqn5wmnk |                   22000000 |
+	// | cosmos1qgqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqggwm7m |                   30000000 |
+	// | cosmos1qsqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqv4uhu3 |                   44000000 |
+	// +-----------------------------------------------+----------------------------+
+
+	// [MatchingInfo]
+	// +-matched-len-+------matched-price------+------total-matched-amount------+
+	// |           6 |    0.500000000000000000 |                      228000000 |
+	// +-------------+-------------------------+--------------------------------+
+}
 
 func (s *KeeperTestSuite) TestCalculateAllocation_Many() {
 	auction := s.createBatchAuction(
