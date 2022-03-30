@@ -13,18 +13,16 @@ import (
 func NewHandler(k keeper.Keeper) sdk.Handler {
 	msgServer := keeper.NewMsgServerImpl(k)
 
-	// this line is used by starport scaffolding # handler/msgServer
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		switch msg := msg.(type) {
-		// this line is used by starport scaffolding # 1
 		case *types.MsgCreateFixedPriceAuction:
 			res, err := msgServer.CreateFixedPriceAuction(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 
-		case *types.MsgCreateEnglishAuction:
-			res, err := msgServer.CreateEnglishAuction(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgCreateBatchAuction:
+			res, err := msgServer.CreateBatchAuction(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 
 		case *types.MsgCancelAuction:
@@ -33,6 +31,10 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 
 		case *types.MsgPlaceBid:
 			res, err := msgServer.PlaceBid(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+
+		case *types.MsgAddAllowedBidder:
+			res, err := msgServer.AddAllowedBidder(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 
 		default:

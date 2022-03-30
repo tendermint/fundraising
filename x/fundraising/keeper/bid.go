@@ -9,174 +9,97 @@ import (
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
 
-// GetBid returns a bid for the given auction id and sequence number.
-// A bidder can have as many bids as they want, so sequence is required to get the bid.
-func (k Keeper) GetBid(ctx sdk.Context, auctionId uint64, sequence uint64) (bid types.Bid, found bool) {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetBidKey(auctionId, sequence))
-	if bz == nil {
-		return bid, false
-	}
-	k.cdc.MustUnmarshal(bz, &bid)
-	return bid, true
+// GetNextBidId increments bid id by one and set it.
+func (k Keeper) GetNextBidIdWithUpdate(ctx sdk.Context, auctionId uint64) uint64 {
+	id := k.GetLastBidId(ctx, auctionId) + 1
+	k.SetBidId(ctx, auctionId, id)
+	return id
 }
 
-// SetBid sets a bid with the given arguments.
-func (k Keeper) SetBid(ctx sdk.Context, auctionId uint64, sequence uint64, bidderAcc sdk.AccAddress, bid types.Bid) {
-	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshal(&bid)
-	store.Set(types.GetBidKey(auctionId, sequence), bz)
-	store.Set(types.GetBidIndexKey(bidderAcc, auctionId, sequence), []byte{})
-}
-
-// GetBids returns all bids registered in the store.
-func (k Keeper) GetBids(ctx sdk.Context) []types.Bid {
-	bids := []types.Bid{}
-	k.IterateBids(ctx, func(bid types.Bid) (stop bool) {
-		bids = append(bids, bid)
-		return false
-	})
-	return bids
-}
-
-// GetBidsByAuctionId returns all bids associated with the auction id that are registered in the store.
-func (k Keeper) GetBidsByAuctionId(ctx sdk.Context, auctionId uint64) []types.Bid {
-	bids := []types.Bid{}
-	k.IterateBidsByAuctionId(ctx, auctionId, func(bid types.Bid) (stop bool) {
-		bids = append(bids, bid)
-		return false
-	})
-	return bids
-}
-
-// GetBidsByBidder returns all bids associated with the bidder that are registered in the store.
-func (k Keeper) GetBidsByBidder(ctx sdk.Context, bidderAcc sdk.AccAddress) []types.Bid {
-	bids := []types.Bid{}
-	k.IterateBidsByBidder(ctx, bidderAcc, func(bid types.Bid) (stop bool) {
-		bids = append(bids, bid)
-		return false
-	})
-	return bids
-}
-
-// IterateBids iterates through all bids stored in the store and invokes callback function for each item.
-// Stops the iteration when the callback function returns true.
-func (k Keeper) IterateBids(ctx sdk.Context, cb func(bid types.Bid) (stop bool)) {
-	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.BidKeyPrefix)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		var bid types.Bid
-		k.cdc.MustUnmarshal(iter.Value(), &bid)
-		if cb(bid) {
-			break
-		}
-	}
-}
-
-// IterateBidsByAuctionId iterates through all bids associated with the auction id stored in the store
-// and invokes callback function for each item.
-// Stops the iteration when the callback function returns true.
-func (k Keeper) IterateBidsByAuctionId(ctx sdk.Context, auctionId uint64, cb func(bid types.Bid) (stop bool)) {
-	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.GetBidAuctionIDKey(auctionId))
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		var bid types.Bid
-		k.cdc.MustUnmarshal(iter.Value(), &bid)
-		if cb(bid) {
-			break
-		}
-	}
-}
-
-// IterateBidsByBidder iterates through all bids associated with the bidder stored in the store
-// and invokes callback function for each item.
-// Stops the iteration when the callback function returns true.
-func (k Keeper) IterateBidsByBidder(ctx sdk.Context, bidderAcc sdk.AccAddress, cb func(bid types.Bid) (stop bool)) {
-	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, types.GetBidIndexByBidderPrefix(bidderAcc))
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		auctionId, sequence := types.ParseBidIndexKey(iter.Key())
-		bid, _ := k.GetBid(ctx, auctionId, sequence)
-		if cb(bid) {
-			break
-		}
-	}
-}
-
-// ReservePayingCoin reserves paying coin to the paying reserve account.
-func (k Keeper) ReservePayingCoin(ctx sdk.Context, auctionId uint64, bidderAcc sdk.AccAddress, payingCoin sdk.Coin) error {
-	if err := k.bankKeeper.SendCoins(ctx, bidderAcc, types.PayingReserveAcc(auctionId), sdk.NewCoins(payingCoin)); err != nil {
-		return sdkerrors.Wrap(err, "failed to reserve paying coin")
-	}
-	return nil
-}
-
-// PlaceBid places a bid for the auction.
-func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
+// PlaceBid places a bid for the selling coin of the auction.
+func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, error) {
 	auction, found := k.GetAuction(ctx, msg.AuctionId)
 	if !found {
-		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", msg.AuctionId)
+		return types.Bid{}, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d not found", msg.AuctionId)
 	}
 
 	if auction.GetStatus() != types.AuctionStatusStarted {
-		return sdkerrors.Wrapf(types.ErrInvalidAuctionStatus, "unable to bid because the auction is in %s", auction.GetStatus().String())
+		return types.Bid{}, types.ErrInvalidAuctionStatus
 	}
 
-	if auction.GetPayingCoinDenom() != msg.Coin.Denom {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "coin denom must match with the paying coin denom")
-	}
-
-	bidAmt := msg.Coin.Amount.ToDec().Quo(msg.Price).TruncateInt()
-	receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidAmt)
-	balanceAmt := k.bankKeeper.GetBalance(ctx, msg.GetBidder(), auction.GetPayingCoinDenom()).Amount
-
-	// the bidder must have greater than or equal to the bid amount
-	if balanceAmt.Sub(bidAmt).IsNegative() {
-		return sdkerrors.ErrInsufficientFunds
-	}
-
-	// the bidder cannot bid more than the remaining coin
-	remaining := auction.GetRemainingCoin().Sub(receiveCoin)
-	if remaining.IsNegative() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "request coin must be lower than or equal to the remaining total selling coin")
-	}
-
-	if auction.GetType() == types.AuctionTypeFixedPrice {
-		if !msg.Price.Equal(auction.GetStartPrice()) {
-			return sdkerrors.Wrap(types.ErrInvalidStartPrice, "bid price must be equal to the start price of the auction")
+	if auction.GetType() == types.AuctionTypeBatch {
+		if msg.Price.LT(auction.(*types.BatchAuction).MinBidPrice) {
+			return types.Bid{}, types.ErrInsufficientMinBidPrice
 		}
-
-		if err := auction.SetRemainingCoin(remaining); err != nil {
-			return err
-		}
-
-		k.SetAuction(ctx, auction)
-
-		if err := k.ReservePayingCoin(ctx, auction.GetId(), msg.GetBidder(), msg.Coin); err != nil {
-			return err
-		}
-
-	} else {
-		// TODO: implement English auction type
-		return sdkerrors.Wrap(types.ErrInvalidAuctionType, "not supported auction type in this version")
 	}
 
-	sequenceId := k.GetNextSequenceWithUpdate(ctx)
+	_, found = auction.GetAllowedBiddersMap()[msg.Bidder]
+	if !found {
+		return types.Bid{}, types.ErrNotAllowedBidder
+	}
 
 	bid := types.Bid{
-		AuctionId: auction.GetId(),
-		Sequence:  sequenceId,
+		AuctionId: msg.AuctionId,
+		Id:        k.GetNextBidIdWithUpdate(ctx, auction.GetId()),
 		Bidder:    msg.Bidder,
+		Type:      msg.BidType,
 		Price:     msg.Price,
 		Coin:      msg.Coin,
 		Height:    uint64(ctx.BlockHeader().Height),
-		Eligible:  false, // it becomes true when a bidder receives succesfully during distribution in endblocker
+		IsMatched: false,
 	}
 
-	k.SetBid(ctx, bid.AuctionId, bid.Sequence, msg.GetBidder(), bid)
+	// Place a bid depending on the bid type
+	switch bid.Type {
+	case types.BidTypeFixedPrice:
+		if err := k.ValidateFixedPriceBid(ctx, auction, bid); err != nil {
+			return types.Bid{}, err
+		}
+
+		payingCoinDenom := auction.GetPayingCoinDenom()
+
+		// Reserve bid amount
+		bidPayingAmt := bid.ConvertToPayingAmount(payingCoinDenom)
+		bidPayingCoin := sdk.NewCoin(payingCoinDenom, bidPayingAmt)
+		if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), bidPayingCoin); err != nil {
+			return types.Bid{}, err
+		}
+
+		// Subtract bid amount from the remaining
+		bidSellingAmt := bid.ConvertToSellingAmount(payingCoinDenom)
+		bidSellingCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidSellingAmt)
+		remaining := auction.GetRemainingSellingCoin().Sub(bidSellingCoin)
+
+		_ = auction.SetRemainingSellingCoin(remaining)
+		k.SetAuction(ctx, auction)
+		bid.SetMatched(true)
+
+	case types.BidTypeBatchWorth:
+		if err := k.ValidateBatchWorthBid(ctx, auction, bid); err != nil {
+			return types.Bid{}, err
+		}
+
+		if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), msg.Coin); err != nil {
+			return types.Bid{}, err
+		}
+
+	case types.BidTypeBatchMany:
+		if err := k.ValidateBatchManyBid(ctx, auction, bid); err != nil {
+			return types.Bid{}, err
+		}
+
+		reserveAmt := bid.ConvertToPayingAmount(auction.GetPayingCoinDenom())
+		reserveCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), reserveAmt)
+
+		if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), reserveCoin); err != nil {
+			return types.Bid{}, err
+		}
+	}
+
+	// Call before bid placed hook
+	k.BeforeBidPlaced(ctx, bid.AuctionId, bid.Bidder, bid.Type, bid.Price, bid.Coin)
+
+	k.SetBid(ctx, bid)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -185,9 +108,153 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) error {
 			sdk.NewAttribute(types.AttributeKeyBidderAddress, msg.GetBidder().String()),
 			sdk.NewAttribute(types.AttributeKeyBidPrice, msg.Price.String()),
 			sdk.NewAttribute(types.AttributeKeyBidCoin, msg.Coin.String()),
-			sdk.NewAttribute(types.AttributeKeyBidAmount, receiveCoin.String()),
 		),
 	})
+
+	return bid, nil
+}
+
+// ValidateFixedPriceBid validates a fixed price bid type.
+func (k Keeper) ValidateFixedPriceBid(ctx sdk.Context, auction types.AuctionI, bid types.Bid) error {
+	if bid.Coin.Denom != auction.GetPayingCoinDenom() &&
+		bid.Coin.Denom != auction.GetSellingCoin().Denom {
+		return types.ErrIncorrectCoinDenom
+	}
+
+	if !bid.Price.Equal(auction.GetStartPrice()) {
+		return sdkerrors.Wrap(types.ErrInvalidStartPrice, "start price must be equal to the start price of the auction")
+	}
+
+	// For remaining coin validation, convert bid amount in selling coin denom
+	bidAmt := bid.ConvertToSellingAmount(auction.GetPayingCoinDenom())
+	bidCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidAmt)
+	remainingCoin := auction.GetRemainingSellingCoin()
+
+	if remainingCoin.IsLT(bidCoin) {
+		return sdkerrors.Wrapf(types.ErrInsufficientRemainingAmount, "remaining selling coin amount %s", remainingCoin)
+	}
+
+	// Get the total bid amount by the bidder
+	totalBidAmt := sdk.ZeroInt()
+	for _, b := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
+		if b.Bidder == bid.Bidder {
+			totalBidAmt = totalBidAmt.Add(b.ConvertToSellingAmount(auction.GetPayingCoinDenom()))
+		}
+	}
+
+	totalBidAmt = totalBidAmt.Add(bidAmt)
+	maxBidAmt := auction.GetMaxBidAmount(bid.Bidder)
+
+	// The total bid amount can't be greater than the bidder's maximum bid amount
+	if totalBidAmt.GT(maxBidAmt) {
+		return types.ErrOverMaxBidAmountLimit
+	}
+
+	return nil
+}
+
+// ValidateBatchWorthBid validates a batch worth bid type.
+func (k Keeper) ValidateBatchWorthBid(ctx sdk.Context, auction types.AuctionI, bid types.Bid) error {
+	if bid.Coin.Denom != auction.GetPayingCoinDenom() {
+		return types.ErrIncorrectCoinDenom
+	}
+
+	bidAmt := bid.ConvertToSellingAmount(auction.GetPayingCoinDenom())
+	maxBidAmt := auction.GetMaxBidAmount(bid.Bidder)
+
+	// The total bid amount can't be greater than the bidder's maximum bid amount
+	if bidAmt.GT(maxBidAmt) {
+		return types.ErrOverMaxBidAmountLimit
+	}
+
+	return nil
+}
+
+// ValidateBatchManyBid validates a batch many bid type.
+func (k Keeper) ValidateBatchManyBid(ctx sdk.Context, auction types.AuctionI, bid types.Bid) error {
+	if bid.Coin.Denom != auction.GetSellingCoin().Denom {
+		return types.ErrIncorrectCoinDenom
+	}
+
+	bidAmt := bid.ConvertToSellingAmount(auction.GetPayingCoinDenom())
+	maxBidAmt := auction.GetMaxBidAmount(bid.Bidder)
+
+	// The total bid amount can't be greater than the bidder's maximum bid amount
+	if bidAmt.GT(maxBidAmt) {
+		return types.ErrOverMaxBidAmountLimit
+	}
+
+	return nil
+}
+
+// ModifyBid handles types.MsgModifyBid and stores the modified bid.
+// A bidder must provide either greater bid price or coin amount.
+// They are not permitted to modify with less bid price or coin amount.
+func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) error {
+	auction, found := k.GetAuction(ctx, msg.AuctionId)
+	if !found {
+		return sdkerrors.Wrap(sdkerrors.ErrNotFound, "auction not found")
+	}
+
+	if auction.GetStatus() != types.AuctionStatusStarted {
+		return types.ErrInvalidAuctionStatus
+	}
+
+	if auction.GetType() != types.AuctionTypeBatch {
+		return types.ErrIncorrectAuctionType
+	}
+
+	bid, found := k.GetBid(ctx, msg.AuctionId, msg.BidId)
+	if !found {
+		return sdkerrors.Wrap(sdkerrors.ErrNotFound, "bid not found")
+	}
+
+	if !bid.GetBidder().Equals(msg.GetBidder()) {
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "only the bid creator can modify the bid")
+	}
+
+	if msg.Price.LT(auction.(*types.BatchAuction).MinBidPrice) {
+		return types.ErrInsufficientMinBidPrice
+	}
+
+	if bid.Coin.Denom != msg.Coin.Denom {
+		return sdkerrors.Wrap(types.ErrIncorrectCoinDenom, "modifying bid type is not allowed")
+	}
+
+	if msg.Price.LT(bid.Price) || msg.Coin.Amount.LT(bid.Coin.Amount) {
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "bid price or coin amount cannot be lower")
+	}
+
+	if msg.Price.Equal(bid.Price) && msg.Coin.Amount.Equal(bid.Coin.Amount) {
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "bid price and coin amount must be changed")
+	}
+
+	// Reserve bid amount difference
+	switch bid.Type {
+	case types.BidTypeBatchWorth:
+		diffBidCoin := msg.Coin.Sub(bid.Coin)
+		if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), diffBidCoin); err != nil {
+			return err
+		}
+	case types.BidTypeBatchMany:
+		prevBidAmt := msg.Coin.Amount.ToDec().Mul(msg.Price)
+		currBidAmt := bid.Coin.Amount.ToDec().Mul(bid.Price)
+		diffBidAmt := prevBidAmt.Sub(currBidAmt).TruncateInt()
+		diffBidCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), diffBidAmt)
+
+		if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), diffBidCoin); err != nil {
+			return err
+		}
+	}
+
+	bid.Price = msg.Price
+	bid.Coin = msg.Coin
+	bid.Height = uint64(ctx.BlockHeader().Height)
+
+	// Call the before mid modified hook
+	k.BeforeBidModified(ctx, bid.AuctionId, bid.Bidder, bid.Type, bid.Price, bid.Coin)
+
+	k.SetBid(ctx, bid)
 
 	return nil
 }

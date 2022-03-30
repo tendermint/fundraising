@@ -20,14 +20,17 @@ type AuctionI interface {
 	GetType() AuctionType
 	SetType(AuctionType) error
 
+	GetAllowedBidders() []AllowedBidder
+	SetAllowedBidders([]AllowedBidder) error
+
 	GetAuctioneer() string
 	SetAuctioneer(string) error
 
-	GetSellingPoolAddress() string
-	SetSellingPoolAddress(string) error
+	GetSellingReserveAddress() string
+	SetSellingReserveAddress(string) error
 
-	GetPayingPoolAddress() string
-	SetPayingPoolAddress(string) error
+	GetPayingReserveAddress() string
+	SetPayingReserveAddress(string) error
 
 	GetStartPrice() sdk.Dec
 	SetStartPrice(sdk.Dec) error
@@ -38,12 +41,15 @@ type AuctionI interface {
 	GetPayingCoinDenom() string
 	SetPayingCoinDenom(string) error
 
-	GetVestingPoolAddress() string
-	SetVestingPoolAddress(string) error
+	GetVestingReserveAddress() string
+	SetVestingReserveAddress(string) error
 
 	GetVestingSchedules() []VestingSchedule
 	SetVestingSchedules([]VestingSchedule) error
-
+	
+	GetRemainingSellingCoin() sdk.Coin
+	SetRemainingSellingCoin(sdk.Coin) error
+	
 	GetStartTime() time.Time
 	SetStartTime(time.Time) error
 
@@ -52,55 +58,68 @@ type AuctionI interface {
 
 	GetStatus() AuctionStatus
 	SetStatus(AuctionStatus) error
+
+	GetAllowedBiddersMap() map[string]sdk.Int
+
+	GetMaxBidAmount(bidder string) sdk.Int
+	SetMaxBidAmount(bidder string, maxBidAmt sdk.Int) error
+
+	Validate() error
 }
 ```
 
 ## Base Auction
 
-A base auction is the simplest and most common auction type that just stores all requisite fields directly in a struct.
+A base auction stores all requisite fields directly in a struct.
 
 ```go
 // BaseAuction defines a base auction type. It contains all the necessary fields
 // for basic auction functionality. Any custom auction type should extend this
 // type for additional functionality (e.g. english auction, fixed price auction).
 type BaseAuction struct {
-	Id                 uint64            // id of the auction
-	Type               AuctionType       // supporting auction types are english and fixed price
-	Auctioneer         string            // the account that is in charge of the action
-	SellingPoolAddress string            // an escrow account to collect selling tokens for the auction
-	PayingPoolAddress  string            // an escrow account to collect paying tokens for the auction
-	StartPrice         sdk.Dec           // starting price of the auction
-	SellingCoin        sdk.Coin          // selling coin for the auction
-	PayingCoinDenom    string            // the paying coin denom that bidders use to bid for
-	VestingPoolAddress string            // the vesting account that releases the paying amount of coins based on the schedules
-	VestingSchedules   []VestingSchedule // vesting schedules for the auction
-	WinningPrice       sdk.Dec           // the winning price of the auction
-	RemainingCoin      sdk.Coin          // the remaining amount of coin to sell
-	StartTime          time.Time         // start time of the auction
-	EndTime            []time.Time       // end times of the auction since extended round(s) can occur
-	Status             AuctionStatus     // the auction status
+	Id                    uint64            // id of the auction
+	Type                  AuctionType       // the auction type; currently FixedPrice and English are supported
+	AllowedBidders        []AllowedBidder   // the bidders who are allowed to bid
+	Auctioneer            string            // the owner of the auction
+	SellingReserveAddress string            // the reserve account to collect selling coins from the auctioneer
+	PayingReserveAddress  string            // the reserve account to collect paying coins from the bidders
+	StartPrice            sdk.Dec           // the starting price
+	SellingCoin           sdk.Coin          // the selling amount of coin
+	PayingCoinDenom       string            // the denom that the auctioneer receives to raise funds
+	VestingReserveAddress string            // the reserve account that releases the accumulated paying coins based on the schedules
+	VestingSchedules      []VestingSchedule // the vesting schedules for the auction
+	RemainingSellingCoin  sdk.Coin          // the remaining amount of coin to sell
+	StartTime             time.Time         // the start time of the auction
+	EndTimes              []time.Time       // the end times of the auction; it is an array since extended round(s) can occur
+	Status                AuctionStatus     // the auction status
+}
+
+// AllowedBidder defines a bidder who is allowed to bid with max number of bids.
+type AllowedBidder struct {
+	Bidder          string  // a bidder who is allowed to bid
+	MaxBidAmount    uint64  // a maximum amount of bids per bidder
 }
 ```
+
 
 ## Vesting
 
 ```go
 // VestingSchedule defines the vesting schedule for the owner of an auction.
 type VestingSchedule struct {
-	ReleaseTime time.Time // release time for distribution of the vesting coin
-	Weight      sdk.Dec   // vesting weight for the schedule
+	ReleaseTime time.Time // the release time for vesting coin distribution
+	Weight      sdk.Dec   // the vesting weight for the schedule
 }
 
 // VestingQueue defines the vesting queue.
 type VestingQueue struct {
-	AuctionId   uint64    // id of the auction
-	Auctioneer  string    // account that creates the auction
-	PayingCoin  sdk.Coin  // paying amount of coin 
-	ReleaseTime time.Time // release time of the vesting coin
-	Vested      bool      // status of distribution
+	AuctionId       uint64    // id of the auction
+	Auctioneer      string    // the owner of the auction
+	PayingCoin      sdk.Coin  // the paying amount of coin for the vesting
+	ReleaseTime     time.Time // the release time of the vesting 
+	Released        bool      // the distribution status 
 }
 ```
-
 
 ## Auction Type
 
@@ -110,25 +129,26 @@ type AuctionType uint32
 
 const (
 	// AUCTION_TYPE_UNSPECIFIED defines an invalid auction type
-	TypeNil AuctionType = 0
-	// AUCTION_TYPE_ENGLISH defines the English auction type
-	TypeEnglish AuctionType = 1
+	AuctionTypeNil AuctionType = 0
 	// AUCTION_TYPE_FIXED_PRICE defines the fixed price auction type
-	TypeFixedPrice AuctionType = 1
+	AuctionTypeFixedPrice AuctionType = 1
+	// AUCTION_TYPE_BATCH defines the batch auction type
+	AuctionTypeBatch AuctionType = 2
 )
-
-// EnglishAuction defines the english auction type 
-type EnglishAuction struct {
-	*BaseAuction
-
-	MaximumBidPrice sdk.Dec // maximum bid price that bidders can bid for the auction
-	Extended        uint32  // a number of extended rounds
-	ExtendRate      sdk.Dec // rate that determines if the auction needs an another round
-}
 
 // FixedPriceAuction defines the fixed price auction type
 type FixedPriceAuction struct {
 	*BaseAuction
+}
+
+// BatchAuction defines the batch auction type 
+type BatchAuction struct {
+    *BaseAuction
+	
+	MinBidPrice			sdk.Dec	// the minimum bid price that bidders must provide
+	MatchedPrice		sdk.Dec	// the matched price of the auction (a.k.a., winning price)
+    MaxExtendedRound    uint32  // a maximum number of extended rounds
+    ExtendedRate        sdk.Dec // rate that determines if the auction needs another round, compared to the number of the matched bids at the previous end time.
 }
 ```
 
@@ -159,14 +179,46 @@ const (
 ```go
 // Bid defines a standard bid for an auction.
 type Bid struct {
-	AuctionId uint64   // id of the auction
-	Bidder    string   // the account that bids for the auction
-	Price     sdk.Dec  // the price for the bid
-	Coin      sdk.Coin // paying amount of coin that the bidder bids
-	Height    uint64   // block height
-	isWinner  bool     // the bid that is determined to be a winner when an auction ends; default value is false
+	AuctionId 	uint64   // id of the auction
+	Bidder    	string   // the account that bids for the auction
+	Id        	uint64   // id of the bid of the bidder
+	Type      	BidType  // the bid type; currently Fixed-Price, How-Much-Worth-To-Buy and How-Many-Coins-To-Buy are supported.
+	Price     	sdk.Dec  // the price for the bid
+	Coin      	sdk.Coin // targeted amount of coin that the bidder bids; the denom must be either the denom or SellingCoin or PayingCoinDenom
+	Height		uint64   // block height
+	IsMatched	bool     // the bid that is determined to be matched (a.k.a., winner) when an auction ends; default value is false
 }
 ```
+
+## Bid Type
+
+```go
+// BidType is the type of a bid.
+type BidType uint32
+
+const (
+	// BID_TYPE_UNSPECIFIED defines an invalid bid type
+	BidTypeNil          BidType = 0
+ 	// BID_TYPE_FIXED_PRICE defines a bid type for a fixed price auction type
+	BidTypeFixedPrice   BidType = 1
+	// Bid_TYPE_BATCH_WORTH defines a bid type for How-Much-Worth-to-Buy of a batch auction
+	BidTypeBatchWorth   BidType = 2
+	// Bid_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy of a batch auction
+	BidTypeBatchMany    BidType = 3
+)
+
+```
+
+For `FixedPriceAuction`,
+- `BidType` must be set to `BidTypeFixedPrice`,
+- `BidPrice` must be set as `StartPrice` in `BaseAuction`, and
+- the denom of `BidCoin` can be set to either `PayingCoinDenom` or the denom of `SellingCoin`.
+
+For `BatchAuction`and `BidTypeBatchWorth`,
+- the denom of `BidCoin` must be set as `PayingCoinDenom`.
+
+For `BatchAuction`and `BidTypeBatchMany`,
+- the denom of `BidCoin` must be set as the denom of `SellingCoin`.
 
 ## Parameters
 
@@ -179,26 +231,30 @@ type Bid struct {
 
 Stores are KVStores in the multi-store. The key to find the store is the first parameter in the list.
 
-### prefix key to retrieve the latest auction id
+### The key for the latest auction id
 
-- `AuctionIdKey: 0x11 -> uint64`
+- `LastAuctionIdKey: 0x11 -> Uint64Value(lastAuctionId)`
 
-### prefix key to retrieve the latest sequence number from the auction id
+### The key for the latest bid id
 
-- `SequenceKey: 0x12 | AuctionId -> uint64`
+- `LastBidIdKey: 0x12 | AuctionId -> Uint64Value(lastBidId)`
 
-### prefix key to retrieve the auction from the auction id
+### The key to retrieve the auction object from the auction id
 
-- `AuctionKeyPrefix: 0x21 | AuctionId -> ProtocolBuffer(Auction)`
+- `AuctionKey: 0x21 | AuctionId -> ProtocolBuffer(Auction)`
 
-### prefix key to retrieve the bid from the auction id and sequence number
+### The key to retrieve the bid object from the auction id and bid id
 
-- `BidKeyPrefix: 0x31 | AuctionId | Sequence -> ProtocolBuffer(Bid)`
+- `BidKey: 0x31 | AuctionId | BidId -> ProtocolBuffer(Bid)`
 
-### prefix key to retrieve the auction id and sequence by iterating the bidder address
+### The index key to retrieve the bid object from the bidder address
 
-- `BidIndexKeyPrefix: 0x32 | BidderAddrLen (1 byte) | BidderAddr | AuctionId | Sequence -> nil`
+- `BidIndexKey: 0x32 | BidderAddrLen (1 byte) | BidderAddr | AuctionId | BidId -> nil`
 
-### prefix key to retrieve the vesting queues from the auction id and vesting release time
+### The key to retrieve the last matched bids length 
 
-- `VestingQueueKeyPrefix: 0x41 | AuctionId | format(time) -> ProtocolBuffer(VestingQueue)`
+- `LastMatchedBidsLenKey: 0x33 | AuctionId -> Uint64Value(lastMatchedBidsLen)`
+
+### The key to retrieve the vesting queue object from the  auction id and 
+
+- `VestingQueueKey: 0x41 | AuctionId | sdk.FormatTimeBytes(releaseTime) -> ProtocolBuffer(VestingQueue)`

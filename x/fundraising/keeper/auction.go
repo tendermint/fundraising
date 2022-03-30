@@ -1,10 +1,9 @@
 package keeper
 
 import (
+	"fmt"
 	"strconv"
 	"time"
-
-	gogotypes "github.com/gogo/protobuf/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -13,309 +12,219 @@ import (
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
 
-// GetAuctionId returns the global auction ID counter.
-func (k Keeper) GetAuctionId(ctx sdk.Context) uint64 {
-	var id uint64
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.AuctionIdKey)
-	if bz == nil {
-		id = 0 // initialize the auction id
-	} else {
-		val := gogotypes.UInt64Value{}
-		err := k.cdc.Unmarshal(bz, &val)
-		if err != nil {
-			panic(err)
-		}
-		id = val.GetValue()
-	}
-	return id
-}
-
 // GetNextAuctionIdWithUpdate increments auction id by one and set it.
 func (k Keeper) GetNextAuctionIdWithUpdate(ctx sdk.Context) uint64 {
-	id := k.GetAuctionId(ctx) + 1
+	id := k.GetLastAuctionId(ctx) + 1
 	k.SetAuctionId(ctx, id)
 	return id
 }
 
-// SetAuctionId sets the global auction ID counter.
-func (k Keeper) SetAuctionId(ctx sdk.Context, id uint64) {
-	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshal(&gogotypes.UInt64Value{Value: id})
-	store.Set(types.AuctionIdKey, bz)
-}
-
-// GetSequence returns the last sequence number of the bid.
-func (k Keeper) GetSequence(ctx sdk.Context) uint64 {
-	var seq uint64
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.SequenceKey)
-	if bz == nil {
-		seq = 0 // initialize the sequence
-	} else {
-		val := gogotypes.UInt64Value{}
-		err := k.cdc.Unmarshal(bz, &val)
-		if err != nil {
-			panic(err)
-		}
-		seq = val.GetValue()
-	}
-	return seq
-}
-
-// GetNextSequence increments sequence number by one and set it.
-func (k Keeper) GetNextSequenceWithUpdate(ctx sdk.Context) uint64 {
-	seq := k.GetSequence(ctx) + 1
-	k.SetSequence(ctx, seq)
-	return seq
-}
-
-// SetSequence sets the sequence number of the bid.
-func (k Keeper) SetSequence(ctx sdk.Context, seq uint64) {
-	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshal(&gogotypes.UInt64Value{Value: seq})
-	store.Set(types.SequenceKey, bz)
-}
-
-// GetAuction returns an auction for a given auction id.
-func (k Keeper) GetAuction(ctx sdk.Context, id uint64) (auction types.AuctionI, found bool) {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetAuctionKey(id))
-	if bz == nil {
-		return auction, false
-	}
-	return k.decodeAuction(bz), true
-}
-
-// GetAuctions returns all auctions in the store.
-func (k Keeper) GetAuctions(ctx sdk.Context) (auctions []types.AuctionI) {
-	k.IterateAuctions(ctx, func(auction types.AuctionI) (stop bool) {
-		auctions = append(auctions, auction)
-		return false
-	})
-
-	return auctions
-}
-
-// SetAuction sets an auction with the given auction id.
-func (k Keeper) SetAuction(ctx sdk.Context, auction types.AuctionI) {
-	id := auction.GetId()
-	store := ctx.KVStore(k.storeKey)
-
-	bz, err := k.MarshalAuction(auction)
-	if err != nil {
-		panic(err)
+// CreateFixedPriceAuction sets a fixed price auction.
+func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFixedPriceAuction) (types.AuctionI, error) {
+	if ctx.BlockTime().After(msg.EndTime) { // EndTime < CurrentTime
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be set after the current time")
 	}
 
-	store.Set(types.GetAuctionKey(id), bz)
-}
-
-// IterateAuctions iterates over all the stored auctions and performs a callback function.
-// Stops iteration when callback returns true.
-func (k Keeper) IterateAuctions(ctx sdk.Context, cb func(auction types.AuctionI) (stop bool)) {
-	store := ctx.KVStore(k.storeKey)
-	iterator := sdk.KVStorePrefixIterator(store, types.AuctionKeyPrefix)
-
-	defer iterator.Close()
-	for ; iterator.Valid(); iterator.Next() {
-		auction := k.decodeAuction(iterator.Value())
-
-		if cb(auction) {
-			break
-		}
-	}
-}
-
-func (k Keeper) decodeAuction(bz []byte) types.AuctionI {
-	acc, err := k.UnmarshalAuction(bz)
-	if err != nil {
-		panic(err)
-	}
-
-	return acc
-}
-
-// MarshalAuction serializes an auction.
-func (k Keeper) MarshalAuction(auction types.AuctionI) ([]byte, error) { // nolint:interfacer
-	return k.cdc.MarshalInterface(auction)
-}
-
-// UnmarshalAuction returns an auction from raw serialized
-// bytes of a Proto-based Auction type.
-func (k Keeper) UnmarshalAuction(bz []byte) (auction types.AuctionI, err error) {
-	return auction, k.cdc.UnmarshalInterface(bz, &auction)
-}
-
-// DistributeSellingCoin releases designated selling coin from the selling reserve module account.
-func (k Keeper) DistributeSellingCoin(ctx sdk.Context, auction types.AuctionI) error {
-	sellingReserveAcc := types.SellingReserveAcc(auction.GetId())
-
-	var inputs []banktypes.Input
-	var outputs []banktypes.Output
-
-	totalBidCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, sdk.ZeroInt())
-
-	// distribute coins to all bidders from the selling reserve module account
-	for _, bid := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
-		bidAmt := bid.Coin.Amount.ToDec().Quo(bid.Price).TruncateInt()
-		receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidAmt)
-
-		bidderAcc, err := sdk.AccAddressFromBech32(bid.GetBidder())
-		if err != nil {
-			return err
-		}
-
-		inputs = append(inputs, banktypes.NewInput(sellingReserveAcc, sdk.NewCoins(receiveCoin)))
-		outputs = append(outputs, banktypes.NewOutput(bidderAcc, sdk.NewCoins(receiveCoin)))
-
-		totalBidCoin = totalBidCoin.Add(receiveCoin)
-	}
-
-	reserveBalance := k.bankKeeper.GetBalance(ctx, sellingReserveAcc, auction.GetSellingCoin().Denom)
-	remainingCoin := reserveBalance.Sub(totalBidCoin)
-
-	// send remaining coin to the auctioneer
-	inputs = append(inputs, banktypes.NewInput(sellingReserveAcc, sdk.NewCoins(remainingCoin)))
-	outputs = append(outputs, banktypes.NewOutput(auction.GetAuctioneer(), sdk.NewCoins(remainingCoin)))
-
-	// send all at once
-	if err := k.bankKeeper.InputOutputCoins(ctx, inputs, outputs); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// DistributePayingCoin releases vested selling coin from the vesting reserve module account.
-func (k Keeper) DistributePayingCoin(ctx sdk.Context, auction types.AuctionI) error {
-	for _, vq := range k.GetVestingQueuesByAuctionId(ctx, auction.GetId()) {
-		if types.IsVested(vq.GetReleaseTime(), ctx.BlockTime()) {
-			vestingReserveAcc := types.VestingReserveAcc(auction.GetId())
-			reserveBalance := k.bankKeeper.GetBalance(ctx, vestingReserveAcc, auction.GetPayingCoinDenom())
-
-			if err := k.bankKeeper.SendCoins(ctx, vestingReserveAcc, auction.GetAuctioneer(), sdk.NewCoins(reserveBalance)); err != nil {
-				return err
-			}
-
-			vq.Vested = true
-			k.SetVestingQueue(ctx, auction.GetId(), vq.ReleaseTime, vq)
-		}
-	}
-
-	return nil
-}
-
-// ReserveSellingCoin reserves the selling coin to the selling reserve account.
-func (k Keeper) ReserveSellingCoin(ctx sdk.Context, auctionId uint64, auctioneerAcc sdk.AccAddress, sellingCoin sdk.Coin) error {
-	if err := k.bankKeeper.SendCoins(ctx, auctioneerAcc, types.SellingReserveAcc(auctionId), sdk.NewCoins(sellingCoin)); err != nil {
-		return sdkerrors.Wrap(err, "failed to reserve selling coin")
-	}
-	return nil
-}
-
-// CreateFixedPriceAuction sets fixed price auction.
-func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFixedPriceAuction) error {
 	nextId := k.GetNextAuctionIdWithUpdate(ctx)
 
-	auctioneerAcc, err := sdk.AccAddressFromBech32(msg.Auctioneer)
-	if err != nil {
-		return err
+	if err := k.ReserveCreationFee(ctx, msg.GetAuctioneer()); err != nil {
+		return nil, err
 	}
 
-	if ctx.BlockTime().After(msg.EndTime) {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be prior to current time")
+	if err := k.ReserveSellingCoin(ctx, nextId, msg.GetAuctioneer(), msg.SellingCoin); err != nil {
+		return nil, err
 	}
 
-	params := k.GetParams(ctx)
-	auctionFeeCollectorAcc, err := sdk.AccAddressFromBech32(params.AuctionFeeCollector)
-	if err != nil {
-		return err
-	}
+	// Allowed bidder list is empty when an auction is created
+	// The module is fundamentally designed to delegate authorization
+	// to an external module to add allowed bidder list for an auction
+	allowedBidders := []types.AllowedBidder{}
+	endTimes := []time.Time{msg.EndTime} // it is an array data type to handle BatchAuction
 
-	if err := k.bankKeeper.SendCoins(ctx, msg.GetAuctioneer(), auctionFeeCollectorAcc, params.AuctionCreationFee); err != nil {
-		return sdkerrors.Wrap(err, "failed to pay auction creation fee")
-	}
-
-	if err := k.ReserveSellingCoin(ctx, nextId, auctioneerAcc, msg.SellingCoin); err != nil {
-		return err
-	}
-
-	sellingReserveAcc := types.SellingReserveAcc(nextId)
-	payingReserveAcc := types.PayingReserveAcc(nextId)
-	vestingReserveAcc := types.VestingReserveAcc(nextId)
-
-	baseAuction := types.NewBaseAuction(
+	ba := types.NewBaseAuction(
 		nextId,
 		types.AuctionTypeFixedPrice,
-		auctioneerAcc.String(),
-		sellingReserveAcc.String(),
-		payingReserveAcc.String(),
+		allowedBidders,
+		msg.Auctioneer,
+		types.SellingReserveAddress(nextId).String(),
+		types.PayingReserveAddress(nextId).String(),
 		msg.StartPrice,
 		msg.SellingCoin,
 		msg.PayingCoinDenom,
-		vestingReserveAcc.String(),
+		types.VestingReserveAddress(nextId).String(),
 		msg.VestingSchedules,
-		sdk.ZeroDec(),
-		msg.SellingCoin, // add selling coin to remaining coin
+		msg.SellingCoin,
 		msg.StartTime,
-		[]time.Time{msg.EndTime},
+		endTimes,
 		types.AuctionStatusStandBy,
 	)
 
-	// updates status if the start time is already passed over the current time
-	if types.IsAuctionStarted(baseAuction.GetStartTime(), ctx.BlockTime()) {
-		baseAuction.Status = types.AuctionStatusStarted
+	// Update status if the start time is already passed over the current time
+	if ba.ShouldAuctionStarted(ctx.BlockTime()) {
+		ba.Status = types.AuctionStatusStarted
 	}
 
-	fixedPriceAuction := types.NewFixedPriceAuction(baseAuction)
+	auction := types.NewFixedPriceAuction(ba)
 
-	k.SetAuction(ctx, fixedPriceAuction)
+	// Call the before auction created hook
+	k.BeforeFixedPriceAuctionCreated(
+		ctx,
+		auction.Auctioneer,
+		auction.StartPrice,
+		auction.SellingCoin,
+		auction.PayingCoinDenom,
+		auction.VestingSchedules,
+		auction.StartTime,
+		auction.EndTimes[0],
+	)
+
+	k.SetAuction(ctx, auction)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeCreateFixedPriceAuction,
 			sdk.NewAttribute(types.AttributeKeyAuctionId, strconv.FormatUint(nextId, 10)),
-			sdk.NewAttribute(types.AttributeKeyAuctioneerAddress, auctioneerAcc.String()),
-			sdk.NewAttribute(types.AttributeKeyStartPrice, msg.StartPrice.String()),
-			sdk.NewAttribute(types.AttributeKeySellingPoolAddress, sellingReserveAcc.String()),
-			sdk.NewAttribute(types.AttributeKeyPayingPoolAddress, payingReserveAcc.String()),
-			sdk.NewAttribute(types.AttributeKeyVestingPoolAddress, vestingReserveAcc.String()),
-			sdk.NewAttribute(types.AttributeKeySellingCoin, msg.SellingCoin.String()),
-			sdk.NewAttribute(types.AttributeKeyPayingCoinDenom, msg.PayingCoinDenom),
-			sdk.NewAttribute(types.AttributeKeyStartTime, msg.StartTime.String()),
+			sdk.NewAttribute(types.AttributeKeyAuctioneerAddress, auction.GetAuctioneer().String()),
+			sdk.NewAttribute(types.AttributeKeySellingReserveAddress, auction.GetSellingReserveAddress().String()),
+			sdk.NewAttribute(types.AttributeKeyPayingReserveAddress, auction.GetPayingReserveAddress().String()),
+			sdk.NewAttribute(types.AttributeKeyStartPrice, auction.GetStartPrice().String()),
+			sdk.NewAttribute(types.AttributeKeySellingCoin, auction.GetSellingCoin().String()),
+			sdk.NewAttribute(types.AttributeKeyPayingCoinDenom, auction.GetPayingCoinDenom()),
+			sdk.NewAttribute(types.AttributeKeyVestingReserveAddress, auction.GetVestingReserveAddress().String()),
+			sdk.NewAttribute(types.AttributeKeyRemainingSellingCoin, auction.GetRemainingSellingCoin().String()),
+			sdk.NewAttribute(types.AttributeKeyStartTime, auction.GetStartTime().String()),
 			sdk.NewAttribute(types.AttributeKeyEndTime, msg.EndTime.String()),
-			sdk.NewAttribute(types.AttributeKeyAuctionStatus, types.AuctionStatusStandBy.String()),
+			sdk.NewAttribute(types.AttributeKeyAuctionStatus, auction.GetStatus().String()),
 		),
 	})
 
-	return nil
+	return auction, nil
 }
 
-// CreateEnglishAuction sets english auction.
-func (k Keeper) CreateEnglishAuction(ctx sdk.Context, msg *types.MsgCreateEnglishAuction) error {
-	// TODO: not implemented yet
-	return nil
+// CreateBatchAuction sets batch auction.
+func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuction) (types.AuctionI, error) {
+	if ctx.BlockTime().After(msg.EndTime) { // EndTime < CurrentTime
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be set after the current time")
+	}
+
+	nextId := k.GetNextAuctionIdWithUpdate(ctx)
+
+	if err := k.ReserveCreationFee(ctx, msg.GetAuctioneer()); err != nil {
+		return nil, err
+	}
+
+	if err := k.ReserveSellingCoin(ctx, nextId, msg.GetAuctioneer(), msg.SellingCoin); err != nil {
+		return nil, err
+	}
+
+	// Allowed bidder list is empty when an auction is created
+	// The module is fundamentally designed to delegate authorization
+	// to an external module to add allowed bidder list for an auction
+	allowedBidders := []types.AllowedBidder{}
+	endTimes := []time.Time{msg.EndTime} // it is an array data type to handle BatchAuction
+
+	baseAuction := types.NewBaseAuction(
+		nextId,
+		types.AuctionTypeBatch,
+		allowedBidders,
+		msg.Auctioneer,
+		types.SellingReserveAddress(nextId).String(),
+		types.PayingReserveAddress(nextId).String(),
+		msg.StartPrice,
+		msg.SellingCoin,
+		msg.PayingCoinDenom,
+		types.VestingReserveAddress(nextId).String(),
+		msg.VestingSchedules,
+		msg.SellingCoin,
+		msg.StartTime,
+		endTimes,
+		types.AuctionStatusStandBy,
+	)
+
+	// Update status if the start time is already passed the current time
+	if baseAuction.ShouldAuctionStarted(ctx.BlockTime()) {
+		baseAuction.Status = types.AuctionStatusStarted
+	}
+
+	auction := types.NewBatchAuction(
+		baseAuction,
+		msg.MinBidPrice,
+		sdk.ZeroDec(),
+		msg.MaxExtendedRound,
+		msg.ExtendedRoundRate,
+	)
+
+	// Call the before auction created hook
+	k.BeforeBatchAuctionCreated(
+		ctx,
+		auction.Auctioneer,
+		auction.StartPrice,
+		auction.MinBidPrice,
+		auction.SellingCoin,
+		auction.PayingCoinDenom,
+		auction.VestingSchedules,
+		auction.MaxExtendedRound,
+		auction.ExtendedRoundRate,
+		auction.StartTime,
+		auction.EndTimes[0],
+	)
+
+	k.SetAuction(ctx, auction)
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCreateBatchAuction,
+			sdk.NewAttribute(types.AttributeKeyAuctionId, strconv.FormatUint(nextId, 10)),
+			sdk.NewAttribute(types.AttributeKeyAuctioneerAddress, auction.GetAuctioneer().String()),
+			sdk.NewAttribute(types.AttributeKeySellingReserveAddress, auction.GetSellingReserveAddress().String()),
+			sdk.NewAttribute(types.AttributeKeyPayingReserveAddress, auction.GetPayingReserveAddress().String()),
+			sdk.NewAttribute(types.AttributeKeyStartPrice, auction.GetStartPrice().String()),
+			sdk.NewAttribute(types.AttributeKeySellingCoin, auction.GetSellingCoin().String()),
+			sdk.NewAttribute(types.AttributeKeyPayingCoinDenom, auction.GetPayingCoinDenom()),
+			sdk.NewAttribute(types.AttributeKeyVestingReserveAddress, auction.GetVestingReserveAddress().String()),
+			sdk.NewAttribute(types.AttributeKeyRemainingSellingCoin, auction.GetRemainingSellingCoin().String()),
+			sdk.NewAttribute(types.AttributeKeyStartTime, auction.GetStartTime().String()),
+			sdk.NewAttribute(types.AttributeKeyEndTime, msg.EndTime.String()),
+			sdk.NewAttribute(types.AttributeKeyAuctionStatus, auction.GetStatus().String()),
+			sdk.NewAttribute(types.AttributeKeyMinBidPrice, auction.MinBidPrice.String()),
+			sdk.NewAttribute(types.AttributeKeyMaxExtendedRound, fmt.Sprint(auction.MaxExtendedRound)),
+			sdk.NewAttribute(types.AttributeKeyExtendedRoundRate, auction.ExtendedRoundRate.String()),
+		),
+	})
+
+	return auction, nil
 }
 
-// CancelAuction cancels the auction in an event when the auctioneer needs to modify the auction.
-// However, it can only be canceled when the auction has not started yet.
+// CancelAuction cancels the auction. It can only be canceled when the auction has not started yet.
 func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) error {
 	auction, found := k.GetAuction(ctx, msg.AuctionId)
 	if !found {
-		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", msg.AuctionId)
+		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d not found", msg.AuctionId)
 	}
 
 	if auction.GetAuctioneer().String() != msg.Auctioneer {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "failed to verify ownership of the auction")
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "only the autioneer can cancel the auction")
 	}
 
 	if auction.GetStatus() != types.AuctionStatusStandBy {
-		return sdkerrors.Wrap(types.ErrInvalidAuctionStatus, "auction cannot be canceled due to current status")
+		return sdkerrors.Wrap(types.ErrInvalidAuctionStatus, "only the stand by auction can be cancelled")
 	}
 
-	if err := auction.SetStatus(types.AuctionStatusCancelled); err != nil {
-		return err
+	sellingReserveAddr := auction.GetSellingReserveAddress()
+	sellingCoinDenom := auction.GetSellingCoin().Denom
+	spendableCoins := k.bankKeeper.SpendableCoins(ctx, sellingReserveAddr)
+	releaseCoin := sdk.NewCoin(sellingCoinDenom, spendableCoins.AmountOf(sellingCoinDenom))
+
+	// Release the selling coin back to the auctioneer
+	if err := k.bankKeeper.SendCoins(ctx, sellingReserveAddr, auction.GetAuctioneer(), sdk.NewCoins(releaseCoin)); err != nil {
+		return sdkerrors.Wrap(err, "failed to release the selling coin")
 	}
+
+	_ = auction.SetRemainingSellingCoin(sdk.NewCoin(sellingCoinDenom, sdk.ZeroInt()))
+	_ = auction.SetStatus(types.AuctionStatusCancelled)
+
+	// Call the before auction canceled hook
+	k.BeforeAuctionCanceled(ctx, msg.AuctionId, msg.Auctioneer)
 
 	k.SetAuction(ctx, auction)
 
@@ -327,4 +236,270 @@ func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) erro
 	})
 
 	return nil
+}
+
+// AddAllowedBidders is a function that is implemented for an external module to add
+// allowed bidders in the auction's AllowedBidders list; it doesn't do the auctioneer's verification
+// because the module is fundamentally designed to delegate authorization to an external module.
+// It is suggested for an external module to add any necessary verification and operations depending on their use cases.
+func (k Keeper) AddAllowedBidders(ctx sdk.Context, auctionId uint64, bidders []types.AllowedBidder) error {
+	auction, found := k.GetAuction(ctx, auctionId)
+	if !found {
+		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", auctionId)
+	}
+
+	if len(bidders) == 0 {
+		return types.ErrEmptyAllowedBidders
+	}
+
+	if err := types.ValidateAllowedBidders(bidders, auction.GetSellingCoin().Amount); err != nil {
+		return err
+	}
+
+	// Append new bidders from the existing ones
+	allowedBidders := auction.GetAllowedBidders()
+	allowedBidders = append(allowedBidders, bidders...)
+
+	if err := auction.SetAllowedBidders(allowedBidders); err != nil {
+		return err
+	}
+
+	// Call the before allowed bidders added hook
+	k.BeforeAllowedBiddersAdded(ctx, auctionId, bidders)
+
+	k.SetAuction(ctx, auction)
+
+	return nil
+}
+
+// UpdateAllowedBidder is a function that is implemented for an external module to update
+// allowed bidders in the auction's AllowedBidders list; it simply updates the bidder's maximum bid amount.
+// It doesn't do the auctioneer's verification because the module is fundamentally designed to delegate authorization to an external module.
+// It is suggested for an external module to add any necessary verification and operations depending on their use cases.
+func (k Keeper) UpdateAllowedBidder(ctx sdk.Context, auctionId uint64, bidder sdk.AccAddress, maxBidAmount sdk.Int) error {
+	auction, found := k.GetAuction(ctx, auctionId)
+	if !found {
+		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", auctionId)
+	}
+
+	if maxBidAmount.IsNil() {
+		return types.ErrInvalidMaxBidAmount
+	}
+
+	if !maxBidAmount.IsPositive() {
+		return types.ErrInvalidMaxBidAmount
+	}
+
+	if _, found := auction.GetAllowedBiddersMap()[bidder.String()]; !found {
+		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "bidder %s is not found", bidder.String())
+	}
+
+	_ = auction.SetMaxBidAmount(bidder.String(), maxBidAmount)
+
+	// Call the before allowed bidders updated hook
+	k.BeforeAllowedBidderUpdated(ctx, auctionId, bidder, maxBidAmount)
+
+	k.SetAuction(ctx, auction)
+
+	return nil
+}
+
+// AllocateSellingCoin allocates allocated selling coin for all matched bids in MatchingInfo and
+// releases them from the selling reserve account.
+func (k Keeper) AllocateSellingCoin(ctx sdk.Context, auction types.AuctionI, mInfo MatchingInfo) error {
+	// Call the before seling coin distributed hook
+	k.BeforeSellingCoinsAllocated(ctx, auction.GetId(), mInfo.AllocationMap, mInfo.RefundMap)
+
+	sellingReserveAddr := auction.GetSellingReserveAddress()
+	sellingCoinDenom := auction.GetSellingCoin().Denom
+
+	inputs := []banktypes.Input{}
+	outputs := []banktypes.Output{}
+
+	// Allocate coins to all matched bidders in AllocationMap and
+	// set the amounts in trasnaction inputs and outputs from the selling reserve account
+	for bidder, allocAmt := range mInfo.AllocationMap {
+		if allocAmt.IsZero() {
+			continue
+		}
+		allocateCoins := sdk.NewCoins(sdk.NewCoin(sellingCoinDenom, allocAmt))
+		bidderAddr, _ := sdk.AccAddressFromBech32(bidder)
+
+		inputs = append(inputs, banktypes.NewInput(sellingReserveAddr, allocateCoins))
+		outputs = append(outputs, banktypes.NewOutput(bidderAddr, allocateCoins))
+	}
+
+	// Send all at once
+	if err := k.bankKeeper.InputOutputCoins(ctx, inputs, outputs); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ReleaseVestingPayingCoin releases the vested selling coin to the auctioneer from the vesting reserve account.
+func (k Keeper) ReleaseVestingPayingCoin(ctx sdk.Context, auction types.AuctionI) error {
+	vqs := k.GetVestingQueuesByAuctionId(ctx, auction.GetId())
+	vqsLen := len(vqs)
+
+	for i, vq := range vqs {
+		if vq.ShouldRelease(ctx.BlockTime()) {
+			vestingReserveAddr := auction.GetVestingReserveAddress()
+			auctioneerAddr := auction.GetAuctioneer()
+			payingCoins := sdk.NewCoins(vq.PayingCoin)
+
+			if err := k.bankKeeper.SendCoins(ctx, vestingReserveAddr, auctioneerAddr, payingCoins); err != nil {
+				return sdkerrors.Wrap(err, "failed to release paying coin to the auctioneer")
+			}
+
+			vq.SetReleased(true)
+			k.SetVestingQueue(ctx, vq)
+
+			// Update status to AuctionStatusFinished when all the amounts are released
+			if i == vqsLen-1 {
+				_ = auction.SetStatus(types.AuctionStatusFinished)
+				k.SetAuction(ctx, auction)
+			}
+		}
+	}
+
+	return nil
+}
+
+// RefundRemainingSellingCoin refunds the remaining selling coin back to the auctioneer.
+// This function is called right after the selling coin is sold.
+func (k Keeper) RefundRemainingSellingCoin(ctx sdk.Context, auction types.AuctionI) error {
+	sellingReserveAddr := auction.GetSellingReserveAddress()
+	sellingCoinDenom := auction.GetSellingCoin().Denom
+	spendableCoins := k.bankKeeper.SpendableCoins(ctx, sellingReserveAddr)
+	releaseCoins := sdk.NewCoins(sdk.NewCoin(sellingCoinDenom, spendableCoins.AmountOf(sellingCoinDenom)))
+
+	if err := k.bankKeeper.SendCoins(ctx, sellingReserveAddr, auction.GetAuctioneer(), releaseCoins); err != nil {
+		return err
+	}
+	return nil
+}
+
+// RefundPayingCoin refunds paying coin back to the bidders.
+func (k Keeper) RefundPayingCoin(ctx sdk.Context, auction types.AuctionI, mInfo MatchingInfo) error {
+	payingReserveAddr := auction.GetPayingReserveAddress()
+	payingCoinDenom := auction.GetPayingCoinDenom()
+
+	inputs := []banktypes.Input{}
+	outputs := []banktypes.Output{}
+
+	// Refund the unmatched bid amount back to the bidder
+	for bidder, refundAmt := range mInfo.RefundMap {
+		if refundAmt.IsZero() {
+			continue
+		}
+
+		bidderAddr, err := sdk.AccAddressFromBech32(bidder)
+		if err != nil {
+			return err
+		}
+		refundCoins := sdk.NewCoins(sdk.NewCoin(payingCoinDenom, refundAmt))
+
+		inputs = append(inputs, banktypes.NewInput(payingReserveAddr, refundCoins))
+		outputs = append(outputs, banktypes.NewOutput(bidderAddr, refundCoins))
+	}
+
+	// Send all at once
+	if err := k.bankKeeper.InputOutputCoins(ctx, inputs, outputs); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ExtendRound extends another round of ExtendedPeriod value for the auction.
+func (k Keeper) ExtendRound(ctx sdk.Context, ba *types.BatchAuction) {
+	params := k.GetParams(ctx)
+	extendedPeriod := ctx.BlockTime().AddDate(0, 0, int(params.ExtendedPeriod))
+
+	endTimes := ba.GetEndTimes()
+	endTimes = append(endTimes, extendedPeriod)
+
+	_ = ba.SetEndTimes(endTimes)
+	k.SetAuction(ctx, ba)
+}
+
+// FinishFixedPriceAuction finishes a fixed price auction.
+func (k Keeper) FinishFixedPriceAuction(ctx sdk.Context, auction types.AuctionI) {
+	mInfo := k.CalculateFixedPriceAllocation(ctx, auction)
+
+	if err := k.AllocateSellingCoin(ctx, auction, mInfo); err != nil {
+		panic(err)
+	}
+
+	if err := k.RefundRemainingSellingCoin(ctx, auction); err != nil {
+		panic(err)
+	}
+
+	if err := k.ApplyVestingSchedules(ctx, auction); err != nil {
+		panic(err)
+	}
+}
+
+// FinishBatchAuction finishes a batch auction.
+func (k Keeper) FinishBatchAuction(ctx sdk.Context, auction types.AuctionI) {
+	ba := auction.(*types.BatchAuction)
+
+	if ba.MaxExtendedRound+1 == uint32(len(auction.GetEndTimes())) {
+		mInfo := k.CalculateBatchAllocation(ctx, auction)
+
+		if err := k.AllocateSellingCoin(ctx, auction, mInfo); err != nil {
+			panic(err)
+		}
+
+		if err := k.RefundRemainingSellingCoin(ctx, auction); err != nil {
+			panic(err)
+		}
+
+		if err := k.RefundPayingCoin(ctx, auction, mInfo); err != nil {
+			panic(err)
+		}
+
+		if err := k.ApplyVestingSchedules(ctx, auction); err != nil {
+			panic(err)
+		}
+	}
+
+	// Extend round since there is no last matched length to compare with
+	lastMatchedLen := k.GetLastMatchedBidsLen(ctx, ba.GetId())
+	if lastMatchedLen == 0 {
+		k.CalculateBatchAllocation(ctx, auction)
+		k.ExtendRound(ctx, ba)
+		return
+	}
+
+	mInfo := k.CalculateBatchAllocation(ctx, auction)
+
+	currDec := sdk.NewDec(mInfo.MatchedLen)
+	lastDec := sdk.NewDec(lastMatchedLen)
+	diff := sdk.OneDec().Sub(currDec.Quo(lastDec)) // 1 - (CurrentMatchedLenDec / LastMatchedLenDec)
+
+	// To prevent from auction sniping technique, compare the extended round rate with
+	// the current and the last length of matched bids to determine
+	// if the auction needs another extended round
+	if diff.GTE(ba.ExtendedRoundRate) {
+		k.ExtendRound(ctx, ba)
+		return
+	}
+
+	if err := k.AllocateSellingCoin(ctx, auction, mInfo); err != nil {
+		panic(err)
+	}
+
+	if err := k.RefundRemainingSellingCoin(ctx, auction); err != nil {
+		panic(err)
+	}
+
+	if err := k.RefundPayingCoin(ctx, auction, mInfo); err != nil {
+		panic(err)
+	}
+
+	if err := k.ApplyVestingSchedules(ctx, auction); err != nil {
+		panic(err)
+	}
 }

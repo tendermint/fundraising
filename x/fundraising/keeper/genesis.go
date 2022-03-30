@@ -1,4 +1,4 @@
-package fundraising
+package keeper
 
 import (
 	"fmt"
@@ -6,12 +6,11 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/tendermint/fundraising/x/fundraising/keeper"
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
 
 // InitGenesis initializes the module's state from a provided genesis state.
-func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
+func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 	if err := genState.Validate(); err != nil {
 		panic(err)
 	}
@@ -31,17 +30,12 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	}
 
 	for _, bid := range genState.Bids {
-		bidderAcc, err := sdk.AccAddressFromBech32(bid.Bidder)
-		if err != nil {
-			panic(err)
-		}
-
 		_, found := k.GetAuction(ctx, bid.AuctionId)
 		if !found {
 			panic(fmt.Sprintf("auction %d is not found", bid.AuctionId))
 		}
 
-		k.SetBid(ctx, bid.AuctionId, bid.Sequence, bidderAcc, bid)
+		k.SetBid(ctx, bid)
 	}
 
 	for _, queue := range genState.VestingQueues {
@@ -50,12 +44,12 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			panic(fmt.Sprintf("auction %d is not found", queue.AuctionId))
 		}
 
-		k.SetVestingQueue(ctx, queue.AuctionId, queue.ReleaseTime, queue)
+		k.SetVestingQueue(ctx, queue)
 	}
 }
 
 // ExportGenesis returns the module's exported genesis state.
-func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
+func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 	params := k.GetParams(ctx)
 	bids := k.GetBids(ctx)
 	queues := k.GetVestingQueues(ctx)

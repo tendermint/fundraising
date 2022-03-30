@@ -1,5 +1,5 @@
 syntax = "proto3";
-package tendermint.fundraising.fundraising;
+package tendermint.fundraising;
 
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "cosmos_proto/cosmos.proto";
@@ -32,6 +32,12 @@ service Query {
   rpc Bids(QueryBidsRequest) returns (QueryBidsResponse) {
     option (google.api.http).get =
         "/cosmos/fundraising/v1beta1/auctions/{auction_id}/bids";
+  }
+
+  // Bid returns the specific bid from the auction id and bid id.
+  rpc Bid(QueryBidRequest) returns (QueryBidResponse) {
+    option (google.api.http).get =
+        "/cosmos/fundraising/v1beta1/auctions/{auction_id}/bids/{bid_id}";
   }
 
   // Vestings returns all vestings for the auction.
@@ -80,7 +86,7 @@ message QueryAuctionResponse {
 message QueryBidsRequest {
   uint64 auction_id = 1;
   string bidder = 2;
-  string eligible = 3;
+  string is_matched = 3;
   cosmos.base.query.v1beta1.PageRequest pagination = 4;
 }
 
@@ -91,6 +97,18 @@ message QueryBidsResponse {
 
   // pagination defines the pagination in the response
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryBidRequest is the request type for the Query/Sequence RPC method.
+message QueryBidRequest {
+  uint64 auction_id = 1;
+  uint64 bid_id = 2;
+}
+
+// QueryBidResponse is response type for the Query/Sequence RPC method.
+message QueryBidResponse {
+  // bid specifies specific bid
+  Bid bid = 1 [ (gogoproto.nullable) = false ];
 }
 
 // QueryVestingsRequest is request type for the Query/Vestings RPC method.

@@ -29,7 +29,7 @@ func (suite *keysTestSuite) TestGetAuctionKey() {
 func (suite *keysTestSuite) TestGetBidKey() {
 	testCases := []struct {
 		auctionId uint64
-		sequence  uint64
+		bidId     uint64
 		expected  []byte
 	}{
 		{
@@ -50,17 +50,17 @@ func (suite *keysTestSuite) TestGetBidKey() {
 	}
 
 	for _, tc := range testCases {
-		key := types.GetBidKey(tc.auctionId, tc.sequence)
+		key := types.GetBidKey(tc.auctionId, tc.bidId)
 		suite.Require().Equal(tc.expected, key)
 	}
 }
 
 func (suite *keysTestSuite) TestBidIndexKey() {
 	testCases := []struct {
-		bidderAcc sdk.AccAddress
-		auctionId uint64
-		sequence  uint64
-		expected  []byte
+		bidderAddr sdk.AccAddress
+		auctionId  uint64
+		bidId      uint64
+		expected   []byte
 	}{
 		{
 			sdk.AccAddress(crypto.AddressHash([]byte("bidder1"))),
@@ -92,12 +92,12 @@ func (suite *keysTestSuite) TestBidIndexKey() {
 	}
 
 	for _, tc := range testCases {
-		key := types.GetBidIndexKey(tc.bidderAcc, tc.auctionId, tc.sequence)
+		key := types.GetBidIndexKey(tc.bidderAddr, tc.auctionId, tc.bidId)
 		suite.Require().Equal(tc.expected, key)
 
-		auctionId, sequence := types.ParseBidIndexKey(key)
+		auctionId, bidId := types.ParseBidIndexKey(key)
 		suite.Require().Equal(tc.auctionId, auctionId)
-		suite.Require().Equal(tc.sequence, sequence)
+		suite.Require().Equal(tc.bidId, bidId)
 	}
 }
 
@@ -109,21 +109,21 @@ func (suite *keysTestSuite) TestVestingQueueKey() {
 	}{
 		{
 			uint64(1),
-			types.ParseTime("2021-12-01T00:00:00Z"),
+			types.MustParseRFC3339("2021-12-01T00:00:00Z"),
 			[]byte{0x41, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1, 0x32, 0x30, 0x32, 0x31,
 				0x2d, 0x31, 0x32, 0x2d, 0x30, 0x31, 0x54, 0x30, 0x30, 0x3a, 0x30, 0x30,
 				0x3a, 0x30, 0x30, 0x2e, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30},
 		},
 		{
 			uint64(5),
-			types.ParseTime("2022-01-05T00:00:00Z"),
+			types.MustParseRFC3339("2022-01-05T00:00:00Z"),
 			[]byte{0x41, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x5, 0x32, 0x30, 0x32, 0x32,
 				0x2d, 0x30, 0x31, 0x2d, 0x30, 0x35, 0x54, 0x30, 0x30, 0x3a, 0x30, 0x30,
 				0x3a, 0x30, 0x30, 0x2e, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30},
 		},
 		{
 			uint64(11),
-			types.ParseTime("2022-07-11T00:00:00Z"),
+			types.MustParseRFC3339("2022-07-11T00:00:00Z"),
 			[]byte{0x41, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xb, 0x32, 0x30, 0x32, 0x32, 0x2d,
 				0x30, 0x37, 0x2d, 0x31, 0x31, 0x54, 0x30, 0x30, 0x3a, 0x30, 0x30, 0x3a, 0x30,
 				0x30, 0x2e, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30},

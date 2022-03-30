@@ -77,8 +77,8 @@ import (
 	ibchost "github.com/cosmos/ibc-go/modules/core/24-host"
 	ibckeeper "github.com/cosmos/ibc-go/modules/core/keeper"
 	"github.com/spf13/cast"
-	"github.com/tendermint/spm/cosmoscmd"
-	"github.com/tendermint/spm/openapiconsole"
+	"github.com/tendermint/starport/starport/pkg/cosmoscmd"
+	"github.com/tendermint/starport/starport/pkg/openapiconsole"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	"github.com/tendermint/tendermint/libs/log"
@@ -86,7 +86,7 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	// this line is used by starport scaffolding # stargate/app/moduleImport
-	fundraisingdocs "github.com/tendermint/fundraising/docs"
+	fundraisingdocs "github.com/tendermint/fundraising/client/docs"
 	fundraising "github.com/tendermint/fundraising/x/fundraising"
 	fundraisingkeeper "github.com/tendermint/fundraising/x/fundraising/keeper"
 	fundraisingtypes "github.com/tendermint/fundraising/x/fundraising/types"
@@ -95,6 +95,7 @@ import (
 const (
 	AccountAddressPrefix = "cosmos"
 	Name                 = "fundraising"
+	DefaultChainID       = "fundraising-1"
 )
 
 // this line is used by starport scaffolding # stargate/wasm/app/enabledProposals
@@ -360,7 +361,7 @@ func New(
 		app.GetSubspace(fundraisingtypes.ModuleName),
 		app.AccountKeeper,
 		app.BankKeeper,
-		app.ModuleAccountAddrs(),
+		app.DistrKeeper,
 	)
 
 	// Create static IBC router, add transfer route, then set and seal it
@@ -400,7 +401,7 @@ func New(
 		params.NewAppModule(app.ParamsKeeper),
 		transferModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
-		fundraising.NewAppModule(appCodec, app.FundraisingKeeper, app.AccountKeeper, app.BankKeeper),
+		fundraising.NewAppModule(appCodec, app.FundraisingKeeper, app.AccountKeeper, app.BankKeeper, app.DistrKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -599,8 +600,8 @@ func (app *App) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIConfig
 	ModuleBasics.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
 	// Register app's OpenAPI routes.
-	if apiConfig.Enable {
-		apiSvr.Router.Handle("/static/openapi.yml", http.FileServer(http.FS(fundraisingdocs.Docs)))
+	if apiConfig.Swagger {
+		apiSvr.Router.Handle("/static/openapi.yml", http.FileServer(fundraisingdocs.Docs))
 		apiSvr.Router.HandleFunc("/", openapiconsole.Handler(Name, "/static/openapi.yml"))
 	}
 }

@@ -2,7 +2,7 @@ package types_test
 
 import (
 	"testing"
-	time "time"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -14,10 +14,6 @@ import (
 )
 
 func TestMsgCreateFixedPriceAuction(t *testing.T) {
-	auctioneerAcc := sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer")))
-	startTime, _ := time.Parse(time.RFC3339, "2021-11-01T22:00:00+00:00")
-	endTime := startTime.AddDate(0, 1, 0) // add 1 month
-
 	testCases := []struct {
 		expectedErr string
 		msg         *types.MsgCreateFixedPriceAuction
@@ -25,125 +21,154 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 		{
 			"", // empty means no error expected
 			types.NewMsgCreateFixedPriceAuction(
-				auctioneerAcc.String(),
+				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0.5"),
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
 				[]types.VestingSchedule{},
-				startTime,
-				endTime,
+				time.Now(),
+				time.Now().AddDate(0, 1, 0),
 			),
 		},
 		{
 			"start price must be positve: invalid request",
 			types.NewMsgCreateFixedPriceAuction(
-				auctioneerAcc.String(),
+				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0"),
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
 				[]types.VestingSchedule{},
-				startTime,
-				endTime,
+				time.Now(),
+				time.Now().AddDate(0, 1, 0),
 			),
 		},
 		{
 			"selling coin amount must be positive: invalid request",
 			types.NewMsgCreateFixedPriceAuction(
-				auctioneerAcc.String(),
+				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0.5"),
 				sdk.NewInt64Coin("denom2", 0),
 				"denom1",
 				[]types.VestingSchedule{},
-				startTime,
-				endTime,
+				time.Now(),
+				time.Now().AddDate(0, 1, 0),
 			),
 		},
 		{
-			"vesting weight must be positive: invalid vesting schedules",
+			"selling coin denom must not be the same as paying coin denom: invalid request",
 			types.NewMsgCreateFixedPriceAuction(
-				auctioneerAcc.String(),
+				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0.5"),
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
-				"denom1",
-				[]types.VestingSchedule{
-					{
-						types.ParseTime("2022-06-01T22:08:41+00:00"),
-						sdk.ZeroDec(),
-					},
-				},
-				startTime,
-				endTime,
-			),
-		},
-		{
-			"each vesting weight must not be greater than 1: invalid vesting schedules",
-			types.NewMsgCreateFixedPriceAuction(
-				auctioneerAcc.String(),
-				sdk.MustNewDecFromStr("0.5"),
-				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
-				"denom1",
-				[]types.VestingSchedule{
-					{
-						types.ParseTime("2022-06-01T22:08:41+00:00"),
-						sdk.MustNewDecFromStr("1.1"),
-					},
-				},
-				startTime,
-				endTime,
-			),
-		},
-		{
-			"total vesting weight must be equal to 1: invalid vesting schedules",
-			types.NewMsgCreateFixedPriceAuction(
-				auctioneerAcc.String(),
-				sdk.MustNewDecFromStr("0.5"),
-				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
-				"denom1",
-				[]types.VestingSchedule{
-					{
-						types.ParseTime("2022-06-01T22:00:00+00:00"),
-						sdk.MustNewDecFromStr("0.5"),
-					},
-					{
-						types.ParseTime("2022-12-01T22:00:00+00:00"),
-						sdk.MustNewDecFromStr("0.3"),
-					},
-				},
-				startTime,
-				endTime,
+				"denom2",
+				[]types.VestingSchedule{},
+				time.Now(),
+				time.Now().AddDate(0, 1, 0),
 			),
 		},
 		{
 			"end time must be greater than start time: invalid request",
 			types.NewMsgCreateFixedPriceAuction(
-				auctioneerAcc.String(),
+				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0.5"),
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
 				[]types.VestingSchedule{},
-				startTime,
-				startTime.AddDate(-1, 0, 0),
+				time.Now(),
+				time.Now().AddDate(-1, 0, 0),
 			),
 		},
 		{
-			"release time must be chronological: invalid vesting schedules",
+			"vesting weight must be positive: invalid vesting schedules",
 			types.NewMsgCreateFixedPriceAuction(
-				auctioneerAcc.String(),
+				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0.5"),
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.ParseTime("2022-12-01T22:00:00+00:00"),
+						types.MustParseRFC3339("2022-06-01T22:08:41+00:00"),
+						sdk.ZeroDec(),
+					},
+				},
+				time.Now(),
+				time.Now().AddDate(0, 1, 0),
+			),
+		},
+		{
+			"vesting weight must not be greater than 1: invalid vesting schedules",
+			types.NewMsgCreateFixedPriceAuction(
+				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom1",
+				[]types.VestingSchedule{
+					{
+						types.MustParseRFC3339("2022-06-01T22:08:41+00:00"),
+						sdk.MustNewDecFromStr("1.1"),
+					},
+				},
+				time.Now(),
+				time.Now().AddDate(0, 1, 0),
+			),
+		},
+		{
+			"release time must be set after the end time: invalid vesting schedules",
+			types.NewMsgCreateFixedPriceAuction(
+				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom1",
+				[]types.VestingSchedule{
+					{
+						types.MustParseRFC3339("2022-06-01T22:08:41+00:00"),
+						sdk.MustNewDecFromStr("1.0"),
+					},
+				},
+				time.Now(),
+				time.Now().AddDate(1, 0, 0),
+			),
+		},
+		{
+			"release time must be chronological: invalid vesting schedules",
+			types.NewMsgCreateFixedPriceAuction(
+				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom1",
+				[]types.VestingSchedule{
+					{
+						types.MustParseRFC3339("2022-12-01T22:00:00+00:00"),
 						sdk.MustNewDecFromStr("0.5"),
 					},
 					{
-						types.ParseTime("2022-06-01T22:00:00+00:00"),
+						types.MustParseRFC3339("2022-06-01T22:00:00+00:00"),
 						sdk.MustNewDecFromStr("0.5"),
 					},
 				},
-				startTime,
-				endTime,
+				time.Now(),
+				time.Now().AddDate(0, 1, 0),
+			),
+		},
+		{
+			"total vesting weight must be equal to 1: invalid vesting schedules",
+			types.NewMsgCreateFixedPriceAuction(
+				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom1",
+				[]types.VestingSchedule{
+					{
+						types.MustParseRFC3339("2022-06-01T22:00:00+00:00"),
+						sdk.MustNewDecFromStr("0.5"),
+					},
+					{
+						types.MustParseRFC3339("2022-12-01T22:00:00+00:00"),
+						sdk.MustNewDecFromStr("0.3"),
+					},
+				},
+				time.Now(),
+				time.Now().AddDate(0, 1, 0),
 			),
 		},
 	}
@@ -166,8 +191,227 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 	}
 }
 
-func TestMsgCreateEnglishAuction(t *testing.T) {
-	// TODO: not implemented yet
+func TestMsgCreateBatchAuction(t *testing.T) {
+	testCases := []struct {
+		expectedErr string
+		msg         *types.MsgCreateBatchAuction
+	}{
+		{
+			"", // empty means no error expected
+			types.NewMsgCreateBatchAuction(
+				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.MustNewDecFromStr("0.1"),
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom1",
+				[]types.VestingSchedule{},
+				uint32(2),
+				sdk.MustNewDecFromStr("0.05"),
+				time.Now(),
+				time.Now().AddDate(0, 1, 0),
+			),
+		},
+		{
+			"start price must be positve: invalid request",
+			types.NewMsgCreateBatchAuction(
+				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
+				sdk.MustNewDecFromStr("0"),
+				sdk.MustNewDecFromStr("0.1"),
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom1",
+				[]types.VestingSchedule{},
+				uint32(2),
+				sdk.MustNewDecFromStr("0.05"),
+				time.Now(),
+				time.Now().AddDate(0, 1, 0),
+			),
+		},
+		{
+			"selling coin amount must be positive: invalid request",
+			types.NewMsgCreateBatchAuction(
+				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.MustNewDecFromStr("0.1"),
+				sdk.NewInt64Coin("denom2", 0),
+				"denom1",
+				[]types.VestingSchedule{},
+				uint32(2),
+				sdk.MustNewDecFromStr("0.05"),
+				time.Now(),
+				time.Now().AddDate(0, 1, 0),
+			),
+		},
+		{
+			"selling coin denom must not be the same as paying coin denom: invalid request",
+			types.NewMsgCreateBatchAuction(
+				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.MustNewDecFromStr("0.1"),
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom2",
+				[]types.VestingSchedule{},
+				uint32(2),
+				sdk.MustNewDecFromStr("0.05"),
+				time.Now(),
+				time.Now().AddDate(0, 1, 0),
+			),
+		},
+		{
+			"end time must be greater than start time: invalid request",
+			types.NewMsgCreateBatchAuction(
+				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.MustNewDecFromStr("0.1"),
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom1",
+				[]types.VestingSchedule{},
+				uint32(2),
+				sdk.MustNewDecFromStr("0.05"),
+				time.Now(),
+				time.Now().AddDate(-1, 0, 0),
+			),
+		},
+		{
+			"vesting weight must be positive: invalid vesting schedules",
+			types.NewMsgCreateBatchAuction(
+				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.MustNewDecFromStr("0.1"),
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom1",
+				[]types.VestingSchedule{
+					{
+						types.MustParseRFC3339("2022-06-01T22:08:41+00:00"),
+						sdk.ZeroDec(),
+					},
+				},
+				uint32(2),
+				sdk.MustNewDecFromStr("0.05"),
+				time.Now(),
+				time.Now().AddDate(0, 1, 0),
+			),
+		},
+		{
+			"vesting weight must not be greater than 1: invalid vesting schedules",
+			types.NewMsgCreateBatchAuction(
+				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.MustNewDecFromStr("0.1"),
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom1",
+				[]types.VestingSchedule{
+					{
+						types.MustParseRFC3339("2022-06-01T22:08:41+00:00"),
+						sdk.MustNewDecFromStr("1.1"),
+					},
+				},
+				uint32(2),
+				sdk.MustNewDecFromStr("0.05"),
+				time.Now(),
+				time.Now().AddDate(0, 1, 0),
+			),
+		},
+		{
+			"release time must be set after the end time: invalid vesting schedules",
+			types.NewMsgCreateBatchAuction(
+				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.MustNewDecFromStr("0.1"),
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom1",
+				[]types.VestingSchedule{
+					{
+						types.MustParseRFC3339("2022-06-01T22:08:41+00:00"),
+						sdk.MustNewDecFromStr("1.0"),
+					},
+				},
+				uint32(2),
+				sdk.MustNewDecFromStr("0.05"),
+				time.Now(),
+				time.Now().AddDate(1, 0, 0),
+			),
+		},
+		{
+			"release time must be chronological: invalid vesting schedules",
+			types.NewMsgCreateBatchAuction(
+				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.MustNewDecFromStr("0.1"),
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom1",
+				[]types.VestingSchedule{
+					{
+						types.MustParseRFC3339("2022-12-01T22:00:00+00:00"),
+						sdk.MustNewDecFromStr("0.5"),
+					},
+					{
+						types.MustParseRFC3339("2022-06-01T22:00:00+00:00"),
+						sdk.MustNewDecFromStr("0.5"),
+					},
+				},
+				uint32(2),
+				sdk.MustNewDecFromStr("0.05"),
+				time.Now(),
+				time.Now().AddDate(0, 1, 0),
+			),
+		},
+		{
+			"total vesting weight must be equal to 1: invalid vesting schedules",
+			types.NewMsgCreateBatchAuction(
+				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.MustNewDecFromStr("0.1"),
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom1",
+				[]types.VestingSchedule{
+					{
+						types.MustParseRFC3339("2022-06-01T22:00:00+00:00"),
+						sdk.MustNewDecFromStr("0.5"),
+					},
+					{
+						types.MustParseRFC3339("2022-12-01T22:00:00+00:00"),
+						sdk.MustNewDecFromStr("0.3"),
+					},
+				},
+				uint32(2),
+				sdk.MustNewDecFromStr("0.05"),
+				time.Now(),
+				time.Now().AddDate(0, 1, 0),
+			),
+		},
+		{
+			"extend rate must be positve: invalid request",
+			types.NewMsgCreateBatchAuction(
+				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.MustNewDecFromStr("0.1"),
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom1",
+				[]types.VestingSchedule{},
+				uint32(2),
+				sdk.MustNewDecFromStr("-0.05"),
+				time.Now(),
+				time.Now().AddDate(0, 1, 0),
+			),
+		},
+	}
+
+	for _, tc := range testCases {
+		require.IsType(t, &types.MsgCreateBatchAuction{}, tc.msg)
+		require.Equal(t, types.TypeMsgCreateBatchAuction, tc.msg.Type())
+		require.Equal(t, types.RouterKey, tc.msg.Route())
+		require.Equal(t, sdk.MustSortJSON(legacy.Cdc.MustMarshalJSON(tc.msg)), tc.msg.GetSignBytes())
+
+		err := tc.msg.ValidateBasic()
+		if tc.expectedErr == "" {
+			require.Nil(t, err)
+			signers := tc.msg.GetSigners()
+			require.Len(t, signers, 1)
+			require.Equal(t, tc.msg.GetAuctioneer(), signers[0])
+		} else {
+			require.EqualError(t, err, tc.expectedErr)
+		}
+	}
 }
 
 func TestMsgCancelAuction(t *testing.T) {
@@ -203,8 +447,6 @@ func TestMsgCancelAuction(t *testing.T) {
 }
 
 func TestMsgPlaceBid(t *testing.T) {
-	bidderAcc := sdk.AccAddress(crypto.AddressHash([]byte("Bidder")))
-
 	testCases := []struct {
 		expectedErr string
 		msg         *types.MsgPlaceBid
@@ -213,7 +455,8 @@ func TestMsgPlaceBid(t *testing.T) {
 			"", // empty means no error expected
 			types.NewMsgPlaceBid(
 				uint64(1),
-				bidderAcc.String(),
+				sdk.AccAddress(crypto.AddressHash([]byte("Bidder"))).String(),
+				types.BidTypeBatchWorth,
 				sdk.OneDec(),
 				sdk.NewInt64Coin("denom2", 1000000),
 			),
@@ -222,17 +465,19 @@ func TestMsgPlaceBid(t *testing.T) {
 			"bid price must be positve value: invalid request",
 			types.NewMsgPlaceBid(
 				uint64(1),
-				bidderAcc.String(),
+				sdk.AccAddress(crypto.AddressHash([]byte("Bidder"))).String(),
+				types.BidTypeBatchWorth,
 				sdk.ZeroDec(),
 				sdk.NewInt64Coin("denom2", 1000000),
 			),
 		},
 		{
-			"bid price must be positve value: invalid request",
+			"invalid coin amount: 0: invalid request",
 			types.NewMsgPlaceBid(
 				uint64(1),
-				bidderAcc.String(),
-				sdk.ZeroDec(),
+				sdk.AccAddress(crypto.AddressHash([]byte("Bidder"))).String(),
+				types.BidTypeBatchWorth,
+				sdk.OneDec(),
 				sdk.NewInt64Coin("denom2", 0),
 			),
 		},
@@ -250,6 +495,95 @@ func TestMsgPlaceBid(t *testing.T) {
 			signers := tc.msg.GetSigners()
 			require.Len(t, signers, 1)
 			require.Equal(t, tc.msg.GetBidder(), signers[0])
+		} else {
+			require.EqualError(t, err, tc.expectedErr)
+		}
+	}
+}
+
+func TestMsgModifyBid(t *testing.T) {
+	testCases := []struct {
+		expectedErr string
+		msg         *types.MsgModifyBid
+	}{
+		{
+			"", // empty means no error expected
+			types.NewMsgModifyBid(
+				uint64(1),
+				sdk.AccAddress(crypto.AddressHash([]byte("Bidder"))).String(),
+				uint64(0),
+				sdk.OneDec(),
+				sdk.NewInt64Coin("denom2", 1000000),
+			),
+		},
+		{
+			"bid price must be positve value: invalid request",
+			types.NewMsgModifyBid(
+				uint64(1),
+				sdk.AccAddress(crypto.AddressHash([]byte("Bidder"))).String(),
+				uint64(0),
+				sdk.ZeroDec(),
+				sdk.NewInt64Coin("denom2", 1000000),
+			),
+		},
+		{
+			"invalid coin amount: 0: invalid request",
+			types.NewMsgModifyBid(
+				uint64(1),
+				sdk.AccAddress(crypto.AddressHash([]byte("Bidder"))).String(),
+				uint64(0),
+				sdk.OneDec(),
+				sdk.NewInt64Coin("denom2", 0),
+			),
+		},
+	}
+
+	for _, tc := range testCases {
+		require.IsType(t, &types.MsgModifyBid{}, tc.msg)
+		require.Equal(t, types.TypeMsgModifyBid, tc.msg.Type())
+		require.Equal(t, types.RouterKey, tc.msg.Route())
+		require.Equal(t, sdk.MustSortJSON(legacy.Cdc.MustMarshalJSON(tc.msg)), tc.msg.GetSignBytes())
+
+		err := tc.msg.ValidateBasic()
+		if tc.expectedErr == "" {
+			require.Nil(t, err)
+			signers := tc.msg.GetSigners()
+			require.Len(t, signers, 1)
+			require.Equal(t, tc.msg.GetBidder(), signers[0])
+		} else {
+			require.EqualError(t, err, tc.expectedErr)
+		}
+	}
+}
+
+func TestAddAllowedBidder(t *testing.T) {
+	testCases := []struct {
+		expectedErr string
+		msg         *types.MsgAddAllowedBidder
+	}{
+		{
+			"", // empty means no error expected
+			types.NewAddAllowedBidder(
+				uint64(1),
+				types.AllowedBidder{
+					sdk.AccAddress(crypto.AddressHash([]byte("Bidder"))).String(),
+					sdk.NewInt(100_000_000),
+				},
+			),
+		},
+	}
+
+	for _, tc := range testCases {
+		require.IsType(t, &types.MsgAddAllowedBidder{}, tc.msg)
+		require.Equal(t, types.TypeMsgAddAllowedBidder, tc.msg.Type())
+		require.Equal(t, types.RouterKey, tc.msg.Route())
+		require.Equal(t, sdk.MustSortJSON(legacy.Cdc.MustMarshalJSON(tc.msg)), tc.msg.GetSignBytes())
+
+		err := tc.msg.ValidateBasic()
+		if tc.expectedErr == "" {
+			require.Nil(t, err)
+			signers := tc.msg.GetSigners()
+			require.Len(t, signers, 1)
 		} else {
 			require.EqualError(t, err, tc.expectedErr)
 		}

@@ -26,16 +26,11 @@ message Params {
   // the extended auction round lasts.
   uint32 extended_period = 2
       [ (gogoproto.moretags) = "yaml:\"extended_period\"" ];
-
-  // auction_fee_collector is the module account address to collect fees within
-  // the module
-  string auction_fee_collector = 3
-      [ (gogoproto.moretags) = "yaml:\"auction_fee_collector\"" ];
 }
 
 // BaseAuction defines a base auction type. It contains all the necessary fields
 // for basic auction functionality. Any custom auction type should extend this
-// type for additional functionality (e.g. english auction, fixed price
+// type for additional functionality (e.g. batch auction, fixed price
 // auction).
 message BaseAuction {
   option (gogoproto.goproto_getters) = false;
@@ -45,52 +40,52 @@ message BaseAuction {
   // id specifies index of the auction
   uint64 id = 1;
 
-  // type specifies the auction type; type 1 is fixed price and 2 is english
+  // type specifies the auction type; type 1 is fixed price and 2 is batch
+  // auction
   AuctionType type = 2;
 
+  // allowed_bidders specifies the bidders who are allowed to bid for the
+  // auction
+  repeated AllowedBidder allowed_bidders = 3 [ (gogoproto.nullable) = false ];
+
   // auctioneer specifies the bech32-encoded address that creates the auction
-  string auctioneer = 3;
+  string auctioneer = 4;
 
-  // selling_pool_address specifies the bech32-encoded address that has all the
-  // selling coin
-  string selling_pool_address = 4;
+  // selling_reserve_address specifies the bech32-encoded address that has all
+  // the selling coin
+  string selling_reserve_address = 5;
 
-  // paying_pool_address specifies the bech32-encoded address that has all the
-  // paying coin
-  string paying_pool_address = 5;
+  // paying_reserve_address specifies the bech32-encoded address that has all
+  // the paying coin
+  string paying_reserve_address = 6;
 
   // start_price specifies the starting price of the auction
-  string start_price = 6 [
+  // it is determined by the proportion of the price of paying coin denom
+  string start_price = 7 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
   // selling_coin specifies the selling coin for the auction
-  cosmos.base.v1beta1.Coin selling_coin = 7 [
+  cosmos.base.v1beta1.Coin selling_coin = 8 [
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
   ];
 
   // paying_coin_denom specifies the paying coin denom that bidders use to bid
   // for
-  string paying_coin_denom = 8;
+  string paying_coin_denom = 9;
 
-  // vesting_pool_address specifies the bech32-encoded vesting address that
+  // vesting_reserve_address specifies the bech32-encoded vesting address that
   // holds vesting amounts of coin
-  string vesting_pool_address = 9;
+  string vesting_reserve_address = 10;
 
   // vesting_schedules specifies the vesting schedules for the auction
-  repeated VestingSchedule vesting_schedules = 10
+  repeated VestingSchedule vesting_schedules = 11
       [ (gogoproto.nullable) = false ];
 
-  // winning_price specifies the winning price of the auction
-  string winning_price = 11 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-
   // remaining_coin specifes the remaining amount of selling coin to sell
-  cosmos.base.v1beta1.Coin remaining_coin = 12 [
+  cosmos.base.v1beta1.Coin remaining_selling_coin = 12 [
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
   ];
@@ -116,27 +111,35 @@ message FixedPriceAuction {
   BaseAuction base_auction = 1 [ (gogoproto.embed) = true ];
 }
 
-// EnglishAuction defines the english auction type. It is an ascending dynamic
-// auction that an auctioneer decides the starting price of the selling amount
-// of coin and bidders bid to purchase the amounts of coin. It creates
-// competition for the price, not how fast bidders can bid.
-message EnglishAuction {
+// BatchAuction defines a batch auction type. It allows bidders to participate
+// in the auction by placing their limit orders with a bid price they are
+// willing to bid within the auction period. They can place multiple bids with
+// different bid prices and if they want to modify their existing bid, they only
+// have an option to modify with a higher bid price. Under the hood, an order
+// book is created to record the bids to calculate the matched bidders.
+message BatchAuction {
   option (gogoproto.goproto_getters) = false;
 
   BaseAuction base_auction = 1 [ (gogoproto.embed) = true ];
 
-  // maximum_bid_price specifies the maximum bid price for the auction
-  string maximum_bid_price = 2 [
+  // min_bid_price specifies the minibum bid price
+  string min_bid_price = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
-  // extended specifies a number of extended rounds
-  uint32 extended = 3;
+  // matched_price specifies the matched price of the auction
+  string matched_price = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
-  // extend_rate specifies the rate that decides if the auction needs another
-  // round
-  string extend_rate = 4 [
+  // max_extended_round specifies a maximum number of extended rounds
+  uint32 max_extended_round = 4;
+
+  // extended_round_rate specifies the rate that decides if the auction needs
+  // another round
+  string extended_round_rate = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
@@ -152,9 +155,9 @@ enum AuctionType {
   // AUCTION_TYPE_FIXED_PRICE defines the fixed price auction type
   AUCTION_TYPE_FIXED_PRICE = 1
       [ (gogoproto.enumvalue_customname) = "AuctionTypeFixedPrice" ];
-  // AUCTION_TYPE_ENGLISH defines the english auction type
-  AUCTION_TYPE_ENGLISH = 2
-      [ (gogoproto.enumvalue_customname) = "AuctionTypeEnglish" ];
+  // AUCTION_TYPE_BATCH defines the batch auction type
+  AUCTION_TYPE_BATCH = 2
+      [ (gogoproto.enumvalue_customname) = "AuctionTypeBatch" ];
 }
 
 // AuctionStatus enumerates the valid status of an auction.
@@ -212,39 +215,82 @@ message VestingQueue {
   google.protobuf.Timestamp release_time = 4
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
-  // vested specifies the status of distribution
-  bool vested = 5;
+  // released specifies the status of distribution
+  bool released = 5;
+}
+
+// AllowedBidder defines an allowed bidder for the auction.
+message AllowedBidder {
+  // bidder specifies the bech32-encoded address that bids for the auction
+  string bidder = 1;
+
+  // max_bid_amount specifies the maximum bid amount that the bidder can bid
+  string max_bid_amount = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // Bid defines a standard bid for an auction.
 message Bid {
+  option (gogoproto.goproto_getters) = false;
+
   // auction_id specifies the id of the auction
   uint64 auction_id = 1;
 
-  // sequence specifies a number to track first come first served based auction
-  // type
-  uint64 sequence = 2;
-
   // bidder specifies the bech32-encoded address that bids for the auction
-  string bidder = 3;
+  string bidder = 2;
 
-  // price specifies the increasing bid price is only possible
-  string price = 4 [
+  // id specifies an index of a bid for the bidder
+  uint64 id = 3;
+
+  // type specifies the bid type; type 1 is fixed price, 2 is how-much-worth, 3
+  // is how-many-coins
+  BidType type = 4;
+
+  // price specifies the bid price in which price the bidder places the bid
+  string price = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 
-  // coin specifies the paying amount of coin that the bidder bids
-  cosmos.base.v1beta1.Coin coin = 5 [
+  // coin specifies the amount of coin that the bidder bids
+  // for a fixed price auction, the denom is of the paying coin.
+  // for a batch auction of how-much-worth, the denom is of the paying coin.
+  // for a batch auction of how-many-coins, the denom is of the selling coin.
+  cosmos.base.v1beta1.Coin coin = 6 [
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
   ];
 
   // height specifies the block height of the bid
-  uint64 height = 6;
+  uint64 height = 7;
 
-  // eligible specifies the bid that is eligible to purchase the selling coin
-  bool eligible = 7;
+  // isMatched specifies the bid that is a winning bid and enables the bidder to
+  // purchase the selling coin
+  bool isMatched = 8;
+}
+
+// BidType enumerates the valid types of a bid.
+enum BidType {
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  // BID_TYPE_UNSPECIFIED defines the default bid type
+  BID_TYPE_UNSPECIFIED = 0 [ (gogoproto.enumvalue_customname) = "BidTypeNil" ];
+
+  // BID_TYPE_FIXED_PRICE defines a bid type for a fixed price auction type
+  BID_TYPE_FIXED_PRICE = 1
+      [ (gogoproto.enumvalue_customname) = "BidTypeFixedPrice" ];
+
+  // BID_TYPE_BATCH_WORTH defines a bid type for How-Much-Worth-to-Buy of a
+  // batch auction
+  BID_TYPE_BATCH_WORTH = 2
+      [ (gogoproto.enumvalue_customname) = "BidTypeBatchWorth" ];
+
+  // BID_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy of a batch
+  // auction
+  BID_TYPE_BATCH_MANY = 3
+      [ (gogoproto.enumvalue_customname) = "BidTypeBatchMany" ];
 }
 
 // AddressType enumerates the available types of a address.

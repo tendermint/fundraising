@@ -1,16 +1,19 @@
 accounts:
   - name: alice
     coins: ["2000000000000stake","1000000000000000denom1","1000000000000000denom2"]
-  - name: bob
-    coins: ["1000000000000stake","1000000000000000denom1","1000000000000000denom2"]
+  - name: bob 
+    coins: ["2000000000000stake","1000000000000000denom1"]
+  - name: steve
+    coins: ["1000000000000000denom2"]
 validator:
   name: alice
-  staked: "100000000stake"
-# client:
-  # openapi:
-    # path: "docs/static/openapi.yml"
-  # vuex:
-    # path: "vue/src/store"
+  staked: "1000000000000stake"
+client:
+  openapi:
+    path: "client/docs/static/openapi.yml"
 faucet:
-  name: bob
+  name: alice
   coins: ["100000stake", "1000000denom1", "1000000denom2"]
+build:
+  binary: "fundraisingd"
+  ldflags: ["-X github.com/tendermint/fundraising/x/fundraising/keeper.enableAddAllowedBidder=false"]
