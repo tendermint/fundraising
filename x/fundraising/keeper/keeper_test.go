@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"encoding/binary"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -250,6 +251,56 @@ func (s *KeeperTestSuite) sendCoins(fromAddr, toAddr sdk.AccAddress, coins sdk.C
 
 	err := s.app.BankKeeper.SendCoins(s.ctx, fromAddr, toAddr, coins)
 	s.Require().NoError(err)
+}
+
+// fullString is a helper function that returns a full output of the matching result.
+// it includes all bids sorted in descending order, allocation, refund, and matching info.
+// it is useful for debugging.
+func (s *KeeperTestSuite) fullString(auctionId uint64, mInfo keeper.MatchingInfo) string {
+	auction, found := s.keeper.GetAuction(s.ctx, auctionId)
+	s.Require().True(found)
+
+	payingCoinDenom := auction.GetPayingCoinDenom()
+	bids := s.keeper.GetBidsByAuctionId(s.ctx, auctionId)
+	bids = types.SortByBidPrice(bids)
+
+	var b strings.Builder
+
+	// Bids
+	b.WriteString("[Bids]\n")
+	b.WriteString("+--------------------bidder---------------------+-id-+---------price---------+---------type---------+-----reserve-amount-----+-------bid-amount-------+\n")
+	for _, bid := range bids {
+		reserveAmt := bid.ConvertToPayingAmount(payingCoinDenom)
+		bidAmt := bid.ConvertToSellingAmount(payingCoinDenom)
+
+		_, _ = fmt.Fprintf(&b, "| %28s | %2d | %21s | %20s | %22s | %22s |\n", bid.Bidder, bid.Id, bid.Price.String(), bid.Type, reserveAmt, bidAmt)
+	}
+	b.WriteString("+-----------------------------------------------+----+-----------------------+----------------------+------------------------+------------------------+\n\n")
+
+	// Allocation
+	b.WriteString("[Allocation]\n")
+	b.WriteString("+--------------------bidder---------------------+------allocated-amount------+\n")
+	for bidder, allocatedAmt := range mInfo.AllocationMap {
+		_, _ = fmt.Fprintf(&b, "| %28s | %26s |\n", bidder, allocatedAmt)
+	}
+	b.WriteString("+-----------------------------------------------+----------------------------+\n\n")
+
+	// Refund
+	if mInfo.RefundMap != nil {
+		b.WriteString("[Refund]\n")
+		b.WriteString("+--------------------bidder---------------------+------refund-amount------+\n")
+		for bidder, refundAmt := range mInfo.RefundMap {
+			_, _ = fmt.Fprintf(&b, "| %30s | %23s |\n", bidder, refundAmt)
+		}
+		b.WriteString("+-----------------------------------------------+-------------------------+\n\n")
+	}
+
+	b.WriteString("[MatchingInfo]\n")
+	b.WriteString("+-matched-len-+------matched-price------+------total-matched-amount------+\n")
+	_, _ = fmt.Fprintf(&b, "| %11d | %23s | %30s |\n", mInfo.MatchedLen, mInfo.MatchedPrice.String(), mInfo.TotalMatchedAmount)
+	b.WriteString("+-------------+-------------------------+--------------------------------+")
+
+	return b.String()
 }
 
 // bodSellingAmount exchanges to selling coin amount (PayingCoinAmount/Price).
