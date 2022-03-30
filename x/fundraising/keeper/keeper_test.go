@@ -268,13 +268,14 @@ func (s *KeeperTestSuite) fullString(auctionId uint64, mInfo keeper.MatchingInfo
 
 	// Bids
 	b.WriteString("[Bids]\n")
-	b.WriteString("+-id-+---------price---------+---------type---------+-----reserve-amount-----+-------bid-amount-------+\n")
+	b.WriteString("+--------------------bidder---------------------+-id-+---------price---------+---------type---------+-----reserve-amount-----+-------bid-amount-------+\n")
 	for _, bid := range bids {
 		reserveAmt := bid.ConvertToPayingAmount(payingCoinDenom)
 		bidAmt := bid.ConvertToSellingAmount(payingCoinDenom)
-		_, _ = fmt.Fprintf(&b, "| %2d | %21s | %20s | %22s | %22s |\n", bid.Id, bid.Price.String(), bid.Type, reserveAmt, bidAmt)
+
+		_, _ = fmt.Fprintf(&b, "| %28s | %2d | %21s | %20s | %22s | %22s |\n", bid.Bidder, bid.Id, bid.Price.String(), bid.Type, reserveAmt, bidAmt)
 	}
-	b.WriteString("+----+-----------------------+----------------------+------------------------+------------------------+\n\n")
+	b.WriteString("+-----------------------------------------------+----+-----------------------+----------------------+------------------------+------------------------+\n\n")
 
 	// Allocation
 	b.WriteString("[Allocation]\n")

@@ -38,14 +38,14 @@ func (s *KeeperTestSuite) TestExampleFullString() {
 
 	// Output:
 	// [Bids]
-	// +-id-+---------price---------+---------type---------+-----reserve-amount-----+-------bid-amount-------+
-	// |  1 |  0.500000000000000000 | BID_TYPE_FIXED_PRICE |               15000000 |               30000000 |
-	// |  2 |  0.500000000000000000 | BID_TYPE_FIXED_PRICE |               22000000 |               44000000 |
-	// |  3 |  0.500000000000000000 | BID_TYPE_FIXED_PRICE |               33000000 |               66000000 |
-	// |  4 |  0.500000000000000000 | BID_TYPE_FIXED_PRICE |                5500000 |               11000000 |
-	// |  5 |  0.500000000000000000 | BID_TYPE_FIXED_PRICE |               27500000 |               55000000 |
-	// |  6 |  0.500000000000000000 | BID_TYPE_FIXED_PRICE |               11000000 |               22000000 |
-	// +----+-----------------------+----------------------+------------------------+------------------------+
+	// +--------------------bidder---------------------+-id-+---------price---------+---------type---------+-----reserve-amount-----+-------bid-amount-------+
+	// | cosmos1qgqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqggwm7m |  1 |  0.500000000000000000 | BID_TYPE_FIXED_PRICE |               15000000 |               30000000 |
+	// | cosmos1qsqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqv4uhu3 |  2 |  0.500000000000000000 | BID_TYPE_FIXED_PRICE |               22000000 |               44000000 |
+	// | cosmos1qcqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqh7jn9h |  3 |  0.500000000000000000 | BID_TYPE_FIXED_PRICE |               33000000 |               66000000 |
+	// | cosmos1pqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqvzjng6 |  4 |  0.500000000000000000 | BID_TYPE_FIXED_PRICE |                5500000 |               11000000 |
+	// | cosmos1pgqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqhfuh3u |  5 |  0.500000000000000000 | BID_TYPE_FIXED_PRICE |               27500000 |               55000000 |
+	// | cosmos1psqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqn5wmnk |  6 |  0.500000000000000000 | BID_TYPE_FIXED_PRICE |               11000000 |               22000000 |
+	// +-----------------------------------------------+----+-----------------------+----------------------+------------------------+------------------------+
 
 	// [Allocation]
 	// +--------------------bidder---------------------+------allocated-amount------+
