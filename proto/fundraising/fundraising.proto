@@ -263,12 +263,9 @@ message Bid {
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
   ];
 
-  // height specifies the block height of the bid
-  uint64 height = 7;
-
   // isMatched specifies the bid that is a winning bid and enables the bidder to
   // purchase the selling coin
-  bool isMatched = 8;
+  bool isMatched = 7;
 }
 
 // BidType enumerates the valid types of a bid.

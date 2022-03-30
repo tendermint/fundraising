@@ -185,7 +185,6 @@ type Bid struct {
 	Type      	BidType  // the bid type; currently Fixed-Price, How-Much-Worth-To-Buy and How-Many-Coins-To-Buy are supported.
 	Price     	sdk.Dec  // the price for the bid
 	Coin      	sdk.Coin // targeted amount of coin that the bidder bids; the denom must be either the denom or SellingCoin or PayingCoinDenom
-	Height		uint64   // block height
 	IsMatched	bool     // the bid that is determined to be matched (a.k.a., winner) when an auction ends; default value is false
 }
 ```

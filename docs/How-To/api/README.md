@@ -209,7 +209,6 @@ Result:
         "denom": "denom2",
         "amount": "5000000"
       },
-      "height": "230",
       "eligible": false
     }
   ],
