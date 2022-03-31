@@ -53,8 +53,8 @@ func MsgCreateBatchAuctionExec(clientCtx client.Context,
 	return clitestutil.ExecTestCLICmd(clientCtx, cli.NewCreateBatchAuctionCmd(), args)
 }
 
-// MsgPlaceBid creates a transaction for placing a bid.
-func MsgPlaceBid(clientCtx client.Context,
+// MsgPlaceBidExec creates a transaction for placing a bid.
+func MsgPlaceBidExec(clientCtx client.Context,
 	from string,
 	auctionId uint64,
 	bidType types.BidType,
