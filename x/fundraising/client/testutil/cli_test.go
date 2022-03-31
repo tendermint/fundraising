@@ -5,12 +5,14 @@ package testutil
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/suite"
 )
 
 func TestTxCmdTestSuite(t *testing.T) {
-	// suite.Run(t, new(TxCmdTestSuite))
+	suite.Run(t, new(IntegrationTestSuite))
 }
 
-func TestQueryCmdTestSuite(t *testing.T) {
-	// suite.Run(t, new(QueryCmdTestSuite))
-}
+// func TestQueryCmdTestSuite(t *testing.T) {
+// 	suite.Run(t, new(QueryCmdTestSuite))
+// }
