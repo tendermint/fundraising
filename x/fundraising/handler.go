@@ -33,6 +33,10 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 			res, err := msgServer.PlaceBid(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 
+		case *types.MsgModifyBid:
+			res, err := msgServer.ModifyBid(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+
 		case *types.MsgAddAllowedBidder:
 			res, err := msgServer.AddAllowedBidder(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
