@@ -6,7 +6,7 @@ Description: A high-level overview of how the command-line interface (CLI) works
 
 ## Synopsis
 
-This document provides a high-level overview of how the command line (CLI) interface works for the `fundraising` module. To set up a local testing environment, it requires the latest [Starport](https://starport.com/). If you don't have Starport set up in your local machine, see [this Starport guide](https://docs.starport.network/) to install it. Run this command under the project root directory `$ starport chain serve -c config-test.yml` or simply `$ make localnet.
+This document provides a high-level overview of how the command line (CLI) interface works for the `fundraising` module. To set up a local testing environment, it requires the latest [Starport](https://starport.com/). If you don't have Starport set up in your local machine, see [this Starport guide](https://docs.starport.network/) to install it. Run this command under the project root directory `$ starport chain serve -c config-test.yml` or simply `$ make localnet`.
 
 Note that [jq](https://stedolan.github.io/jq/) is recommended to be installed as it is used to process JSON throughout the document.
 
@@ -28,7 +28,7 @@ Note that [jq](https://stedolan.github.io/jq/) is recommended to be installed as
 
 # Transaction
 
-+++ https://github.com/tendermint/fundraising/blob/main/proto/fundraising/tx.proto#L14-L29
++++ https://github.com/tendermint/fundraising/blob/main/proto/fundraising/tx.proto#L12-L35
 
 ## CreateFixedPriceAuction
 
@@ -40,24 +40,24 @@ Usage
 create-fixed-price-auction [file]
 ```
 
-| **Argument** |  **Description**                                             |
-| :----------- | :----------------------------------------------------------- |
-| file         | file that contains required fields for a fixed price auction |
+| **Argument** |  **Description**                                                   |
+| :----------- | :----------------------------------------------------------------- |
+| file         | file that contains required fields to create a fixed price auction |
 
 Field description of the input file
 
-| **Field**         |  **Description**                                                                                               |
-| :---------------- | :------------------------------------------------------------------------------------------------------------- |
-| start_price       | The starting price of the selling coin; This proportional to the paying coin denom. This is the matched price. | 
-| selling_coin      | The selling amount of coin for the auction                                                                     | 
-| paying_coin_denom | The paying coin denom that bidders use to bid with                                                             | 
-| vesting_schedules | The vesting schedules that release the paying coins to the autioneer                                           | 
-| start_time        | The start time of the auction                                                                                  | 
-| end_time          | The end time of the auction                                                                                    | 
+| **Field**         |  **Description**                                                                    |
+| :---------------- | :---------------------------------------------------------------------------------- |
+| start_price       | The starting price of the selling coin; it is proportional to the paying coin denom | 
+| selling_coin      | The selling amount of coin for the auction                                          | 
+| paying_coin_denom | The paying coin denom that bidders use to bid with                                  | 
+| vesting_schedules | The vesting schedules that release the paying coins to the autioneer                | 
+| start_time        | The start time of the auction                                                       | 
+| end_time          | The end time of the auction                                                         | 
 
 Example of input as JSON:
 
-An auctioneer creates a fixed price auction for `1000000000000denom1` selling coin where the start price is `2.0`. It means that the price of `1denom1` is `2denom2`. The auctioneer sets their vesting schedules for themselves to receive the accumulated paying coin amount. This provides trust to the auction participants.
+An auctioneer creates a fixed price auction for `1000000000000denom1` selling coin where the start price is `2.0`. It means that the price of `1denom1` is `2denom2`. The auctioneer sets their vesting schedules for themselves to receive the accumulated paying coin amount. This is a gesture for taking responsibility for auction participants.
 
 ```json
 {
@@ -131,7 +131,7 @@ Field description of the input file
 
 Example of input as JSON:
 
-An auctioneer creates a batch price auction for `1000000000000denom1` selling coin where the start price is `0.3` and the minimum bid price is `0.1`. Unlike a fixed price auction, the start price is not determined until the auction ends. It is only used as a reference of what the auctioneer considers their selling coin price is. The auctioneer sets their vesting schedules for themselves to receive the accumulated paying coin amount. This provides trust to the auction participants.
+An auctioneer creates a batch price auction for `1000000000000denom1` selling coin where the start price is `0.3` and the minimum bid price is `0.1`. Unlike a fixed price auction, the start price is not determined until the auction ends. It is only used as a reference of what the auctioneer considers their selling coin price is. The auctioneer sets their vesting schedules for themselves to receive the accumulated paying coin amount. This is a gesture for taking responsibility for auction participants.
 
 ```json
 {
@@ -356,7 +356,7 @@ fundraisingd q fundraising bids 1 -o json | jq
 
 # Query
 
-+++ https://github.com/tendermint/fundraising/blob/main/proto/fundraising/query.proto#L14-L42
++++ https://github.com/tendermint/fundraising/blob/main/proto/fundraising/query.proto#L14-L48
 
 ## Params 
 
