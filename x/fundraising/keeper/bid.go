@@ -217,7 +217,7 @@ func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) error {
 	}
 
 	if bid.Coin.Denom != msg.Coin.Denom {
-		return sdkerrors.Wrap(types.ErrIncorrectCoinDenom, "modifying bid type is not allowed")
+		return types.ErrIncorrectCoinDenom
 	}
 
 	if msg.Price.LT(bid.Price) || msg.Coin.Amount.LT(bid.Coin.Amount) {
