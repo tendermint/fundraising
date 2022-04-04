@@ -322,7 +322,7 @@ modify-bid [auction-id] [bid-id] [price] [coin]
 | :---------- | :---------------------------- |
 | auction-id  | auction id                    | 
 | bid-id      | bid id that the bidder placed |
-| price       | bid price of a selling coin as the unit of a paying coin. For `BatchAuction`, The price cannot be lower than the original bid price of the auction | 
+| price       | bid price of a selling coin as the unit of a paying coin. For `BatchAuction`, the price cannot be lower than the original bid price of the auction | 
 | coin        | how many coins to bid. The denom must be the same as the modifying bid. The amount cannot be smaller than that of the original coin amount. |
 
 
