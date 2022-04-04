@@ -19,6 +19,7 @@ var (
 
 	// EnableAddAllowedBidder indicates whether msgServer accepts MsgAddAllowedBidder or not.
 	// Never set this to true in production environment. Doing that will expose serious attack vector.
+	// Default is false, which means AddAllowedBidder can't be executed through message level.
 	EnableAddAllowedBidder = false
 )
 

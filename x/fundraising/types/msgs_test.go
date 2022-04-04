@@ -67,7 +67,7 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 			),
 		},
 		{
-			"end time must be greater than start time: invalid request",
+			"end time must be set after start time: invalid request",
 			types.NewMsgCreateFixedPriceAuction(
 				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0.5"),
@@ -257,7 +257,7 @@ func TestMsgCreateBatchAuction(t *testing.T) {
 			),
 		},
 		{
-			"end time must be greater than start time: invalid request",
+			"end time must be set after start time: invalid request",
 			types.NewMsgCreateBatchAuction(
 				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0.5"),

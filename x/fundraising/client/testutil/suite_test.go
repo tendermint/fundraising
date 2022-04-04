@@ -85,21 +85,6 @@ func (s *IntegrationTestSuite) TestNewCreateFixedAmountPlanCmd() {
 	startTime := time.Now()
 	endTime := startTime.AddDate(0, 1, 0)
 
-	// happy case
-	case1 := cli.FixedPriceAuctionRequest{
-		StartPrice:      sdk.MustNewDecFromStr("1.0"),
-		SellingCoin:     sdk.NewInt64Coin(s.denom1, 100_000_000_000),
-		PayingCoinDenom: s.denom2,
-		VestingSchedules: []types.VestingSchedule{
-			{
-				ReleaseTime: endTime.AddDate(0, 3, 0),
-				Weight:      sdk.MustNewDecFromStr("1.0"),
-			},
-		},
-		StartTime: startTime,
-		EndTime:   endTime,
-	}
-
 	testCases := []struct {
 		name         string
 		args         []string
@@ -108,15 +93,150 @@ func (s *IntegrationTestSuite) TestNewCreateFixedAmountPlanCmd() {
 		expectedCode uint32
 	}{
 		{
-			"valid transaction",
+			"valid case",
 			[]string{
-				testutil.WriteToNewTempFile(s.T(), case1.String()).Name(),
+				testutil.WriteToNewTempFile(s.T(), cli.FixedPriceAuctionRequest{
+					StartPrice:      sdk.MustNewDecFromStr("1.0"),
+					SellingCoin:     sdk.NewInt64Coin(s.denom1, 100_000_000_000),
+					PayingCoinDenom: s.denom2,
+					VestingSchedules: []types.VestingSchedule{
+						{
+							ReleaseTime: endTime.AddDate(0, 3, 0),
+							Weight:      sdk.MustNewDecFromStr("1.0"),
+						},
+					},
+					StartTime: startTime,
+					EndTime:   endTime,
+				}.String()).Name(),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
 			},
 			false, &sdk.TxResponse{}, 0,
+		},
+		{
+			"invalid case #1: invalid end time",
+			[]string{
+				testutil.WriteToNewTempFile(s.T(), cli.FixedPriceAuctionRequest{
+					StartPrice:      sdk.MustNewDecFromStr("1.0"),
+					SellingCoin:     sdk.NewInt64Coin(s.denom1, 100_000_000_000),
+					PayingCoinDenom: s.denom2,
+					VestingSchedules: []types.VestingSchedule{
+						{
+							ReleaseTime: endTime.AddDate(0, 3, 0),
+							Weight:      sdk.MustNewDecFromStr("1.0"),
+						},
+					},
+					StartTime: startTime,
+					EndTime:   startTime,
+				}.String()).Name(),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
+			},
+			true, &sdk.TxResponse{}, 1,
+		},
+		{
+			"invalid case #2: invalid vesting schedule",
+			[]string{
+				testutil.WriteToNewTempFile(s.T(), cli.FixedPriceAuctionRequest{
+					StartPrice:      sdk.MustNewDecFromStr("1.0"),
+					SellingCoin:     sdk.NewInt64Coin(s.denom1, 100_000_000_000),
+					PayingCoinDenom: s.denom2,
+					VestingSchedules: []types.VestingSchedule{
+						{
+							ReleaseTime: startTime,
+							Weight:      sdk.MustNewDecFromStr("1.0"),
+						},
+					},
+					StartTime: startTime,
+					EndTime:   endTime,
+				}.String()).Name(),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
+			},
+			true, &sdk.TxResponse{}, 1,
+		},
+		{
+			"invalid case #3: invalid vesting schedule",
+			[]string{
+				testutil.WriteToNewTempFile(s.T(), cli.FixedPriceAuctionRequest{
+					StartPrice:      sdk.MustNewDecFromStr("1.0"),
+					SellingCoin:     sdk.NewInt64Coin(s.denom1, 100_000_000_000),
+					PayingCoinDenom: s.denom2,
+					VestingSchedules: []types.VestingSchedule{
+						{
+							ReleaseTime: endTime.AddDate(0, 3, 0),
+							Weight:      sdk.MustNewDecFromStr("5.0"),
+						},
+					},
+					StartTime: startTime,
+					EndTime:   endTime,
+				}.String()).Name(),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
+			},
+			true, &sdk.TxResponse{}, 1,
+		},
+		{
+			"invalid case #4: invalid vesting schedule",
+			[]string{
+				testutil.WriteToNewTempFile(s.T(), cli.FixedPriceAuctionRequest{
+					StartPrice:      sdk.MustNewDecFromStr("1.0"),
+					SellingCoin:     sdk.NewInt64Coin(s.denom1, 100_000_000_000),
+					PayingCoinDenom: s.denom2,
+					VestingSchedules: []types.VestingSchedule{
+						{
+							ReleaseTime: endTime.AddDate(0, 3, 0),
+							Weight:      sdk.MustNewDecFromStr("0.5"),
+						},
+						{
+							ReleaseTime: endTime.AddDate(0, 6, 0),
+							Weight:      sdk.MustNewDecFromStr("0.51"),
+						},
+					},
+					StartTime: startTime,
+					EndTime:   endTime,
+				}.String()).Name(),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
+			},
+			true, &sdk.TxResponse{}, 1,
+		},
+		{
+			"invalid case #5: invalid vesting schedule",
+			[]string{
+				testutil.WriteToNewTempFile(s.T(), cli.FixedPriceAuctionRequest{
+					StartPrice:      sdk.MustNewDecFromStr("1.0"),
+					SellingCoin:     sdk.NewInt64Coin(s.denom1, 100_000_000_000),
+					PayingCoinDenom: s.denom2,
+					VestingSchedules: []types.VestingSchedule{
+						{
+							ReleaseTime: endTime.AddDate(0, 3, 0),
+							Weight:      sdk.MustNewDecFromStr("0.5"),
+						},
+						{
+							ReleaseTime: endTime.AddDate(0, 3, 0),
+							Weight:      sdk.MustNewDecFromStr("0.5"),
+						},
+					},
+					StartTime: startTime,
+					EndTime:   endTime,
+				}.String()).Name(),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
+			},
+			true, &sdk.TxResponse{}, 1,
 		},
 	}
 
@@ -128,7 +248,6 @@ func (s *IntegrationTestSuite) TestNewCreateFixedAmountPlanCmd() {
 			clientCtx := val.ClientCtx
 
 			out, err := utilcli.ExecTestCLICmd(clientCtx, cmd, tc.args)
-
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {
@@ -148,24 +267,6 @@ func (s *IntegrationTestSuite) TestNewCreateBatchAuctionCmd() {
 	startTime := time.Now()
 	endTime := startTime.AddDate(0, 1, 0)
 
-	// happy case
-	case1 := cli.BatchAuctionRequest{
-		StartPrice:        sdk.MustNewDecFromStr("0.5"),
-		MinBidPrice:       sdk.MustNewDecFromStr("0.1"),
-		SellingCoin:       sdk.NewInt64Coin(s.denom1, 100_000_000_000),
-		PayingCoinDenom:   s.denom2,
-		MaxExtendedRound:  2,
-		ExtendedRoundRate: sdk.MustNewDecFromStr("0.15"),
-		VestingSchedules: []types.VestingSchedule{
-			{
-				ReleaseTime: endTime.AddDate(0, 3, 0),
-				Weight:      sdk.MustNewDecFromStr("1.0"),
-			},
-		},
-		StartTime: startTime,
-		EndTime:   endTime,
-	}
-
 	testCases := []struct {
 		name         string
 		args         []string
@@ -174,15 +275,168 @@ func (s *IntegrationTestSuite) TestNewCreateBatchAuctionCmd() {
 		expectedCode uint32
 	}{
 		{
-			"valid transaction",
+			"valid case",
 			[]string{
-				testutil.WriteToNewTempFile(s.T(), case1.String()).Name(),
+				testutil.WriteToNewTempFile(s.T(), cli.BatchAuctionRequest{
+					StartPrice:        sdk.MustNewDecFromStr("0.5"),
+					MinBidPrice:       sdk.MustNewDecFromStr("0.1"),
+					SellingCoin:       sdk.NewInt64Coin(s.denom1, 100_000_000_000),
+					PayingCoinDenom:   s.denom2,
+					MaxExtendedRound:  2,
+					ExtendedRoundRate: sdk.MustNewDecFromStr("0.15"),
+					VestingSchedules: []types.VestingSchedule{
+						{
+							ReleaseTime: endTime.AddDate(0, 3, 0),
+							Weight:      sdk.MustNewDecFromStr("1.0"),
+						},
+					},
+					StartTime: startTime,
+					EndTime:   endTime,
+				}.String()).Name(),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
 			},
 			false, &sdk.TxResponse{}, 0,
+		},
+		{
+			"invalid case #1: invalid end time",
+			[]string{
+				testutil.WriteToNewTempFile(s.T(), cli.BatchAuctionRequest{
+					StartPrice:        sdk.MustNewDecFromStr("0.5"),
+					MinBidPrice:       sdk.MustNewDecFromStr("0.1"),
+					SellingCoin:       sdk.NewInt64Coin(s.denom1, 100_000_000_000),
+					PayingCoinDenom:   s.denom2,
+					MaxExtendedRound:  2,
+					ExtendedRoundRate: sdk.MustNewDecFromStr("0.15"),
+					VestingSchedules: []types.VestingSchedule{
+						{
+							ReleaseTime: endTime.AddDate(0, 3, 0),
+							Weight:      sdk.MustNewDecFromStr("1.0"),
+						},
+					},
+					StartTime: startTime,
+					EndTime:   startTime,
+				}.String()).Name(),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
+			},
+			true, &sdk.TxResponse{}, 1,
+		},
+		{
+			"invalid case #2: invalid vesting schedule",
+			[]string{
+				testutil.WriteToNewTempFile(s.T(), cli.BatchAuctionRequest{
+					StartPrice:        sdk.MustNewDecFromStr("0.5"),
+					MinBidPrice:       sdk.MustNewDecFromStr("0.1"),
+					SellingCoin:       sdk.NewInt64Coin(s.denom1, 100_000_000_000),
+					PayingCoinDenom:   s.denom2,
+					MaxExtendedRound:  2,
+					ExtendedRoundRate: sdk.MustNewDecFromStr("0.15"),
+					VestingSchedules: []types.VestingSchedule{
+						{
+							ReleaseTime: startTime,
+							Weight:      sdk.MustNewDecFromStr("1.0"),
+						},
+					},
+					StartTime: startTime,
+					EndTime:   startTime,
+				}.String()).Name(),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
+			},
+			true, &sdk.TxResponse{}, 1,
+		},
+		{
+			"invalid case #3: invalid vesting schedule",
+			[]string{
+				testutil.WriteToNewTempFile(s.T(), cli.BatchAuctionRequest{
+					StartPrice:        sdk.MustNewDecFromStr("0.5"),
+					MinBidPrice:       sdk.MustNewDecFromStr("0.1"),
+					SellingCoin:       sdk.NewInt64Coin(s.denom1, 100_000_000_000),
+					PayingCoinDenom:   s.denom2,
+					MaxExtendedRound:  2,
+					ExtendedRoundRate: sdk.MustNewDecFromStr("0.15"),
+					VestingSchedules: []types.VestingSchedule{
+						{
+							ReleaseTime: endTime.AddDate(0, 3, 0),
+							Weight:      sdk.MustNewDecFromStr("5.0"),
+						},
+					},
+					StartTime: startTime,
+					EndTime:   startTime,
+				}.String()).Name(),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
+			},
+			true, &sdk.TxResponse{}, 1,
+		},
+		{
+			"invalid case #4: invalid vesting schedule",
+			[]string{
+				testutil.WriteToNewTempFile(s.T(), cli.BatchAuctionRequest{
+					StartPrice:        sdk.MustNewDecFromStr("0.5"),
+					MinBidPrice:       sdk.MustNewDecFromStr("0.1"),
+					SellingCoin:       sdk.NewInt64Coin(s.denom1, 100_000_000_000),
+					PayingCoinDenom:   s.denom2,
+					MaxExtendedRound:  2,
+					ExtendedRoundRate: sdk.MustNewDecFromStr("0.15"),
+					VestingSchedules: []types.VestingSchedule{
+						{
+							ReleaseTime: endTime.AddDate(0, 3, 0),
+							Weight:      sdk.MustNewDecFromStr("0.5"),
+						},
+						{
+							ReleaseTime: endTime.AddDate(0, 6, 0),
+							Weight:      sdk.MustNewDecFromStr("0.51"),
+						},
+					},
+					StartTime: startTime,
+					EndTime:   startTime,
+				}.String()).Name(),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
+			},
+			true, &sdk.TxResponse{}, 1,
+		},
+		{
+			"invalid case #5: invalid vesting schedule",
+			[]string{
+				testutil.WriteToNewTempFile(s.T(), cli.BatchAuctionRequest{
+					StartPrice:        sdk.MustNewDecFromStr("0.5"),
+					MinBidPrice:       sdk.MustNewDecFromStr("0.1"),
+					SellingCoin:       sdk.NewInt64Coin(s.denom1, 100_000_000_000),
+					PayingCoinDenom:   s.denom2,
+					MaxExtendedRound:  2,
+					ExtendedRoundRate: sdk.MustNewDecFromStr("0.15"),
+					VestingSchedules: []types.VestingSchedule{
+						{
+							ReleaseTime: endTime.AddDate(0, 3, 0),
+							Weight:      sdk.MustNewDecFromStr("0.5"),
+						},
+						{
+							ReleaseTime: endTime.AddDate(0, 3, 0),
+							Weight:      sdk.MustNewDecFromStr("0.5"),
+						},
+					},
+					StartTime: startTime,
+					EndTime:   startTime,
+				}.String()).Name(),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
+			},
+			true, &sdk.TxResponse{}, 1,
 		},
 	}
 
@@ -208,28 +462,102 @@ func (s *IntegrationTestSuite) TestNewCreateBatchAuctionCmd() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestNewPlaceBidCmd() {
+func (s *IntegrationTestSuite) TestNewCancelAuctionCmd() {
 	val := s.network.Validators[0]
-
-	req := cli.FixedPriceAuctionRequest{
-		StartPrice:      sdk.MustNewDecFromStr("1.0"),
-		SellingCoin:     sdk.NewInt64Coin(s.denom1, 100_000_000_000),
-		PayingCoinDenom: s.denom2,
-		VestingSchedules: []types.VestingSchedule{
-			{
-				ReleaseTime: time.Now().AddDate(0, 6, 0),
-				Weight:      sdk.MustNewDecFromStr("1.0"),
-			},
-		},
-		StartTime: time.Now(),
-		EndTime:   time.Now().AddDate(0, 3, 0),
-	}
 
 	// Create a fixed amount plan
 	_, err := MsgCreateFixedPriceAuctionExec(
 		val.ClientCtx,
 		val.Address.String(),
-		testutil.WriteToNewTempFile(s.T(), req.String()).Name(),
+		testutil.WriteToNewTempFile(s.T(), cli.FixedPriceAuctionRequest{
+			StartPrice:      sdk.MustNewDecFromStr("1.0"),
+			SellingCoin:     sdk.NewInt64Coin(s.denom1, 100_000_000_000),
+			PayingCoinDenom: s.denom2,
+			VestingSchedules: []types.VestingSchedule{
+				{
+					ReleaseTime: time.Now().AddDate(1, 0, 0),
+					Weight:      sdk.MustNewDecFromStr("1.0"),
+				},
+			},
+			StartTime: time.Now().AddDate(0, 1, 0),
+			EndTime:   time.Now().AddDate(0, 3, 0),
+		}.String()).Name(),
+	)
+	s.Require().NoError(err)
+
+	testCases := []struct {
+		name         string
+		args         []string
+		expectErr    bool
+		respType     proto.Message
+		expectedCode uint32
+	}{
+		{
+			"valid case",
+			[]string{
+				fmt.Sprint(1),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 10)).String()),
+			},
+			false, &sdk.TxResponse{}, 0,
+		},
+		{
+			"invalid case #1: auction not found",
+			[]string{
+				fmt.Sprint(5),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 10)).String()),
+			},
+			false, &sdk.TxResponse{}, 38,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+
+		s.Run(tc.name, func() {
+			cmd := cli.NewCancelAuctionCmd()
+			clientCtx := val.ClientCtx
+
+			out, err := utilcli.ExecTestCLICmd(clientCtx, cmd, tc.args)
+
+			if tc.expectErr {
+				s.Require().Error(err)
+			} else {
+				s.Require().NoError(err, out.String())
+				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
+
+				txResp := tc.respType.(*sdk.TxResponse)
+				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+			}
+		})
+	}
+}
+
+func (s *IntegrationTestSuite) TestNewPlaceBidCmd() {
+	val := s.network.Validators[0]
+
+	// Create a fixed amount plan
+	_, err := MsgCreateFixedPriceAuctionExec(
+		val.ClientCtx,
+		val.Address.String(),
+		testutil.WriteToNewTempFile(s.T(), cli.FixedPriceAuctionRequest{
+			StartPrice:      sdk.MustNewDecFromStr("1.0"),
+			SellingCoin:     sdk.NewInt64Coin(s.denom1, 100_000_000_000),
+			PayingCoinDenom: s.denom2,
+			VestingSchedules: []types.VestingSchedule{
+				{
+					ReleaseTime: time.Now().AddDate(0, 6, 0),
+					Weight:      sdk.MustNewDecFromStr("1.0"),
+				},
+			},
+			StartTime: time.Now(),
+			EndTime:   time.Now().AddDate(0, 3, 0),
+		}.String()).Name(),
 	)
 	s.Require().NoError(err)
 
@@ -250,7 +578,7 @@ func (s *IntegrationTestSuite) TestNewPlaceBidCmd() {
 		expectedCode uint32
 	}{
 		{
-			"valid transaction case #1",
+			"valid case",
 			[]string{
 				fmt.Sprint(1),
 				"fixed-price",
@@ -262,6 +590,48 @@ func (s *IntegrationTestSuite) TestNewPlaceBidCmd() {
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 10)).String()),
 			},
 			false, &sdk.TxResponse{}, 0,
+		},
+		{
+			"invalid case #1: incorrect auction type",
+			[]string{
+				fmt.Sprint(1),
+				"batch-worth",
+				sdk.MustNewDecFromStr("1.0").String(),
+				sdk.NewCoin(s.denom2, sdk.NewInt(50_000_000)).String(),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 10)).String()),
+			},
+			false, &sdk.TxResponse{}, 7,
+		},
+		{
+			"invalid case #2: incorrect auction type",
+			[]string{
+				fmt.Sprint(1),
+				"batch-many",
+				sdk.MustNewDecFromStr("1.0").String(),
+				sdk.NewCoin(s.denom2, sdk.NewInt(50_000_000)).String(),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 10)).String()),
+			},
+			false, &sdk.TxResponse{}, 7,
+		},
+		{
+			"invalid case #3: incorrect start price",
+			[]string{
+				fmt.Sprint(1),
+				"fixed-price",
+				sdk.MustNewDecFromStr("0.1").String(),
+				sdk.NewCoin(s.denom2, sdk.NewInt(50_000_000)).String(),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 10)).String()),
+			},
+			false, &sdk.TxResponse{}, 3,
 		},
 	}
 
@@ -285,5 +655,4 @@ func (s *IntegrationTestSuite) TestNewPlaceBidCmd() {
 			}
 		})
 	}
-
 }

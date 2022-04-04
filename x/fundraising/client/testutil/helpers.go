@@ -86,6 +86,7 @@ func MsgAddAllowedBidderExec(clientCtx client.Context,
 
 	args := append([]string{
 		fmt.Sprint(auctionId),
+		from,
 		maxBidAmt.String(),
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, from),
 	}, commonArgs...)
