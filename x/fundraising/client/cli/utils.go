@@ -89,7 +89,7 @@ func parseBidType(s string) (types.BidType, error) {
 	case "batch-worth", "bw", "w":
 		return types.BidTypeBatchWorth, nil
 	case "batch-many", "bm", "m":
-		return types.BidTypeBatchWorth, nil
+		return types.BidTypeBatchMany, nil
 	}
 	return 0, fmt.Errorf("invalid bid type: %s", s)
 }

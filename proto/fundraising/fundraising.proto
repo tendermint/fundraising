@@ -263,9 +263,9 @@ message Bid {
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
   ];
 
-  // isMatched specifies the bid that is a winning bid and enables the bidder to
-  // purchase the selling coin
-  bool isMatched = 7;
+  // is_matched specifies the bid that is a winning bid and enables the bidder
+  // to purchase the selling coin
+  bool is_matched = 7;
 }
 
 // BidType enumerates the valid types of a bid.

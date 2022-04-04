@@ -6,7 +6,7 @@ This document describes the state transaction operations in the fundraising modu
 
 ## Coin Reservation for Fundraising Module Message
 
-Transaction confirmation causes state transition on the [Bank](https://docs.cosmos.network/master/modules/bank/) module. Some messages on the fundraising module require coin reservation before confirmation.
+Transaction confirmation causes state transition on the Cosmos SDK [x/bank] module. Some messages on the fundraising module require coin reservation before confirmation.
 
 The coin reserve processes for each message type are:
 
