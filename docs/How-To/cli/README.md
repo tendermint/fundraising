@@ -111,15 +111,15 @@ Usage
 create-batch-auction [file]
 ```
 
-| **Argument** |  **Description**                                             |
-| :----------- | :----------------------------------------------------------- |
-| file         | file that contains required fields for a fixed price auction |
+| **Argument** |  **Description**                                       |
+| :----------- | :----------------------------------------------------- |
+| file         | file that contains required fields for a batch auction |
 
 Field description of the input file
 
 | **Field**           |  **Description**                                                                    |
 | :------------------ | :---------------------------------------------------------------------------------- |
-| start_price         | The starting price of the selling coin; it is proportional to the paying coin denom. This is the matched price | 
+| start_price         | The starting price of the selling coin; it is proportional to the paying coin denom. This might not be the matched price and it can be used as a reference price from the auctioneer. | 
 | min_bid_price       | The minimum bid price that bidders must place with                                  |
 | selling_coin        | The selling amount of coin for the auction                                          | 
 | paying_coin_denom   | The paying coin denom that bidders use to bid with                                  | 
@@ -131,7 +131,7 @@ Field description of the input file
 
 Example of input as JSON:
 
-An auctioneer creates a batch price auction for `1000000000000denom1` selling coin where the start price is `0.3` and the minimum bid price is `0.1`. Unlike a fixed price auction, the start price is not determined until the auction ends. It is only used as a reference of what the auctioneer considers their selling coin price is. The auctioneer sets their vesting schedules for themselves to receive the accumulated paying coin amount. This is a gesture for taking responsibility for auction participants.
+An auctioneer creates a batch price auction for `1000000000000denom1` selling coin where the start price is `0.3` and the minimum bid price is `0.1`. Unlike a fixed price auction, the start price might not be the matched price. It is only used as a reference of what the auctioneer considers their selling coin price is. The auctioneer sets their vesting schedules for themselves to receive the accumulated paying coin amount. This is a gesture for taking responsibility for auction participants.
 
 ```json
 {
