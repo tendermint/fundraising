@@ -28596,13 +28596,13 @@ paths:
                           type: string
                         amount:
                           type: string
-                    isMatched:
+                    is_matched:
                       type: boolean
                       title: >-
-                        isMatched specifies the bid that is a winning bid and
-                        enables the bidder to
+                        is_matched specifies the bid that is a winning bid and
+                        enables the bidder
 
-                        purchase the selling coin
+                        to purchase the selling coin
                   description: Bid defines a standard bid for an auction.
                 title: bids specifies the existing bids
               pagination:
@@ -28962,13 +28962,13 @@ paths:
                         type: string
                       amount:
                         type: string
-                  isMatched:
+                  is_matched:
                     type: boolean
                     title: >-
-                      isMatched specifies the bid that is a winning bid and
-                      enables the bidder to
+                      is_matched specifies the bid that is a winning bid and
+                      enables the bidder
 
-                      purchase the selling coin
+                      to purchase the selling coin
                 description: Bid defines a standard bid for an auction.
                 title: bid specifies specific bid
             description: >-
@@ -49024,13 +49024,13 @@ definitions:
             type: string
           amount:
             type: string
-      isMatched:
+      is_matched:
         type: boolean
         title: >-
-          isMatched specifies the bid that is a winning bid and enables the
-          bidder to
+          is_matched specifies the bid that is a winning bid and enables the
+          bidder
 
-          purchase the selling coin
+          to purchase the selling coin
     description: Bid defines a standard bid for an auction.
   tendermint.fundraising.BidType:
     type: string
@@ -49522,13 +49522,13 @@ definitions:
                 type: string
               amount:
                 type: string
-          isMatched:
+          is_matched:
             type: boolean
             title: >-
-              isMatched specifies the bid that is a winning bid and enables the
-              bidder to
+              is_matched specifies the bid that is a winning bid and enables the
+              bidder
 
-              purchase the selling coin
+              to purchase the selling coin
         description: Bid defines a standard bid for an auction.
         title: bid specifies specific bid
     description: QueryBidResponse is response type for the Query/Sequence RPC method.
@@ -49597,13 +49597,13 @@ definitions:
                   type: string
                 amount:
                   type: string
-            isMatched:
+            is_matched:
               type: boolean
               title: >-
-                isMatched specifies the bid that is a winning bid and enables
-                the bidder to
+                is_matched specifies the bid that is a winning bid and enables
+                the bidder
 
-                purchase the selling coin
+                to purchase the selling coin
           description: Bid defines a standard bid for an auction.
         title: bids specifies the existing bids
       pagination:

@@ -1,19 +1,19 @@
-accounts:
-  - name: alice
-    coins: ["2000000000000stake","1000000000000000denom1","1000000000000000denom2"]
-  - name: bob 
-    coins: ["2000000000000stake","1000000000000000denom1"]
-  - name: steve
-    coins: ["1000000000000000denom2"]
-validator:
-  name: alice
-  staked: "1000000000000stake"
-client:
-  openapi:
-    path: "client/docs/static/openapi.yml"
-faucet:
-  name: alice
-  coins: ["100000stake", "1000000denom1", "1000000denom2"]
 build:
   binary: "fundraisingd"
   ldflags: ["-X github.com/tendermint/fundraising/x/fundraising/keeper.enableAddAllowedBidder=true"]
+accounts:
+  - name: alice # cosmos1zaavvzxez0elundtn32qnk9lkm8kmcszzsv80v
+    mnemonic: "guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host"
+    coins: ["1000000000000stake","1000000000000000denom1","1000000000000000denom2"]
+  - name: bob # cosmos1mzgucqnfr2l8cj5apvdpllhzt4zeuh2cshz5xu
+    mnemonic: "friend excite rough reopen cover wheel spoon convince island path clean monkey play snow number walnut pull lock shoot hurry dream divide concert discover"
+    coins: ["1000000000000stake","1000000000000000denom1","1000000000000000denom2"]
+  - name: steve # cosmos185fflsvwrz0cx46w6qada7mdy92m6kx4gqx0ny
+    mnemonic: "fuel obscure melt april direct second usual hair leave hobby beef bacon solid drum used law mercy worry fat super must ritual bring faculty"
+    coins: [1000000000000stake,"1000000000000000denom1","1000000000000000denom2"]
+validator:
+  name: alice
+  staked: "500000000000stake"
+client:
+  openapi:
+    path: "client/docs/static/openapi.yml"
