@@ -13,8 +13,8 @@ If you haven't already, install Golang by following the official Go [install doc
 
 Requirement | Notes
 ----------- | -----------------
-Go          | version 1.16 or higher
-Cosmos SDK  | v0.44.0
+Go          | version 1.17 or higher
+Cosmos SDK  | v0.45.1
 
 ## Installation
 
