@@ -57,7 +57,6 @@ Where auction.json contains:
 
 {
   "start_price": "1.000000000000000000",
-  "min_bid_price": "0.100000000000000000",
   "selling_coin": {
     "denom": "denom1",
     "amount": "1000000000000"

@@ -14,7 +14,7 @@ func (s *KeeperTestSuite) TestFixedPrice_InvalidStartPrice() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("1"),
-		parseCoin("1000_000_000denom1"),
+		parseCoin("1_000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
 		time.Now().AddDate(0, 0, -1),
@@ -41,7 +41,7 @@ func (s *KeeperTestSuite) TestFixedPrice_InsufficientRemainingAmount() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("1"),
-		parseCoin("1000_000_000denom1"),
+		parseCoin("1_000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
 		time.Now().AddDate(0, 0, -1),
@@ -99,7 +99,7 @@ func (s *KeeperTestSuite) TestFixedPrice_IncorrectCoinDenom() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("1"),
-		parseCoin("1000_000_000denom1"),
+		parseCoin("1_000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
 		time.Now().AddDate(0, 0, -1),
@@ -125,12 +125,38 @@ func (s *KeeperTestSuite) TestFixedPrice_IncorrectCoinDenom() {
 	s.Require().ErrorIs(err, types.ErrIncorrectCoinDenom)
 }
 
+func (s *KeeperTestSuite) TestFixedPrice_IncorrectAuctionType() {
+	auction := s.createFixedPriceAuction(
+		s.addr(0),
+		parseDec("1"),
+		parseCoin("1_000_000_000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	s.fundAddr(s.addr(2), parseCoins("200_000_000denom2"))
+	s.addAllowedBidder(auction.Id, s.addr(2), bidSellingAmount(parseDec("1"), parseCoin("200_000_000denom2")))
+
+	_, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
+		AuctionId: auction.Id,
+		Bidder:    s.addr(2).String(),
+		BidType:   types.BidTypeBatchWorth,
+		Price:     parseDec("1.0"),
+		Coin:      parseCoin("200_000_000denom2"),
+	})
+	s.Require().ErrorIs(err, types.ErrIncorrectAuctionType)
+}
+
 func (s *KeeperTestSuite) TestBatchAuction_IncorrectCoinDenom() {
 	auction := s.createBatchAuction(
 		s.addr(1),
 		parseDec("0.5"),
 		parseDec("0.1"),
-		parseCoin("1000_000_000denom1"),
+		parseCoin("1_000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
 		1,
@@ -172,7 +198,7 @@ func (s *KeeperTestSuite) TestBatchWorth_OverMaxBidAmountLimit() {
 		s.addr(1),
 		parseDec("0.5"),
 		parseDec("0.1"),
-		parseCoin("1000_000_000denom1"),
+		parseCoin("1_000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
 		1,
@@ -204,7 +230,7 @@ func (s *KeeperTestSuite) TestBatchMany_OverMaxBidAmountLimit() {
 		s.addr(1),
 		parseDec("0.5"),
 		parseDec("0.1"),
-		parseCoin("1000_000_000denom1"),
+		parseCoin("1_000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
 		1,

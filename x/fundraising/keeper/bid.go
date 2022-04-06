@@ -115,6 +115,10 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 
 // ValidateFixedPriceBid validates a fixed price bid type.
 func (k Keeper) ValidateFixedPriceBid(ctx sdk.Context, auction types.AuctionI, bid types.Bid) error {
+	if auction.GetType() != types.AuctionTypeFixedPrice {
+		return types.ErrIncorrectAuctionType
+	}
+
 	if bid.Coin.Denom != auction.GetPayingCoinDenom() &&
 		bid.Coin.Denom != auction.GetSellingCoin().Denom {
 		return types.ErrIncorrectCoinDenom
@@ -154,6 +158,10 @@ func (k Keeper) ValidateFixedPriceBid(ctx sdk.Context, auction types.AuctionI, b
 
 // ValidateBatchWorthBid validates a batch worth bid type.
 func (k Keeper) ValidateBatchWorthBid(ctx sdk.Context, auction types.AuctionI, bid types.Bid) error {
+	if auction.GetType() != types.AuctionTypeBatch {
+		return types.ErrIncorrectAuctionType
+	}
+
 	if bid.Coin.Denom != auction.GetPayingCoinDenom() {
 		return types.ErrIncorrectCoinDenom
 	}
@@ -171,6 +179,10 @@ func (k Keeper) ValidateBatchWorthBid(ctx sdk.Context, auction types.AuctionI, b
 
 // ValidateBatchManyBid validates a batch many bid type.
 func (k Keeper) ValidateBatchManyBid(ctx sdk.Context, auction types.AuctionI, bid types.Bid) error {
+	if auction.GetType() != types.AuctionTypeBatch {
+		return types.ErrIncorrectAuctionType
+	}
+
 	if bid.Coin.Denom != auction.GetSellingCoin().Denom {
 		return types.ErrIncorrectCoinDenom
 	}
