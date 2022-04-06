@@ -10,7 +10,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/tendermint/fundraising/x/fundraising/client/cli"
-	"github.com/tendermint/fundraising/x/fundraising/types"
 )
 
 var commonArgs = []string{
@@ -57,7 +56,7 @@ func MsgCreateBatchAuctionExec(clientCtx client.Context,
 func MsgPlaceBidExec(clientCtx client.Context,
 	from string,
 	auctionId uint64,
-	bidType types.BidType,
+	bidType string,
 	price sdk.Dec,
 	coin sdk.Coin,
 	extraArgs ...string,
@@ -65,7 +64,7 @@ func MsgPlaceBidExec(clientCtx client.Context,
 
 	args := append([]string{
 		fmt.Sprint(auctionId),
-		bidType.String(),
+		bidType,
 		price.String(),
 		coin.String(),
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, from),

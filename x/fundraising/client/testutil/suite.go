@@ -656,3 +656,164 @@ func (s *IntegrationTestSuite) TestNewPlaceBidCmd() {
 		})
 	}
 }
+
+func (s *IntegrationTestSuite) TestNewModifyBidCmd() {
+	val := s.network.Validators[0]
+
+	// Create a fixed amount plan
+	_, err := MsgCreateBatchAuctionExec(
+		val.ClientCtx,
+		val.Address.String(),
+		testutil.WriteToNewTempFile(s.T(), cli.BatchAuctionRequest{
+			StartPrice:        sdk.MustNewDecFromStr("0.5"),
+			MinBidPrice:       sdk.MustNewDecFromStr("0.1"),
+			SellingCoin:       sdk.NewInt64Coin(s.denom1, 100_000_000_000),
+			PayingCoinDenom:   s.denom2,
+			MaxExtendedRound:  2,
+			ExtendedRoundRate: sdk.MustNewDecFromStr("0.2"),
+			VestingSchedules: []types.VestingSchedule{
+				{
+					ReleaseTime: time.Now().AddDate(0, 6, 0),
+					Weight:      sdk.MustNewDecFromStr("1.0"),
+				},
+			},
+			StartTime: time.Now(),
+			EndTime:   time.Now().AddDate(0, 3, 0),
+		}.String()).Name(),
+	)
+	s.Require().NoError(err)
+
+	// Add allowed bidder
+	_, err = MsgAddAllowedBidderExec(
+		val.ClientCtx,
+		val.Address.String(),
+		1,
+		sdk.NewInt(100_000_000),
+	)
+	s.Require().NoError(err)
+
+	// Place a bid
+	_, err = MsgPlaceBidExec(
+		val.ClientCtx,
+		val.Address.String(),
+		1,
+		"batch-worth",
+		sdk.MustNewDecFromStr("0.55"),
+		sdk.NewCoin(s.denom2, sdk.NewInt(50_000_000)),
+	)
+	s.Require().NoError(err)
+
+	testCases := []struct {
+		name         string
+		args         []string
+		expectErr    bool
+		respType     proto.Message
+		expectedCode uint32
+	}{
+		{
+			"valid case",
+			[]string{
+				fmt.Sprint(1),
+				fmt.Sprint(1),
+				sdk.MustNewDecFromStr("0.6").String(),
+				sdk.NewCoin(s.denom2, sdk.NewInt(50_000_000)).String(),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 10)).String()),
+			},
+			false, &sdk.TxResponse{}, 0,
+		},
+		{
+			"invalid case #1: bid price and coin amount must be changed",
+			[]string{
+				fmt.Sprint(1),
+				fmt.Sprint(1),
+				sdk.MustNewDecFromStr("0.5").String(),
+				sdk.NewCoin(s.denom2, sdk.NewInt(50_000_000)).String(),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 10)).String()),
+			},
+			false, &sdk.TxResponse{}, 4,
+		},
+		{
+			"invalid case #2: bid not found",
+			[]string{
+				fmt.Sprint(1),
+				fmt.Sprint(5),
+				sdk.MustNewDecFromStr("0.5").String(),
+				sdk.NewCoin(s.denom2, sdk.NewInt(50_000_000)).String(),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 10)).String()),
+			},
+			false, &sdk.TxResponse{}, 38,
+		},
+		{
+			"invalid case #3: min bid price",
+			[]string{
+				fmt.Sprint(1),
+				fmt.Sprint(1),
+				sdk.MustNewDecFromStr("0.05").String(),
+				sdk.NewCoin(s.denom2, sdk.NewInt(50_000_000)).String(),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 10)).String()),
+			},
+			false, &sdk.TxResponse{}, 13,
+		},
+		{
+			"invalid case #4: incorrect denom",
+			[]string{
+				fmt.Sprint(1),
+				fmt.Sprint(1),
+				sdk.MustNewDecFromStr("0.6").String(),
+				sdk.NewCoin(s.denom1, sdk.NewInt(50_000_000)).String(),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 10)).String()),
+			},
+			false, &sdk.TxResponse{}, 8,
+		},
+		{
+			"invalid case #5: bid price or coin amount cannot be lower",
+			[]string{
+				fmt.Sprint(1),
+				fmt.Sprint(1),
+				sdk.MustNewDecFromStr("0.2").String(),
+				sdk.NewCoin(s.denom2, sdk.NewInt(50_000_000)).String(),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 10)).String()),
+			},
+			false, &sdk.TxResponse{}, 4,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+
+		s.Run(tc.name, func() {
+			cmd := cli.NewModifyBidCmd()
+			clientCtx := val.ClientCtx
+
+			out, err := utilcli.ExecTestCLICmd(clientCtx, cmd, tc.args)
+
+			if tc.expectErr {
+				s.Require().Error(err)
+			} else {
+				s.Require().NoError(err, out.String())
+				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
+
+				txResp := tc.respType.(*sdk.TxResponse)
+				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+			}
+		})
+	}
+}
