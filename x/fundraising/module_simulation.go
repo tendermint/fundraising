@@ -15,20 +15,22 @@ import (
 // AppModuleSimulation
 // ----------------------------------------------------------------------------
 
-// GenerateGenesisState creates a randomized GenState of the module
-func (AppModule) GenerateGenesisState(simState *module.SimulationState) {}
+// GenerateGenesisState creates a randomized GenState of the module.
+func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
+	simulation.RandomizedGenState(simState)
+}
 
-// ProposalContents doesn't return any content functions for governance proposals
+// ProposalContents doesn't return any content functions for governance proposals.
 func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedProposalContent {
 	return nil
 }
 
-// RandomizedParams creates randomized  param changes for the simulator
+// RandomizedParams creates randomized  param changes for the simulator.
 func (am AppModule) RandomizedParams(r *rand.Rand) []simtypes.ParamChange {
 	return []simtypes.ParamChange{}
 }
 
-// RegisterStoreDecoder registers a decoder
+// RegisterStoreDecoder registers store decoders.
 func (am AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {
 	sdr[types.StoreKey] = simulation.NewDecodeStore(am.cdc)
 }
