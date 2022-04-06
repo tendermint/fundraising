@@ -179,8 +179,69 @@ func SimulateMsgCreateBatchAuction(ak types.AccountKeeper, bk types.BankKeeper, 
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+		denoms := genDenoms(r)
+		fundAccountsOnce(r, ctx, bk, accs, denoms)
 
-		return simtypes.OperationMsg{}, []simtypes.FutureOperation{}, nil
+		simAccount, _ := simtypes.RandomAcc(r, accs)
+
+		account := ak.GetAccount(ctx, simAccount.Address)
+		spendable := bk.SpendableCoins(ctx, account.GetAddress())
+
+		params := k.GetParams(ctx)
+
+		_, hasNeg := spendable.SafeSub(params.AuctionCreationFee)
+		if hasNeg {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgCreateFixedPriceAuction, "insufficient balance for auction creation fee"), nil, nil
+		}
+
+		auctioneerAcc := account.GetAddress()
+		ranDenom := shuffleDenoms(denoms)
+		startPrice := sdk.NewDecFromInt(simtypes.RandomAmount(r, sdk.NewInt(10)))
+		minBidPrice := simtypes.RandomDecAmount(r, startPrice)
+		sellingCoin := sdk.NewInt64Coin(ranDenom, 1)
+		payingCoinDenom := sdk.DefaultBondDenom
+		vestingSchedules := []types.VestingSchedule{}
+		maxExtendedRound := uint32(simtypes.RandIntBetween(r, 1, 5))
+		extendedRoundRate := sdk.NewDecFromIntWithPrec(simtypes.RandomAmount(r, sdk.NewInt(30)), 2)
+		startTime := ctx.BlockTime()
+		endTime := ctx.BlockTime().AddDate(0, simtypes.RandIntBetween(r, 1, 24), 0)
+
+		// TODO: is this logic reasonable to have?
+		for _, auction := range k.GetAuctions(ctx) {
+			if auction.GetSellingCoin().Denom == sellingCoin.Denom {
+				return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgCreateFixedPriceAuction, "auction already exists with the same selling coin denom"), nil, nil
+			}
+		}
+
+		msg := types.NewMsgCreateBatchAuction(
+			auctioneerAcc.String(),
+			startPrice,
+			minBidPrice,
+			sellingCoin,
+			payingCoinDenom,
+			vestingSchedules,
+			maxExtendedRound,
+			extendedRoundRate,
+			startTime,
+			endTime,
+		)
+
+		txCtx := simulation.OperationInput{
+			R:               r,
+			App:             app,
+			TxGen:           cosmoscmd.MakeEncodingConfig(simapp.ModuleBasics).TxConfig,
+			Cdc:             nil,
+			Msg:             msg,
+			MsgType:         msg.Type(),
+			Context:         ctx,
+			SimAccount:      simAccount,
+			AccountKeeper:   ak,
+			Bankkeeper:      bk,
+			ModuleName:      types.ModuleName,
+			CoinsSpentInMsg: spendable,
+		}
+
+		return simulation.GenAndDeliverTxWithRandFees(txCtx)
 	}
 }
 
@@ -256,5 +317,5 @@ func shuffleDenoms(denoms []string) string {
 	rand.Shuffle(len(denoms), func(i, j int) {
 		denoms2[i], denoms2[j] = denoms2[j], denoms2[i]
 	})
-	return denoms[0]
+	return denoms2[0]
 }

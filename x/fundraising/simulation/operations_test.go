@@ -55,7 +55,29 @@ func (s *SimTestSuite) TestSimulateCreateFixedPriceAuction() {
 	s.Require().Equal(types.TypeMsgCreateFixedPriceAuction, msg.Type())
 	s.Require().Equal(types.ModuleName, msg.Route())
 	s.Require().Equal("cosmos1tp4es44j4vv8m59za3z0tm64dkmlnm8wg2frhc", msg.Auctioneer)
-	s.Require().Equal("denom1", msg.SellingCoin.Denom)
+	s.Require().Equal("denom10", msg.SellingCoin.Denom)
+	s.Require().Equal("stake", msg.PayingCoinDenom)
+}
+
+func (s *SimTestSuite) TestSimulateCreateBatchAuction() {
+	r := rand.New(rand.NewSource(0))
+	accs := s.getTestingAccounts(r, 1)
+
+	s.app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: s.app.LastBlockHeight() + 1, AppHash: s.app.LastCommitID().Hash}})
+
+	op := simulation.SimulateMsgCreateBatchAuction(s.app.AuthKeeper, s.app.BankKeeper, s.app.FundraisingKeeper)
+	opMsg, futureOps, err := op(r, s.app.BaseApp, s.ctx, accs, "")
+	s.Require().NoError(err)
+	s.Require().True(opMsg.OK)
+	s.Require().Len(futureOps, 0)
+
+	var msg types.MsgCreateBatchAuction
+	types.ModuleCdc.MustUnmarshalJSON(opMsg.Msg, &msg)
+
+	s.Require().Equal(types.TypeMsgCreateBatchAuction, msg.Type())
+	s.Require().Equal(types.ModuleName, msg.Route())
+	s.Require().Equal("cosmos1tp4es44j4vv8m59za3z0tm64dkmlnm8wg2frhc", msg.Auctioneer)
+	s.Require().Equal("denom10", msg.SellingCoin.Denom)
 	s.Require().Equal("stake", msg.PayingCoinDenom)
 }
 
