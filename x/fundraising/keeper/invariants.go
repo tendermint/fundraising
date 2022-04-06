@@ -53,7 +53,7 @@ func SellingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 				if !sellingReserve.IsGTE(auction.GetSellingCoin()) {
 					msg += fmt.Sprintf("\tselling reserve balance %s\n"+
 						"\tselling pool reserve: %v\n"+
-						"\ttotal selling coin: %v",
+						"\ttotal selling coin: %v\n",
 						sellingReserveAddr.String(), sellingReserve, auction.GetSellingCoin())
 					count++
 				}
@@ -88,7 +88,7 @@ func PayingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 			if !payingReserve.IsGTE(totalBidCoin) {
 				msg += fmt.Sprintf("\tpaying reserve balance %s\n"+
 					"\tpaying pool reserve: %v\n"+
-					"\ttotal bid coin: %v",
+					"\ttotal bid coin: %v\n",
 					payingReserveAddr.String(), payingReserve, totalBidCoin)
 				count++
 			}
@@ -124,7 +124,7 @@ func VestingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 			if !vestingReserve.IsGTE(totalPayingCoin) {
 				msg += fmt.Sprintf("\tvesting reserve balance %s\n"+
 					"\tvesting pool reserve: %v\n"+
-					"\ttotal paying coin: %v",
+					"\ttotal paying coin: %v\n",
 					vestingReserveAddr.String(), vestingReserve, totalPayingCoin)
 				count++
 			}
@@ -144,19 +144,19 @@ func AuctionStatusStatesInvariant(k Keeper) sdk.Invariant {
 		for _, auction := range k.GetAuctions(ctx) {
 			_, found := k.GetAuction(ctx, auction.GetId())
 			if !found {
-				msg += fmt.Sprintf("auction %d not found", auction.GetId())
+				msg += fmt.Sprintf("\tauction %d not found\n", auction.GetId())
 				count++
 			}
 
 			switch auction.GetStatus() {
 			case types.AuctionStatusStandBy:
 				if !ctx.BlockTime().Before(auction.GetStartTime()) {
-					msg += fmt.Sprintf("expected auction status is %s", types.AuctionStatusStandBy)
+					msg += fmt.Sprintf("\texpected status for auction %d is %s\n", auction.GetId(), types.AuctionStatusStandBy)
 					count++
 				}
 			case types.AuctionStatusStarted:
 				if !auction.ShouldAuctionStarted(ctx.BlockTime()) {
-					msg += fmt.Sprintf("expected auction status is %s", types.AuctionStatusStarted)
+					msg += fmt.Sprintf("\texpected status for auction %d is %s\n", auction.GetId(), types.AuctionStatusStarted)
 					count++
 				}
 			case types.AuctionStatusVesting:
@@ -164,19 +164,20 @@ func AuctionStatusStatesInvariant(k Keeper) sdk.Invariant {
 				lenVestingQueues := len(k.GetVestingQueuesByAuctionId(ctx, auction.GetId()))
 
 				if lenVestingSchedules != lenVestingQueues {
-					msg += fmt.Sprintf("expected vesting queue length %d but got %d", lenVestingSchedules, lenVestingQueues)
+					msg += fmt.Sprintf("\texpected vesting queue length %d but got %d\n", lenVestingSchedules, lenVestingQueues)
 					count++
 				}
 			case types.AuctionStatusFinished:
 				if auction.GetType() == types.AuctionTypeFixedPrice {
 					if !auction.ShouldAuctionFinished(ctx.BlockTime()) {
-						msg += fmt.Sprintf("expected auction status is %s", types.AuctionStatusFinished)
+						msg += fmt.Sprintf("\texpected status for auction %d is %s\n", auction.GetId(), types.AuctionStatusFinished)
 						count++
 					}
 				}
 			case types.AuctionStatusCancelled:
 				if !auction.GetRemainingSellingCoin().IsZero() {
-					msg += fmt.Sprintf("expected remaining coin is 0 but got %v", auction.GetRemainingSellingCoin())
+					msg += fmt.Sprintf("\texpected remaining coin is 0 for auction %d but got %v\n",
+						auction.GetId(), auction.GetRemainingSellingCoin())
 					count++
 				}
 			default:
