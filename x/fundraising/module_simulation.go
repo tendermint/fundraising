@@ -27,7 +27,7 @@ func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedP
 
 // RandomizedParams creates randomized  param changes for the simulator.
 func (am AppModule) RandomizedParams(r *rand.Rand) []simtypes.ParamChange {
-	return []simtypes.ParamChange{}
+	return simulation.ParamChanges(r)
 }
 
 // RegisterStoreDecoder registers store decoders.
