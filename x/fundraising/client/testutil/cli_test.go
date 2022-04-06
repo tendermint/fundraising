@@ -10,5 +10,9 @@ import (
 )
 
 func TestTxCmdTestSuite(t *testing.T) {
-	suite.Run(t, new(IntegrationTestSuite))
+	suite.Run(t, new(TxCmdTestSuite))
+}
+
+func TestQueryCmdTestSuite(t *testing.T) {
+	suite.Run(t, new(QueryCmdTestSuite))
 }

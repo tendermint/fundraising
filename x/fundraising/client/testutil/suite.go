@@ -2,6 +2,7 @@ package testutil
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/gogo/protobuf/proto"
@@ -17,6 +18,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/testutil/network"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/starport/starport/pkg/cosmoscmd"
+	tmcli "github.com/tendermint/tendermint/libs/cli"
 	dbm "github.com/tendermint/tm-db"
 
 	chain "github.com/tendermint/fundraising/app"
@@ -25,7 +27,7 @@ import (
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
 
-type IntegrationTestSuite struct {
+type TxCmdTestSuite struct {
 	suite.Suite
 
 	cfg     network.Config
@@ -51,7 +53,7 @@ func NewAppConstructor(encodingCfg cosmoscmd.EncodingConfig) network.AppConstruc
 // network for each test because there are some state modifications that are
 // needed to be made in order to make useful queries. However, we don't want
 // these state changes to be present in other tests.
-func (s *IntegrationTestSuite) SetupTest() {
+func (s *TxCmdTestSuite) SetupTest() {
 	s.T().Log("setting up integration test suite")
 
 	keeper.EnableAddAllowedBidder = true
@@ -74,12 +76,12 @@ func (s *IntegrationTestSuite) SetupTest() {
 }
 
 // TearDownTest cleans up the current test network after each test in the suite.
-func (s *IntegrationTestSuite) TearDownTest() {
+func (s *TxCmdTestSuite) TearDownTest() {
 	s.T().Log("tearing down integration test suite")
 	s.network.Cleanup()
 }
 
-func (s *IntegrationTestSuite) TestNewCreateFixedAmountPlanCmd() {
+func (s *TxCmdTestSuite) TestNewCreateFixedAmountPlanCmd() {
 	val := s.network.Validators[0]
 
 	startTime := time.Now()
@@ -261,7 +263,7 @@ func (s *IntegrationTestSuite) TestNewCreateFixedAmountPlanCmd() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestNewCreateBatchAuctionCmd() {
+func (s *TxCmdTestSuite) TestNewCreateBatchAuctionCmd() {
 	val := s.network.Validators[0]
 
 	startTime := time.Now()
@@ -462,10 +464,10 @@ func (s *IntegrationTestSuite) TestNewCreateBatchAuctionCmd() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestNewCancelAuctionCmd() {
+func (s *TxCmdTestSuite) TestNewCancelAuctionCmd() {
 	val := s.network.Validators[0]
 
-	// Create a fixed amount plan
+	// Create a fixed price auction
 	_, err := MsgCreateFixedPriceAuctionExec(
 		val.ClientCtx,
 		val.Address.String(),
@@ -538,10 +540,10 @@ func (s *IntegrationTestSuite) TestNewCancelAuctionCmd() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestNewPlaceBidCmd() {
+func (s *TxCmdTestSuite) TestNewPlaceBidCmd() {
 	val := s.network.Validators[0]
 
-	// Create a fixed amount plan
+	// Create a fixed price auction
 	_, err := MsgCreateFixedPriceAuctionExec(
 		val.ClientCtx,
 		val.Address.String(),
@@ -657,10 +659,10 @@ func (s *IntegrationTestSuite) TestNewPlaceBidCmd() {
 	}
 }
 
-func (s *IntegrationTestSuite) TestNewModifyBidCmd() {
+func (s *TxCmdTestSuite) TestNewModifyBidCmd() {
 	val := s.network.Validators[0]
 
-	// Create a fixed amount plan
+	// Create a batch auction
 	_, err := MsgCreateBatchAuctionExec(
 		val.ClientCtx,
 		val.Address.String(),
@@ -813,6 +815,320 @@ func (s *IntegrationTestSuite) TestNewModifyBidCmd() {
 
 				txResp := tc.respType.(*sdk.TxResponse)
 				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+			}
+		})
+	}
+}
+
+type QueryCmdTestSuite struct {
+	suite.Suite
+
+	cfg     network.Config
+	network *network.Network
+
+	denom1 string
+	denom2 string
+}
+
+func (s *QueryCmdTestSuite) SetupTest() {
+	s.T().Log("setting up integration test suite")
+
+	keeper.EnableAddAllowedBidder = true
+
+	encodingCfg := cosmoscmd.MakeEncodingConfig(chain.ModuleBasics)
+
+	cfg := network.DefaultConfig()
+	cfg.NumValidators = 1
+	cfg.AppConstructor = NewAppConstructor(encodingCfg)
+	cfg.GenesisState = chain.ModuleBasics.DefaultGenesis(cfg.Codec)
+	cfg.AccountTokens = sdk.NewInt(100_000_000_000_000) // node0token denom
+	cfg.StakingTokens = sdk.NewInt(100_000_000_000_000) // stake denom
+
+	s.cfg = cfg
+	s.network = network.New(s.T(), cfg)
+	s.denom1, s.denom2 = fmt.Sprintf("%stoken", s.network.Validators[0].Moniker), s.cfg.BondDenom
+
+	_, err := s.network.WaitForHeight(1)
+	s.Require().NoError(err)
+}
+
+func (s *QueryCmdTestSuite) TearDownSuite() {
+	s.T().Log("tearing down integration test suite")
+	s.network.Cleanup()
+}
+
+func (s *QueryCmdTestSuite) TestNewQueryParamsCmd() {
+	val := s.network.Validators[0]
+	clientCtx := val.ClientCtx
+
+	testCases := []struct {
+		name      string
+		args      []string
+		expectErr bool
+	}{
+		{
+			"happy case",
+			[]string{fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
+			false,
+		},
+		{
+			"with specific height",
+			[]string{fmt.Sprintf("--%s=1", flags.FlagHeight), fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
+			false,
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			cmd := cli.NewQueryParamsCmd()
+
+			out, err := utilcli.ExecTestCLICmd(clientCtx, cmd, tc.args)
+
+			if tc.expectErr {
+				s.Require().Error(err)
+				s.Require().NotEqual("internal", err.Error())
+			} else {
+				s.Require().NoError(err)
+
+				var params types.Params
+				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &params))
+				s.Require().NotEmpty(params.AuctionCreationFee)
+			}
+		})
+	}
+}
+
+func (s *TxCmdTestSuite) TestNewQueryAuctionsCmd() {
+	val := s.network.Validators[0]
+	clientCtx := val.ClientCtx
+	types.RegisterInterfaces(clientCtx.InterfaceRegistry)
+
+	// Create a fixed price auction
+	_, err := MsgCreateFixedPriceAuctionExec(
+		val.ClientCtx,
+		val.Address.String(),
+		testutil.WriteToNewTempFile(s.T(), cli.FixedPriceAuctionRequest{
+			StartPrice:      sdk.MustNewDecFromStr("1.0"),
+			SellingCoin:     sdk.NewInt64Coin(s.denom1, 100_000_000_000),
+			PayingCoinDenom: s.denom2,
+			VestingSchedules: []types.VestingSchedule{
+				{
+					ReleaseTime: time.Now().AddDate(1, 0, 0),
+					Weight:      sdk.MustNewDecFromStr("1.0"),
+				},
+			},
+			StartTime: time.Now().AddDate(0, 1, 0),
+			EndTime:   time.Now().AddDate(0, 3, 0),
+		}.String()).Name(),
+	)
+	s.Require().NoError(err)
+
+	// Create a batch auction
+	_, err = MsgCreateBatchAuctionExec(
+		val.ClientCtx,
+		val.Address.String(),
+		testutil.WriteToNewTempFile(s.T(), cli.BatchAuctionRequest{
+			StartPrice:        sdk.MustNewDecFromStr("0.5"),
+			MinBidPrice:       sdk.MustNewDecFromStr("0.1"),
+			SellingCoin:       sdk.NewInt64Coin(s.denom1, 100_000_000_000),
+			PayingCoinDenom:   s.denom2,
+			MaxExtendedRound:  2,
+			ExtendedRoundRate: sdk.MustNewDecFromStr("0.2"),
+			VestingSchedules: []types.VestingSchedule{
+				{
+					ReleaseTime: time.Now().AddDate(0, 6, 0),
+					Weight:      sdk.MustNewDecFromStr("1.0"),
+				},
+			},
+			StartTime: time.Now(),
+			EndTime:   time.Now().AddDate(0, 3, 0),
+		}.String()).Name(),
+	)
+	s.Require().NoError(err)
+
+	for _, tc := range []struct {
+		name        string
+		args        []string
+		expectedErr string
+		postRun     func(resp types.QueryAuctionsResponse)
+	}{
+		{
+			"happy case",
+			[]string{fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
+			"",
+			func(resp types.QueryAuctionsResponse) {
+				s.Require().Len(resp.Auctions, 2)
+			},
+		},
+	} {
+		s.Run(tc.name, func() {
+			cmd := cli.NewQueryAuctionsCmd()
+
+			out, err := utilcli.ExecTestCLICmd(val.ClientCtx, cmd, tc.args)
+
+			if tc.expectedErr == "" {
+				s.Require().NoError(err)
+				var resp types.QueryAuctionsResponse
+				s.Require().NoError(val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp), out.String())
+				tc.postRun(resp)
+			} else {
+				s.Require().EqualError(err, tc.expectedErr)
+			}
+		})
+	}
+}
+
+func (s *TxCmdTestSuite) TestNewQueryAuctionCmd() {
+	val := s.network.Validators[0]
+	clientCtx := val.ClientCtx
+	types.RegisterInterfaces(clientCtx.InterfaceRegistry)
+
+	// Create a fixed price auction
+	_, err := MsgCreateFixedPriceAuctionExec(
+		val.ClientCtx,
+		val.Address.String(),
+		testutil.WriteToNewTempFile(s.T(), cli.FixedPriceAuctionRequest{
+			StartPrice:      sdk.MustNewDecFromStr("1.0"),
+			SellingCoin:     sdk.NewInt64Coin(s.denom1, 100_000_000_000),
+			PayingCoinDenom: s.denom2,
+			VestingSchedules: []types.VestingSchedule{
+				{
+					ReleaseTime: time.Now().AddDate(1, 0, 0),
+					Weight:      sdk.MustNewDecFromStr("1.0"),
+				},
+			},
+			StartTime: time.Now().AddDate(0, 1, 0),
+			EndTime:   time.Now().AddDate(0, 3, 0),
+		}.String()).Name(),
+	)
+	s.Require().NoError(err)
+
+	for _, tc := range []struct {
+		name        string
+		args        []string
+		expectedErr string
+		postRun     func(resp types.QueryAuctionResponse)
+	}{
+		{
+			"happy case",
+			[]string{
+				strconv.Itoa(1),
+				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
+			},
+			"",
+			func(resp types.QueryAuctionResponse) {
+				auction, err := types.UnpackAuction(resp.Auction)
+				s.Require().NoError(err)
+				s.Require().Equal(types.AuctionTypeFixedPrice, auction.GetType())
+			},
+		},
+	} {
+		s.Run(tc.name, func() {
+			cmd := cli.NewQueryAuctionCmd()
+
+			out, err := utilcli.ExecTestCLICmd(val.ClientCtx, cmd, tc.args)
+
+			if tc.expectedErr == "" {
+				s.Require().NoError(err)
+				var resp types.QueryAuctionResponse
+				s.Require().NoError(val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp), out.String())
+				tc.postRun(resp)
+			} else {
+				s.Require().EqualError(err, tc.expectedErr)
+			}
+		})
+	}
+}
+
+func (s *TxCmdTestSuite) TestNewQueryBidsCmd() {
+	val := s.network.Validators[0]
+	clientCtx := val.ClientCtx
+	types.RegisterInterfaces(clientCtx.InterfaceRegistry)
+
+	// Create a batch auction
+	_, err := MsgCreateBatchAuctionExec(
+		val.ClientCtx,
+		val.Address.String(),
+		testutil.WriteToNewTempFile(s.T(), cli.BatchAuctionRequest{
+			StartPrice:        sdk.MustNewDecFromStr("0.5"),
+			MinBidPrice:       sdk.MustNewDecFromStr("0.1"),
+			SellingCoin:       sdk.NewInt64Coin(s.denom1, 100_000_000_000),
+			PayingCoinDenom:   s.denom2,
+			MaxExtendedRound:  2,
+			ExtendedRoundRate: sdk.MustNewDecFromStr("0.2"),
+			VestingSchedules: []types.VestingSchedule{
+				{
+					ReleaseTime: time.Now().AddDate(0, 6, 0),
+					Weight:      sdk.MustNewDecFromStr("1.0"),
+				},
+			},
+			StartTime: time.Now(),
+			EndTime:   time.Now().AddDate(0, 3, 0),
+		}.String()).Name(),
+	)
+	s.Require().NoError(err)
+
+	// Add allowed bidder
+	_, err = MsgAddAllowedBidderExec(
+		val.ClientCtx,
+		val.Address.String(),
+		1,
+		sdk.NewInt(100_000_000),
+	)
+	s.Require().NoError(err)
+
+	// Place a bid #1
+	_, err = MsgPlaceBidExec(
+		val.ClientCtx,
+		val.Address.String(),
+		1,
+		"batch-worth",
+		sdk.MustNewDecFromStr("0.55"),
+		sdk.NewCoin(s.denom2, sdk.NewInt(20_000_000)),
+	)
+	s.Require().NoError(err)
+
+	// Place a bid #2
+	_, err = MsgPlaceBidExec(
+		val.ClientCtx,
+		val.Address.String(),
+		1,
+		"batch-many",
+		sdk.MustNewDecFromStr("0.6"),
+		sdk.NewCoin(s.denom1, sdk.NewInt(5_000_000)),
+	)
+	s.Require().NoError(err)
+
+	for _, tc := range []struct {
+		name        string
+		args        []string
+		expectedErr string
+		postRun     func(resp types.QueryBidsResponse)
+	}{
+		{
+			"happy case",
+			[]string{
+				strconv.Itoa(1),
+				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
+			},
+			"",
+			func(resp types.QueryBidsResponse) {
+				s.Require().Len(resp.Bids, 2)
+			},
+		},
+	} {
+		s.Run(tc.name, func() {
+			cmd := cli.NewQueryBidsCmd()
+
+			out, err := utilcli.ExecTestCLICmd(val.ClientCtx, cmd, tc.args)
+
+			if tc.expectedErr == "" {
+				s.Require().NoError(err)
+				var resp types.QueryBidsResponse
+				s.Require().NoError(val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp), out.String())
+				tc.postRun(resp)
+			} else {
+				s.Require().EqualError(err, tc.expectedErr)
 			}
 		})
 	}
