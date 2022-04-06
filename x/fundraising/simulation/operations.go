@@ -1,6 +1,7 @@
 package simulation
 
 import (
+	"fmt"
 	"math/rand"
 	"sync"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 	"github.com/tendermint/spm/cosmoscmd"
 
@@ -111,7 +113,8 @@ func SimulateMsgCreateFixedPriceAuction(ak types.AccountKeeper, bk types.BankKee
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
-		fundAccountsOnce(r, ctx, bk, accs)
+		denoms := genDenoms(r)
+		fundAccountsOnce(r, ctx, bk, accs, denoms)
 
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 
@@ -119,25 +122,27 @@ func SimulateMsgCreateFixedPriceAuction(ak types.AccountKeeper, bk types.BankKee
 		spendable := bk.SpendableCoins(ctx, account.GetAddress())
 
 		params := k.GetParams(ctx)
+
 		_, hasNeg := spendable.SafeSub(params.AuctionCreationFee)
 		if hasNeg {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgCreateFixedPriceAuction, "insufficient balance for auction creation fee"), nil, nil
 		}
 
 		auctioneerAcc := account.GetAddress()
-
-		// mint pool coins to simulate the real-world cases
-		// funds, err := fundBalances(ctx, r, bk, creatorAcc, testCoinDenoms)
-		// if err != nil {
-		// 	return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgCreateFixedAmountPlan, "unable to mint pool coins"), nil, nil
-		// }
-
-		startPrice := sdk.ZeroDec()
-		sellingCoin := sdk.NewInt64Coin("", 1)
-		payingCoinDenom := ""
+		ranDenom := shuffleDenoms(denoms)
+		startPrice := sdk.NewDecFromInt(simtypes.RandomAmount(r, sdk.NewInt(10)))
+		sellingCoin := sdk.NewInt64Coin(ranDenom, 1)
+		payingCoinDenom := sdk.DefaultBondDenom
 		vestingSchedules := []types.VestingSchedule{}
 		startTime := ctx.BlockTime()
-		endTime := startTime.AddDate(0, simtypes.RandIntBetween(r, 1, 24), 0)
+		endTime := ctx.BlockTime().AddDate(0, simtypes.RandIntBetween(r, 1, 24), 0)
+
+		// TODO: is this logic reasonable to have?
+		for _, auction := range k.GetAuctions(ctx) {
+			if auction.GetSellingCoin().Denom == sellingCoin.Denom {
+				return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgCreateFixedPriceAuction, "auction already exists with the same selling coin denom"), nil, nil
+			}
+		}
 
 		msg := types.NewMsgCreateFixedPriceAuction(
 			auctioneerAcc.String(),
@@ -149,12 +154,10 @@ func SimulateMsgCreateFixedPriceAuction(ak types.AccountKeeper, bk types.BankKee
 			endTime,
 		)
 
-		encoding := cosmoscmd.MakeEncodingConfig(simapp.ModuleBasics)
-
 		txCtx := simulation.OperationInput{
 			R:               r,
 			App:             app,
-			TxGen:           encoding.TxConfig,
+			TxGen:           cosmoscmd.MakeEncodingConfig(simapp.ModuleBasics).TxConfig,
 			Cdc:             nil,
 			Msg:             msg,
 			MsgType:         msg.Type(),
@@ -187,6 +190,10 @@ func SimulateMsgPlaceBid(ak types.AccountKeeper, bk types.BankKeeper, k keeper.K
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+		// TODO:
+		// Auction must exist
+		// Bidder must be in allowed bidder list
+		// Depending on auction type, place a bid accordingly
 
 		return simtypes.OperationMsg{}, []simtypes.FutureOperation{}, nil
 	}
@@ -216,21 +223,38 @@ func SimulateMsgModifyBid(ak types.AccountKeeper, bk types.BankKeeper, k keeper.
 
 var once sync.Once
 
-func fundAccountsOnce(r *rand.Rand, ctx sdk.Context, bk types.BankKeeper, accs []simtypes.Account) {
+func genDenoms(r *rand.Rand) []string {
+	denoms := []string{}
+	for i := 1; i <= simtypes.RandIntBetween(r, 10, 20); i++ {
+		denoms = append(denoms, "denom"+fmt.Sprint(i))
+	}
+	return denoms
+}
+
+func fundAccountsOnce(r *rand.Rand, ctx sdk.Context, bk types.BankKeeper, accs []simtypes.Account, denoms []string) {
 	once.Do(func() {
-		denoms := []string{"denom1", "denom2", "denom3", "denom4", "denom5", "denom6"}
 		maxAmt := sdk.NewInt(1_000_000_000_000_000)
 		for _, acc := range accs {
 			var coins sdk.Coins
 			for _, denom := range denoms {
 				coins = coins.Add(sdk.NewCoin(denom, simtypes.RandomAmount(r, maxAmt)))
 			}
-			if err := bk.MintCoins(ctx, types.ModuleName, coins); err != nil {
+			if err := bk.MintCoins(ctx, minttypes.ModuleName, coins); err != nil {
 				panic(err)
 			}
-			if err := bk.SendCoinsFromModuleToAccount(ctx, types.ModuleName, acc.Address, coins); err != nil {
+			if err := bk.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, acc.Address, coins); err != nil {
 				panic(err)
 			}
 		}
 	})
+}
+
+// shuffleDenoms returns randomly shuffled denom.
+func shuffleDenoms(denoms []string) string {
+	denoms2 := make([]string, len(denoms))
+	copy(denoms2, denoms)
+	rand.Shuffle(len(denoms), func(i, j int) {
+		denoms2[i], denoms2[j] = denoms2[j], denoms2[i]
+	})
+	return denoms[0]
 }
