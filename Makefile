@@ -117,20 +117,23 @@ clean:
 .PHONY: go-mod-cache clean
 
 ###############################################################################
-###                              Documentation                              ###
-###############################################################################
-
-###############################################################################
 ###                           Tests & Simulation                            ###
 ###############################################################################
 
 test: test-unit
-test-all: test-unit 
+test-all: test-unit test-race test-cover
 
 test-unit: 
 	@VERSION=$(VERSION) go test -mod=readonly -tags='norace' $(PACKAGES_NOSIMULATION)
 
-.PHONY: test test-all test-unit
+
+test-race:
+	@go test -mod=readonly -timeout 30m -race -coverprofile=coverage.txt -covermode=atomic -tags='ledger test_ledger_mock' ./...
+
+test-cover:
+	@go test -mod=readonly -timeout 30m -coverprofile=coverage.txt -covermode=atomic -tags='norace ledger test_ledger_mock' ./...
+
+.PHONY: test test-all test-unit test-race test-cover
 
 SIM_NUM_BLOCKS ?= 500
 SIM_BLOCK_SIZE ?= 200

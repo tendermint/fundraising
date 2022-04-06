@@ -72,7 +72,7 @@ func (msg MsgCreateFixedPriceAuction) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid paying coin denom: %v", err)
 	}
 	if !msg.EndTime.After(msg.StartTime) {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "end time must be greater than start time")
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "end time must be set after start time")
 	}
 	if err := ValidateVestingSchedules(msg.VestingSchedules, msg.EndTime); err != nil {
 		return err
@@ -154,7 +154,7 @@ func (msg MsgCreateBatchAuction) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid paying coin denom: %v", err)
 	}
 	if !msg.EndTime.After(msg.StartTime) {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "end time must be greater than start time")
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "end time must be set after start time")
 	}
 	if err := ValidateVestingSchedules(msg.VestingSchedules, msg.EndTime); err != nil {
 		return err
