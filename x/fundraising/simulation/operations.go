@@ -25,7 +25,6 @@ const (
 	OpWeightMsgCreateBatchAuction      = "op_weight_msg_create_batch_auction"
 	OpWeightMsgPlaceBid                = "op_weight_msg_place_bid"
 	OpWeightMsgCancelAuction           = "op_weight_msg_cancel_auction"
-	OpWeightMsgModifyBid               = "op_weight_msg_modify_bid"
 )
 
 var (
@@ -76,13 +75,6 @@ func WeightedOperations(
 		},
 	)
 
-	var weightMsgModifyBid int
-	appParams.GetOrGenerate(cdc, OpWeightMsgModifyBid, &weightMsgModifyBid, nil,
-		func(_ *rand.Rand) {
-			weightMsgModifyBid = appparams.DefaultWeightMsgModifyBid
-		},
-	)
-
 	return simulation.WeightedOperations{
 		simulation.NewWeightedOperation(
 			weightMsgCreateFixedPriceAuction,
@@ -99,10 +91,6 @@ func WeightedOperations(
 		simulation.NewWeightedOperation(
 			weightMsgCancelAuction,
 			SimulateMsgCancelAuction(ak, bk, k),
-		),
-		simulation.NewWeightedOperation(
-			weightMsgModifyBid,
-			SimulateMsgModifyBid(ak, bk, k),
 		),
 	}
 }
@@ -128,10 +116,10 @@ func SimulateMsgCreateFixedPriceAuction(ak types.AccountKeeper, bk types.BankKee
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgCreateFixedPriceAuction, "insufficient balance for auction creation fee"), nil, nil
 		}
 
-		auctioneerAcc := account.GetAddress()
+		auctioneer := account.GetAddress().String()
 		ranDenom := shuffleDenoms(denoms)
 		startPrice := sdk.NewDecFromInt(simtypes.RandomAmount(r, sdk.NewInt(10)))
-		sellingCoin := sdk.NewInt64Coin(ranDenom, 1)
+		sellingCoin := sdk.NewCoin(ranDenom, simtypes.RandomAmount(r, sdk.NewInt(100_000_000_000_000)))
 		payingCoinDenom := sdk.DefaultBondDenom
 		vestingSchedules := []types.VestingSchedule{}
 		startTime := ctx.BlockTime()
@@ -145,7 +133,7 @@ func SimulateMsgCreateFixedPriceAuction(ak types.AccountKeeper, bk types.BankKee
 		}
 
 		msg := types.NewMsgCreateFixedPriceAuction(
-			auctioneerAcc.String(),
+			auctioneer,
 			startPrice,
 			sellingCoin,
 			payingCoinDenom,
@@ -194,11 +182,11 @@ func SimulateMsgCreateBatchAuction(ak types.AccountKeeper, bk types.BankKeeper, 
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgCreateFixedPriceAuction, "insufficient balance for auction creation fee"), nil, nil
 		}
 
-		auctioneerAcc := account.GetAddress()
+		auctioneer := account.GetAddress().String()
 		ranDenom := shuffleDenoms(denoms)
 		startPrice := sdk.NewDecFromInt(simtypes.RandomAmount(r, sdk.NewInt(10)))
 		minBidPrice := simtypes.RandomDecAmount(r, startPrice)
-		sellingCoin := sdk.NewInt64Coin(ranDenom, 1)
+		sellingCoin := sdk.NewCoin(ranDenom, simtypes.RandomAmount(r, sdk.NewInt(100_000_000_000_000)))
 		payingCoinDenom := sdk.DefaultBondDenom
 		vestingSchedules := []types.VestingSchedule{}
 		maxExtendedRound := uint32(simtypes.RandIntBetween(r, 1, 5))
@@ -214,7 +202,7 @@ func SimulateMsgCreateBatchAuction(ak types.AccountKeeper, bk types.BankKeeper, 
 		}
 
 		msg := types.NewMsgCreateBatchAuction(
-			auctioneerAcc.String(),
+			auctioneer,
 			startPrice,
 			minBidPrice,
 			sellingCoin,
@@ -251,12 +239,63 @@ func SimulateMsgPlaceBid(ak types.AccountKeeper, bk types.BankKeeper, k keeper.K
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
-		// TODO:
-		// Auction must exist
-		// Bidder must be in allowed bidder list
+		// TODO: Bidder must be in allowed bidder list
 		// Depending on auction type, place a bid accordingly
 
-		return simtypes.OperationMsg{}, []simtypes.FutureOperation{}, nil
+		auctions := k.GetAuctions(ctx)
+		if len(auctions) == 0 {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgPlaceBid, "no auction to place a bid"), nil, nil
+		}
+
+		simAccount, _ := simtypes.RandomAcc(r, accs)
+
+		account := ak.GetAccount(ctx, simAccount.Address)
+		spendable := bk.SpendableCoins(ctx, account.GetAddress())
+
+		bidder := account.GetAddress().String()
+		auction := auctions[simtypes.RandIntBetween(r, 0, len(auctions))]
+
+		var bidType types.BidType
+		var price sdk.Dec
+		var coin sdk.Coin
+
+		switch auction.GetType() {
+		case types.AuctionTypeFixedPrice:
+			bidType = types.BidTypeFixedPrice
+			price = auction.GetStartPrice()
+			coin = sdk.NewCoin(auction.GetPayingCoinDenom(), simtypes.RandomAmount(r, sdk.NewInt(500_000_000)))
+		case types.AuctionTypeBatch:
+			// TODO: randomize worth or many
+			bidType = types.BidTypeBatchWorth
+		default:
+		}
+
+		// TODO: check if bidder has sufficient amount of coin to place a bid
+
+		msg := types.NewMsgPlaceBid(
+			auction.GetId(),
+			bidder,
+			bidType,
+			price,
+			coin,
+		)
+
+		txCtx := simulation.OperationInput{
+			R:               r,
+			App:             app,
+			TxGen:           cosmoscmd.MakeEncodingConfig(simapp.ModuleBasics).TxConfig,
+			Cdc:             nil,
+			Msg:             msg,
+			MsgType:         msg.Type(),
+			Context:         ctx,
+			SimAccount:      simAccount,
+			AccountKeeper:   ak,
+			Bankkeeper:      bk,
+			ModuleName:      types.ModuleName,
+			CoinsSpentInMsg: spendable,
+		}
+
+		return simulation.GenAndDeliverTxWithRandFees(txCtx)
 	}
 }
 
@@ -266,19 +305,58 @@ func SimulateMsgCancelAuction(ak types.AccountKeeper, bk types.BankKeeper, k kee
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+		auctions := k.GetAuctions(ctx)
+		r.Shuffle(len(auctions), func(i, j int) {
+			auctions[i], auctions[j] = auctions[j], auctions[i]
+		})
 
-		return simtypes.OperationMsg{}, []simtypes.FutureOperation{}, nil
-	}
-}
+		var simAccount simtypes.Account
+		var auction types.AuctionI
+		skip := true
 
-// SimulateMsgModifyBid generates a MsgHarvest with random values
-// nolint: interfacer
-func SimulateMsgModifyBid(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
-	return func(
-		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
-	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+		// Find an auction that is not started yet
+		for _, a := range auctions {
+			if !a.ShouldAuctionStarted(ctx.BlockTime()) {
+				auction = a
+				skip = false
+				break
+			}
+		}
+		if skip {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgCancelAuction, "no auction to cancel"), nil, nil
+		}
 
-		return simtypes.OperationMsg{}, []simtypes.FutureOperation{}, nil
+		accs = shuffleSimAccounts(r, accs)
+
+		// Only the auctioneer can cancel the auction
+		for _, acc := range accs {
+			if acc.Address.Equals(auction.GetAuctioneer()) {
+				simAccount = acc
+			}
+		}
+
+		account := ak.GetAccount(ctx, simAccount.Address)
+		spendable := bk.SpendableCoins(ctx, account.GetAddress())
+		auctioneer := account.GetAddress().String()
+
+		msg := types.NewMsgCancelAuction(auctioneer, auction.GetId())
+
+		txCtx := simulation.OperationInput{
+			R:               r,
+			App:             app,
+			TxGen:           cosmoscmd.MakeEncodingConfig(simapp.ModuleBasics).TxConfig,
+			Cdc:             nil,
+			Msg:             msg,
+			MsgType:         msg.Type(),
+			Context:         ctx,
+			SimAccount:      simAccount,
+			AccountKeeper:   ak,
+			Bankkeeper:      bk,
+			ModuleName:      types.ModuleName,
+			CoinsSpentInMsg: spendable,
+		}
+
+		return simulation.GenAndDeliverTxWithRandFees(txCtx)
 	}
 }
 
@@ -318,4 +396,14 @@ func shuffleDenoms(denoms []string) string {
 		denoms2[i], denoms2[j] = denoms2[j], denoms2[i]
 	})
 	return denoms2[0]
+}
+
+// shuffleSimAccounts returns randomly shuffled simulation accounts.
+func shuffleSimAccounts(r *rand.Rand, accs []simtypes.Account) []simtypes.Account {
+	accs2 := make([]simtypes.Account, len(accs))
+	copy(accs2, accs)
+	r.Shuffle(len(accs2), func(i, j int) {
+		accs2[i], accs2[j] = accs2[j], accs2[i]
+	})
+	return accs2
 }
