@@ -25,6 +25,7 @@ type SimTestSuite struct {
 	app    *chain.App
 	ctx    sdk.Context
 	keeper keeper.Keeper
+	r      *rand.Rand
 }
 
 func (s *SimTestSuite) SetupTest() {
@@ -55,9 +56,9 @@ func (s *SimTestSuite) TestSimulateCreateFixedPriceAuction() {
 	s.Require().Equal(types.TypeMsgCreateFixedPriceAuction, msg.Type())
 	s.Require().Equal(types.ModuleName, msg.Route())
 	s.Require().Equal("cosmos1tp4es44j4vv8m59za3z0tm64dkmlnm8wg2frhc", msg.Auctioneer)
-	s.Require().Equal("denom10", msg.SellingCoin.Denom)
-	s.Require().Equal("stake", msg.PayingCoinDenom)
-	s.Require().Equal(sdk.MustNewDecFromStr("5"), msg.StartPrice)
+	s.Require().Equal("denom1", msg.SellingCoin.Denom)
+	s.Require().Equal(sdk.DefaultBondDenom, msg.PayingCoinDenom)
+	s.Require().Equal(sdk.MustNewDecFromStr("0.2"), msg.StartPrice)
 }
 
 func (s *SimTestSuite) TestSimulateCreateBatchAuction() {

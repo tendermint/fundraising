@@ -118,8 +118,8 @@ func SimulateMsgCreateFixedPriceAuction(ak types.AccountKeeper, bk types.BankKee
 
 		auctioneer := account.GetAddress().String()
 		ranDenom := shuffleDenoms(denoms)
-		startPrice := sdk.NewDecFromInt(simtypes.RandomAmount(r, sdk.NewInt(10)))
-		sellingCoin := sdk.NewCoin(ranDenom, simtypes.RandomAmount(r, sdk.NewInt(100_000_000_000_000)))
+		startPrice := sdk.NewDecWithPrec(int64(simtypes.RandIntBetween(r, 10, 100)), 2)
+		sellingCoin := sdk.NewInt64Coin(ranDenom, int64(simtypes.RandIntBetween(r, 10000000, 100000000000000)))
 		payingCoinDenom := sdk.DefaultBondDenom
 		vestingSchedules := []types.VestingSchedule{}
 		startTime := ctx.BlockTime()
@@ -184,9 +184,9 @@ func SimulateMsgCreateBatchAuction(ak types.AccountKeeper, bk types.BankKeeper, 
 
 		auctioneer := account.GetAddress().String()
 		ranDenom := shuffleDenoms(denoms)
-		startPrice := sdk.NewDecFromInt(simtypes.RandomAmount(r, sdk.NewInt(10)))
-		minBidPrice := simtypes.RandomDecAmount(r, startPrice)
-		sellingCoin := sdk.NewCoin(ranDenom, simtypes.RandomAmount(r, sdk.NewInt(100_000_000_000_000)))
+		startPrice := sdk.NewDecWithPrec(int64(simtypes.RandIntBetween(r, 10, 100)), 2)
+		minBidPrice := sdk.NewDecWithPrec(int64(simtypes.RandIntBetween(r, 1, 10)), 2)
+		sellingCoin := sdk.NewInt64Coin(ranDenom, int64(simtypes.RandIntBetween(r, 10000000, 100000000000000)))
 		payingCoinDenom := sdk.DefaultBondDenom
 		vestingSchedules := []types.VestingSchedule{}
 		maxExtendedRound := uint32(simtypes.RandIntBetween(r, 1, 5))
