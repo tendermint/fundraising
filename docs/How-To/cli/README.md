@@ -6,7 +6,7 @@ Description: A high-level overview of how the command-line interface (CLI) works
 
 ## Synopsis
 
-This document provides a high-level overview of how the command line (CLI) interface works for the `fundraising` module. To set up a local testing environment, it requires the latest [Starport](https://starport.com/). If you don't have Starport set up in your local machine, see [this Starport guide](https://docs.starport.network/) to install it. Run this command under the project root directory `$ starport chain serve -c config-test.yml` or simply `$ make localnet`.
+This document provides a high-level overview of how the command line (CLI) interface works for the `fundraising` module. To set up a local testing environment, it requires the latest [Starport](https://starport.com/). If you don't have Starport set up in your local machine, see [this Starport guide](https://docs.starport.com/#install-starport) to install it. Run this command under the project root directory `$ starport chain serve -c config-test.yml` or simply `$ make localnet`.
 
 Note that [jq](https://stedolan.github.io/jq/) is recommended to be installed as it is used to process JSON throughout the document.
 
