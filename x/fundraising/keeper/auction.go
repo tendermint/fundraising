@@ -238,10 +238,12 @@ func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) erro
 	return nil
 }
 
-// AddAllowedBidders is a function that is implemented for an external module to add
-// allowed bidders in the auction's AllowedBidders list; it doesn't do the auctioneer's verification
-// because the module is fundamentally designed to delegate authorization to an external module.
-// It is suggested for an external module to add any necessary verification and operations depending on their use cases.
+// AddAllowedBidders is a function that is implemented for an external module.
+// An external module uses this function to add allowed bidders in the auction's allowed bidders list.
+// It doesn't look up the bidder's previous maximum bid amount. Instead, it overlaps.
+// It doesn't have any auctioneer's verficiation logic because the module is fundamentally designed
+// to delegate full authorization to an external module.
+// It is up to an external module to freely add necessary verficiation and operations depending on their use cases.
 func (k Keeper) AddAllowedBidders(ctx sdk.Context, auctionId uint64, bidders []types.AllowedBidder) error {
 	auction, found := k.GetAuction(ctx, auctionId)
 	if !found {
@@ -272,10 +274,11 @@ func (k Keeper) AddAllowedBidders(ctx sdk.Context, auctionId uint64, bidders []t
 	return nil
 }
 
-// UpdateAllowedBidder is a function that is implemented for an external module to update
-// allowed bidders in the auction's AllowedBidders list; it simply updates the bidder's maximum bid amount.
-// It doesn't do the auctioneer's verification because the module is fundamentally designed to delegate authorization to an external module.
-// It is suggested for an external module to add any necessary verification and operations depending on their use cases.
+// UpdateAllowedBidder is a function that is implemented for an external module.
+// An external module uses this function to update maximum bid amount of particular allowed bidder in the auction.
+// It doesn't have any auctioneer's verficiation logic because the module is fundamentally designed
+// to delegate full authorization to an external module.
+// It is up to an external module to freely add necessary verficiation and operations depending on their use cases.
 func (k Keeper) UpdateAllowedBidder(ctx sdk.Context, auctionId uint64, bidder sdk.AccAddress, maxBidAmount sdk.Int) error {
 	auction, found := k.GetAuction(ctx, auctionId)
 	if !found {

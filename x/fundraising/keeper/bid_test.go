@@ -190,7 +190,6 @@ func (s *KeeperTestSuite) TestBatchAuction_IncorrectCoinDenom() {
 		Coin:      parseCoin("100_000_000denom2"),
 	})
 	s.Require().ErrorIs(err, types.ErrIncorrectCoinDenom)
-
 }
 
 func (s *KeeperTestSuite) TestBatchWorth_OverMaxBidAmountLimit() {

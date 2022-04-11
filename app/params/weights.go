@@ -5,5 +5,5 @@ const (
 	DefaultWeightMsgCreateFixedPriceAuction int = 10
 	DefaultWeightMsgCreateBatchAuction      int = 10
 	DefaultWeightMsgCancelAuction           int = 10
-	DefaultWeightMsgPlaceBid                int = 80
+	DefaultWeightMsgPlaceBid                int = 0
 )
