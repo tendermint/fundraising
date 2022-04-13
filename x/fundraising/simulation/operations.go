@@ -1,7 +1,6 @@
 package simulation
 
 import (
-	"fmt"
 	"math/rand"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -97,10 +96,10 @@ func WeightedOperations(
 			weightMsgCancelAuction,
 			SimulateMsgCancelAuction(ak, bk, k),
 		),
-		// simulation.NewWeightedOperation(
-		// 	weightMsgPlaceBid,
-		// 	SimulateMsgPlaceBid(ak, bk, k),
-		// ),
+		simulation.NewWeightedOperation(
+			weightMsgPlaceBid,
+			SimulateMsgPlaceBid(ak, bk, k),
+		),
 	}
 }
 
@@ -310,17 +309,17 @@ func SimulateMsgPlaceBid(ak types.AccountKeeper, bk types.BankKeeper, k keeper.K
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgPlaceBid, "no auction to place a bid"), nil, nil
 		}
 
-		simAccount, _ := simtypes.RandomAcc(r, accs)
-
-		account := ak.GetAccount(ctx, simAccount.Address)
-		spendable := bk.SpendableCoins(ctx, account.GetAddress())
-
 		// Select a random auction
-		auction := auctions[simtypes.RandIntBetween(r, 0, len(auctions))]
+		auction := auctions[r.Intn(len(auctions))]
 
 		if auction.GetStatus() != types.AuctionStatusStarted {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgPlaceBid, "auction must be started status"), nil, nil
 		}
+
+		simAccount, _ := simtypes.RandomAcc(r, accs)
+
+		account := ak.GetAccount(ctx, simAccount.Address)
+		spendable := bk.SpendableCoins(ctx, account.GetAddress())
 
 		bidder := account.GetAddress().String()
 
@@ -386,8 +385,6 @@ func SimulateMsgPlaceBid(ak types.AccountKeeper, bk types.BankKeeper, k keeper.K
 			ModuleName:      types.ModuleName,
 			CoinsSpentInMsg: spendable,
 		}
-
-		fmt.Println("genAndDeliverTxWithFees")
 
 		return genAndDeliverTxWithFees(txCtx, Gas, Fees)
 	}

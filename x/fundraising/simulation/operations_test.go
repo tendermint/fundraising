@@ -152,59 +152,59 @@ func TestSimulateCancelAuction(t *testing.T) {
 }
 
 func TestSimulatePlaceBid(t *testing.T) {
-	// app, ctx := createTestApp(false)
+	app, ctx := createTestApp(false)
 
-	// // Setup a single account
-	// s := rand.NewSource(1)
-	// r := rand.New(s)
+	// Setup a single account
+	s := rand.NewSource(1)
+	r := rand.New(s)
 
-	// accounts := getTestingAccounts(t, r, app, ctx, 1)
+	accounts := getTestingAccounts(t, r, app, ctx, 1)
 
-	// app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: app.LastBlockHeight() + 1, AppHash: app.LastCommitID().Hash}})
+	app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: app.LastBlockHeight() + 1, AppHash: app.LastCommitID().Hash}})
 
-	// // Create a fixed price auction
-	// _, err := app.FundraisingKeeper.CreateFixedPriceAuction(ctx, &types.MsgCreateFixedPriceAuction{
-	// 	Auctioneer:       accounts[0].Address.String(),
-	// 	StartPrice:       sdk.MustNewDecFromStr("0.5"),
-	// 	SellingCoin:      sdk.NewInt64Coin("denom1", 5000000000),
-	// 	PayingCoinDenom:  "denom2",
-	// 	VestingSchedules: []types.VestingSchedule{},
-	// 	StartTime:        ctx.BlockTime(),
-	// 	EndTime:          ctx.BlockTime().AddDate(0, 1, 0),
-	// })
-	// require.NoError(t, err)
+	// Create a fixed price auction
+	_, err := app.FundraisingKeeper.CreateFixedPriceAuction(ctx, &types.MsgCreateFixedPriceAuction{
+		Auctioneer:       accounts[0].Address.String(),
+		StartPrice:       sdk.MustNewDecFromStr("0.5"),
+		SellingCoin:      sdk.NewInt64Coin("denoma", 5000000000),
+		PayingCoinDenom:  "denomb",
+		VestingSchedules: []types.VestingSchedule{},
+		StartTime:        ctx.BlockTime(),
+		EndTime:          ctx.BlockTime().AddDate(0, 1, 0),
+	})
+	require.NoError(t, err)
 
-	// // Create a batch auction
-	// _, err = app.FundraisingKeeper.CreateBatchAuction(ctx, &types.MsgCreateBatchAuction{
-	// 	Auctioneer:        accounts[0].Address.String(),
-	// 	StartPrice:        sdk.MustNewDecFromStr("0.5"),
-	// 	MinBidPrice:       sdk.MustNewDecFromStr("0.1"),
-	// 	SellingCoin:       sdk.NewInt64Coin("denom3", 5000000000),
-	// 	PayingCoinDenom:   "denom4",
-	// 	MaxExtendedRound:  3,
-	// 	ExtendedRoundRate: sdk.MustNewDecFromStr("0.1"),
-	// 	VestingSchedules:  []types.VestingSchedule{},
-	// 	StartTime:         ctx.BlockTime(),
-	// 	EndTime:           ctx.BlockTime().AddDate(0, 1, 0),
-	// })
-	// require.NoError(t, err)
+	// Create a batch auction
+	_, err = app.FundraisingKeeper.CreateBatchAuction(ctx, &types.MsgCreateBatchAuction{
+		Auctioneer:        accounts[0].Address.String(),
+		StartPrice:        sdk.MustNewDecFromStr("0.5"),
+		MinBidPrice:       sdk.MustNewDecFromStr("0.1"),
+		SellingCoin:       sdk.NewInt64Coin("denomc", 5000000000),
+		PayingCoinDenom:   "denomd",
+		MaxExtendedRound:  3,
+		ExtendedRoundRate: sdk.MustNewDecFromStr("0.1"),
+		VestingSchedules:  []types.VestingSchedule{},
+		StartTime:         ctx.BlockTime(),
+		EndTime:           ctx.BlockTime().AddDate(0, 1, 0),
+	})
+	require.NoError(t, err)
 
-	// op := simulation.SimulateMsgPlaceBid(app.AuthKeeper, app.BankKeeper, app.FundraisingKeeper)
-	// opMsg, futureOps, err := op(r, app.BaseApp, ctx, accounts, "")
-	// require.NoError(t, err)
-	// require.True(t, opMsg.OK)
-	// require.Len(t, futureOps, 0)
+	op := simulation.SimulateMsgPlaceBid(app.AuthKeeper, app.BankKeeper, app.FundraisingKeeper)
+	opMsg, futureOps, err := op(r, app.BaseApp, ctx, accounts, "")
+	require.NoError(t, err)
+	require.True(t, opMsg.OK)
+	require.Len(t, futureOps, 0)
 
-	// var msg types.MsgPlaceBid
-	// types.ModuleCdc.MustUnmarshalJSON(opMsg.Msg, &msg)
+	var msg types.MsgPlaceBid
+	types.ModuleCdc.MustUnmarshalJSON(opMsg.Msg, &msg)
 
-	// require.Equal(t, types.TypeMsgPlaceBid, msg.Type())
-	// require.Equal(t, types.ModuleName, msg.Route())
-	// require.Equal(t, "cosmos1tnh2q55v8wyygtt9srz5safamzdengsnqeycj3", msg.Bidder)
-	// require.Equal(t, uint64(2), msg.AuctionId)
-	// require.Equal(t, types.BidTypeBatchWorth, msg.BidType)
-	// require.Equal(t, sdk.MustNewDecFromStr("1.3"), msg.Price)
-	// require.Equal(t, sdk.NewInt64Coin("denom4", 336222540), msg.Coin)
+	require.Equal(t, types.TypeMsgPlaceBid, msg.Type())
+	require.Equal(t, types.ModuleName, msg.Route())
+	require.Equal(t, "cosmos1tnh2q55v8wyygtt9srz5safamzdengsnqeycj3", msg.Bidder)
+	require.Equal(t, uint64(2), msg.AuctionId)
+	require.Equal(t, types.BidTypeBatchWorth, msg.BidType)
+	require.Equal(t, sdk.MustNewDecFromStr("1.3"), msg.Price)
+	require.Equal(t, sdk.NewInt64Coin("denomd", 336222540), msg.Coin)
 }
 
 func createTestApp(isCheckTx bool) (*chain.App, sdk.Context) {
