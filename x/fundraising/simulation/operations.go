@@ -1,6 +1,7 @@
 package simulation
 
 import (
+	"fmt"
 	"math/rand"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -321,7 +322,7 @@ func SimulateMsgPlaceBid(ak types.AccountKeeper, bk types.BankKeeper, k keeper.K
 		account := ak.GetAccount(ctx, simAccount.Address)
 		spendable := bk.SpendableCoins(ctx, account.GetAddress())
 
-		bidder := account.GetAddress().String()
+		bidder := account.GetAddress()
 
 		// Random number to be used to choose bid type
 		n := r.Int()
@@ -347,29 +348,43 @@ func SimulateMsgPlaceBid(ak types.AccountKeeper, bk types.BankKeeper, k keeper.K
 			}
 		}
 
-		if !sdk.NewCoins(bid.Coin).IsAllLTE(spendable) {
-			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgPlaceBid, "insufficient funds"), nil, nil
+		fmt.Println("")
+		fmt.Println("> Auction SellingCoinDenom: ", auction.GetSellingCoin().Denom)
+		fmt.Println("> Auction PayingCoinDenom: ", auction.GetPayingCoinDenom())
+		fmt.Println("> BidCoin: ", bid.Coin)
+		fmt.Println("")
+
+		bidAmt := bid.ConvertToPayingAmount(auction.GetPayingCoinDenom())     // For Reserving bid amount
+		maxBidAmt := bid.ConvertToSellingAmount(auction.GetPayingCoinDenom()) // For AllowedBidders
+
+		// if _, err := fundBalances(ctx, r, bk, bidder, []string{auction.GetPayingCoinDenom()}); err != nil {
+		// 	return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgCreateFixedPriceAuction, "failed to fund auctioneer"), nil, err
+		// }
+
+		// Call spendable coins here again to get the funded balances
+		_, hasNeg := bk.SpendableCoins(ctx, bidder).SafeSub(sdk.NewCoins(sdk.NewCoin(auction.GetPayingCoinDenom(), bidAmt)))
+		if hasNeg {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgPlaceBid, "insufficient balance to place a bid"), nil, nil
 		}
 
-		// Increase the bidder's maximum bid amount if they had previous bids
-		maxBidAmt := bid.ConvertToSellingAmount(auction.GetPayingCoinDenom())
-		_, found := k.GetAuction(ctx, auction.GetId())
-		if !found {
-			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgPlaceBid, "auction not found"), nil, nil
-		}
-
-		prevMaxBidAmt, found := auction.GetAllowedBiddersMap()[bidder]
+		prevMaxBidAmt, found := auction.GetAllowedBiddersMap()[bidder.String()]
 		if found {
 			maxBidAmt = maxBidAmt.Add(prevMaxBidAmt)
 		}
 
 		if err := k.AddAllowedBidders(ctx, auction.GetId(), []types.AllowedBidder{
-			{Bidder: bidder, MaxBidAmount: maxBidAmt},
+			{Bidder: bidder.String(), MaxBidAmount: maxBidAmt},
 		}); err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgPlaceBid, "failed to add allowed bidders"), nil, nil
 		}
 
-		msg := types.NewMsgPlaceBid(auction.GetId(), bidder, bid.Type, bid.Price, bid.Coin)
+		msg := types.NewMsgPlaceBid(
+			auction.GetId(),
+			bidder.String(),
+			bid.Type,
+			bid.Price,
+			bid.Coin,
+		)
 
 		txCtx := simulation.OperationInput{
 			R:               r,
