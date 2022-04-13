@@ -93,10 +93,10 @@ func WeightedOperations(
 			weightMsgCreateBatchAuction,
 			SimulateMsgCreateBatchAuction(ak, bk, k),
 		),
-		simulation.NewWeightedOperation(
-			weightMsgCancelAuction,
-			SimulateMsgCancelAuction(ak, bk, k),
-		),
+		// simulation.NewWeightedOperation(
+		// 	weightMsgCancelAuction,
+		// 	SimulateMsgCancelAuction(ak, bk, k),
+		// ),
 		// simulation.NewWeightedOperation(
 		// 	weightMsgPlaceBid,
 		// 	SimulateMsgPlaceBid(ak, bk, k),
@@ -126,8 +126,8 @@ func SimulateMsgCreateFixedPriceAuction(ak types.AccountKeeper, bk types.BankKee
 		sellingCoin := sdk.NewInt64Coin(testCoinDenoms[r.Intn(len(testCoinDenoms))], int64(simtypes.RandIntBetween(r, 10000000000, 1000000000000)))
 		payingCoinDenom := sdk.DefaultBondDenom
 		vestingSchedules := []types.VestingSchedule{}
-		startTime := ctx.BlockTime().AddDate(0, 0, simtypes.RandIntBetween(r, -3, 10))
-		endTime := startTime.AddDate(0, simtypes.RandIntBetween(r, 1, 24), 0)
+		startTime := ctx.BlockTime().AddDate(0, 0, simtypes.RandIntBetween(r, 0, 1))
+		endTime := startTime.AddDate(0, simtypes.RandIntBetween(r, 1, 12), 0)
 
 		if _, err := fundBalances(ctx, r, bk, auctioneer, testCoinDenoms); err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgCreateFixedPriceAuction, "failed to fund auctioneer"), nil, err
@@ -193,8 +193,8 @@ func SimulateMsgCreateBatchAuction(ak types.AccountKeeper, bk types.BankKeeper, 
 		vestingSchedules := []types.VestingSchedule{}
 		maxExtendedRound := uint32(simtypes.RandIntBetween(r, 1, 5))
 		extendedRoundRate := sdk.NewDecWithPrec(int64(simtypes.RandIntBetween(r, 1, 3)), 1) // 0.1 ~ 0.3
-		startTime := ctx.BlockTime().AddDate(0, 0, simtypes.RandIntBetween(r, -3, 10))
-		endTime := startTime.AddDate(0, simtypes.RandIntBetween(r, 1, 24), 0)
+		startTime := ctx.BlockTime().AddDate(0, 0, simtypes.RandIntBetween(r, 0, 1))
+		endTime := startTime.AddDate(0, simtypes.RandIntBetween(r, 1, 12), 0)
 
 		if _, err := fundBalances(ctx, r, bk, auctioneer, testCoinDenoms); err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgCreateBatchAuction, "failed to fund auctioneer"), nil, err

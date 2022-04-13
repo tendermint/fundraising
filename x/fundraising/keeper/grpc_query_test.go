@@ -382,7 +382,7 @@ func (s *KeeperTestSuite) TestGRPCVestings() {
 
 	// Set the current block time a day after so that it gets finished
 	s.ctx = s.ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, 1))
-	fundraising.EndBlocker(s.ctx, s.keeper)
+	fundraising.BeginBlocker(s.ctx, s.keeper)
 
 	for _, tc := range []struct {
 		name      string

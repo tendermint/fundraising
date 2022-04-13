@@ -29,7 +29,7 @@ func (s *KeeperTestSuite) TestEndBlockerStandByStatus() {
 
 	// Modify current time and call end blocker
 	s.ctx = s.ctx.WithBlockTime(standByAuction.StartTime.AddDate(0, 0, 1))
-	fundraising.EndBlocker(s.ctx, s.keeper)
+	fundraising.BeginBlocker(s.ctx, s.keeper)
 
 	auction, found = s.keeper.GetAuction(s.ctx, standByAuction.GetId())
 	s.Require().True(found)
@@ -72,7 +72,7 @@ func (s *KeeperTestSuite) TestEndBlockerStartedStatus() {
 
 	// Modify the current block time a day after the end time
 	s.ctx = s.ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, 1))
-	fundraising.EndBlocker(s.ctx, s.keeper)
+	fundraising.BeginBlocker(s.ctx, s.keeper)
 
 	// The remaining selling coin must be returned to the auctioneer
 	auctioneerBalance := s.getBalance(auctioneer, auction.GetSellingCoin().Denom)
@@ -110,14 +110,14 @@ func (s *KeeperTestSuite) TestEndBlockerVestingStatus() {
 
 	// Modify the current block time a day after the end time
 	s.ctx = s.ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, 1))
-	fundraising.EndBlocker(s.ctx, s.keeper)
+	fundraising.BeginBlocker(s.ctx, s.keeper)
 
 	vestingReserve := s.getBalance(auction.GetVestingReserveAddress(), auction.GetPayingCoinDenom())
 	s.Require().Equal(totalBidCoin, vestingReserve)
 
 	// Modify the current block time a day after the last vesting schedule
 	s.ctx = s.ctx.WithBlockTime(auction.VestingSchedules[len(auction.VestingSchedules)-1].ReleaseTime.AddDate(0, 0, 1))
-	fundraising.EndBlocker(s.ctx, s.keeper)
+	fundraising.BeginBlocker(s.ctx, s.keeper)
 
 	queues := s.keeper.GetVestingQueuesByAuctionId(s.ctx, auction.GetId())
 	s.Require().Len(queues, 2)

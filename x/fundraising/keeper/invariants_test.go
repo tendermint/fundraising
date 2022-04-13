@@ -121,11 +121,11 @@ func (s *KeeperTestSuite) TestVestingPoolReserveAmountInvariant() {
 
 	// Make the auction ended
 	ctx = ctx.WithBlockTime(auction.GetEndTimes()[0].AddDate(0, 0, 1))
-	fundraising.EndBlocker(ctx, k)
+	fundraising.BeginBlocker(ctx, k)
 
 	// Make first and second vesting queues over
 	ctx = ctx.WithBlockTime(auction.GetVestingSchedules()[0].GetReleaseTime().AddDate(0, 0, 1))
-	fundraising.EndBlocker(ctx, k)
+	fundraising.BeginBlocker(ctx, k)
 
 	_, broken := keeper.VestingPoolReserveAmountInvariant(k)(ctx)
 	s.Require().False(broken)
@@ -197,14 +197,14 @@ func (s *KeeperTestSuite) TestAuctionStatusStatesInvariant() {
 
 	// set the current block time a day after so that it gets finished
 	ctx = ctx.WithBlockTime(startedAuction.GetEndTimes()[0].AddDate(0, 0, 1))
-	fundraising.EndBlocker(ctx, k)
+	fundraising.BeginBlocker(ctx, k)
 
 	_, broken = keeper.AuctionStatusStatesInvariant(k)(ctx)
 	s.Require().False(broken)
 
 	// set the current block time a day after so that all vesting queues get released
 	ctx = ctx.WithBlockTime(startedAuction.GetVestingSchedules()[3].GetReleaseTime().AddDate(0, 0, 1))
-	fundraising.EndBlocker(ctx, k)
+	fundraising.BeginBlocker(ctx, k)
 
 	_, broken = keeper.AuctionStatusStatesInvariant(k)(ctx)
 	s.Require().False(broken)

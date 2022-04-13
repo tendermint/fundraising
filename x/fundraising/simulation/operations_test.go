@@ -107,10 +107,10 @@ func TestSimulateCreateBatchAuction(t *testing.T) {
 	require.Equal(t, types.TypeMsgCreateBatchAuction, msg.Type())
 	require.Equal(t, types.ModuleName, msg.Route())
 	require.Equal(t, "cosmos1tnh2q55v8wyygtt9srz5safamzdengsnqeycj3", msg.Auctioneer)
-	require.Equal(t, "denom10", msg.SellingCoin.Denom)
+	require.Equal(t, "denomb", msg.SellingCoin.Denom)
 	require.Equal(t, "stake", msg.PayingCoinDenom)
-	require.Equal(t, uint32(3), msg.MaxExtendedRound)
-	require.Equal(t, sdk.MustNewDecFromStr("0.04"), msg.ExtendedRoundRate)
+	require.Equal(t, uint32(1), msg.MaxExtendedRound)
+	require.Equal(t, sdk.MustNewDecFromStr("0.1"), msg.ExtendedRoundRate)
 }
 
 func TestSimulateCancelAuction(t *testing.T) {
