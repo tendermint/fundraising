@@ -126,7 +126,7 @@ func SimulateMsgCreateFixedPriceAuction(ak types.AccountKeeper, bk types.BankKee
 		sellingCoin := sdk.NewInt64Coin(testCoinDenoms[r.Intn(len(testCoinDenoms))], int64(simtypes.RandIntBetween(r, 10000000000, 1000000000000)))
 		payingCoinDenom := sdk.DefaultBondDenom
 		vestingSchedules := []types.VestingSchedule{}
-		startTime := ctx.BlockTime().AddDate(0, 0, simtypes.RandIntBetween(r, 0, 1))
+		startTime := ctx.BlockTime().AddDate(0, 0, simtypes.RandIntBetween(r, 0, 2))
 		endTime := startTime.AddDate(0, simtypes.RandIntBetween(r, 1, 12), 0)
 
 		if _, err := fundBalances(ctx, r, bk, auctioneer, testCoinDenoms); err != nil {
@@ -193,7 +193,7 @@ func SimulateMsgCreateBatchAuction(ak types.AccountKeeper, bk types.BankKeeper, 
 		vestingSchedules := []types.VestingSchedule{}
 		maxExtendedRound := uint32(simtypes.RandIntBetween(r, 1, 5))
 		extendedRoundRate := sdk.NewDecWithPrec(int64(simtypes.RandIntBetween(r, 1, 3)), 1) // 0.1 ~ 0.3
-		startTime := ctx.BlockTime().AddDate(0, 0, simtypes.RandIntBetween(r, 0, 1))
+		startTime := ctx.BlockTime().AddDate(0, 0, simtypes.RandIntBetween(r, 0, 2))
 		endTime := startTime.AddDate(0, simtypes.RandIntBetween(r, 1, 12), 0)
 
 		if _, err := fundBalances(ctx, r, bk, auctioneer, testCoinDenoms); err != nil {
@@ -254,9 +254,9 @@ func SimulateMsgCancelAuction(ak types.AccountKeeper, bk types.BankKeeper, k kee
 
 		// Find an auction that is not started yet
 		skip := true
-		for _, a := range auctions {
-			if a.GetStatus() == types.AuctionStatusStandBy {
-				auction = a
+
+		for _, auction = range auctions {
+			if auction.GetStatus() == types.AuctionStatusStandBy {
 				skip = false
 				break
 			}
@@ -364,9 +364,11 @@ func SimulateMsgPlaceBid(ak types.AccountKeeper, bk types.BankKeeper, k keeper.K
 			maxBidAmt = maxBidAmt.Add(prevMaxBidAmt)
 		}
 
-		k.AddAllowedBidders(ctx, auction.GetId(), []types.AllowedBidder{
+		if err := k.AddAllowedBidders(ctx, auction.GetId(), []types.AllowedBidder{
 			{Bidder: bidder, MaxBidAmount: maxBidAmt},
-		})
+		}); err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgPlaceBid, "failed to add allowed bidders"), nil, nil
+		}
 
 		msg := types.NewMsgPlaceBid(auction.GetId(), bidder, bid.Type, bid.Price, bid.Coin)
 
