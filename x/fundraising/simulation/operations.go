@@ -93,10 +93,10 @@ func WeightedOperations(
 			weightMsgCreateBatchAuction,
 			SimulateMsgCreateBatchAuction(ak, bk, k),
 		),
-		// simulation.NewWeightedOperation(
-		// 	weightMsgCancelAuction,
-		// 	SimulateMsgCancelAuction(ak, bk, k),
-		// ),
+		simulation.NewWeightedOperation(
+			weightMsgCancelAuction,
+			SimulateMsgCancelAuction(ak, bk, k),
+		),
 		// simulation.NewWeightedOperation(
 		// 	weightMsgPlaceBid,
 		// 	SimulateMsgPlaceBid(ak, bk, k),

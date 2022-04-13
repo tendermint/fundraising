@@ -4,6 +4,6 @@ package params
 const (
 	DefaultWeightMsgCreateFixedPriceAuction int = 15
 	DefaultWeightMsgCreateBatchAuction      int = 15
-	DefaultWeightMsgCancelAuction           int = 0
+	DefaultWeightMsgCancelAuction           int = 5
 	DefaultWeightMsgPlaceBid                int = 0
 )
