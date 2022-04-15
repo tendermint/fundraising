@@ -323,6 +323,8 @@ func SimulateMsgPlaceBid(ak types.AccountKeeper, bk types.BankKeeper, k keeper.K
 		spendable := bk.SpendableCoins(ctx, account.GetAddress())
 
 		bidder := account.GetAddress()
+		sellingCoinDenom := auction.GetSellingCoin().Denom
+		payingCoinDenom := auction.GetPayingCoinDenom()
 
 		if _, err := fundBalances(ctx, r, bk, bidder, testCoinDenoms); err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgPlaceBid, "failed to fund bidder"), nil, err
@@ -334,38 +336,27 @@ func SimulateMsgPlaceBid(ak types.AccountKeeper, bk types.BankKeeper, k keeper.K
 			bid.Type = types.BidTypeFixedPrice
 			bid.Price = auction.GetStartPrice()
 			if r.Int()%2 == 0 {
-				bid.Coin = sdk.NewInt64Coin(auction.GetPayingCoinDenom(), int64(simtypes.RandIntBetween(r, 100000, 1000000000)))
+				bid.Coin = sdk.NewInt64Coin(payingCoinDenom, int64(simtypes.RandIntBetween(r, 100000, 1000000000)))
 			} else {
-				bid.Coin = sdk.NewInt64Coin(auction.GetSellingCoin().Denom, int64(simtypes.RandIntBetween(r, 100000, 1000000000)))
+				bid.Coin = sdk.NewInt64Coin(sellingCoinDenom, int64(simtypes.RandIntBetween(r, 100000, 1000000000)))
 			}
 		case types.AuctionTypeBatch:
 			bid.Price = auction.GetStartPrice().Add(sdk.NewDecWithPrec(int64(simtypes.RandIntBetween(r, 1, 5)), 1)) // StartPrice + 0.1 ~ 0.5
 			if r.Int()%2 == 0 {
 				bid.Type = types.BidTypeBatchWorth
-				bid.Coin = sdk.NewInt64Coin(auction.GetPayingCoinDenom(), int64(simtypes.RandIntBetween(r, 100000, 1000000000)))
+				bid.Coin = sdk.NewInt64Coin(payingCoinDenom, int64(simtypes.RandIntBetween(r, 100000, 1000000000)))
 			} else {
 				bid.Type = types.BidTypeBatchMany
-				bid.Coin = sdk.NewInt64Coin(auction.GetSellingCoin().Denom, int64(simtypes.RandIntBetween(r, 100000, 1000000000)))
+				bid.Coin = sdk.NewInt64Coin(sellingCoinDenom, int64(simtypes.RandIntBetween(r, 100000, 1000000000)))
 			}
 		}
 
-		payingCoinDenom := auction.GetPayingCoinDenom()
+		bidReserveAmt := bid.ConvertToPayingAmount(payingCoinDenom)
+		maxBidAmt := bid.ConvertToSellingAmount(payingCoinDenom)
 
-		bidAmt := bid.ConvertToPayingAmount(payingCoinDenom) // For Reserving bid amount
-
-		if !bk.SpendableCoins(ctx, bidder).AmountOf(payingCoinDenom).GT(bidAmt) {
+		if !bk.SpendableCoins(ctx, bidder).AmountOf(payingCoinDenom).GT(bidReserveAmt) {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgPlaceBid, "insufficient balance to place a bid"), nil, nil
 		}
-
-		maxBidAmt := bid.ConvertToSellingAmount(payingCoinDenom) // For AllowedBidders
-
-		fmt.Println("")
-		fmt.Println("> Auction Type: ", auction.GetType())
-		fmt.Println("> Bid Type: ", bid.Type)
-		fmt.Println("> Auction SellingCoinDenom: ", auction.GetSellingCoin().Denom) // denomb
-		fmt.Println("> Auction PayingCoinDenom: ", auction.GetPayingCoinDenom())    // stake
-		fmt.Println("> BidCoin: ", bid.Coin)                                        // denomb
-		fmt.Println("")
 
 		prevMaxBidAmt, found := auction.GetAllowedBiddersMap()[bidder.String()]
 		if found {

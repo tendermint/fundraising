@@ -139,7 +139,6 @@ func (s *KeeperTestSuite) placeBidFixedPrice(
 	var maxBidAmt sdk.Int
 
 	if coin.Denom == auction.GetPayingCoinDenom() {
-		fundAmt = coin.Amount
 		fundCoin = coin
 		maxBidAmt = coin.Amount.ToDec().QuoTruncate(price).TruncateInt()
 	} else {
