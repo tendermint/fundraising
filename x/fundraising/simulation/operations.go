@@ -1,13 +1,11 @@
 package simulation
 
 import (
-	"fmt"
 	"math/rand"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/simapp"
-	"github.com/cosmos/cosmos-sdk/simapp/helpers"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
@@ -25,16 +23,6 @@ const (
 	OpWeightMsgCreateBatchAuction      = "op_weight_msg_create_batch_auction"
 	OpWeightMsgCancelAuction           = "op_weight_msg_cancel_auction"
 	OpWeightMsgPlaceBid                = "op_weight_msg_place_bid"
-)
-
-var (
-	Gas  = uint64(20000000)
-	Fees = sdk.Coins{
-		{
-			Denom:  "stake",
-			Amount: sdk.NewInt(0),
-		},
-	}
 )
 
 var (
@@ -295,7 +283,7 @@ func SimulateMsgCancelAuction(ak types.AccountKeeper, bk types.BankKeeper, k kee
 			CoinsSpentInMsg: spendable,
 		}
 
-		return genAndDeliverTxWithFees(txCtx, Gas, Fees)
+		return simulation.GenAndDeliverTxWithRandFees(txCtx)
 	}
 }
 
@@ -392,9 +380,6 @@ func SimulateMsgPlaceBid(ak types.AccountKeeper, bk types.BankKeeper, k keeper.K
 			CoinsSpentInMsg: spendable,
 		}
 
-		fmt.Println("GenAndDeliverTxWithRandFees: ")
-
-		// return genAndDeliverTxWithFees(txCtx, Gas, Fees)
 		return simulation.GenAndDeliverTxWithRandFees(txCtx)
 	}
 }
@@ -425,49 +410,4 @@ func shuffleSimAccounts(r *rand.Rand, accs []simtypes.Account) []simtypes.Accoun
 		accs2[i], accs2[j] = accs2[j], accs2[i]
 	})
 	return accs2
-}
-
-// genAndDeliverTxWithFees generates a transaction with given fee and delivers it.
-func genAndDeliverTxWithFees(txCtx simulation.OperationInput, gas uint64, fees sdk.Coins) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
-	account := txCtx.AccountKeeper.GetAccount(txCtx.Context, txCtx.SimAccount.Address)
-	spendable := txCtx.Bankkeeper.SpendableCoins(txCtx.Context, account.GetAddress())
-
-	var err error
-
-	_, hasNeg := spendable.SafeSub(txCtx.CoinsSpentInMsg)
-	if hasNeg {
-		return simtypes.NoOpMsg(txCtx.ModuleName, txCtx.MsgType, "message doesn't leave room for fees"), nil, err
-	}
-
-	if err != nil {
-		return simtypes.NoOpMsg(txCtx.ModuleName, txCtx.MsgType, "unable to generate fees"), nil, err
-	}
-	return genAndDeliverTx(txCtx, fees, gas)
-}
-
-// genAndDeliverTx generates a transactions and delivers it.
-func genAndDeliverTx(txCtx simulation.OperationInput, fees sdk.Coins, gas uint64) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
-	account := txCtx.AccountKeeper.GetAccount(txCtx.Context, txCtx.SimAccount.Address)
-	tx, err := helpers.GenTx(
-		txCtx.TxGen,
-		[]sdk.Msg{txCtx.Msg},
-		fees,
-		gas,
-		txCtx.Context.ChainID(),
-		[]uint64{account.GetAccountNumber()},
-		[]uint64{account.GetSequence()},
-		txCtx.SimAccount.PrivKey,
-	)
-
-	if err != nil {
-		return simtypes.NoOpMsg(txCtx.ModuleName, txCtx.MsgType, "unable to generate mock tx"), nil, err
-	}
-
-	_, _, err = txCtx.App.Deliver(txCtx.TxGen.TxEncoder(), tx)
-	if err != nil {
-		return simtypes.NoOpMsg(txCtx.ModuleName, txCtx.MsgType, "unable to deliver tx"), nil, err
-	}
-
-	return simtypes.NewOperationMsg(txCtx.Msg, true, "", txCtx.Cdc), nil, nil
-
 }
