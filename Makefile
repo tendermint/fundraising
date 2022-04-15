@@ -149,6 +149,11 @@ test-sim-nondeterminism:
 	@VERSION=$(VERSION) go test -mod=readonly $(SIMAPP) -run TestAppStateDeterminism -Enabled=true \
 		-NumBlocks=$(SIM_NUM_BLOCKS) -BlockSize=$(SIM_BLOCK_SIZE) -Commit=$(SIM_COMMIT) -Period=$(SIM_PERIOD)  \
 		-v -timeout $(SIM_TIMEOUT)
+## test-sim-import-export: Run simulation test checking import and export app state determinism
+## go get github.com/cosmos/tools/cmd/runsim@v1.0.0
+test-sim-import-export: runsim
+	@echo "Running application import/export simulation. This may take several minutes..."
+	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 2 2 TestAppImportExport
 
 ## test-sim-ci: Run lightweight simulation for CI pipeline
 test-sim-ci:
@@ -171,7 +176,7 @@ test-sim-profile:
 		-Enabled=true -NumBlocks=$(SIM_NUM_BLOCKS) -BlockSize=$(SIM_BLOCK_SIZE) -Period=$(SIM_PERIOD) \
 		-Commit=$(SIM_COMMIT) timeout $(SIM_TIMEOUT)-cpuprofile cpu.out -memprofile mem.out
 
-.PHONY: test-sim-nondeterminism test-sim-ci test-sim-profile test-sim-benchmark
+.PHONY: test-sim-nondeterminism test-sim-import-export test-sim-ci test-sim-profile test-sim-benchmark
 
 ###############################################################################
 ###                                Protobuf                                 ###
