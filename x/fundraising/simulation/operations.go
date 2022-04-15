@@ -299,7 +299,7 @@ func SimulateMsgCancelAuction(ak types.AccountKeeper, bk types.BankKeeper, k kee
 	}
 }
 
-// SimulateMsgPlaceBid generates a MsgStake with random values
+// SimulateMsgPlaceBid generates a MsgPlaceBid with random values
 // nolint: interfacer
 func SimulateMsgPlaceBid(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(
@@ -324,22 +324,23 @@ func SimulateMsgPlaceBid(ak types.AccountKeeper, bk types.BankKeeper, k keeper.K
 
 		bidder := account.GetAddress()
 
-		// Random number to be used to choose bid type
-		n := r.Int()
+		if _, err := fundBalances(ctx, r, bk, bidder, testCoinDenoms); err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgPlaceBid, "failed to fund bidder"), nil, err
+		}
 
 		var bid types.Bid
 		switch auction.GetType() {
 		case types.AuctionTypeFixedPrice:
 			bid.Type = types.BidTypeFixedPrice
 			bid.Price = auction.GetStartPrice()
-			if n%2 == 0 {
+			if r.Int()%2 == 0 {
 				bid.Coin = sdk.NewInt64Coin(auction.GetPayingCoinDenom(), int64(simtypes.RandIntBetween(r, 100000, 1000000000)))
 			} else {
 				bid.Coin = sdk.NewInt64Coin(auction.GetSellingCoin().Denom, int64(simtypes.RandIntBetween(r, 100000, 1000000000)))
 			}
 		case types.AuctionTypeBatch:
-			bid.Price = auction.GetStartPrice().Add(sdk.NewDecWithPrec(int64(simtypes.RandIntBetween(r, 1, 10)), 1)) // 0.1 ~ 1.0
-			if n%2 == 0 {
+			bid.Price = auction.GetStartPrice().Add(sdk.NewDecWithPrec(int64(simtypes.RandIntBetween(r, 1, 5)), 1)) // StartPrice + 0.1 ~ 0.5
+			if r.Int()%2 == 0 {
 				bid.Type = types.BidTypeBatchWorth
 				bid.Coin = sdk.NewInt64Coin(auction.GetPayingCoinDenom(), int64(simtypes.RandIntBetween(r, 100000, 1000000000)))
 			} else {
@@ -348,24 +349,23 @@ func SimulateMsgPlaceBid(ak types.AccountKeeper, bk types.BankKeeper, k keeper.K
 			}
 		}
 
-		fmt.Println("")
-		fmt.Println("> Auction SellingCoinDenom: ", auction.GetSellingCoin().Denom)
-		fmt.Println("> Auction PayingCoinDenom: ", auction.GetPayingCoinDenom())
-		fmt.Println("> BidCoin: ", bid.Coin)
-		fmt.Println("")
+		payingCoinDenom := auction.GetPayingCoinDenom()
 
-		bidAmt := bid.ConvertToPayingAmount(auction.GetPayingCoinDenom())     // For Reserving bid amount
-		maxBidAmt := bid.ConvertToSellingAmount(auction.GetPayingCoinDenom()) // For AllowedBidders
+		bidAmt := bid.ConvertToPayingAmount(payingCoinDenom) // For Reserving bid amount
 
-		// if _, err := fundBalances(ctx, r, bk, bidder, []string{auction.GetPayingCoinDenom()}); err != nil {
-		// 	return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgCreateFixedPriceAuction, "failed to fund auctioneer"), nil, err
-		// }
-
-		// Call spendable coins here again to get the funded balances
-		_, hasNeg := bk.SpendableCoins(ctx, bidder).SafeSub(sdk.NewCoins(sdk.NewCoin(auction.GetPayingCoinDenom(), bidAmt)))
-		if hasNeg {
+		if !bk.SpendableCoins(ctx, bidder).AmountOf(payingCoinDenom).GT(bidAmt) {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgPlaceBid, "insufficient balance to place a bid"), nil, nil
 		}
+
+		maxBidAmt := bid.ConvertToSellingAmount(payingCoinDenom) // For AllowedBidders
+
+		fmt.Println("")
+		fmt.Println("> Auction Type: ", auction.GetType())
+		fmt.Println("> Bid Type: ", bid.Type)
+		fmt.Println("> Auction SellingCoinDenom: ", auction.GetSellingCoin().Denom) // denomb
+		fmt.Println("> Auction PayingCoinDenom: ", auction.GetPayingCoinDenom())    // stake
+		fmt.Println("> BidCoin: ", bid.Coin)                                        // denomb
+		fmt.Println("")
 
 		prevMaxBidAmt, found := auction.GetAllowedBiddersMap()[bidder.String()]
 		if found {
@@ -401,7 +401,10 @@ func SimulateMsgPlaceBid(ak types.AccountKeeper, bk types.BankKeeper, k keeper.K
 			CoinsSpentInMsg: spendable,
 		}
 
-		return genAndDeliverTxWithFees(txCtx, Gas, Fees)
+		fmt.Println("GenAndDeliverTxWithRandFees: ")
+
+		// return genAndDeliverTxWithFees(txCtx, Gas, Fees)
+		return simulation.GenAndDeliverTxWithRandFees(txCtx)
 	}
 }
 

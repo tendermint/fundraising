@@ -203,7 +203,7 @@ func TestSimulatePlaceBid(t *testing.T) {
 	require.Equal(t, "cosmos1tnh2q55v8wyygtt9srz5safamzdengsnqeycj3", msg.Bidder)
 	require.Equal(t, uint64(2), msg.AuctionId)
 	require.Equal(t, types.BidTypeBatchWorth, msg.BidType)
-	require.Equal(t, sdk.MustNewDecFromStr("1.3"), msg.Price)
+	require.Equal(t, sdk.MustNewDecFromStr("0.8"), msg.Price)
 	require.Equal(t, sdk.NewInt64Coin("denomd", 336222540), msg.Coin)
 }
 

@@ -85,6 +85,13 @@ func PayingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 			payingCoinDenom := auction.GetPayingCoinDenom()
 			spendable := k.bankKeeper.SpendableCoins(ctx, payingReserveAddr)
 			payingReserve := sdk.NewCoin(payingCoinDenom, spendable.AmountOf(payingCoinDenom))
+			fmt.Println("> PayingPoolReserveAmountInvariant")
+			fmt.Println("> Auction Type: ", auction.GetType())
+			fmt.Println("> Auction GetSellingCoin: ", auction.GetSellingCoin())
+			fmt.Println("> Auction GetPayingCoinDenom: ", auction.GetPayingCoinDenom())
+			fmt.Println("> PayingReserve: ", payingReserve)
+			fmt.Println("> TotalBidCoin: ", totalBidCoin)
+
 			if !payingReserve.IsGTE(totalBidCoin) {
 				msg += fmt.Sprintf("\tpaying reserve balance %s\n"+
 					"\tpaying pool reserve: %v\n"+

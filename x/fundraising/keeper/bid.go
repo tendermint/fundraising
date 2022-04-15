@@ -48,14 +48,14 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		IsMatched: false,
 	}
 
+	payingCoinDenom := auction.GetPayingCoinDenom()
+
 	// Place a bid depending on the bid type
 	switch bid.Type {
 	case types.BidTypeFixedPrice:
 		if err := k.ValidateFixedPriceBid(ctx, auction, bid); err != nil {
 			return types.Bid{}, err
 		}
-
-		payingCoinDenom := auction.GetPayingCoinDenom()
 
 		// Reserve bid amount
 		bidPayingAmt := bid.ConvertToPayingAmount(payingCoinDenom)
@@ -87,8 +87,8 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 			return types.Bid{}, err
 		}
 
-		reserveAmt := bid.ConvertToPayingAmount(auction.GetPayingCoinDenom())
-		reserveCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), reserveAmt)
+		reserveAmt := bid.ConvertToPayingAmount(payingCoinDenom)
+		reserveCoin := sdk.NewCoin(payingCoinDenom, reserveAmt)
 
 		if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), reserveCoin); err != nil {
 			return types.Bid{}, err
