@@ -149,6 +149,7 @@ test-sim-nondeterminism:
 	@VERSION=$(VERSION) go test -mod=readonly $(SIMAPP) -run TestAppStateDeterminism -Enabled=true \
 		-NumBlocks=$(SIM_NUM_BLOCKS) -BlockSize=$(SIM_BLOCK_SIZE) -Commit=$(SIM_COMMIT) -Period=$(SIM_PERIOD)  \
 		-v -timeout $(SIM_TIMEOUT)
+		
 ## test-sim-import-export: Run simulation test checking import and export app state determinism
 ## go get github.com/cosmos/tools/cmd/runsim@v1.0.0
 test-sim-import-export: runsim
