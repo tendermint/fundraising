@@ -22,7 +22,6 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 		if err != nil {
 			panic(err)
 		}
-
 		k.GetNextAuctionIdWithUpdate(ctx)
 		k.SetAuction(ctx, auction)
 	}

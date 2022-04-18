@@ -161,6 +161,9 @@ func AuctionStatusStatesInvariant(k Keeper) sdk.Invariant {
 			case types.AuctionStatusStarted:
 				if !auction.ShouldAuctionStarted(ctx.BlockTime()) {
 					msg += fmt.Sprintf("\texpected status for auction %d is %s\n", auction.GetId(), types.AuctionStatusStarted)
+					msg += fmt.Sprintf("\tcurrentTime: %s\n", ctx.BlockTime())
+					msg += fmt.Sprintf("\tstartTime: %s\n", auction.GetStartTime())
+					msg += fmt.Sprintf("\tendTime: %s\n", auction.GetEndTimes()[0])
 					count++
 				}
 			case types.AuctionStatusVesting:

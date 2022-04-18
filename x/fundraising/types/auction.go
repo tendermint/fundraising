@@ -262,13 +262,13 @@ func (ba BaseAuction) GetAllowedBiddersMap() map[string]sdk.Int { // map(bidder 
 
 // ShouldAuctionStarted returns true if the start time is equal or before the given time t.
 func (ba BaseAuction) ShouldAuctionStarted(t time.Time) bool {
-	return !ba.GetStartTime().After(t)
+	return !ba.GetStartTime().After(t) // StartTime <= Time
 }
 
 // ShouldAuctionFinished returns true if the end time is equal or before the given time t.
 func (ba BaseAuction) ShouldAuctionFinished(t time.Time) bool {
 	ts := ba.GetEndTimes()
-	return !ts[len(ts)-1].After(t)
+	return !ts[len(ts)-1].After(t) // LastEndTime <= Time
 }
 
 // NewFixedPriceAuction returns a new fixed price auction.
