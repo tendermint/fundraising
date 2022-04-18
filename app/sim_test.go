@@ -21,6 +21,7 @@ import (
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
+	"github.com/cosmos/cosmos-sdk/x/genutil"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -34,6 +35,7 @@ import (
 	"github.com/tendermint/starport/starport/pkg/cosmoscmd"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 )
 
@@ -81,7 +83,7 @@ func BenchmarkSimulation(b *testing.B) {
 	)
 
 	app, ok := cosmoscmdApp.(*App)
-	require.True(b, ok, "can't use simapp")
+	require.True(b, ok)
 
 	// Run randomized simulations
 	_, simParams, simErr := simulation.SimulateFromSeed(
@@ -118,17 +120,16 @@ func TestAppImportExport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	encoding := cosmoscmd.MakeEncodingConfig(ModuleBasics)
 	cosmoscmdApp := New(
 		logger, db, nil, true, map[int64]bool{},
-		DefaultNodeHome, simapp.FlagPeriodValue, encoding,
+		DefaultNodeHome, simapp.FlagPeriodValue, cosmoscmd.MakeEncodingConfig(ModuleBasics),
 		simapp.EmptyAppOptions{}, fauxMerkleModeOpt,
 	)
 
 	app, ok := cosmoscmdApp.(*App)
-	require.True(t, ok, "can't use simapp")
+	require.True(t, ok)
 
-	// // run randomized simulation
+	// run randomized simulation
 	_, simParams, simErr := simulation.SimulateFromSeed(
 		t,
 		os.Stdout,
@@ -156,6 +157,17 @@ func TestAppImportExport(t *testing.T) {
 	exported, err := app.ExportAppStateAndValidators(false, []string{})
 	require.NoError(t, err)
 
+	// (TEST) Export genesis file
+	genDoc := &tmtypes.GenesisDoc{
+		ChainID:    "simulation-chain",
+		Validators: nil,
+		AppState:   exported.AppState,
+	}
+	err = genutil.ExportGenesisFile(genDoc, "../genesis.json")
+	if err != nil {
+		panic(err)
+	}
+
 	fmt.Printf("importing genesis...\n")
 
 	_, newDB, newDir, _, _, err := simapp.SetupSimulation("leveldb-app-sim-2", "Simulation-2")
@@ -173,7 +185,7 @@ func TestAppImportExport(t *testing.T) {
 	)
 
 	newApp, ok := cosmoscmdNewApp.(*App)
-	require.True(t, ok, "can't use simapp")
+	require.True(t, ok)
 
 	var genesisState GenesisState
 	err = json.Unmarshal(exported.AppState, &genesisState)
@@ -183,6 +195,20 @@ func TestAppImportExport(t *testing.T) {
 	ctxB := newApp.NewContext(true, tmproto.Header{Height: app.LastBlockHeight()})
 	newApp.mm.InitGenesis(ctxB, app.AppCodec(), genesisState)
 	newApp.StoreConsensusParams(ctxB, exported.ConsensusParams)
+
+	// (TEST) Export genesis file 2
+	exported2, err := newApp.ExportAppStateAndValidators(false, []string{})
+	require.NoError(t, err)
+
+	newgenDoc := &tmtypes.GenesisDoc{
+		ChainID:    "simulation-chain",
+		Validators: nil,
+		AppState:   exported2.AppState,
+	}
+	err = genutil.ExportGenesisFile(newgenDoc, "../genesis-after.json")
+	if err != nil {
+		panic(err)
+	}
 
 	fmt.Printf("comparing stores...\n")
 
@@ -255,7 +281,7 @@ func TestAppStateDeterminism(t *testing.T) {
 			)
 
 			app, ok := cosmoscmdApp.(*App)
-			require.True(t, ok, "can't use simapp")
+			require.True(t, ok)
 
 			fmt.Printf(
 				"running non-determinism simulation; seed %d: %d/%d, attempt: %d/%d\n",
