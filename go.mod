@@ -3,8 +3,7 @@ module github.com/tendermint/fundraising
 go 1.17
 
 require (
-	github.com/cosmos/cosmos-sdk v0.45.1
-	github.com/cosmos/ibc-go/v2 v2.0.3
+	github.com/cosmos/cosmos-sdk v0.45.3
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.2
 	github.com/gorilla/mux v1.8.0
@@ -25,6 +24,8 @@ require (
 )
 
 require (
+	github.com/confio/ics23/go v0.7.0 // indirect
+	github.com/gin-gonic/gin v1.7.0 // indirect
 	github.com/google/go-cmp v0.5.7 // indirect
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
 )

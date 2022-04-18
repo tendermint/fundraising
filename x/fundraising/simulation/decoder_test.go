@@ -6,6 +6,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	gogotypes "github.com/gogo/protobuf/types"
+
 	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/types/kv"
 
@@ -18,12 +20,14 @@ func TestDecodeFarmingStore(t *testing.T) {
 	dec := simulation.NewDecodeStore(cdc)
 
 	baseAuction := types.BaseAuction{}
+	lastBidId := gogotypes.UInt64Value{}
 	bid := types.Bid{}
 	vestingQueue := types.VestingQueue{}
 
 	kvPairs := kv.Pairs{
 		Pairs: []kv.Pair{
 			{Key: types.AuctionKeyPrefix, Value: cdc.MustMarshal(&baseAuction)},
+			{Key: types.LastBidIdKeyPrefix, Value: cdc.MustMarshal(&lastBidId)},
 			{Key: types.BidKeyPrefix, Value: cdc.MustMarshal(&bid)},
 			{Key: types.VestingQueueKeyPrefix, Value: cdc.MustMarshal(&vestingQueue)},
 			{Key: []byte{0x99}, Value: []byte{0x99}},
@@ -35,6 +39,7 @@ func TestDecodeFarmingStore(t *testing.T) {
 		expectedLog string
 	}{
 		{"Auction", fmt.Sprintf("%v\n%v", baseAuction, baseAuction)},
+		{"LastBidId", fmt.Sprintf("%v\n%v", lastBidId, lastBidId)},
 		{"Bid", fmt.Sprintf("%v\n%v", bid, bid)},
 		{"VestingQueue", fmt.Sprintf("%v\n%v", vestingQueue, vestingQueue)},
 		{"other", ""},

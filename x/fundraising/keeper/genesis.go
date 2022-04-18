@@ -34,7 +34,6 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 		if !found {
 			panic(fmt.Sprintf("auction %d is not found", bid.AuctionId))
 		}
-
 		k.SetBid(ctx, bid)
 	}
 
@@ -43,7 +42,6 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 		if !found {
 			panic(fmt.Sprintf("auction %d is not found", queue.AuctionId))
 		}
-
 		k.SetVestingQueue(ctx, queue)
 	}
 }

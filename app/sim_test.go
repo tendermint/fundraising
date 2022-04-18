@@ -28,8 +28,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v2/modules/apps/transfer/types"
-	ibchost "github.com/cosmos/ibc-go/v2/modules/core/24-host"
 	"github.com/stretchr/testify/require"
 	fundraisingtypes "github.com/tendermint/fundraising/x/fundraising/types"
 	"github.com/tendermint/starport/starport/pkg/cosmoscmd"
@@ -167,6 +165,7 @@ func TestAppImportExport(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
+	//////////////////////////////
 
 	fmt.Printf("importing genesis...\n")
 
@@ -179,7 +178,7 @@ func TestAppImportExport(t *testing.T) {
 	}()
 
 	cosmoscmdNewApp := New(
-		logger, newDB, nil, true, map[int64]bool{},
+		log.NewNopLogger(), newDB, nil, true, map[int64]bool{},
 		DefaultNodeHome, simapp.FlagPeriodValue, cosmoscmd.MakeEncodingConfig(ModuleBasics),
 		simapp.EmptyAppOptions{}, fauxMerkleModeOpt,
 	)
@@ -209,6 +208,7 @@ func TestAppImportExport(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
+	//////////////////////////////
 
 	fmt.Printf("comparing stores...\n")
 
@@ -226,11 +226,9 @@ func TestAppImportExport(t *testing.T) {
 		{app.keys[paramstypes.StoreKey], newApp.keys[paramstypes.StoreKey], [][]byte{}},
 		{app.keys[govtypes.StoreKey], newApp.keys[govtypes.StoreKey], [][]byte{}},
 		{app.keys[evidencetypes.StoreKey], newApp.keys[evidencetypes.StoreKey], [][]byte{}},
+		{app.keys[authzkeeper.StoreKey], newApp.keys[authzkeeper.StoreKey], [][]byte{}},
 		{app.keys[capabilitytypes.StoreKey], newApp.keys[capabilitytypes.StoreKey], [][]byte{}},
 		{app.keys[fundraisingtypes.StoreKey], newApp.keys[fundraisingtypes.StoreKey], [][]byte{}},
-		{app.keys[authzkeeper.StoreKey], newApp.keys[authzkeeper.StoreKey], [][]byte{}},
-		{app.keys[ibchost.StoreKey], newApp.keys[ibchost.StoreKey], [][]byte{}},
-		{app.keys[ibctransfertypes.StoreKey], newApp.keys[ibctransfertypes.StoreKey], [][]byte{}},
 	}
 
 	for _, skp := range storeKeysPrefixes {

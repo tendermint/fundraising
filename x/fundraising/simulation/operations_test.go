@@ -28,7 +28,7 @@ func TestWeightedOperations(t *testing.T) {
 	cdc := types.ModuleCdc
 	appParams := make(simtypes.AppParams)
 
-	weightedOps := simulation.WeightedOperations(appParams, cdc, app.AuthKeeper, app.BankKeeper, app.FundraisingKeeper)
+	weightedOps := simulation.WeightedOperations(appParams, cdc, app.AccountKeeper, app.BankKeeper, app.FundraisingKeeper)
 
 	s := rand.NewSource(1)
 	r := rand.New(s)
@@ -67,7 +67,7 @@ func TestSimulateCreateFixedPriceAuction(t *testing.T) {
 
 	app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: app.LastBlockHeight() + 1, AppHash: app.LastCommitID().Hash}})
 
-	op := simulation.SimulateMsgCreateFixedPriceAuction(app.AuthKeeper, app.BankKeeper, app.FundraisingKeeper)
+	op := simulation.SimulateMsgCreateFixedPriceAuction(app.AccountKeeper, app.BankKeeper, app.FundraisingKeeper)
 	opMsg, futureOps, err := op(r, app.BaseApp, ctx, accounts, "")
 	require.NoError(t, err)
 	require.True(t, opMsg.OK)
@@ -95,7 +95,7 @@ func TestSimulateCreateBatchAuction(t *testing.T) {
 
 	app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: app.LastBlockHeight() + 1, AppHash: app.LastCommitID().Hash}})
 
-	op := simulation.SimulateMsgCreateBatchAuction(app.AuthKeeper, app.BankKeeper, app.FundraisingKeeper)
+	op := simulation.SimulateMsgCreateBatchAuction(app.AccountKeeper, app.BankKeeper, app.FundraisingKeeper)
 	opMsg, futureOps, err := op(r, app.BaseApp, ctx, accounts, "")
 	require.NoError(t, err)
 	require.True(t, opMsg.OK)
@@ -136,7 +136,7 @@ func TestSimulateCancelAuction(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	op := simulation.SimulateMsgCancelAuction(app.AuthKeeper, app.BankKeeper, app.FundraisingKeeper)
+	op := simulation.SimulateMsgCancelAuction(app.AccountKeeper, app.BankKeeper, app.FundraisingKeeper)
 	opMsg, futureOps, err := op(r, app.BaseApp, ctx, accounts, "")
 	require.NoError(t, err)
 	require.True(t, opMsg.OK)
@@ -189,7 +189,7 @@ func TestSimulatePlaceBid(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	op := simulation.SimulateMsgPlaceBid(app.AuthKeeper, app.BankKeeper, app.FundraisingKeeper)
+	op := simulation.SimulateMsgPlaceBid(app.AccountKeeper, app.BankKeeper, app.FundraisingKeeper)
 	opMsg, futureOps, err := op(r, app.BaseApp, ctx, accounts, "")
 	require.NoError(t, err)
 	require.True(t, opMsg.OK)
@@ -230,8 +230,8 @@ func getTestingAccounts(t *testing.T, r *rand.Rand, app *chain.App, ctx sdk.Cont
 
 	// add coins to the accounts
 	for _, acc := range accs {
-		acc := app.AuthKeeper.NewAccountWithAddress(ctx, acc.Address)
-		app.AuthKeeper.SetAccount(ctx, acc)
+		acc := app.AccountKeeper.NewAccountWithAddress(ctx, acc.Address)
+		app.AccountKeeper.SetAccount(ctx, acc)
 
 		err := app.BankKeeper.MintCoins(ctx, minttypes.ModuleName, coins)
 		require.NoError(t, err)
