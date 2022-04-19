@@ -29,6 +29,7 @@ import (
 	"github.com/stretchr/testify/require"
 	fundraisingtypes "github.com/tendermint/fundraising/x/fundraising/types"
 	"github.com/tendermint/starport/starport/pkg/cosmoscmd"
+	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
@@ -205,6 +206,96 @@ func TestAppImportExport(t *testing.T) {
 		fmt.Printf("compared %d different key/value pairs between %s and %s\n", len(failedKVAs), skp.A, skp.B)
 		require.Equal(t, len(failedKVAs), 0, simapp.GetSimulationLog(skp.A.Name(), app.SimulationManager().StoreDecoders, failedKVAs, failedKVBs))
 	}
+}
+
+func TestAppSimulationAfterImport(t *testing.T) {
+	config, db, dir, logger, skip, err := simapp.SetupSimulation("leveldb-app-sim", "Simulation")
+	if skip {
+		t.Skip("skipping application simulation after import")
+	}
+	require.NoError(t, err, "simulation setup failed")
+
+	defer func() {
+		db.Close()
+		require.NoError(t, os.RemoveAll(dir))
+	}()
+
+	cosmoscmdApp := New(
+		logger, db, nil, true, map[int64]bool{},
+		DefaultNodeHome, simapp.FlagPeriodValue, cosmoscmd.MakeEncodingConfig(ModuleBasics),
+		simapp.EmptyAppOptions{}, fauxMerkleModeOpt,
+	)
+
+	app, ok := cosmoscmdApp.(*App)
+	require.True(t, ok)
+
+	// run randomized simulation
+	stopEarly, simParams, simErr := simulation.SimulateFromSeed(
+		t,
+		os.Stdout,
+		app.BaseApp,
+		AppStateFn(app.AppCodec(), app.SimulationManager()),
+		simtypes.RandomAccounts, // replace with own random account function if using keys other than secp256k1
+		simapp.SimulationOperations(app, app.AppCodec(), config),
+		app.ModuleAccountAddrs(),
+		config,
+		app.AppCodec(),
+	)
+
+	// export state and simParams before the simulation error is checked
+	err = simapp.CheckExportSimulation(app, config, simParams)
+	require.NoError(t, err)
+	require.NoError(t, simErr)
+
+	if config.Commit {
+		simapp.PrintStats(db)
+	}
+
+	if stopEarly {
+		fmt.Println("can't export or import a zero-validator genesis, exiting test...")
+		return
+	}
+
+	fmt.Printf("exporting genesis...\n")
+
+	exported, err := app.ExportAppStateAndValidators(true, []string{})
+	require.NoError(t, err)
+
+	fmt.Printf("importing genesis...\n")
+
+	_, newDB, newDir, _, _, err := simapp.SetupSimulation("leveldb-app-sim-2", "Simulation-2")
+	require.NoError(t, err, "simulation setup failed")
+
+	defer func() {
+		newDB.Close()
+		require.NoError(t, os.RemoveAll(newDir))
+	}()
+
+	cosmoscmdNewApp := New(
+		logger, newDB, nil, true, map[int64]bool{},
+		DefaultNodeHome, simapp.FlagPeriodValue, cosmoscmd.MakeEncodingConfig(ModuleBasics),
+		simapp.EmptyAppOptions{}, fauxMerkleModeOpt,
+	)
+
+	newApp, ok := cosmoscmdNewApp.(*App)
+	require.True(t, ok)
+
+	newApp.InitChain(abci.RequestInitChain{
+		AppStateBytes: exported.AppState,
+	})
+
+	_, _, err = simulation.SimulateFromSeed(
+		t,
+		os.Stdout,
+		newApp.BaseApp,
+		AppStateFn(app.AppCodec(), app.SimulationManager()),
+		simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
+		simapp.SimulationOperations(newApp, newApp.AppCodec(), config),
+		app.ModuleAccountAddrs(),
+		config,
+		app.AppCodec(),
+	)
+	require.NoError(t, err)
 }
 
 func TestAppStateDeterminism(t *testing.T) {
