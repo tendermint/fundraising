@@ -17,16 +17,13 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 
 	k.SetParams(ctx, genState.Params)
 
-	for i, auction := range genState.Auctions {
+	for _, auction := range genState.Auctions {
 		auction, err := types.UnpackAuction(auction)
 		if err != nil {
 			panic(err)
 		}
+		k.GetNextAuctionIdWithUpdate(ctx)
 		k.SetAuction(ctx, auction)
-
-		if i == len(genState.Auctions)-1 {
-			k.SetAuctionId(ctx, auction.GetId())
-		}
 	}
 
 	for _, bid := range genState.Bids {
@@ -34,7 +31,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 		if !found {
 			panic(fmt.Sprintf("auction %d is not found", bid.AuctionId))
 		}
-
+		k.GetNextBidIdWithUpdate(ctx, bid.AuctionId)
 		k.SetBid(ctx, bid)
 	}
 
@@ -43,7 +40,6 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 		if !found {
 			panic(fmt.Sprintf("auction %d is not found", queue.AuctionId))
 		}
-
 		k.SetVestingQueue(ctx, queue)
 	}
 }

@@ -119,7 +119,6 @@ func (s *KeeperTestSuite) addAllowedBidder(auctionId uint64, bidder sdk.AccAddre
 	}
 
 	err := s.keeper.AddAllowedBidders(s.ctx, auctionId, []types.AllowedBidder{
-		// {Bidder: bidder.String(), MaxBidAmount: sdk.NewInt(1000000000000)},
 		{Bidder: bidder.String(), MaxBidAmount: maxBidAmt},
 	})
 	s.Require().NoError(err)
@@ -140,7 +139,6 @@ func (s *KeeperTestSuite) placeBidFixedPrice(
 	var maxBidAmt sdk.Int
 
 	if coin.Denom == auction.GetPayingCoinDenom() {
-		fundAmt = coin.Amount
 		fundCoin = coin
 		maxBidAmt = coin.Amount.ToDec().QuoTruncate(price).TruncateInt()
 	} else {

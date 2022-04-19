@@ -107,7 +107,7 @@ func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI
 
 				// Accumulate how much reserved paying coin amount is matched
 				if reservedMatchedAmt, ok := reservedMatchedMap[b.Bidder]; ok {
-					reserveAmt := sdk.ZeroInt()
+					var reserveAmt sdk.Int
 					if matchingAmt.LT(bidAmt) {
 						reserveAmt = matchingAmt.ToDec().Mul(matchingPrice).Ceil().TruncateInt()
 					} else {

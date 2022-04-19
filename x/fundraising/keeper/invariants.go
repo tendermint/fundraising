@@ -77,7 +77,8 @@ func PayingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 
 			if auction.GetStatus() == types.AuctionStatusStarted {
 				for _, bid := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
-					totalBidCoin = totalBidCoin.Add(bid.Coin)
+					bidAmt := bid.ConvertToPayingAmount(auction.GetPayingCoinDenom())
+					totalBidCoin = totalBidCoin.Add(sdk.NewCoin(auction.GetPayingCoinDenom(), bidAmt))
 				}
 			}
 
@@ -152,11 +153,17 @@ func AuctionStatusStatesInvariant(k Keeper) sdk.Invariant {
 			case types.AuctionStatusStandBy:
 				if !ctx.BlockTime().Before(auction.GetStartTime()) {
 					msg += fmt.Sprintf("\texpected status for auction %d is %s\n", auction.GetId(), types.AuctionStatusStandBy)
+					msg += fmt.Sprintf("\tcurrent time %s\n", ctx.BlockTime())
+					msg += fmt.Sprintf("\tstart time %s\n", auction.GetStartTime())
+					msg += fmt.Sprintf("\tend time %s\n", auction.GetEndTimes()[0])
 					count++
 				}
 			case types.AuctionStatusStarted:
 				if !auction.ShouldAuctionStarted(ctx.BlockTime()) {
 					msg += fmt.Sprintf("\texpected status for auction %d is %s\n", auction.GetId(), types.AuctionStatusStarted)
+					msg += fmt.Sprintf("\tcurrentTime: %s\n", ctx.BlockTime())
+					msg += fmt.Sprintf("\tstartTime: %s\n", auction.GetStartTime())
+					msg += fmt.Sprintf("\tendTime: %s\n", auction.GetEndTimes()[0])
 					count++
 				}
 			case types.AuctionStatusVesting:

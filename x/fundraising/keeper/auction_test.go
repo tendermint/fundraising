@@ -230,7 +230,7 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_ReleaseVestingPayingCoin() {
 
 	// Change the block time to release two vesting schedules
 	s.ctx = s.ctx.WithBlockTime(vqs[0].GetReleaseTime().AddDate(0, 4, 1))
-	fundraising.EndBlocker(s.ctx, s.keeper)
+	fundraising.BeginBlocker(s.ctx, s.keeper)
 
 	// Distribute paying coin
 	err = s.keeper.ReleaseVestingPayingCoin(s.ctx, auction)
@@ -247,7 +247,7 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_ReleaseVestingPayingCoin() {
 
 	// Change the block time
 	s.ctx = s.ctx.WithBlockTime(vqs[3].GetReleaseTime().AddDate(0, 0, 1))
-	fundraising.EndBlocker(s.ctx, s.keeper)
+	fundraising.BeginBlocker(s.ctx, s.keeper)
 	s.Require().NoError(s.keeper.ReleaseVestingPayingCoin(s.ctx, auction))
 
 	// All of the vesting queues must be released

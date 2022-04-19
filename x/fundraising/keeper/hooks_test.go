@@ -182,7 +182,8 @@ func (s *KeeperTestSuite) TestHooks() {
 	s.Require().True(fundraisingHooksReceiver.BeforeAllowedBiddersAddedValid)
 
 	// Update the allowed bidder
-	s.keeper.UpdateAllowedBidder(s.ctx, auction.GetId(), s.addr(3), parseInt("110_000_000_000"))
+	err = s.keeper.UpdateAllowedBidder(s.ctx, auction.GetId(), s.addr(3), parseInt("110_000_000_000"))
+	s.Require().NoError(err)
 	s.Require().True(fundraisingHooksReceiver.BeforeAllowedBidderUpdatedValid)
 
 	// Place a bid
