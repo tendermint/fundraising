@@ -218,7 +218,7 @@ func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI
 	for _, matchingPrice := range prices {
 		totalMatchedAmt := sdk.ZeroInt()
 
-		// Iterate all bids for prices that are equal and above the matching price
+		// Iterate all bids that have bid prices that are equal and above the matching price
 		for _, b := range bids {
 			if b.Price.LT(matchingPrice) {
 				break

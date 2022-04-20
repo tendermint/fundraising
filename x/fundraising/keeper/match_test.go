@@ -1307,7 +1307,8 @@ func (s *KeeperTestSuite) TestBenchmark_CalculateFixedPriceAllocation() {
 }
 
 func (s *KeeperTestSuite) TestBenchmark_CalculateBatchAllocation() {
-	for _, numBids := range []int{100, 500, 1000, 1500, 2000} {
+	// for _, numBids := range []int{100, 500, 1000, 1500, 2000} {
+	for _, numBids := range []int{100} {
 		s.SetupTest()
 
 		auction := s.createBatchAuction(
@@ -1337,7 +1338,8 @@ func (s *KeeperTestSuite) TestBenchmark_CalculateBatchAllocation() {
 		s.app.Commit()
 
 		now := time.Now()
-		s.keeper.CalculateBatchAllocation(s.ctx, a)
+		mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
+		fmt.Println(s.fullString(auction.Id, mInfo))
 		elapsed := time.Since(now)
 		fmt.Printf("NumBids: %d, Elapsed TIme: %s\n", numBids, elapsed)
 	}
