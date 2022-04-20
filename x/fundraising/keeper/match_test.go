@@ -1274,8 +1274,42 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed3_LimitedDifferent() {
 	s.Require().NoError(err)
 }
 
+func (s *KeeperTestSuite) TestBenchmark_CalculateFixedPriceAllocation() {
+	for _, numBids := range []int{100, 500, 1000, 1500, 2000} {
+		s.SetupTest()
+
+		auction := s.createFixedPriceAuction(
+			s.addr(0),
+			parseDec("0.5"),
+			parseCoin("1_000_000_000_000denom1"),
+			"denom2",
+			[]types.VestingSchedule{},
+			time.Now().AddDate(0, 0, -1),
+			time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+			true,
+		)
+		s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+		for i := 1; i <= numBids; i++ {
+			s.placeBidFixedPrice(auction.Id, s.addr(1), auction.GetStartPrice(), parseCoin("1_000_000denom2"), true)
+		}
+
+		a, found := s.keeper.GetAuction(s.ctx, auction.Id)
+		s.Require().True(found)
+
+		s.app.Commit()
+
+		now := time.Now()
+		s.keeper.CalculateFixedPriceAllocation(s.ctx, a)
+		elapsed := time.Since(now)
+		fmt.Printf("NumBids: %d, Elapsed Time: %s\n", numBids, elapsed)
+	}
+}
+
 func (s *KeeperTestSuite) TestBenchmark_CalculateBatchAllocation() {
 	for _, numBids := range []int{100, 500, 1000, 1500, 2000} {
+		s.SetupTest()
+
 		auction := s.createBatchAuction(
 			s.addr(0),
 			parseDec("1"),
@@ -1299,6 +1333,8 @@ func (s *KeeperTestSuite) TestBenchmark_CalculateBatchAllocation() {
 
 		a, found := s.keeper.GetAuction(s.ctx, auction.Id)
 		s.Require().True(found)
+
+		s.app.Commit()
 
 		now := time.Now()
 		s.keeper.CalculateBatchAllocation(s.ctx, a)

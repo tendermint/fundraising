@@ -34,8 +34,11 @@ func DeriveAddress(addressType AddressType, moduleName, name string) sdk.AccAddr
 
 // SortByBidPrice sorts bid array by bid price in descending order.
 func SortByBidPrice(bids []Bid) []Bid {
-	sort.SliceStable(bids, func(i, j int) bool {
-		return bids[i].Price.GT(bids[j].Price)
+	sort.Slice(bids, func(i, j int) bool {
+		if bids[i].Price.GT(bids[j].Price) {
+			return true
+		}
+		return bids[i].Id < bids[j].Id
 	})
 	return bids
 }
