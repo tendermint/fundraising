@@ -158,8 +158,8 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Worth() {
 	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
 
 	// Checking
-	s.Require().Equal(mInfo.MatchedLen, int64(2))
-	s.Require().Equal(mInfo.MatchedPrice, parseDec("0.9"))
+	s.Require().Equal(int64(2), mInfo.MatchedLen)
+	s.Require().Equal(parseDec("0.9"), mInfo.MatchedPrice)
 	matchingPrice := parseDec("0.9")
 	matchedAmt := sdk.NewInt(500_000_000).ToDec().QuoTruncate(matchingPrice).TruncateInt()
 
@@ -970,7 +970,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed3() {
 	s.Require().Equal(mInfo.AllocationMap[s.addr(17).String()], matchedAmt17)
 
 	reservedMatchedAmt1 := sdk.NewInt(0)
-	reservedMatchedAmt2 := sdk.NewInt(2000_000_000)
+	reservedMatchedAmt2 := sdk.NewInt(1999_999_994)
 	reservedMatchedAmt3 := matchedAmt3.ToDec().Mul(matchingPrice).Ceil().TruncateInt()
 	reservedMatchedAmt4 := matchedAmt4.ToDec().Mul(matchingPrice).Ceil().TruncateInt()
 	reservedMatchedAmt5 := sdk.NewInt(300_000_000).ToDec().Mul(matchingPrice).Ceil().TruncateInt().Add(sdk.NewInt(1500_000_000))
@@ -1177,7 +1177,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed3_LimitedDifferent() {
 	s.Require().Equal(mInfo.AllocationMap[s.addr(17).String()], matchedAmt17)
 
 	reservedMatchedAmt1 := sdk.NewInt(0)
-	reservedMatchedAmt2 := sdk.NewInt(2000_000_000)
+	reservedMatchedAmt2 := sdk.NewInt(1999_999_991)
 	reservedMatchedAmt3 := sdk.NewInt(5050_000_000)
 	reservedMatchedAmt4 := sdk.NewInt(2020_000_000)
 	reservedMatchedAmt5 := sdk.NewInt(2020_000_000)
