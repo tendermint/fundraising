@@ -55,7 +55,7 @@ func BidsByPrice(bids []Bid) (prices []sdk.Dec, bidsByPrice map[string][]Bid) {
 
 	// Sort prices in descending order.
 	prices = make([]sdk.Dec, len(bidsByPrice))
-	i := 0 // TODO: is it too much optimization? we can use append(...)
+	i := 0
 	for priceStr := range bidsByPrice {
 		prices[i] = sdk.MustNewDecFromStr(priceStr)
 		i++
