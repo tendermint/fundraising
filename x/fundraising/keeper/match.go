@@ -18,30 +18,26 @@ type MatchingInfo struct {
 
 func (k Keeper) CalculateFixedPriceAllocation(ctx sdk.Context, auction types.AuctionI) MatchingInfo {
 	mInfo := MatchingInfo{
-		MatchedPrice:       sdk.ZeroDec(),
+		MatchedPrice:       auction.GetStartPrice(),
 		TotalMatchedAmount: sdk.ZeroInt(),
 		AllocationMap:      map[string]sdk.Int{},
 	}
 
-	totalMatchedAmt := sdk.ZeroInt()
-	allocMap := map[string]sdk.Int{}
+	bids := k.GetBidsByAuctionId(ctx, auction.GetId())
 
-	for _, b := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
-		bidAmt := b.ConvertToSellingAmount(auction.GetPayingCoinDenom())
+	for _, bid := range bids {
+		bidAmt := bid.ConvertToSellingAmount(auction.GetPayingCoinDenom())
 
 		// Accumulate bid amount if the bidder has other bid(s)
-		if allocatedAmt, ok := allocMap[b.Bidder]; ok {
-			allocMap[b.Bidder] = allocatedAmt.Add(bidAmt)
-		} else {
-			allocMap[b.Bidder] = bidAmt
+		allocatedAmt, ok := mInfo.AllocationMap[bid.Bidder]
+		if !ok {
+			mInfo.AllocationMap[bid.Bidder] = sdk.ZeroInt()
 		}
-		totalMatchedAmt = totalMatchedAmt.Add(bidAmt)
+		mInfo.AllocationMap[bid.Bidder] = allocatedAmt.Add(bidAmt)
+
+		mInfo.TotalMatchedAmount = mInfo.TotalMatchedAmount.Add(bidAmt)
 		mInfo.MatchedLen = mInfo.MatchedLen + 1
 	}
-
-	mInfo.MatchedPrice = auction.GetStartPrice()
-	mInfo.TotalMatchedAmount = totalMatchedAmt
-	mInfo.AllocationMap = allocMap
 
 	return mInfo
 }

@@ -260,7 +260,7 @@ func (s *KeeperTestSuite) fullString(auctionId uint64, mInfo keeper.MatchingInfo
 
 	payingCoinDenom := auction.GetPayingCoinDenom()
 	bids := s.keeper.GetBidsByAuctionId(s.ctx, auctionId)
-	bids = types.SortByBidPrice(bids)
+	bids = types.SortBids(bids)
 
 	var b strings.Builder
 
