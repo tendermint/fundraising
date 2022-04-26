@@ -31,7 +31,7 @@ func (k Keeper) CalculateFixedPriceAllocation(ctx sdk.Context, auction types.Auc
 		// Accumulate bid amount if the bidder has other bid(s)
 		allocatedAmt, ok := mInfo.AllocationMap[bid.Bidder]
 		if !ok {
-			mInfo.AllocationMap[bid.Bidder] = sdk.ZeroInt()
+			allocatedAmt = sdk.ZeroInt()
 		}
 		mInfo.AllocationMap[bid.Bidder] = allocatedAmt.Add(bidAmt)
 
