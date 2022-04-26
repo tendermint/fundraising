@@ -6,7 +6,7 @@ import (
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
 
-// MatchingInfo holds information about a batch auction matching info.
+// MatchingInfo holds information about an auction matching information.
 type MatchingInfo struct {
 	MatchedLen         int64              // the length of matched bids
 	MatchedPrice       sdk.Dec            // the final matched price
