@@ -13,7 +13,7 @@ The documentation strategy outlines four specific use cases for documentation. B
 The documentation strategy also proposes:
 
 - The use and re-use of document and format templates
-- Specific [code owners](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-on-github/about-code-owners#about-code-owners) for documentation 
+- Specific code owners for documentation
 - Comment and commit templates combined with [githook](https://git-scm.com/docs/githooks) checks
 
 The outcome shall be focused, consistent, high quality documentation. 
@@ -119,7 +119,7 @@ The specific implementation for fundraising module SHOULD BE as per the followin
 
 The following files are required at the repo root level:
 
-- **README.md** - General repo overview to introduce the product and orientate the user. All README files must follow the best practices as outlined in the [GitHub README](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-on-github/about-readmes) guidelines.
+- **README.md** - General repo overview to introduce the product and orientate the user. All README files must follow the best practices as outlined in the GitHub README guidelines.
 - **TECHNICAL-SETUP.md** - Specific steps on getting started with the repo, can be a link to a tutorial or include the specific action-oriented steps
     - Links to specific tooling setup requirements for development tools, linters, and so on
     - Dependencies such as [pre-commit](https://pre-commit.com/) package manager
@@ -130,7 +130,7 @@ The following files are required at the repo root level:
     - Commit message formats (see [Commit Comments](#commit-comments)
     - Raising PRs
     - Code of Conduct
-- **CODEOWNERS** - Although not part of the documentation itself, a [CODEOWNERS file](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-on-github/about-code-owners) defines the code maintainers who are responsible for code in a repository and perform quality assurance on comments, PRs, and issues.
+- **CODEOWNERS** - Although not part of the documentation itself, a CODEOWNERS file defines the code maintainers who are responsible for code in a repository and perform quality assurance on comments, PRs, and issues.
 
 #### Modules
 
@@ -146,7 +146,7 @@ README files are classed as reference documentation. Content in module-level REA
 The `docs` folder shall include the following files and folders:
 
 - **README.md** - SHALL USE this for introduction and orientating the user, based on the content of this ADR and other materials.
-- **CODEOWNERS** - This [CODEOWNERS file](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-on-github/about-code-owners) details the reviewers for documentation folder. The listed code owners SHALL INCLUDE the code maintainers in the root CODEOWNERS file plus a member of the Tendermint Technical Writing Team.
+- **CODEOWNERS** - This CODEOWNERS file details the reviewers for documentation folder. The listed code owners SHALL INCLUDE the code maintainers in the root CODEOWNERS file plus a member of the Tendermint Technical Writing Team.
 
 #### docs/Reference
 
