@@ -62,7 +62,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 
 	// Update status if the start time is already passed over the current time
 	if ba.ShouldAuctionStarted(ctx.BlockTime()) {
-		ba.SetStatus(types.AuctionStatusStarted)
+		_ = ba.SetStatus(types.AuctionStatusStarted)
 	}
 
 	auction := types.NewFixedPriceAuction(ba)
@@ -144,7 +144,7 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 
 	// Update status if the start time is already passed the current time
 	if ba.ShouldAuctionStarted(ctx.BlockTime()) {
-		ba.SetStatus(types.AuctionStatusStarted)
+		_ = ba.SetStatus(types.AuctionStatusStarted)
 	}
 
 	auction := types.NewBatchAuction(
