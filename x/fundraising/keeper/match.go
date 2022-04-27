@@ -16,6 +16,7 @@ type MatchingInfo struct {
 	RefundMap          map[string]sdk.Int // the map that holds refund amount information for each bidder
 }
 
+// CalculateFixedPriceAllocation loops through all bids for the auction and calculate matching information.
 func (k Keeper) CalculateFixedPriceAllocation(ctx sdk.Context, auction types.AuctionI) MatchingInfo {
 	mInfo := MatchingInfo{
 		MatchedPrice:       auction.GetStartPrice(),
@@ -25,25 +26,26 @@ func (k Keeper) CalculateFixedPriceAllocation(ctx sdk.Context, auction types.Auc
 
 	bids := k.GetBidsByAuctionId(ctx, auction.GetId())
 
+	// All bids for the auction are already matched in message level
+	// Loop through all bids and calculate allocated amount
+	// Accumulate the allocated amount if a bidder placed multiple bids
 	for _, bid := range bids {
 		bidAmt := bid.ConvertToSellingAmount(auction.GetPayingCoinDenom())
 
-		// Accumulate bid amount if the bidder has other bid(s)
 		allocatedAmt, ok := mInfo.AllocationMap[bid.Bidder]
 		if !ok {
 			allocatedAmt = sdk.ZeroInt()
 		}
 		mInfo.AllocationMap[bid.Bidder] = allocatedAmt.Add(bidAmt)
-
 		mInfo.TotalMatchedAmount = mInfo.TotalMatchedAmount.Add(bidAmt)
-		mInfo.MatchedLen = mInfo.MatchedLen + 1
+		mInfo.MatchedLen++
 	}
 
 	return mInfo
 }
 
 func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI) MatchingInfo {
-	matchingInfo := MatchingInfo{
+	mInfo := MatchingInfo{
 		AllocationMap:      map[string]sdk.Int{},
 		ReservedMatchedMap: map[string]sdk.Int{},
 		RefundMap:          map[string]sdk.Int{},
@@ -63,9 +65,9 @@ func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI
 		}
 	}
 
-	matchingInfo.MatchedLen = int64(len(matchRes.MatchedBids))
-	matchingInfo.MatchedPrice = matchRes.MatchPrice
-	matchingInfo.TotalMatchedAmount = matchRes.MatchedAmount
+	mInfo.MatchedLen = int64(len(matchRes.MatchedBids))
+	mInfo.MatchedPrice = matchRes.MatchPrice
+	mInfo.TotalMatchedAmount = matchRes.MatchedAmount
 
 	reservedAmtByBidder := map[string]sdk.Int{}
 	for _, bid := range bids {
@@ -77,22 +79,22 @@ func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI
 	}
 
 	for bidder, reservedAmt := range reservedAmtByBidder {
-		matchingInfo.AllocationMap[bidder] = sdk.ZeroInt()
-		matchingInfo.ReservedMatchedMap[bidder] = sdk.ZeroInt()
-		matchingInfo.RefundMap[bidder] = reservedAmt
+		mInfo.AllocationMap[bidder] = sdk.ZeroInt()
+		mInfo.ReservedMatchedMap[bidder] = sdk.ZeroInt()
+		mInfo.RefundMap[bidder] = reservedAmt
 	}
 
 	for bidder, bidderRes := range matchRes.MatchResultByBidder {
-		matchingInfo.AllocationMap[bidder] = bidderRes.MatchedAmount
-		matchingInfo.ReservedMatchedMap[bidder] = bidderRes.PayingAmount
-		matchingInfo.RefundMap[bidder] = reservedAmtByBidder[bidder].Sub(bidderRes.PayingAmount)
+		mInfo.AllocationMap[bidder] = bidderRes.MatchedAmount
+		mInfo.ReservedMatchedMap[bidder] = bidderRes.PayingAmount
+		mInfo.RefundMap[bidder] = reservedAmtByBidder[bidder].Sub(bidderRes.PayingAmount)
 	}
 
 	for _, bid := range matchRes.MatchedBids {
 		bid.SetMatched(true)
 		k.SetBid(ctx, bid)
 	}
-	k.SetMatchedBidsLen(ctx, auction.GetId(), matchingInfo.MatchedLen)
+	k.SetMatchedBidsLen(ctx, auction.GetId(), mInfo.MatchedLen)
 
-	return matchingInfo
+	return mInfo
 }
