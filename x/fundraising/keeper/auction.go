@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"time"
 
@@ -61,7 +62,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 
 	// Update status if the start time is already passed over the current time
 	if ba.ShouldAuctionStarted(ctx.BlockTime()) {
-		ba.Status = types.AuctionStatusStarted
+		ba.SetStatus(types.AuctionStatusStarted)
 	}
 
 	auction := types.NewFixedPriceAuction(ba)
@@ -123,7 +124,7 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 	allowedBidders := []types.AllowedBidder{}
 	endTimes := []time.Time{msg.EndTime} // it is an array data type to handle BatchAuction
 
-	baseAuction := types.NewBaseAuction(
+	ba := types.NewBaseAuction(
 		nextId,
 		types.AuctionTypeBatch,
 		allowedBidders,
@@ -142,12 +143,12 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 	)
 
 	// Update status if the start time is already passed the current time
-	if baseAuction.ShouldAuctionStarted(ctx.BlockTime()) {
-		baseAuction.Status = types.AuctionStatusStarted
+	if ba.ShouldAuctionStarted(ctx.BlockTime()) {
+		ba.SetStatus(types.AuctionStatusStarted)
 	}
 
 	auction := types.NewBatchAuction(
-		baseAuction,
+		ba,
 		msg.MinBidPrice,
 		sdk.ZeroDec(),
 		msg.MaxExtendedRound,
@@ -262,9 +263,7 @@ func (k Keeper) AddAllowedBidders(ctx sdk.Context, auctionId uint64, bidders []t
 	allowedBidders := auction.GetAllowedBidders()
 	allowedBidders = append(allowedBidders, bidders...)
 
-	if err := auction.SetAllowedBidders(allowedBidders); err != nil {
-		return err
-	}
+	_ = auction.SetAllowedBidders(allowedBidders)
 
 	// Call the before allowed bidders added hook
 	k.BeforeAllowedBiddersAdded(ctx, auctionId, bidders)
@@ -319,13 +318,20 @@ func (k Keeper) AllocateSellingCoin(ctx sdk.Context, auction types.AuctionI, mIn
 	inputs := []banktypes.Input{}
 	outputs := []banktypes.Output{}
 
+	// Sort bidders to reserve determinism
+	var bidders []string
+	for bidder := range mInfo.AllocationMap {
+		bidders = append(bidders, bidder)
+	}
+	sort.Strings(bidders)
+
 	// Allocate coins to all matched bidders in AllocationMap and
 	// set the amounts in trasnaction inputs and outputs from the selling reserve account
-	for bidder, allocAmt := range mInfo.AllocationMap {
-		if allocAmt.IsZero() {
+	for _, bidder := range bidders {
+		if mInfo.AllocationMap[bidder].IsZero() {
 			continue
 		}
-		allocateCoins := sdk.NewCoins(sdk.NewCoin(sellingCoinDenom, allocAmt))
+		allocateCoins := sdk.NewCoins(sdk.NewCoin(sellingCoinDenom, mInfo.AllocationMap[bidder]))
 		bidderAddr, _ := sdk.AccAddressFromBech32(bidder)
 
 		inputs = append(inputs, banktypes.NewInput(sellingReserveAddr, allocateCoins))
@@ -391,9 +397,16 @@ func (k Keeper) RefundPayingCoin(ctx sdk.Context, auction types.AuctionI, mInfo 
 	inputs := []banktypes.Input{}
 	outputs := []banktypes.Output{}
 
+	// Sort bidders to reserve determinism
+	var bidders []string
+	for bidder := range mInfo.RefundMap {
+		bidders = append(bidders, bidder)
+	}
+	sort.Strings(bidders)
+
 	// Refund the unmatched bid amount back to the bidder
-	for bidder, refundAmt := range mInfo.RefundMap {
-		if refundAmt.IsZero() {
+	for _, bidder := range bidders {
+		if mInfo.RefundMap[bidder].IsZero() {
 			continue
 		}
 
@@ -401,7 +414,7 @@ func (k Keeper) RefundPayingCoin(ctx sdk.Context, auction types.AuctionI, mInfo 
 		if err != nil {
 			return err
 		}
-		refundCoins := sdk.NewCoins(sdk.NewCoin(payingCoinDenom, refundAmt))
+		refundCoins := sdk.NewCoins(sdk.NewCoin(payingCoinDenom, mInfo.RefundMap[bidder]))
 
 		inputs = append(inputs, banktypes.NewInput(payingReserveAddr, refundCoins))
 		outputs = append(outputs, banktypes.NewOutput(bidderAddr, refundCoins))
@@ -427,8 +440,8 @@ func (k Keeper) ExtendRound(ctx sdk.Context, ba *types.BatchAuction) {
 	k.SetAuction(ctx, ba)
 }
 
-// FinishFixedPriceAuction finishes a fixed price auction.
-func (k Keeper) FinishFixedPriceAuction(ctx sdk.Context, auction types.AuctionI) {
+// CloseFixedPriceAuction finishes a fixed price auction.
+func (k Keeper) CloseFixedPriceAuction(ctx sdk.Context, auction types.AuctionI) {
 	mInfo := k.CalculateFixedPriceAllocation(ctx, auction)
 
 	if err := k.AllocateSellingCoin(ctx, auction, mInfo); err != nil {
@@ -444,8 +457,8 @@ func (k Keeper) FinishFixedPriceAuction(ctx sdk.Context, auction types.AuctionI)
 	}
 }
 
-// FinishBatchAuction finishes a batch auction.
-func (k Keeper) FinishBatchAuction(ctx sdk.Context, auction types.AuctionI) {
+// CloseBatchAuction finishes a batch auction.
+func (k Keeper) CloseBatchAuction(ctx sdk.Context, auction types.AuctionI) {
 	ba := auction.(*types.BatchAuction)
 
 	if ba.MaxExtendedRound+1 == uint32(len(auction.GetEndTimes())) {
@@ -466,16 +479,19 @@ func (k Keeper) FinishBatchAuction(ctx sdk.Context, auction types.AuctionI) {
 		if err := k.ApplyVestingSchedules(ctx, auction); err != nil {
 			panic(err)
 		}
+
+		return
 	}
 
+	// TODO: what if no matched bids for the auction?
 	// Extend round since there is no last matched length to compare with
 	lastMatchedLen := k.GetLastMatchedBidsLen(ctx, ba.GetId())
 	if lastMatchedLen == 0 {
-		k.CalculateBatchAllocation(ctx, auction)
 		k.ExtendRound(ctx, ba)
 		return
 	}
 
+	// TODO: add test case
 	mInfo := k.CalculateBatchAllocation(ctx, auction)
 
 	currDec := sdk.NewDec(mInfo.MatchedLen)

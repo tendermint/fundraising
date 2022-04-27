@@ -19,20 +19,15 @@ func (k Keeper) ExecuteStandByStatus(ctx sdk.Context, auction types.AuctionI) {
 
 // ExecuteStartedStatus executes operations depending on the auction type.
 func (k Keeper) ExecuteStartedStatus(ctx sdk.Context, auction types.AuctionI) {
-	ctx, writeCache := ctx.CacheContext()
-
-	// Finish the auction
-	if auction.ShouldAuctionFinished(ctx.BlockTime()) { // BlockTime >= EndTime
+	if auction.ShouldAuctionClosed(ctx.BlockTime()) { // BlockTime >= EndTime
 		switch auction.GetType() {
 		case types.AuctionTypeFixedPrice:
-			k.FinishFixedPriceAuction(ctx, auction)
+			k.CloseFixedPriceAuction(ctx, auction)
 
 		case types.AuctionTypeBatch:
-			k.FinishBatchAuction(ctx, auction)
+			k.CloseBatchAuction(ctx, auction)
 		}
 	}
-
-	writeCache()
 }
 
 // ExecuteVestingStatus first gets all vesting queues in the store and

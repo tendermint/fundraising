@@ -74,7 +74,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		bid.SetMatched(true)
 
 	case types.BidTypeBatchWorth:
-		if err := k.ValidateBatchWorthBid(ctx, auction, bid); err != nil {
+		if err := k.ValidateBatchWorthBid(auction, bid); err != nil {
 			return types.Bid{}, err
 		}
 
@@ -83,7 +83,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		}
 
 	case types.BidTypeBatchMany:
-		if err := k.ValidateBatchManyBid(ctx, auction, bid); err != nil {
+		if err := k.ValidateBatchManyBid(auction, bid); err != nil {
 			return types.Bid{}, err
 		}
 
@@ -158,7 +158,7 @@ func (k Keeper) ValidateFixedPriceBid(ctx sdk.Context, auction types.AuctionI, b
 }
 
 // ValidateBatchWorthBid validates a batch worth bid type.
-func (k Keeper) ValidateBatchWorthBid(ctx sdk.Context, auction types.AuctionI, bid types.Bid) error {
+func (k Keeper) ValidateBatchWorthBid(auction types.AuctionI, bid types.Bid) error {
 	if auction.GetType() != types.AuctionTypeBatch {
 		return types.ErrIncorrectAuctionType
 	}
@@ -179,7 +179,7 @@ func (k Keeper) ValidateBatchWorthBid(ctx sdk.Context, auction types.AuctionI, b
 }
 
 // ValidateBatchManyBid validates a batch many bid type.
-func (k Keeper) ValidateBatchManyBid(ctx sdk.Context, auction types.AuctionI, bid types.Bid) error {
+func (k Keeper) ValidateBatchManyBid(auction types.AuctionI, bid types.Bid) error {
 	if auction.GetType() != types.AuctionTypeBatch {
 		return types.ErrIncorrectAuctionType
 	}
@@ -234,28 +234,32 @@ func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) error {
 	}
 
 	if msg.Price.LT(bid.Price) || msg.Coin.Amount.LT(bid.Coin.Amount) {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "bid price or coin amount cannot be lower")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "bid price or coin amount cannot be lower")
 	}
 
+	// TODO: add test case
 	if msg.Price.Equal(bid.Price) && msg.Coin.Amount.Equal(bid.Coin.Amount) {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "bid price and coin amount must be changed")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "bid price and coin amount must be changed")
 	}
 
 	// Reserve bid amount difference
 	switch bid.Type {
 	case types.BidTypeBatchWorth:
-		diffBidCoin := msg.Coin.Sub(bid.Coin)
-		if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), diffBidCoin); err != nil {
-			return err
+		diffReserveCoin := msg.Coin.Sub(bid.Coin)
+		if diffReserveCoin.IsPositive() {
+			if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), diffReserveCoin); err != nil {
+				return err
+			}
 		}
-	case types.BidTypeBatchMany:
-		prevBidAmt := msg.Coin.Amount.ToDec().Mul(msg.Price)
-		currBidAmt := bid.Coin.Amount.ToDec().Mul(bid.Price)
-		diffBidAmt := prevBidAmt.Sub(currBidAmt).TruncateInt()
-		diffBidCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), diffBidAmt)
-
-		if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), diffBidCoin); err != nil {
-			return err
+	case types.BidTypeBatchMany: // TODO: add test case
+		prevReserveAmt := msg.Coin.Amount.ToDec().Mul(msg.Price).Ceil()
+		currReserveAmt := bid.Coin.Amount.ToDec().Mul(bid.Price).Ceil()
+		diffReserveAmt := currReserveAmt.Sub(prevReserveAmt).TruncateInt()
+		diffReserveCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), diffReserveAmt)
+		if diffReserveCoin.IsPositive() {
+			if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), diffReserveCoin); err != nil {
+				return err
+			}
 		}
 	}
 
