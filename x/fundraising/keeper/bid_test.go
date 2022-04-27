@@ -313,7 +313,7 @@ func (s *KeeperTestSuite) TestModifyBid() {
 		Price:     parseDec("0.3"),
 		Coin:      parseCoin("100_000_000denom2"),
 	})
-	s.Require().ErrorIs(err, sdkerrors.ErrUnauthorized)
+	s.Require().ErrorIs(err, sdkerrors.ErrInvalidRequest)
 
 	// Modify the bid with lower coin amount
 	err = s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{
@@ -323,5 +323,5 @@ func (s *KeeperTestSuite) TestModifyBid() {
 		Price:     parseDec("0.8"),
 		Coin:      parseCoin("100denom2"),
 	})
-	s.Require().ErrorIs(err, sdkerrors.ErrUnauthorized)
+	s.Require().ErrorIs(err, sdkerrors.ErrInvalidRequest)
 }
