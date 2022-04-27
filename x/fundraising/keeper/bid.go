@@ -139,9 +139,10 @@ func (k Keeper) ValidateFixedPriceBid(ctx sdk.Context, auction types.AuctionI, b
 
 	// Get the total bid amount by the bidder
 	totalBidAmt := sdk.ZeroInt()
-	for _, b := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
-		if b.Bidder == bid.Bidder {
-			totalBidAmt = totalBidAmt.Add(b.ConvertToSellingAmount(auction.GetPayingCoinDenom()))
+	for _, bid := range k.GetBidsByBidder(ctx, bid.GetBidder()) {
+		if bid.AuctionId == auction.GetId() {
+			bidSellingAmt := bid.ConvertToSellingAmount(auction.GetPayingCoinDenom())
+			totalBidAmt = totalBidAmt.Add(bidSellingAmt)
 		}
 	}
 
