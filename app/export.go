@@ -68,8 +68,7 @@ func (app *App) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs []str
 	}
 
 	/* Just to be safe, assert the invariants on current state. */
-	// Note that this breaks fundraising invariant since ctx.BlockTime is set as 0001-01-01 00:00:00 +0000 UTC
-	// app.CrisisKeeper.AssertInvariants(ctx)
+	app.CrisisKeeper.AssertInvariants(ctx)
 
 	/* Handle fee distribution state. */
 

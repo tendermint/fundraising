@@ -15,8 +15,6 @@ func RegisterInvariants(ir sdk.InvariantRegistry, k Keeper) {
 		PayingPoolReserveAmountInvariant(k))
 	ir.RegisterRoute(types.ModuleName, "vesting-pool-reserve-amount",
 		VestingPoolReserveAmountInvariant(k))
-	ir.RegisterRoute(types.ModuleName, "auction-status-states",
-		AuctionStatusStatesInvariant(k))
 }
 
 // AllInvariants runs all invariants of the fundraising module.
@@ -26,7 +24,6 @@ func AllInvariants(k Keeper) sdk.Invariant {
 			SellingPoolReserveAmountInvariant,
 			PayingPoolReserveAmountInvariant,
 			VestingPoolReserveAmountInvariant,
-			AuctionStatusStatesInvariant,
 		} {
 			res, stop := inv(k)(ctx)
 			if stop {
@@ -133,66 +130,5 @@ func VestingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 		broken := count != 0
 
 		return sdk.FormatInvariant(types.ModuleName, "vesting pool reserve amount and total paying amount", msg), broken
-	}
-}
-
-// AuctionStatusStatesInvariant checks an invariant that states are properly set depending on the auction status.
-func AuctionStatusStatesInvariant(k Keeper) sdk.Invariant {
-	return func(ctx sdk.Context) (string, bool) {
-		msg := ""
-		count := 0
-
-		for _, auction := range k.GetAuctions(ctx) {
-			_, found := k.GetAuction(ctx, auction.GetId())
-			if !found {
-				msg += fmt.Sprintf("\tauction %d not found\n", auction.GetId())
-				count++
-			}
-
-			switch auction.GetStatus() {
-			case types.AuctionStatusStandBy:
-				if !ctx.BlockTime().Before(auction.GetStartTime()) {
-					msg += fmt.Sprintf("\texpected status for auction %d is %s\n", auction.GetId(), types.AuctionStatusStandBy)
-					msg += fmt.Sprintf("\tcurrent time %s\n", ctx.BlockTime())
-					msg += fmt.Sprintf("\tstart time %s\n", auction.GetStartTime())
-					msg += fmt.Sprintf("\tend time %s\n\n", auction.GetEndTimes()[0])
-					count++
-				}
-			case types.AuctionStatusStarted:
-				if !auction.ShouldAuctionStarted(ctx.BlockTime()) {
-					msg += fmt.Sprintf("\texpected status for auction %d is %s\n", auction.GetId(), types.AuctionStatusStarted)
-					msg += fmt.Sprintf("\tcurrentTime: %s\n", ctx.BlockTime())
-					msg += fmt.Sprintf("\tstartTime: %s\n", auction.GetStartTime())
-					msg += fmt.Sprintf("\tendTime: %s\n\n", auction.GetEndTimes()[0])
-					count++
-				}
-			case types.AuctionStatusVesting:
-				lenVestingSchedules := len(auction.GetVestingSchedules())
-				lenVestingQueues := len(k.GetVestingQueuesByAuctionId(ctx, auction.GetId()))
-
-				if lenVestingSchedules != lenVestingQueues {
-					msg += fmt.Sprintf("\texpected vesting queue length %d but got %d\n", lenVestingSchedules, lenVestingQueues)
-					count++
-				}
-			case types.AuctionStatusFinished:
-				if auction.GetType() == types.AuctionTypeFixedPrice {
-					if !auction.ShouldAuctionClosed(ctx.BlockTime()) {
-						msg += fmt.Sprintf("\texpected status for auction %d is %s\n", auction.GetId(), types.AuctionStatusFinished)
-						count++
-					}
-				}
-			case types.AuctionStatusCancelled:
-				if !auction.GetRemainingSellingCoin().IsZero() {
-					msg += fmt.Sprintf("\texpected remaining coin is 0 for auction %d but got %v\n",
-						auction.GetId(), auction.GetRemainingSellingCoin())
-					count++
-				}
-			default:
-				panic("invalid auction status")
-			}
-		}
-
-		broken := count != 0
-		return sdk.FormatInvariant(types.ModuleName, "auction status states", msg), broken
 	}
 }

@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -146,77 +145,4 @@ func (s *KeeperTestSuite) TestVestingPoolReserveAmountInvariant() {
 
 	_, broken = keeper.VestingPoolReserveAmountInvariant(k)(ctx)
 	s.Require().False(broken)
-}
-
-func (s *KeeperTestSuite) TestAuctionStatusStatesInvariant() {
-	k, ctx := s.keeper, s.ctx
-
-	standByAuction := s.createFixedPriceAuction(
-		s.addr(0),
-		sdk.MustNewDecFromStr("0.35"),
-		sdk.NewInt64Coin("denom1", 500_000_000_000),
-		"denom2",
-		[]types.VestingSchedule{},
-		time.Now().AddDate(0, 1, 0),
-		time.Now().AddDate(0, 3, 0),
-		true,
-	)
-	s.Require().Equal(types.AuctionStatusStandBy, standByAuction.GetStatus())
-
-	_, broken := keeper.AuctionStatusStatesInvariant(k)(ctx)
-	s.Require().False(broken)
-
-	startedAuction := s.createFixedPriceAuction(
-		s.addr(1),
-		sdk.MustNewDecFromStr("0.5"),
-		sdk.NewInt64Coin("denom3", 500_000_000_000),
-		"denom4",
-		[]types.VestingSchedule{
-			{
-				ReleaseTime: time.Now().AddDate(1, 0, 0),
-				Weight:      sdk.MustNewDecFromStr("0.25"),
-			},
-			{
-				ReleaseTime: time.Now().AddDate(1, 3, 0),
-				Weight:      sdk.MustNewDecFromStr("0.25"),
-			},
-			{
-				ReleaseTime: time.Now().AddDate(1, 6, 0),
-				Weight:      sdk.MustNewDecFromStr("0.25"),
-			},
-			{
-				ReleaseTime: time.Now().AddDate(1, 9, 0),
-				Weight:      sdk.MustNewDecFromStr("0.25"),
-			},
-		},
-		time.Now().AddDate(0, 0, -1),
-		time.Now().AddDate(0, 0, -1).AddDate(0, 1, 0),
-		true,
-	)
-	s.Require().Equal(types.AuctionStatusStarted, startedAuction.GetStatus())
-
-	_, broken = keeper.AuctionStatusStatesInvariant(k)(ctx)
-	s.Require().False(broken)
-
-	// set the current block time a day after so that it gets finished
-	ctx = ctx.WithBlockTime(startedAuction.GetEndTimes()[0].AddDate(0, 0, 1))
-	fundraising.BeginBlocker(ctx, k)
-
-	_, broken = keeper.AuctionStatusStatesInvariant(k)(ctx)
-	s.Require().False(broken)
-
-	// set the current block time a day after so that all vesting queues get released
-	ctx = ctx.WithBlockTime(startedAuction.GetVestingSchedules()[3].GetReleaseTime().AddDate(0, 0, 1))
-	fundraising.BeginBlocker(ctx, k)
-
-	_, broken = keeper.AuctionStatusStatesInvariant(k)(ctx)
-	s.Require().False(broken)
-}
-
-func (s *KeeperTestSuite) TestIsGTE() {
-	vestingReserve := sdk.NewInt64Coin(sdk.DefaultBondDenom, 0)
-	totalPayingCoin := sdk.NewInt64Coin(sdk.DefaultBondDenom, 0)
-	if !vestingReserve.IsGTE(totalPayingCoin) {
-		fmt.Println("!")
-	}
 }
