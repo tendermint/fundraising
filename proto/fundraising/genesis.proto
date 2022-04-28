@@ -11,7 +11,6 @@ option go_package = "github.com/tendermint/fundraising/x/fundraising/types";
 
 // GenesisState defines the fundraising module's genesis state.
 message GenesisState {
-  // this line is used by starport scaffolding # genesis/proto/state
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 

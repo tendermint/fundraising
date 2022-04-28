@@ -252,7 +252,7 @@ var xxx_messageInfo_BaseAuction proto.InternalMessageInfo
 // selling amounts of coin and bidders bid to purchase based on the fixed price.
 type FixedPriceAuction struct {
 	*BaseAuction `protobuf:"bytes,1,opt,name=base_auction,json=baseAuction,proto3,embedded=base_auction" json:"base_auction,omitempty"`
-	// remaining_coin specifes the remaining amount of selling coin to sell
+	// remaining_coin specifies the remaining amount of selling coin to sell
 	RemainingSellingCoin types.Coin `protobuf:"bytes,2,opt,name=remaining_selling_coin,json=remainingSellingCoin,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coin" json:"remaining_selling_coin"`
 }
 
@@ -391,7 +391,7 @@ func (m *VestingSchedule) GetReleaseTime() time.Time {
 
 // VestingQueue defines the vesting queue.
 type VestingQueue struct {
-	// auction_id specifes the id of the auction
+	// auction_id specifies the id of the auction
 	AuctionId uint64 `protobuf:"varint,1,opt,name=auction_id,json=auctionId,proto3" json:"auction_id,omitempty"`
 	// auctioneer specifies the bech32-encoded address that creates the auction
 	Auctioneer string `protobuf:"bytes,2,opt,name=auctioneer,proto3" json:"auctioneer,omitempty"`

@@ -57,7 +57,7 @@ func (msg MsgCreateFixedPriceAuction) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid auctioneer address: %v", err)
 	}
 	if !msg.StartPrice.IsPositive() {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "start price must be positve")
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "start price must be positive")
 	}
 	if err := msg.SellingCoin.Validate(); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid selling coin: %v", err)
@@ -136,7 +136,7 @@ func (msg MsgCreateBatchAuction) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid auctioneer address: %v", err)
 	}
 	if !msg.StartPrice.IsPositive() {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "start price must be positve")
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "start price must be positive")
 	}
 	if !msg.MinBidPrice.IsPositive() {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "minimum price must be positive")
@@ -160,7 +160,7 @@ func (msg MsgCreateBatchAuction) ValidateBasic() error {
 		return err
 	}
 	if !msg.ExtendedRoundRate.IsPositive() {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "extend rate must be positve")
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "extend rate must be positive")
 	}
 	return nil
 }
@@ -187,11 +187,11 @@ func (msg MsgCreateBatchAuction) GetAuctioneer() sdk.AccAddress {
 
 // NewMsgCancelAuction creates a new MsgCancelAuction.
 func NewMsgCancelAuction(
-	auctionner string,
+	auctioneer string,
 	auctionId uint64,
 ) *MsgCancelAuction {
 	return &MsgCancelAuction{
-		Auctioneer: auctionner,
+		Auctioneer: auctioneer,
 		AuctionId:  auctionId,
 	}
 }
@@ -253,7 +253,7 @@ func (msg MsgPlaceBid) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid bidder address: %v", err)
 	}
 	if !msg.Price.IsPositive() {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "bid price must be positve value")
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "bid price must be positive value")
 	}
 	if err := msg.Coin.Validate(); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid bid coin: %v", err)
@@ -314,7 +314,7 @@ func (msg MsgModifyBid) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid bidder address: %v", err)
 	}
 	if !msg.Price.IsPositive() {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "bid price must be positve value")
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "bid price must be positive value")
 	}
 	if err := msg.Coin.Validate(); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid bid coin: %v", err)

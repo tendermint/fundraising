@@ -34,8 +34,7 @@ func NewBaseAuction(
 	id uint64, typ AuctionType, allowedBidders []AllowedBidder, auctioneerAddr string,
 	sellingPoolAddr string, payingPoolAddr string, startPrice sdk.Dec,
 	sellingCoin sdk.Coin, payingCoinDenom string, vestingPoolAddr string,
-	vestingSchedules []VestingSchedule, remainingSellingCoin sdk.Coin,
-	startTime time.Time, endTimes []time.Time, status AuctionStatus,
+	vestingSchedules []VestingSchedule, startTime time.Time, endTimes []time.Time, status AuctionStatus,
 ) *BaseAuction {
 	return &BaseAuction{
 		Id:                    id,
@@ -49,7 +48,6 @@ func NewBaseAuction(
 		PayingCoinDenom:       payingCoinDenom,
 		VestingReserveAddress: vestingPoolAddr,
 		VestingSchedules:      vestingSchedules,
-		RemainingSellingCoin:  remainingSellingCoin,
 		StartTime:             startTime,
 		EndTimes:              endTimes,
 		Status:                status,
@@ -159,15 +157,6 @@ func (ba *BaseAuction) SetVestingSchedules(schedules []VestingSchedule) error {
 	return nil
 }
 
-func (ba BaseAuction) GetRemainingSellingCoin() sdk.Coin {
-	return ba.RemainingSellingCoin
-}
-
-func (ba *BaseAuction) SetRemainingSellingCoin(coin sdk.Coin) error {
-	ba.RemainingSellingCoin = coin
-	return nil
-}
-
 func (ba BaseAuction) GetStartTime() time.Time {
 	return ba.StartTime
 }
@@ -272,9 +261,10 @@ func (ba BaseAuction) ShouldAuctionClosed(t time.Time) bool {
 }
 
 // NewFixedPriceAuction returns a new fixed price auction.
-func NewFixedPriceAuction(baseAuction *BaseAuction) *FixedPriceAuction {
+func NewFixedPriceAuction(baseAuction *BaseAuction, remainingSellingCoin sdk.Coin) *FixedPriceAuction {
 	return &FixedPriceAuction{
-		BaseAuction: baseAuction,
+		BaseAuction:          baseAuction,
+		RemainingSellingCoin: remainingSellingCoin,
 	}
 }
 
@@ -326,9 +316,6 @@ type AuctionI interface {
 
 	GetVestingSchedules() []VestingSchedule
 	SetVestingSchedules([]VestingSchedule) error
-
-	GetRemainingSellingCoin() sdk.Coin
-	SetRemainingSellingCoin(sdk.Coin) error
 
 	GetStartTime() time.Time
 	SetStartTime(time.Time) error

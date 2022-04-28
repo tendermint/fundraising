@@ -84,7 +84,7 @@ message FixedPriceAuction {
 
   BaseAuction base_auction = 1 [ (gogoproto.embed) = true ];
 
-  // remaining_coin specifes the remaining amount of selling coin to sell
+  // remaining_coin specifies the remaining amount of selling coin to sell
   cosmos.base.v1beta1.Coin remaining_selling_coin = 2 [
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
@@ -179,7 +179,7 @@ message VestingSchedule {
 
 // VestingQueue defines the vesting queue.
 message VestingQueue {
-  // auction_id specifes the id of the auction
+  // auction_id specifies the id of the auction
   uint64 auction_id = 1;
 
   // auctioneer specifies the bech32-encoded address that creates the auction

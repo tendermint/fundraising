@@ -21260,7 +21260,7 @@ paths:
                     auction_id:
                       type: string
                       format: uint64
-                      title: auction_id specifes the id of the auction
+                      title: auction_id specifies the id of the auction
                     auctioneer:
                       type: string
                       title: >-
@@ -21531,11 +21531,11 @@ paths:
                   extended_period:
                     type: integer
                     format: int64
-                    description: >-
+                    title: >-
                       extended_period specifies the extended period that
                       determines how long
 
-                      the extended auction round lasts.
+                      the extended auction round lasts
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -38536,9 +38536,9 @@ definitions:
       extended_period:
         type: integer
         format: int64
-        description: |-
+        title: |-
           extended_period specifies the extended period that determines how long
-          the extended auction round lasts.
+          the extended auction round lasts
     description: Params defines the set of params for the fundraising module.
   tendermint.fundraising.QueryAuctionResponse:
     type: object
@@ -39105,11 +39105,11 @@ definitions:
           extended_period:
             type: integer
             format: int64
-            description: >-
+            title: >-
               extended_period specifies the extended period that determines how
               long
 
-              the extended auction round lasts.
+              the extended auction round lasts
     description: QueryParamsResponse is response type for the Query/Params RPC method.
   tendermint.fundraising.QueryVestingsResponse:
     type: object
@@ -39122,7 +39122,7 @@ definitions:
             auction_id:
               type: string
               format: uint64
-              title: auction_id specifes the id of the auction
+              title: auction_id specifies the id of the auction
             auctioneer:
               type: string
               title: >-
@@ -39160,7 +39160,7 @@ definitions:
       auction_id:
         type: string
         format: uint64
-        title: auction_id specifes the id of the auction
+        title: auction_id specifies the id of the auction
       auctioneer:
         type: string
         title: >-

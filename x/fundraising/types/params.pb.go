@@ -33,7 +33,7 @@ type Params struct {
 	// pool
 	AuctionCreationFee github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,1,rep,name=auction_creation_fee,json=auctionCreationFee,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"auction_creation_fee" yaml:"auction_creation_fee"`
 	// extended_period specifies the extended period that determines how long
-	// the extended auction round lasts.
+	// the extended auction round lasts
 	ExtendedPeriod uint32 `protobuf:"varint,2,opt,name=extended_period,json=extendedPeriod,proto3" json:"extended_period,omitempty" yaml:"extended_period"`
 }
 

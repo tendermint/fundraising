@@ -28,11 +28,11 @@ func TestUnpackAuction(t *testing.T) {
 				"denom4",
 				types.VestingReserveAddress(1).String(),
 				[]types.VestingSchedule{},
-				sdk.NewInt64Coin("denom3", 1_000_000_000_000),
 				time.Now().AddDate(0, 0, -1),
 				[]time.Time{time.Now().AddDate(0, 1, -1)},
 				types.AuctionStatusStarted,
 			),
+			sdk.NewInt64Coin("denom3", 1_000_000_000_000),
 		),
 	}
 
@@ -67,7 +67,6 @@ func TestShouldAuctionStarted(t *testing.T) {
 		PayingCoinDenom:       "denom4",
 		VestingReserveAddress: types.VestingReserveAddress(1).String(),
 		VestingSchedules:      []types.VestingSchedule{},
-		RemainingSellingCoin:  sdk.NewInt64Coin("denom3", 1_000_000_000_000),
 		StartTime:             types.MustParseRFC3339("2021-12-01T00:00:00Z"),
 		EndTimes:              []time.Time{types.MustParseRFC3339("2021-12-15T00:00:00Z")},
 		Status:                types.AuctionStatusStandBy,
@@ -102,7 +101,6 @@ func TestShouldAuctionClosed(t *testing.T) {
 		PayingCoinDenom:       "denom4",
 		VestingReserveAddress: types.VestingReserveAddress(1).String(),
 		VestingSchedules:      []types.VestingSchedule{},
-		RemainingSellingCoin:  sdk.NewInt64Coin("denom3", 1_000_000_000_000),
 		StartTime:             types.MustParseRFC3339("2021-12-01T00:00:00Z"),
 		EndTimes:              []time.Time{types.MustParseRFC3339("2021-12-15T00:00:00Z")},
 		Status:                types.AuctionStatusStandBy,

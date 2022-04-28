@@ -56,7 +56,7 @@ func (b Bid) Validate() error {
 		return err
 	}
 	if !b.Price.IsPositive() {
-		return fmt.Errorf("bid price must be positve value: %s", b.Price.String())
+		return fmt.Errorf("bid price must be positive value: %s", b.Price.String())
 	}
 	if err := b.Coin.Validate(); err != nil {
 		return err

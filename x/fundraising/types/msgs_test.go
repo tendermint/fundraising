@@ -31,7 +31,7 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 			),
 		},
 		{
-			"start price must be positve: invalid request",
+			"start price must be positive: invalid request",
 			types.NewMsgCreateFixedPriceAuction(
 				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0"),
@@ -212,7 +212,7 @@ func TestMsgCreateBatchAuction(t *testing.T) {
 			),
 		},
 		{
-			"start price must be positve: invalid request",
+			"start price must be positive: invalid request",
 			types.NewMsgCreateBatchAuction(
 				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0"),
@@ -380,7 +380,7 @@ func TestMsgCreateBatchAuction(t *testing.T) {
 			),
 		},
 		{
-			"extend rate must be positve: invalid request",
+			"extend rate must be positive: invalid request",
 			types.NewMsgCreateBatchAuction(
 				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0.5"),
@@ -462,7 +462,7 @@ func TestMsgPlaceBid(t *testing.T) {
 			),
 		},
 		{
-			"bid price must be positve value: invalid request",
+			"bid price must be positive value: invalid request",
 			types.NewMsgPlaceBid(
 				uint64(1),
 				sdk.AccAddress(crypto.AddressHash([]byte("Bidder"))).String(),
@@ -517,7 +517,7 @@ func TestMsgModifyBid(t *testing.T) {
 			),
 		},
 		{
-			"bid price must be positve value: invalid request",
+			"bid price must be positive value: invalid request",
 			types.NewMsgModifyBid(
 				uint64(1),
 				sdk.AccAddress(crypto.AddressHash([]byte("Bidder"))).String(),

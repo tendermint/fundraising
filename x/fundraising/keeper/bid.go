@@ -57,6 +57,8 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 			return types.Bid{}, err
 		}
 
+		fa := auction.(*types.FixedPriceAuction)
+
 		// Reserve bid amount
 		bidPayingAmt := bid.ConvertToPayingAmount(payingCoinDenom)
 		bidPayingCoin := sdk.NewCoin(payingCoinDenom, bidPayingAmt)
@@ -67,10 +69,9 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		// Subtract bid amount from the remaining
 		bidSellingAmt := bid.ConvertToSellingAmount(payingCoinDenom)
 		bidSellingCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidSellingAmt)
-		remaining := auction.GetRemainingSellingCoin().Sub(bidSellingCoin)
+		fa.RemainingSellingCoin = fa.RemainingSellingCoin.Sub(bidSellingCoin)
 
-		_ = auction.SetRemainingSellingCoin(remaining)
-		k.SetAuction(ctx, auction)
+		k.SetAuction(ctx, fa)
 		bid.SetMatched(true)
 
 	case types.BidTypeBatchWorth:
@@ -131,7 +132,7 @@ func (k Keeper) ValidateFixedPriceBid(ctx sdk.Context, auction types.AuctionI, b
 	// For remaining coin validation, convert bid amount in selling coin denom
 	bidAmt := bid.ConvertToSellingAmount(auction.GetPayingCoinDenom())
 	bidCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidAmt)
-	remainingCoin := auction.GetRemainingSellingCoin()
+	remainingCoin := auction.(*types.FixedPriceAuction).RemainingSellingCoin
 
 	if remainingCoin.IsLT(bidCoin) {
 		return sdkerrors.Wrapf(types.ErrInsufficientRemainingAmount, "remaining selling coin amount %s", remainingCoin)
