@@ -20,8 +20,8 @@ message BaseAuction {
   // id specifies index of the auction
   uint64 id = 1;
 
-  // type specifies the auction type; type 1 is fixed price and 2 is batch
-  // auction
+  // type specifies the auction type
+  // type 1 is fixed price and 2 is batch auction
   AuctionType type = 2;
 
   // allowed_bidders specifies the bidders who are allowed to bid for the
@@ -64,22 +64,16 @@ message BaseAuction {
   repeated VestingSchedule vesting_schedules = 11
       [ (gogoproto.nullable) = false ];
 
-  // remaining_coin specifes the remaining amount of selling coin to sell
-  cosmos.base.v1beta1.Coin remaining_selling_coin = 12 [
-    (gogoproto.nullable) = false,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
-  ];
-
   // start_time specifies the start time of the plan
-  google.protobuf.Timestamp start_time = 13
+  google.protobuf.Timestamp start_time = 12
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // end_times specifies the end time of the plan
-  repeated google.protobuf.Timestamp end_times = 14
+  repeated google.protobuf.Timestamp end_times = 13
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // status specifies the auction status
-  AuctionStatus status = 15;
+  AuctionStatus status = 14;
 }
 
 // FixedPriceAuction defines the fixed price auction type. It is the most
@@ -89,6 +83,12 @@ message FixedPriceAuction {
   option (gogoproto.goproto_getters) = false;
 
   BaseAuction base_auction = 1 [ (gogoproto.embed) = true ];
+
+  // remaining_coin specifes the remaining amount of selling coin to sell
+  cosmos.base.v1beta1.Coin remaining_selling_coin = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
 }
 
 // BatchAuction defines a batch auction type. It allows bidders to participate
