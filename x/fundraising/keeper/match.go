@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"sort"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/tendermint/fundraising/x/fundraising/types"
@@ -59,15 +61,23 @@ func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI
 		MatchedAmount:       sdk.ZeroInt(),
 		MatchResultByBidder: map[string]*types.BidderMatchResult{},
 	}
-	for _, price := range prices {
-		res, found := types.Match(auction, price, prices, bidsByPrice)
-		if found {
+
+	// We use binary search to find the best(the lowest possible) matching price.
+	// Note that the returned index from sort.Search is not used, since
+	// we're already storing the match result inside the closure.
+	// In this way, we can reduce redundant calculation for the matching price
+	// after finding it.
+	sort.Search(len(prices), func(i int) bool {
+		// Reverse the index, since prices are sorted in descending order.
+		// Note that our goal is to find the first true(matched) condition, starting
+		// from the lowest price.
+		i = (len(prices) - 1) - i
+		res, matched := types.Match(auction, prices[i], prices, bidsByPrice)
+		if matched { // If we found a valid matching price, store the result
 			matchRes = res
 		}
-		if !found {
-			break
-		}
-	}
+		return matched
+	})
 
 	mInfo.MatchedLen = int64(len(matchRes.MatchedBids))
 	mInfo.MatchedPrice = matchRes.MatchPrice

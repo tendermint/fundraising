@@ -41,7 +41,7 @@ func Match(auction AuctionI, matchPrice sdk.Dec, prices []sdk.Dec, bidsByPrice m
 
 			if res.MatchedAmount.Add(matchAmt).GT(auction.GetSellingCoin().Amount) {
 				// Including this bid will exceed the auction's selling amount.
-				return res, false
+				return nil, false
 			}
 
 			payingAmt := matchPrice.MulInt(matchAmt).Ceil().TruncateInt()
