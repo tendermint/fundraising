@@ -178,7 +178,7 @@ func (s *KeeperTestSuite) TestHooks() {
 
 	// Add allowed bidder
 	allowedBidders := []types.AllowedBidder{types.NewAllowedBidder(auction.GetId(), s.addr(3), parseInt("100_000_000_000"))}
-	s.keeper.AddAllowedBidders(s.ctx, allowedBidders)
+	s.Require().NoError(s.keeper.AddAllowedBidders(s.ctx, allowedBidders))
 	s.Require().True(fundraisingHooksReceiver.BeforeAllowedBiddersAddedValid)
 
 	// Update the allowed bidder

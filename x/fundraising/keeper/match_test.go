@@ -1,63 +1,59 @@
 package keeper_test
 
-// package keeper_test
+import (
+	"fmt"
+	"time"
 
-// import (
-// 	"fmt"
-// 	"time"
+	"github.com/tendermint/fundraising/x/fundraising/types"
 
-// 	sdk "github.com/cosmos/cosmos-sdk/types"
+	_ "github.com/stretchr/testify/suite"
+)
 
-// 	"github.com/tendermint/fundraising/x/fundraising/types"
+func (s *KeeperTestSuite) TestExampleFullString() {
+	auction := s.createFixedPriceAuction(
+		s.addr(0),
+		parseDec("0.5"),
+		parseCoin("1_000_000_000_000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+		true,
+	)
 
-// 	_ "github.com/stretchr/testify/suite"
-// )
+	a, found := s.keeper.GetAuction(s.ctx, auction.GetId())
+	s.Require().True(found)
 
-// func (s *KeeperTestSuite) TestExampleFullString() {
-// 	auction := s.createFixedPriceAuction(
-// 		s.addr(0),
-// 		parseDec("0.5"),
-// 		parseCoin("1_000_000_000_000denom1"),
-// 		"denom2",
-// 		[]types.VestingSchedule{},
-// 		time.Now().AddDate(0, 0, -1),
-// 		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
-// 		true,
-// 	)
+	s.placeBidFixedPrice(a.GetId(), s.addr(1), a.GetStartPrice(), parseCoin("15_000_000denom2"), true)
+	s.placeBidFixedPrice(a.GetId(), s.addr(2), a.GetStartPrice(), parseCoin("20_000_000denom2"), true)
+	s.placeBidFixedPrice(a.GetId(), s.addr(4), a.GetStartPrice(), parseCoin("10_000_000denom1"), true)
+	s.placeBidFixedPrice(a.GetId(), s.addr(6), a.GetStartPrice(), parseCoin("20_000_000denom1"), true)
 
-// 	a, found := s.keeper.GetAuction(s.ctx, auction.GetId())
-// 	s.Require().True(found)
+	mInfo := s.keeper.CalculateFixedPriceAllocation(s.ctx, a)
+	fmt.Println(s.fullString(a.GetId(), mInfo))
 
-// 	s.placeBidFixedPrice(a.GetId(), s.addr(1), a.GetStartPrice(), parseCoin("15_000_000denom2"), true)
-// 	s.placeBidFixedPrice(a.GetId(), s.addr(2), a.GetStartPrice(), parseCoin("20_000_000denom2"), true)
-// 	s.placeBidFixedPrice(a.GetId(), s.addr(4), a.GetStartPrice(), parseCoin("10_000_000denom1"), true)
-// 	s.placeBidFixedPrice(a.GetId(), s.addr(6), a.GetStartPrice(), parseCoin("20_000_000denom1"), true)
+	// Output:
+	// [Bids]
+	// +--------------------bidder---------------------+-id-+---------price---------+---------type---------+-----reserve-amount-----+-------bid-amount-------+
+	// | cosmos1qgqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqggwm7m |  1 |  0.500000000000000000 | BID_TYPE_FIXED_PRICE |               15000000 |               30000000 |
+	// | cosmos1qsqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqv4uhu3 |  2 |  0.500000000000000000 | BID_TYPE_FIXED_PRICE |               20000000 |               40000000 |
+	// | cosmos1pqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqvzjng6 |  3 |  0.500000000000000000 | BID_TYPE_FIXED_PRICE |                5000000 |               10000000 |
+	// | cosmos1psqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqn5wmnk |  4 |  0.500000000000000000 | BID_TYPE_FIXED_PRICE |               10000000 |               20000000 |
+	// +-----------------------------------------------+----+-----------------------+----------------------+------------------------+------------------------+
 
-// 	mInfo := s.keeper.CalculateFixedPriceAllocation(s.ctx, a)
-// 	fmt.Println(s.fullString(a.GetId(), mInfo))
+	// [Allocation]
+	// +--------------------bidder---------------------+------allocated-amount------+
+	// | cosmos1qgqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqggwm7m |                   30000000 |
+	// | cosmos1qsqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqv4uhu3 |                   40000000 |
+	// | cosmos1pqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqvzjng6 |                   10000000 |
+	// | cosmos1psqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqn5wmnk |                   20000000 |
+	// +-----------------------------------------------+----------------------------+
 
-// 	// Output:
-// 	// [Bids]
-// 	// +--------------------bidder---------------------+-id-+---------price---------+---------type---------+-----reserve-amount-----+-------bid-amount-------+
-// 	// | cosmos1qgqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqggwm7m |  1 |  0.500000000000000000 | BID_TYPE_FIXED_PRICE |               15000000 |               30000000 |
-// 	// | cosmos1qsqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqv4uhu3 |  2 |  0.500000000000000000 | BID_TYPE_FIXED_PRICE |               20000000 |               40000000 |
-// 	// | cosmos1pqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqvzjng6 |  3 |  0.500000000000000000 | BID_TYPE_FIXED_PRICE |                5000000 |               10000000 |
-// 	// | cosmos1psqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqn5wmnk |  4 |  0.500000000000000000 | BID_TYPE_FIXED_PRICE |               10000000 |               20000000 |
-// 	// +-----------------------------------------------+----+-----------------------+----------------------+------------------------+------------------------+
-
-// 	// [Allocation]
-// 	// +--------------------bidder---------------------+------allocated-amount------+
-// 	// | cosmos1qgqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqggwm7m |                   30000000 |
-// 	// | cosmos1qsqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqv4uhu3 |                   40000000 |
-// 	// | cosmos1pqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqvzjng6 |                   10000000 |
-// 	// | cosmos1psqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqn5wmnk |                   20000000 |
-// 	// +-----------------------------------------------+----------------------------+
-
-// 	// [MatchingInfo]
-// 	// +-matched-len-+------matched-price------+------total-matched-amount------+
-// 	// |           4 |    0.500000000000000000 |                      100000000 |
-// 	// +-------------+-------------------------+--------------------------------+
-// }
+	// [MatchingInfo]
+	// +-matched-len-+------matched-price------+------total-matched-amount------+
+	// |           4 |    0.500000000000000000 |                      100000000 |
+	// +-------------+-------------------------+--------------------------------+
+}
 
 // func (s *KeeperTestSuite) TestBatchAuction_Many() {
 // 	auction := s.createBatchAuction(

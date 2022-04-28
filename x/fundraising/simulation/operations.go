@@ -346,15 +346,13 @@ func SimulateMsgPlaceBid(ak types.AccountKeeper, bk types.BankKeeper, k keeper.K
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgPlaceBid, "insufficient balance to place a bid"), nil, nil
 		}
 
-		allowedBidders := k.GetAllowedBiddersByAuction(ctx, auction.GetId())
-		allowedBiddersMap := types.GetAllowedBiddersMap(allowedBidders)
-
-		prevMaxBidAmt, found := allowedBiddersMap[bidder.String()]
+		allowedBidder, found := k.GetAllowedBidder(ctx, auction.GetId(), bidder)
 		if found {
-			maxBidAmt = maxBidAmt.Add(prevMaxBidAmt)
+			maxBidAmt = maxBidAmt.Add(allowedBidder.MaxBidAmount)
 		}
 
-		if err := k.AddAllowedBidders(ctx, []types.AllowedBidder{{Bidder: bidder.String(), MaxBidAmount: maxBidAmt}}); err != nil {
+		newAllowedBidder := types.NewAllowedBidder(auction.GetId(), bidder, maxBidAmt)
+		if err := k.AddAllowedBidders(ctx, []types.AllowedBidder{newAllowedBidder}); err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgPlaceBid, "failed to add allowed bidders"), nil, nil
 		}
 
