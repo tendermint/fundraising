@@ -738,7 +738,7 @@ func (s *TxCmdTestSuite) TestNewModifyBidCmd() {
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 10)).String()),
 			},
-			false, &sdk.TxResponse{}, 4,
+			false, &sdk.TxResponse{}, 18,
 		},
 		{
 			"invalid case #2: bid not found",
@@ -794,7 +794,7 @@ func (s *TxCmdTestSuite) TestNewModifyBidCmd() {
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 10)).String()),
 			},
-			false, &sdk.TxResponse{}, 4,
+			false, &sdk.TxResponse{}, 18,
 		},
 	}
 
