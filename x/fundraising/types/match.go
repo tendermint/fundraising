@@ -16,7 +16,9 @@ type BidderMatchResult struct {
 
 // Match returns the match result for all bids that correspond with the auction.
 func Match(auction AuctionI, matchPrice sdk.Dec, prices []sdk.Dec, bidsByPrice map[string][]Bid) (res *MatchResult, matched bool) {
-	biddableAmtByBidder := auction.GetAllowedBiddersMap()
+	// Comment this for now
+	// biddableAmtByBidder := auction.GetAllowedBiddersMap()
+	biddableAmtByBidder := map[string]sdk.Int{}
 	res = &MatchResult{
 		MatchPrice:          matchPrice,
 		MatchedAmount:       sdk.ZeroInt(),

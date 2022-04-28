@@ -38396,6 +38396,10 @@ definitions:
   tendermint.fundraising.AllowedBidder:
     type: object
     properties:
+      auction_id:
+        type: string
+        format: uint64
+        title: auction_id specifies the id of the auction
       bidder:
         type: string
         title: bidder specifies the bech32-encoded address that bids for the auction

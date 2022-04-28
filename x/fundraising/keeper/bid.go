@@ -33,7 +33,9 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		}
 	}
 
-	_, found = auction.GetAllowedBiddersMap()[msg.Bidder]
+	allowedBidders := k.GetAllowedBiddersByAuction(ctx, auction.GetId())
+	allowedBiddersMap := types.GetAllowedBiddersMap(allowedBidders)
+	_, found = allowedBiddersMap[msg.Bidder]
 	if !found {
 		return types.Bid{}, types.ErrNotAllowedBidder
 	}
@@ -75,7 +77,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		bid.SetMatched(true)
 
 	case types.BidTypeBatchWorth:
-		if err := k.ValidateBatchWorthBid(auction, bid); err != nil {
+		if err := k.ValidateBatchWorthBid(ctx, auction, bid); err != nil {
 			return types.Bid{}, err
 		}
 
@@ -84,7 +86,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		}
 
 	case types.BidTypeBatchMany:
-		if err := k.ValidateBatchManyBid(auction, bid); err != nil {
+		if err := k.ValidateBatchManyBid(ctx, auction, bid); err != nil {
 			return types.Bid{}, err
 		}
 
@@ -147,11 +149,15 @@ func (k Keeper) ValidateFixedPriceBid(ctx sdk.Context, auction types.AuctionI, b
 		}
 	}
 
+	allowedBidder, found := k.GetAllowedBidder(ctx, bid.AuctionId, bid.GetBidder())
+	if !found {
+		return sdkerrors.Wrap(sdkerrors.ErrNotFound, "bidder is not found in allowed bidder list")
+	}
+
 	totalBidAmt = totalBidAmt.Add(bidAmt)
-	maxBidAmt := auction.GetMaxBidAmount(bid.Bidder)
 
 	// The total bid amount can't be greater than the bidder's maximum bid amount
-	if totalBidAmt.GT(maxBidAmt) {
+	if totalBidAmt.GT(allowedBidder.MaxBidAmount) {
 		return types.ErrOverMaxBidAmountLimit
 	}
 
@@ -159,7 +165,7 @@ func (k Keeper) ValidateFixedPriceBid(ctx sdk.Context, auction types.AuctionI, b
 }
 
 // ValidateBatchWorthBid validates a batch worth bid type.
-func (k Keeper) ValidateBatchWorthBid(auction types.AuctionI, bid types.Bid) error {
+func (k Keeper) ValidateBatchWorthBid(ctx sdk.Context, auction types.AuctionI, bid types.Bid) error {
 	if auction.GetType() != types.AuctionTypeBatch {
 		return types.ErrIncorrectAuctionType
 	}
@@ -168,11 +174,15 @@ func (k Keeper) ValidateBatchWorthBid(auction types.AuctionI, bid types.Bid) err
 		return types.ErrIncorrectCoinDenom
 	}
 
+	allowedBidder, found := k.GetAllowedBidder(ctx, bid.AuctionId, bid.GetBidder())
+	if !found {
+		return sdkerrors.Wrap(sdkerrors.ErrNotFound, "bidder is not found in allowed bidder list")
+	}
+
 	bidAmt := bid.ConvertToSellingAmount(auction.GetPayingCoinDenom())
-	maxBidAmt := auction.GetMaxBidAmount(bid.Bidder)
 
 	// The total bid amount can't be greater than the bidder's maximum bid amount
-	if bidAmt.GT(maxBidAmt) {
+	if bidAmt.GT(allowedBidder.MaxBidAmount) {
 		return types.ErrOverMaxBidAmountLimit
 	}
 
@@ -180,7 +190,7 @@ func (k Keeper) ValidateBatchWorthBid(auction types.AuctionI, bid types.Bid) err
 }
 
 // ValidateBatchManyBid validates a batch many bid type.
-func (k Keeper) ValidateBatchManyBid(auction types.AuctionI, bid types.Bid) error {
+func (k Keeper) ValidateBatchManyBid(ctx sdk.Context, auction types.AuctionI, bid types.Bid) error {
 	if auction.GetType() != types.AuctionTypeBatch {
 		return types.ErrIncorrectAuctionType
 	}
@@ -189,11 +199,15 @@ func (k Keeper) ValidateBatchManyBid(auction types.AuctionI, bid types.Bid) erro
 		return types.ErrIncorrectCoinDenom
 	}
 
+	allowedBidder, found := k.GetAllowedBidder(ctx, bid.AuctionId, bid.GetBidder())
+	if !found {
+		return sdkerrors.Wrap(sdkerrors.ErrNotFound, "bidder is not found in allowed bidder list")
+	}
+
 	bidAmt := bid.ConvertToSellingAmount(auction.GetPayingCoinDenom())
-	maxBidAmt := auction.GetMaxBidAmount(bid.Bidder)
 
 	// The total bid amount can't be greater than the bidder's maximum bid amount
-	if bidAmt.GT(maxBidAmt) {
+	if bidAmt.GT(allowedBidder.MaxBidAmount) {
 		return types.ErrOverMaxBidAmountLimit
 	}
 

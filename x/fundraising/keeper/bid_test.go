@@ -23,8 +23,10 @@ func (s *KeeperTestSuite) TestFixedPrice_InvalidStartPrice() {
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	// The bid price must be the same as the start price of the auction.
+	// Fund bidder
 	s.fundAddr(s.addr(2), parseCoins("200_000_000denom2"))
+
+	// Set allowed bidder
 	s.addAllowedBidder(auction.Id, s.addr(2), bidSellingAmount(parseDec("1"), parseCoin("200_000_000denom2")))
 
 	_, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{

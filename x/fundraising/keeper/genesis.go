@@ -26,6 +26,10 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 		k.SetAuction(ctx, auction)
 	}
 
+	for _, allowedBidder := range genState.AllowedBidders {
+		k.SetAllowedBidder(ctx, allowedBidder)
+	}
+
 	for _, bid := range genState.Bids {
 		_, found := k.GetAuction(ctx, bid.AuctionId)
 		if !found {
@@ -51,18 +55,22 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 	queues := k.GetVestingQueues(ctx)
 
 	auctions := []*codectypes.Any{}
+	allowedBidders := []types.AllowedBidder{}
 	for _, auction := range k.GetAuctions(ctx) {
 		auctionAny, err := types.PackAuction(auction)
 		if err != nil {
 			panic(err)
 		}
 		auctions = append(auctions, auctionAny)
+
+		allowedBidders = append(allowedBidders, k.GetAllowedBiddersByAuction(ctx, auction.GetId())...)
 	}
 
 	return &types.GenesisState{
-		Params:        params,
-		Auctions:      auctions,
-		Bids:          bids,
-		VestingQueues: queues,
+		Params:         params,
+		Auctions:       auctions,
+		AllowedBidders: allowedBidders,
+		Bids:           bids,
+		VestingQueues:  queues,
 	}
 }

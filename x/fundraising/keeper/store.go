@@ -77,6 +77,54 @@ func (k Keeper) IterateAuctions(ctx sdk.Context, cb func(auction types.AuctionI)
 	}
 }
 
+// GetAllowedBidder returns an allowed bidder object for the given auction id and bidder address.
+func (k Keeper) GetAllowedBidder(ctx sdk.Context, auctionId uint64, bidderAddr sdk.AccAddress) (allowedBidder types.AllowedBidder, found bool) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.GetAllowedBidderKey(auctionId, bidderAddr))
+	if bz == nil {
+		return
+	}
+	k.cdc.MustUnmarshal(bz, &allowedBidder)
+	found = true
+	return
+}
+
+// SetAllowedBidder stores an allowed bidder object for the auction.
+func (k Keeper) SetAllowedBidder(ctx sdk.Context, allowedBidder types.AllowedBidder) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshal(&allowedBidder)
+	store.Set(types.GetAllowedBidderKey(allowedBidder.AuctionId, allowedBidder.GetBidder()), bz)
+}
+
+// GetAllowedBiddersByAuction returns allowed bidders list for the auction.
+func (k Keeper) GetAllowedBiddersByAuction(ctx sdk.Context, auctionId uint64) (allowedBidders []types.AllowedBidder) {
+	_ = k.IterateAllowedBiddersByAuction(ctx, auctionId, func(allowedBidder types.AllowedBidder) (stop bool, err error) {
+		allowedBidders = append(allowedBidders, allowedBidder)
+		return false, nil
+	})
+	return
+}
+
+// IterateAllowedBiddersByAuction iterates through all the allowed bidder for the auction
+// and call cb for each allowed bidder.
+func (k Keeper) IterateAllowedBiddersByAuction(ctx sdk.Context, auctionId uint64, cb func(ab types.AllowedBidder) (stop bool, err error)) error {
+	store := ctx.KVStore(k.storeKey)
+	iter := sdk.KVStorePrefixIterator(store, types.GetAllowedBiddersByAuctionKeyPrefix(auctionId))
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var allowedBidder types.AllowedBidder
+		k.cdc.MustUnmarshal(iter.Value(), &allowedBidder)
+		stop, err := cb(allowedBidder)
+		if err != nil {
+			return err
+		}
+		if stop {
+			break
+		}
+	}
+	return nil
+}
+
 // GetLastBidId returns the last bid id for the bid.
 func (k Keeper) GetLastBidId(ctx sdk.Context, auctionId uint64) uint64 {
 	var id uint64

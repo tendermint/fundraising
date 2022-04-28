@@ -10,10 +10,11 @@ import (
 // DefaultGenesisState returns the default fundraising genesis state
 func DefaultGenesisState() *GenesisState {
 	return &GenesisState{
-		Params:        DefaultParams(),
-		Auctions:      []*codectypes.Any{},
-		Bids:          []Bid{},
-		VestingQueues: []VestingQueue{},
+		Params:         DefaultParams(),
+		Auctions:       []*codectypes.Any{},
+		AllowedBidders: []AllowedBidder{},
+		Bids:           []Bid{},
+		VestingQueues:  []VestingQueue{},
 	}
 }
 
@@ -35,6 +36,12 @@ func (gs GenesisState) Validate() error {
 		}
 	}
 
+	for _, ab := range gs.AllowedBidders {
+		if err := ab.Validate(); err != nil {
+			return err
+		}
+	}
+
 	for _, b := range gs.Bids {
 		if err := b.Validate(); err != nil {
 			return err
@@ -47,6 +54,20 @@ func (gs GenesisState) Validate() error {
 		}
 	}
 
+	return nil
+}
+
+// Validate validates AllowedBidder.
+func (ab AllowedBidder) Validate() error {
+	if _, err := sdk.AccAddressFromBech32(ab.Bidder); err != nil {
+		return err
+	}
+	if ab.MaxBidAmount.IsNil() {
+		return ErrInvalidMaxBidAmount
+	}
+	if !ab.MaxBidAmount.IsPositive() {
+		return ErrInvalidMaxBidAmount
+	}
 	return nil
 }
 

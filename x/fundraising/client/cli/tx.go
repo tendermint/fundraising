@@ -417,8 +417,8 @@ $ %s tx %s add-allowed-bidder 1 10000000000 --from mykey
 			}
 
 			msg := types.NewAddAllowedBidder(
-				auctionId,
 				types.AllowedBidder{
+					AuctionId:    auctionId,
 					Bidder:       bidderAddr.String(),
 					MaxBidAmount: maxBidAmt,
 				},
