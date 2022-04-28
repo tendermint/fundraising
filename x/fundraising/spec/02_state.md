@@ -47,9 +47,6 @@ type AuctionI interface {
 	GetVestingSchedules() []VestingSchedule
 	SetVestingSchedules([]VestingSchedule) error
 	
-	GetRemainingSellingCoin() sdk.Coin
-	SetRemainingSellingCoin(sdk.Coin) error
-	
 	GetStartTime() time.Time
 	SetStartTime(time.Time) error
 
@@ -88,7 +85,6 @@ type BaseAuction struct {
 	PayingCoinDenom       string            // the denom that the auctioneer receives to raise funds
 	VestingReserveAddress string            // the reserve account that releases the accumulated paying coins based on the schedules
 	VestingSchedules      []VestingSchedule // the vesting schedules for the auction
-	RemainingSellingCoin  sdk.Coin          // the remaining amount of coin to sell
 	StartTime             time.Time         // the start time of the auction
 	EndTimes              []time.Time       // the end times of the auction; it is an array since extended round(s) can occur
 	Status                AuctionStatus     // the auction status
@@ -139,6 +135,7 @@ const (
 // FixedPriceAuction defines the fixed price auction type
 type FixedPriceAuction struct {
 	*BaseAuction
+	RemainingSellingCoin sdk.Coin // the remaining amount of coin to sell
 }
 
 // BatchAuction defines the batch auction type 
