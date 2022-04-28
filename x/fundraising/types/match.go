@@ -41,7 +41,6 @@ func Match(auction AuctionI, matchPrice sdk.Dec, prices []sdk.Dec, bidsByPrice m
 
 			if res.MatchedAmount.Add(matchAmt).GT(auction.GetSellingCoin().Amount) {
 				// Including this bid will exceed the auction's selling amount.
-				// Thus, we found the ideal match price.
 				return res, false
 			}
 
@@ -59,7 +58,9 @@ func Match(auction AuctionI, matchPrice sdk.Dec, prices []sdk.Dec, bidsByPrice m
 			bidderRes.PayingAmount = bidderRes.PayingAmount.Add(payingAmt)
 
 			biddableAmtByBidder[bid.Bidder] = biddableAmt.Sub(matchAmt)
-			res.MatchedBids = append(res.MatchedBids, bid)
+			if matchAmt.IsPositive() {
+				res.MatchedBids = append(res.MatchedBids, bid)
+			}
 			res.MatchedAmount = res.MatchedAmount.Add(matchAmt)
 		}
 	}

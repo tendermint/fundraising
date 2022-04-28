@@ -620,7 +620,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2_LimitedSame() {
 	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
 
 	// Checking
-	s.Require().Equal(mInfo.MatchedLen, int64(13))
+	s.Require().Equal(int64(11), mInfo.MatchedLen)
 	matchingPrice := parseDec("0.6")
 	s.Require().Equal(mInfo.MatchedPrice, matchingPrice)
 
@@ -761,7 +761,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2_LimitedDifferent() {
 	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
 
 	// Checking
-	s.Require().Equal(mInfo.MatchedLen, int64(15))
+	s.Require().Equal(int64(12), mInfo.MatchedLen)
 	matchingPrice := parseDec("0.5")
 	s.Require().Equal(mInfo.MatchedPrice, matchingPrice)
 
@@ -1110,7 +1110,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed3_LimitedDifferent() {
 	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
 
 	// Checking
-	s.Require().Equal(mInfo.MatchedLen, int64(16))
+	s.Require().Equal(int64(14), mInfo.MatchedLen)
 	matchingPrice := parseDec("10.1")
 	s.Require().Equal(mInfo.MatchedPrice, matchingPrice)
 

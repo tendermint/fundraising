@@ -54,10 +54,14 @@ func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI
 	bids := k.GetBidsByAuctionId(ctx, auction.GetId())
 	prices, bidsByPrice := types.BidsByPrice(bids)
 
-	var matchRes *types.MatchResult
-	for i, price := range prices {
+	matchRes := &types.MatchResult{
+		MatchPrice:          sdk.Dec{},
+		MatchedAmount:       sdk.ZeroInt(),
+		MatchResultByBidder: map[string]*types.BidderMatchResult{},
+	}
+	for _, price := range prices {
 		res, found := types.Match(auction, price, prices, bidsByPrice)
-		if found || (matchRes == nil && i == len(prices)-1) {
+		if found {
 			matchRes = res
 		}
 		if !found {
