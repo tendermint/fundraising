@@ -20,9 +20,6 @@ type AuctionI interface {
 	GetType() AuctionType
 	SetType(AuctionType) error
 
-	GetAllowedBidders() []AllowedBidder
-	SetAllowedBidders([]AllowedBidder) error
-
 	GetAuctioneer() string
 	SetAuctioneer(string) error
 
@@ -76,7 +73,6 @@ A base auction stores all requisite fields directly in a struct.
 type BaseAuction struct {
 	Id                    uint64            // id of the auction
 	Type                  AuctionType       // the auction type; currently FixedPrice and English are supported
-	AllowedBidders        []AllowedBidder   // the bidders who are allowed to bid
 	Auctioneer            string            // the owner of the auction
 	SellingReserveAddress string            // the reserve account to collect selling coins from the auctioneer
 	PayingReserveAddress  string            // the reserve account to collect paying coins from the bidders
@@ -89,9 +85,12 @@ type BaseAuction struct {
 	EndTimes              []time.Time       // the end times of the auction; it is an array since extended round(s) can occur
 	Status                AuctionStatus     // the auction status
 }
+```
 
+```go
 // AllowedBidder defines a bidder who is allowed to bid with max number of bids.
 type AllowedBidder struct {
+	AuctionId       uint64  // id of the auction
 	Bidder          string  // a bidder who is allowed to bid
 	MaxBidAmount    uint64  // a maximum amount of bids per bidder
 }
@@ -99,7 +98,6 @@ type AllowedBidder struct {
 
 
 ## Vesting
-
 ```go
 // VestingSchedule defines the vesting schedule for the owner of an auction.
 type VestingSchedule struct {
@@ -238,6 +236,10 @@ Stores are KVStores in the multi-store. The key to find the store is the first p
 ### The key to retrieve the auction object from the auction id
 
 - `AuctionKey: 0x21 | AuctionId -> ProtocolBuffer(Auction)`
+
+### The key to retrieve the allowed bidder object for the auction
+
+- `AllowedBidderKey: 0x22 | AuctionId | BidderAddrLen (1 byte) | BidderAddr -> ProtocolBuffer(AllowedBidder)`
 
 ### The key to retrieve the bid object from the auction id and bid id
 

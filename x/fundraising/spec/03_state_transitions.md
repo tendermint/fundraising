@@ -34,8 +34,6 @@ When `MsgPlaceBid` is confirmed, `PayingCoin` of the bidder is reserved in `Payi
 
 For a fixed price auction, when `MsgPlaceBid` is confirmed, `RemainingSellingCoin` is updated based on the message.
 
-
-
 ### MsgModifyBid
 
 When `MsgModifyBid` is confirmed for an existing bid, the difference of `PayingCoin`  of the modifying bid and `PayingCoin`  of the existing bid is reserved in `PayingReserveAddress`.
