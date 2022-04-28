@@ -838,7 +838,7 @@ func (s *QueryCmdTestSuite) SetupTest() {
 	encodingCfg := cosmoscmd.MakeEncodingConfig(chain.ModuleBasics)
 
 	cfg := network.DefaultConfig()
-	cfg.NumValidators = 1
+	cfg.NumValidators = 2
 	cfg.AppConstructor = NewAppConstructor(encodingCfg)
 	cfg.GenesisState = chain.ModuleBasics.DefaultGenesis(cfg.Codec)
 	cfg.AccountTokens = sdk.NewInt(100_000_000_000_000) // node0token denom
@@ -1031,6 +1031,148 @@ func (s *TxCmdTestSuite) TestNewQueryAuctionCmd() {
 			if tc.expectedErr == "" {
 				s.Require().NoError(err)
 				var resp types.QueryAuctionResponse
+				s.Require().NoError(val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp), out.String())
+				tc.postRun(resp)
+			} else {
+				s.Require().EqualError(err, tc.expectedErr)
+			}
+		})
+	}
+}
+
+func (s *TxCmdTestSuite) TestNewQueryAllowedBiddersCmd() {
+	val := s.network.Validators[0]
+	clientCtx := val.ClientCtx
+	types.RegisterInterfaces(clientCtx.InterfaceRegistry)
+
+	// Create a fixed price auction
+	_, err := MsgCreateFixedPriceAuctionExec(
+		val.ClientCtx,
+		val.Address.String(),
+		testutil.WriteToNewTempFile(s.T(), cli.FixedPriceAuctionRequest{
+			StartPrice:      sdk.MustNewDecFromStr("1.0"),
+			SellingCoin:     sdk.NewInt64Coin(s.denom1, 100_000_000_000),
+			PayingCoinDenom: s.denom2,
+			VestingSchedules: []types.VestingSchedule{
+				{
+					ReleaseTime: time.Now().AddDate(1, 0, 0),
+					Weight:      sdk.MustNewDecFromStr("1.0"),
+				},
+			},
+			StartTime: time.Now().AddDate(0, 1, 0),
+			EndTime:   time.Now().AddDate(0, 3, 0),
+		}.String()).Name(),
+	)
+	s.Require().NoError(err)
+
+	// Add allowed bidder
+	_, err = MsgAddAllowedBidderExec(
+		val.ClientCtx,
+		val.Address.String(),
+		1,
+		sdk.NewInt(100_000_000),
+	)
+	s.Require().NoError(err)
+
+	for _, tc := range []struct {
+		name        string
+		args        []string
+		expectedErr string
+		postRun     func(resp types.QueryAllowedBiddersResponse)
+	}{
+		{
+			"happy case",
+			[]string{
+				strconv.Itoa(1),
+				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
+			},
+			"",
+			func(resp types.QueryAllowedBiddersResponse) {
+				s.Require().Len(resp.AllowedBidders, 1)
+			},
+		},
+	} {
+		s.Run(tc.name, func() {
+			cmd := cli.NewQueryAllowedBiddersCmd()
+
+			out, err := utilcli.ExecTestCLICmd(val.ClientCtx, cmd, tc.args)
+
+			if tc.expectedErr == "" {
+				s.Require().NoError(err)
+				var resp types.QueryAllowedBiddersResponse
+				s.Require().NoError(val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp), out.String())
+				tc.postRun(resp)
+			} else {
+				s.Require().EqualError(err, tc.expectedErr)
+			}
+		})
+	}
+}
+
+func (s *TxCmdTestSuite) TestNewQueryAllowedBidderCmd() {
+	val := s.network.Validators[0]
+	clientCtx := val.ClientCtx
+	types.RegisterInterfaces(clientCtx.InterfaceRegistry)
+
+	// Create a fixed price auction
+	_, err := MsgCreateFixedPriceAuctionExec(
+		val.ClientCtx,
+		val.Address.String(),
+		testutil.WriteToNewTempFile(s.T(), cli.FixedPriceAuctionRequest{
+			StartPrice:      sdk.MustNewDecFromStr("1.0"),
+			SellingCoin:     sdk.NewInt64Coin(s.denom1, 100_000_000_000),
+			PayingCoinDenom: s.denom2,
+			VestingSchedules: []types.VestingSchedule{
+				{
+					ReleaseTime: time.Now().AddDate(1, 0, 0),
+					Weight:      sdk.MustNewDecFromStr("1.0"),
+				},
+			},
+			StartTime: time.Now().AddDate(0, 1, 0),
+			EndTime:   time.Now().AddDate(0, 3, 0),
+		}.String()).Name(),
+	)
+	s.Require().NoError(err)
+
+	// Add allowed bidder
+	maxBidAmt := sdk.NewInt(100_000_000)
+	_, err = MsgAddAllowedBidderExec(
+		val.ClientCtx,
+		val.Address.String(),
+		1,
+		maxBidAmt,
+	)
+	s.Require().NoError(err)
+
+	for _, tc := range []struct {
+		name        string
+		args        []string
+		expectedErr string
+		postRun     func(resp types.QueryAllowedBidderResponse)
+	}{
+		{
+			"happy case",
+			[]string{
+				strconv.Itoa(1),
+				val.Address.String(),
+				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
+			},
+			"",
+			func(resp types.QueryAllowedBidderResponse) {
+				s.Require().Equal(uint64(1), resp.AllowedBidder.AuctionId)
+				s.Require().Equal(val.Address.String(), resp.AllowedBidder.Bidder)
+				s.Require().Equal(maxBidAmt, resp.AllowedBidder.MaxBidAmount)
+			},
+		},
+	} {
+		s.Run(tc.name, func() {
+			cmd := cli.NewQueryAllowedBidderCmd()
+
+			out, err := utilcli.ExecTestCLICmd(val.ClientCtx, cmd, tc.args)
+
+			if tc.expectedErr == "" {
+				s.Require().NoError(err)
+				var resp types.QueryAllowedBidderResponse
 				s.Require().NoError(val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp), out.String())
 				tc.postRun(resp)
 			} else {

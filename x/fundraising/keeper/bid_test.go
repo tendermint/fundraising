@@ -258,7 +258,7 @@ func (s *KeeperTestSuite) TestBatchMany_OverMaxBidAmountLimit() {
 	s.Require().ErrorIs(err, types.ErrOverMaxBidAmountLimit)
 }
 
-func (s *KeeperTestSuite) TestModifyBid() {
+func (s *KeeperTestSuite) TestModifyBid_BidTypeWorth() {
 	a := s.createBatchAuction(
 		s.addr(0),
 		parseDec("0.1"),
@@ -275,7 +275,7 @@ func (s *KeeperTestSuite) TestModifyBid() {
 	s.Require().Equal(types.AuctionStatusStarted, a.GetStatus())
 
 	// Place a bid
-	b := s.placeBidBatchWorth(a.Id, s.addr(1), parseDec("0.6"), parseCoin("100_000_000denom2"), sdk.NewInt(1000_000_000), true)
+	b := s.placeBidBatchWorth(a.Id, s.addr(1), parseDec("0.6"), parseCoin("100_000_000denom2"), sdk.NewInt(1_000_000_000), true)
 
 	// Modify the bid with not existing bid
 	err := s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{
@@ -326,4 +326,57 @@ func (s *KeeperTestSuite) TestModifyBid() {
 		Coin:      parseCoin("100denom2"),
 	})
 	s.Require().ErrorIs(err, sdkerrors.ErrInvalidRequest)
+
+	// No modification
+	err = s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{
+		AuctionId: a.Id,
+		Bidder:    s.addr(1).String(),
+		BidId:     b.Id,
+		Price:     parseDec("0.6"),
+		Coin:      parseCoin("100_000_000denom2"),
+	})
+	s.Require().ErrorIs(err, sdkerrors.ErrInvalidRequest)
+}
+
+func (s *KeeperTestSuite) TestModifyBid_BidTypeMany() {
+	a := s.createBatchAuction(
+		s.addr(0),
+		parseDec("0.1"),
+		parseDec("0.1"),
+		parseCoin("1_000_000_000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		1,
+		sdk.MustNewDecFromStr("0.2"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, a.GetStatus())
+
+	// Place a bid
+	b := s.placeBidBatchMany(a.Id, s.addr(1), parseDec("0.5"), parseCoin("100_000_000denom1"), sdk.NewInt(1_000_000_000), true)
+
+	// Insufficient minimum price
+	err := s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{
+		AuctionId: a.Id,
+		Bidder:    s.addr(1).String(),
+		BidId:     b.Id,
+		Price:     parseDec("0.01"),
+		Coin:      parseCoin("100_000_000denom1"),
+	})
+	s.Require().ErrorIs(err, types.ErrInsufficientMinBidPrice)
+
+	// Fund the bidder enough paying coin
+	s.fundAddr(s.addr(1), parseCoins("1_000_000_000_000denom2"))
+
+	// Modify the bid with not existing bid
+	err = s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{
+		AuctionId: a.Id,
+		Bidder:    s.addr(1).String(),
+		BidId:     b.Id,
+		Price:     parseDec("0.8"),
+		Coin:      parseCoin("100_000_000denom1"),
+	})
+	s.Require().NoError(err)
 }

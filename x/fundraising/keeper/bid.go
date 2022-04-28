@@ -252,7 +252,6 @@ func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "bid price or coin amount cannot be lower")
 	}
 
-	// TODO: add test case
 	if msg.Price.Equal(bid.Price) && msg.Coin.Amount.Equal(bid.Coin.Amount) {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "bid price and coin amount must be changed")
 	}
@@ -266,9 +265,9 @@ func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) error {
 				return err
 			}
 		}
-	case types.BidTypeBatchMany: // TODO: add test case
-		prevReserveAmt := msg.Coin.Amount.ToDec().Mul(msg.Price).Ceil()
-		currReserveAmt := bid.Coin.Amount.ToDec().Mul(bid.Price).Ceil()
+	case types.BidTypeBatchMany:
+		prevReserveAmt := bid.Coin.Amount.ToDec().Mul(bid.Price).Ceil()
+		currReserveAmt := msg.Coin.Amount.ToDec().Mul(msg.Price).Ceil()
 		diffReserveAmt := currReserveAmt.Sub(prevReserveAmt).TruncateInt()
 		diffReserveCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), diffReserveAmt)
 		if diffReserveCoin.IsPositive() {
