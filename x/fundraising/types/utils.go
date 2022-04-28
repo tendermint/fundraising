@@ -32,8 +32,8 @@ func DeriveAddress(addressType AddressType, moduleName, name string) sdk.AccAddr
 	}
 }
 
-// SortByBidPrice sorts bid array by bid price in descending order.
-func SortByBidPrice(bids []Bid) []Bid {
+// SortBids sorts bid array by bid price in descending order.
+func SortBids(bids []Bid) []Bid {
 	sort.Slice(bids, func(i, j int) bool {
 		if bids[i].Price.GT(bids[j].Price) {
 			return true
@@ -44,7 +44,7 @@ func SortByBidPrice(bids []Bid) []Bid {
 }
 
 func BidsByPrice(bids []Bid) (prices []sdk.Dec, bidsByPrice map[string][]Bid) {
-	bids = SortByBidPrice(bids)
+	bids = SortBids(bids)
 
 	bidsByPrice = map[string][]Bid{} // price => []Bid
 
@@ -55,7 +55,7 @@ func BidsByPrice(bids []Bid) (prices []sdk.Dec, bidsByPrice map[string][]Bid) {
 
 	// Sort prices in descending order.
 	prices = make([]sdk.Dec, len(bidsByPrice))
-	i := 0 // TODO: is it too much optimization? we can use append(...)
+	i := 0
 	for priceStr := range bidsByPrice {
 		prices[i] = sdk.MustNewDecFromStr(priceStr)
 		i++
@@ -64,68 +64,4 @@ func BidsByPrice(bids []Bid) (prices []sdk.Dec, bidsByPrice map[string][]Bid) {
 		return prices[i].GT(prices[j])
 	})
 	return
-}
-
-type MatchResult struct {
-	MatchPrice          sdk.Dec
-	MatchedAmount       sdk.Int
-	MatchedBids         []Bid
-	MatchResultByBidder map[string]*BidderMatchResult
-}
-
-type BidderMatchResult struct {
-	PayingAmount  sdk.Int
-	MatchedAmount sdk.Int
-}
-
-func Match(auction AuctionI, matchPrice sdk.Dec, prices []sdk.Dec, bidsByPrice map[string][]Bid) (res *MatchResult, matched bool) {
-	biddableAmtByBidder := auction.GetAllowedBiddersMap()
-	res = &MatchResult{
-		MatchPrice:          matchPrice,
-		MatchedAmount:       sdk.ZeroInt(),
-		MatchResultByBidder: map[string]*BidderMatchResult{},
-	}
-
-	for _, price := range prices {
-		if price.LT(matchPrice) {
-			break
-		}
-
-		for _, bid := range bidsByPrice[price.String()] {
-			var bidAmt sdk.Int
-			switch bid.Type {
-			case BidTypeBatchWorth:
-				bidAmt = bid.Coin.Amount.ToDec().QuoTruncate(matchPrice).TruncateInt()
-			case BidTypeBatchMany:
-				bidAmt = bid.Coin.Amount
-			}
-			biddableAmt := biddableAmtByBidder[bid.Bidder]
-			matchAmt := sdk.MinInt(bidAmt, biddableAmtByBidder[bid.Bidder])
-
-			if res.MatchedAmount.Add(matchAmt).GT(auction.GetSellingCoin().Amount) {
-				// Including this bid will exceed the auction's selling amount.
-				// Thus, we found the ideal match price.
-				return res, false
-			}
-
-			payingAmt := matchPrice.MulInt(matchAmt).Ceil().TruncateInt()
-
-			bidderRes, ok := res.MatchResultByBidder[bid.Bidder]
-			if !ok {
-				bidderRes = &BidderMatchResult{
-					PayingAmount:  sdk.ZeroInt(),
-					MatchedAmount: sdk.ZeroInt(),
-				}
-				res.MatchResultByBidder[bid.Bidder] = bidderRes
-			}
-			bidderRes.MatchedAmount = bidderRes.MatchedAmount.Add(matchAmt)
-			bidderRes.PayingAmount = bidderRes.PayingAmount.Add(payingAmt)
-
-			biddableAmtByBidder[bid.Bidder] = biddableAmt.Sub(matchAmt)
-			res.MatchedBids = append(res.MatchedBids, bid)
-			res.MatchedAmount = res.MatchedAmount.Add(matchAmt)
-		}
-	}
-
-	return res, true
 }

@@ -89,7 +89,7 @@ func TestShouldAuctionStarted(t *testing.T) {
 	}
 }
 
-func TestShouldAuctionFinished(t *testing.T) {
+func TestShouldAuctionClosed(t *testing.T) {
 	auction := types.BaseAuction{
 		Id:                    1,
 		Type:                  types.AuctionTypeFixedPrice,
@@ -120,7 +120,7 @@ func TestShouldAuctionFinished(t *testing.T) {
 		{"2021-12-30T00:00:00Z", true},
 		{"2022-01-01T00:00:00Z", true},
 	} {
-		require.Equal(t, tc.expected, auction.ShouldAuctionFinished(types.MustParseRFC3339(tc.currentTime)))
+		require.Equal(t, tc.expected, auction.ShouldAuctionClosed(types.MustParseRFC3339(tc.currentTime)))
 	}
 }
 

@@ -13,7 +13,7 @@ This document provides a high-level overview of what gRPC-gateway REST routes ar
 
 ## gRPC-gateway REST Routes
 
-To test out the following command line interface, you must set up a local network. By simply running `make localnet` under the root project directory, you can start the local network. It requires [Starport](https://starport.com/), but if you don't have Starport set up in your local machine, see this [install Starport guide](https://docs.starport.com/#install-starport) to install it.  
+To test out the following command line interface, you must set up a local network. By simply running `make localnet` under the root project directory, you can start the local network. It requires Ignite CLI, but if you don't have Starport set up in your local machine, see this [install Starport guide](https://docs.ignite.com/#install-starport) to install it.  
 
 * [Params](#Params)
 * [Auctions](#Auctions)

@@ -68,7 +68,7 @@ Run `make test-all` command to run tests.
 
 ## Localnet
 
-To start a local blockchain, you can simply run the following command. The command uses [Starport](https://starport.com/) to start a local blockchain node with automatic reloading. If you don't have Starport set up in your local machine, see this [install guide](https://docs.starport.com/#install-starport) to install it.  
+To start a local blockchain, you can simply run the following command. The command uses Ignite CLI to start a local blockchain node with automatic reloading. If you don't have Starport set up in your local machine, see this [install guide](https://docs.ignite.com/#install-starport) to install it.  
 
 ```bash
 make localnet

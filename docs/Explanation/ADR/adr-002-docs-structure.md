@@ -134,7 +134,7 @@ The following files are required at the repo root level:
 
 #### Modules
 
-In line with Cosmos SDK convention (TODO: needs reference) each module contains its own relevant documentation:
+In line with Cosmos SDK convention each module contains its own relevant documentation:
 
 - **Module specifications** - A document that outlines state transitions `x/module-name/docs/`
 - **Module-level README.md** e.g. x/module-name/README.md

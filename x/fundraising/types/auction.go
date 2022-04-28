@@ -265,8 +265,8 @@ func (ba BaseAuction) ShouldAuctionStarted(t time.Time) bool {
 	return !ba.GetStartTime().After(t) // StartTime <= Time
 }
 
-// ShouldAuctionFinished returns true if the end time is equal or before the given time t.
-func (ba BaseAuction) ShouldAuctionFinished(t time.Time) bool {
+// ShouldAuctionClosed returns true if the end time is equal or before the given time t.
+func (ba BaseAuction) ShouldAuctionClosed(t time.Time) bool {
 	ts := ba.GetEndTimes()
 	return !ts[len(ts)-1].After(t) // LastEndTime <= Time
 }
@@ -340,7 +340,7 @@ type AuctionI interface {
 	SetStatus(AuctionStatus) error
 
 	ShouldAuctionStarted(t time.Time) bool
-	ShouldAuctionFinished(t time.Time) bool
+	ShouldAuctionClosed(t time.Time) bool
 
 	GetAllowedBiddersMap() map[string]sdk.Int
 

@@ -153,7 +153,7 @@ func TestSortByBidPrice(t *testing.T) {
 		},
 	}
 
-	bids := types.SortByBidPrice(sampleBids)
+	bids := types.SortBids(sampleBids)
 
 	require.True(t, sort.SliceIsSorted(bids, func(i, j int) bool {
 		return bids[i].Price.GT(bids[j].Price)
