@@ -26,6 +26,10 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 		k.SetAuction(ctx, auction)
 	}
 
+	for _, record := range genState.AllowedBidderRecords {
+		k.SetAllowedBidder(ctx, record.AuctionId, record.AllowedBidder)
+	}
+
 	for _, bid := range genState.Bids {
 		_, found := k.GetAuction(ctx, bid.AuctionId)
 		if !found {
@@ -51,18 +55,30 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 	queues := k.GetVestingQueues(ctx)
 
 	auctions := []*codectypes.Any{}
+	allowedBidderRecords := []types.AllowedBidderRecord{}
 	for _, auction := range k.GetAuctions(ctx) {
 		auctionAny, err := types.PackAuction(auction)
 		if err != nil {
 			panic(err)
 		}
 		auctions = append(auctions, auctionAny)
+
+		if err := k.IterateAllowedBiddersByAuction(ctx, auction.GetId(), func(ab types.AllowedBidder) (stop bool, err error) {
+			allowedBidderRecords = append(allowedBidderRecords, types.AllowedBidderRecord{
+				AuctionId:     auction.GetId(),
+				AllowedBidder: ab,
+			})
+			return false, nil
+		}); err != nil {
+			panic(err)
+		}
 	}
 
 	return &types.GenesisState{
-		Params:        params,
-		Auctions:      auctions,
-		Bids:          bids,
-		VestingQueues: queues,
+		Params:               params,
+		Auctions:             auctions,
+		AllowedBidderRecords: allowedBidderRecords,
+		Bids:                 bids,
+		VestingQueues:        queues,
 	}
 }

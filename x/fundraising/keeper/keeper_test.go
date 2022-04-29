@@ -113,15 +113,12 @@ func (s *KeeperTestSuite) addAllowedBidder(auctionId uint64, bidder sdk.AccAddre
 	auction, found := s.keeper.GetAuction(s.ctx, auctionId)
 	s.Require().True(found)
 
-	prevMaxBidAmt, found := auction.GetAllowedBiddersMap()[bidder.String()]
+	allowedBidder, found := s.keeper.GetAllowedBidder(s.ctx, auction.GetId(), bidder)
 	if found {
-		maxBidAmt = maxBidAmt.Add(prevMaxBidAmt)
+		maxBidAmt = maxBidAmt.Add(allowedBidder.MaxBidAmount)
 	}
 
-	err := s.keeper.AddAllowedBidders(s.ctx, auctionId, []types.AllowedBidder{
-		{Bidder: bidder.String(), MaxBidAmount: maxBidAmt},
-	})
-	s.Require().NoError(err)
+	s.keeper.SetAllowedBidder(s.ctx, auctionId, types.NewAllowedBidder(bidder, maxBidAmt))
 }
 
 func (s *KeeperTestSuite) placeBidFixedPrice(

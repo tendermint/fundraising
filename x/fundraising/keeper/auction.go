@@ -20,7 +20,8 @@ func (k Keeper) GetNextAuctionIdWithUpdate(ctx sdk.Context) uint64 {
 	return id
 }
 
-// CreateFixedPriceAuction sets a fixed price auction.
+// CreateFixedPriceAuction handles types.MsgCreateFixedPriceAuction and create a fixed price auction.
+// Note that the module is designed to delegate authorization to an external module to add allowed bidders for the auction.
 func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFixedPriceAuction) (types.AuctionI, error) {
 	if ctx.BlockTime().After(msg.EndTime) { // EndTime < CurrentTime
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be set after the current time")
@@ -36,16 +37,9 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		return nil, err
 	}
 
-	// Allowed bidder list is empty when an auction is created
-	// The module is fundamentally designed to delegate authorization
-	// to an external module to add allowed bidder list for an auction
-	allowedBidders := []types.AllowedBidder{}
-	endTimes := []time.Time{msg.EndTime} // it is an array data type to handle BatchAuction
-
 	ba := types.NewBaseAuction(
 		nextId,
 		types.AuctionTypeFixedPrice,
-		allowedBidders,
 		msg.Auctioneer,
 		types.SellingReserveAddress(nextId).String(),
 		types.PayingReserveAddress(nextId).String(),
@@ -54,9 +48,8 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		msg.PayingCoinDenom,
 		types.VestingReserveAddress(nextId).String(),
 		msg.VestingSchedules,
-		msg.SellingCoin,
 		msg.StartTime,
-		endTimes,
+		[]time.Time{msg.EndTime}, // it is an array data type to handle BatchAuction
 		types.AuctionStatusStandBy,
 	)
 
@@ -65,7 +58,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		_ = ba.SetStatus(types.AuctionStatusStarted)
 	}
 
-	auction := types.NewFixedPriceAuction(ba)
+	auction := types.NewFixedPriceAuction(ba, msg.SellingCoin)
 
 	// Call the before auction created hook
 	k.BeforeFixedPriceAuctionCreated(
@@ -92,7 +85,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 			sdk.NewAttribute(types.AttributeKeySellingCoin, auction.GetSellingCoin().String()),
 			sdk.NewAttribute(types.AttributeKeyPayingCoinDenom, auction.GetPayingCoinDenom()),
 			sdk.NewAttribute(types.AttributeKeyVestingReserveAddress, auction.GetVestingReserveAddress().String()),
-			sdk.NewAttribute(types.AttributeKeyRemainingSellingCoin, auction.GetRemainingSellingCoin().String()),
+			sdk.NewAttribute(types.AttributeKeyRemainingSellingCoin, auction.RemainingSellingCoin.String()),
 			sdk.NewAttribute(types.AttributeKeyStartTime, auction.GetStartTime().String()),
 			sdk.NewAttribute(types.AttributeKeyEndTime, msg.EndTime.String()),
 			sdk.NewAttribute(types.AttributeKeyAuctionStatus, auction.GetStatus().String()),
@@ -102,7 +95,8 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 	return auction, nil
 }
 
-// CreateBatchAuction sets batch auction.
+// CreateBatchAuction handles types.MsgCreateBatchAuction and create a batch auction.
+// Note that the module is designed to delegate authorization to an external module to add allowed bidders for the auction.
 func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuction) (types.AuctionI, error) {
 	if ctx.BlockTime().After(msg.EndTime) { // EndTime < CurrentTime
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be set after the current time")
@@ -118,16 +112,11 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 		return nil, err
 	}
 
-	// Allowed bidder list is empty when an auction is created
-	// The module is fundamentally designed to delegate authorization
-	// to an external module to add allowed bidder list for an auction
-	allowedBidders := []types.AllowedBidder{}
 	endTimes := []time.Time{msg.EndTime} // it is an array data type to handle BatchAuction
 
 	ba := types.NewBaseAuction(
 		nextId,
 		types.AuctionTypeBatch,
-		allowedBidders,
 		msg.Auctioneer,
 		types.SellingReserveAddress(nextId).String(),
 		types.PayingReserveAddress(nextId).String(),
@@ -136,7 +125,6 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 		msg.PayingCoinDenom,
 		types.VestingReserveAddress(nextId).String(),
 		msg.VestingSchedules,
-		msg.SellingCoin,
 		msg.StartTime,
 		endTimes,
 		types.AuctionStatusStandBy,
@@ -183,7 +171,6 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 			sdk.NewAttribute(types.AttributeKeySellingCoin, auction.GetSellingCoin().String()),
 			sdk.NewAttribute(types.AttributeKeyPayingCoinDenom, auction.GetPayingCoinDenom()),
 			sdk.NewAttribute(types.AttributeKeyVestingReserveAddress, auction.GetVestingReserveAddress().String()),
-			sdk.NewAttribute(types.AttributeKeyRemainingSellingCoin, auction.GetRemainingSellingCoin().String()),
 			sdk.NewAttribute(types.AttributeKeyStartTime, auction.GetStartTime().String()),
 			sdk.NewAttribute(types.AttributeKeyEndTime, msg.EndTime.String()),
 			sdk.NewAttribute(types.AttributeKeyAuctionStatus, auction.GetStatus().String()),
@@ -204,7 +191,7 @@ func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) erro
 	}
 
 	if auction.GetAuctioneer().String() != msg.Auctioneer {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "only the autioneer can cancel the auction")
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "only the auctioneer can cancel the auction")
 	}
 
 	if auction.GetStatus() != types.AuctionStatusStandBy {
@@ -221,12 +208,16 @@ func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) erro
 		return sdkerrors.Wrap(err, "failed to release the selling coin")
 	}
 
-	_ = auction.SetRemainingSellingCoin(sdk.NewCoin(sellingCoinDenom, sdk.ZeroInt()))
-	_ = auction.SetStatus(types.AuctionStatusCancelled)
-
 	// Call the before auction canceled hook
 	k.BeforeAuctionCanceled(ctx, msg.AuctionId, msg.Auctioneer)
 
+	if auction.GetType() == types.AuctionTypeFixedPrice {
+		fa := auction.(*types.FixedPriceAuction)
+		fa.RemainingSellingCoin = sdk.NewCoin(sellingCoinDenom, sdk.ZeroInt())
+		auction = fa
+	}
+
+	_ = auction.SetStatus(types.AuctionStatusCancelled)
 	k.SetAuction(ctx, auction)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -242,66 +233,64 @@ func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) erro
 // AddAllowedBidders is a function that is implemented for an external module.
 // An external module uses this function to add allowed bidders in the auction's allowed bidders list.
 // It doesn't look up the bidder's previous maximum bid amount. Instead, it overlaps.
-// It doesn't have any auctioneer's verficiation logic because the module is fundamentally designed
+// It doesn't have any auctioneer's verification logic because the module is fundamentally designed
 // to delegate full authorization to an external module.
-// It is up to an external module to freely add necessary verficiation and operations depending on their use cases.
-func (k Keeper) AddAllowedBidders(ctx sdk.Context, auctionId uint64, bidders []types.AllowedBidder) error {
+// It is up to an external module to freely add necessary verification and operations depending on their use cases.
+func (k Keeper) AddAllowedBidders(ctx sdk.Context, auctionId uint64, allowedBidders []types.AllowedBidder) error {
+	if len(allowedBidders) == 0 {
+		return types.ErrEmptyAllowedBidders
+	}
+
 	auction, found := k.GetAuction(ctx, auctionId)
 	if !found {
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", auctionId)
 	}
 
-	if len(bidders) == 0 {
-		return types.ErrEmptyAllowedBidders
-	}
-
-	if err := types.ValidateAllowedBidders(bidders, auction.GetSellingCoin().Amount); err != nil {
-		return err
-	}
-
-	// Append new bidders from the existing ones
-	allowedBidders := auction.GetAllowedBidders()
-	allowedBidders = append(allowedBidders, bidders...)
-
-	_ = auction.SetAllowedBidders(allowedBidders)
-
 	// Call the before allowed bidders added hook
-	k.BeforeAllowedBiddersAdded(ctx, auctionId, bidders)
+	k.BeforeAllowedBiddersAdded(ctx, allowedBidders)
 
-	k.SetAuction(ctx, auction)
+	// Store new allowed bidders
+	for _, ab := range allowedBidders {
+		if err := ab.Validate(); err != nil {
+			return err
+		}
+
+		if ab.MaxBidAmount.GT(auction.GetSellingCoin().Amount) {
+			return types.ErrInsufficientRemainingAmount
+		}
+
+		k.SetAllowedBidder(ctx, auctionId, ab)
+	}
 
 	return nil
 }
 
 // UpdateAllowedBidder is a function that is implemented for an external module.
 // An external module uses this function to update maximum bid amount of particular allowed bidder in the auction.
-// It doesn't have any auctioneer's verficiation logic because the module is fundamentally designed
+// It doesn't have any auctioneer's verification logic because the module is fundamentally designed
 // to delegate full authorization to an external module.
-// It is up to an external module to freely add necessary verficiation and operations depending on their use cases.
+// It is up to an external module to freely add necessary verification and operations depending on their use cases.
 func (k Keeper) UpdateAllowedBidder(ctx sdk.Context, auctionId uint64, bidder sdk.AccAddress, maxBidAmount sdk.Int) error {
-	auction, found := k.GetAuction(ctx, auctionId)
+	_, found := k.GetAuction(ctx, auctionId)
 	if !found {
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", auctionId)
 	}
 
-	if maxBidAmount.IsNil() {
-		return types.ErrInvalidMaxBidAmount
-	}
-
-	if !maxBidAmount.IsPositive() {
-		return types.ErrInvalidMaxBidAmount
-	}
-
-	if _, found := auction.GetAllowedBiddersMap()[bidder.String()]; !found {
+	_, found = k.GetAllowedBidder(ctx, auctionId, bidder)
+	if !found {
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "bidder %s is not found", bidder.String())
 	}
 
-	_ = auction.SetMaxBidAmount(bidder.String(), maxBidAmount)
+	allowedBidder := types.NewAllowedBidder(bidder, maxBidAmount)
+
+	if err := allowedBidder.Validate(); err != nil {
+		return err
+	}
 
 	// Call the before allowed bidders updated hook
 	k.BeforeAllowedBidderUpdated(ctx, auctionId, bidder, maxBidAmount)
 
-	k.SetAuction(ctx, auction)
+	k.SetAllowedBidder(ctx, auctionId, allowedBidder)
 
 	return nil
 }
@@ -309,7 +298,7 @@ func (k Keeper) UpdateAllowedBidder(ctx sdk.Context, auctionId uint64, bidder sd
 // AllocateSellingCoin allocates allocated selling coin for all matched bids in MatchingInfo and
 // releases them from the selling reserve account.
 func (k Keeper) AllocateSellingCoin(ctx sdk.Context, auction types.AuctionI, mInfo MatchingInfo) error {
-	// Call the before seling coin distributed hook
+	// Call the before selling coin distributed hook
 	k.BeforeSellingCoinsAllocated(ctx, auction.GetId(), mInfo.AllocationMap, mInfo.RefundMap)
 
 	sellingReserveAddr := auction.GetSellingReserveAddress()
@@ -326,7 +315,7 @@ func (k Keeper) AllocateSellingCoin(ctx sdk.Context, auction types.AuctionI, mIn
 	sort.Strings(bidders)
 
 	// Allocate coins to all matched bidders in AllocationMap and
-	// set the amounts in trasnaction inputs and outputs from the selling reserve account
+	// set the amounts in transaction inputs and outputs from the selling reserve account
 	for _, bidder := range bidders {
 		if mInfo.AllocationMap[bidder].IsZero() {
 			continue

@@ -34,8 +34,6 @@ service Msg {
       returns (MsgAddAllowedBidderResponse);
 }
 
-// this line is used by Starport scaffolding # proto/tx/message
-
 // MsgCreateFixedPriceAuction defines a SDK message for creating a fixed price
 // auction.
 message MsgCreateFixedPriceAuction {

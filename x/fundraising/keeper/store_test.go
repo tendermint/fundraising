@@ -51,6 +51,35 @@ func (s *KeeperTestSuite) TestLastAuctionId() {
 	s.Require().Len(auctions, 2)
 }
 
+func (s *KeeperTestSuite) TestAllowedBidderByAuction() {
+	auction := s.createFixedPriceAuction(
+		s.addr(0),
+		sdk.MustNewDecFromStr("1.0"),
+		parseCoin("1000000000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		time.Now().AddDate(0, 6, 0),
+		time.Now().AddDate(0, 6, 0).AddDate(0, 1, 0),
+		true,
+	)
+	s.Require().Equal(auction.GetStatus(), types.AuctionStatusStandBy)
+
+	allowedBidders := s.keeper.GetAllowedBiddersByAuction(s.ctx, auction.Id)
+	s.Require().Len(allowedBidders, 0)
+
+	// Add new allowed bidders
+	newAllowedBidders := []types.AllowedBidder{
+		{Bidder: s.addr(1).String(), MaxBidAmount: parseInt("100000")},
+		{Bidder: s.addr(2).String(), MaxBidAmount: parseInt("100000")},
+		{Bidder: s.addr(3).String(), MaxBidAmount: parseInt("100000")},
+	}
+	err := s.keeper.AddAllowedBidders(s.ctx, auction.Id, newAllowedBidders)
+	s.Require().NoError(err)
+
+	allowedBidders = s.keeper.GetAllowedBiddersByAuction(s.ctx, auction.Id)
+	s.Require().Len(allowedBidders, 3)
+}
+
 func (s *KeeperTestSuite) TestLastBidId() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),

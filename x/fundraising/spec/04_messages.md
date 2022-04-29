@@ -88,7 +88,6 @@ make install-testing
 ```go
 // MsgAddAllowedBidder defines a SDK message to add an allowed bidder
 type MsgAddAllowedBidder struct {
-	AuctionId       uint64        // the id of the auction
 	AllowedBidder   AllowedBidder // the bidder and their maximum bid amount
 }
 ```

@@ -19,7 +19,6 @@ func (s *KeeperTestSuite) TestDefaultGenesis() {
 	s.Require().Equal(genState, got)
 }
 
-// TODO: add simple and complex cases
 func (s *KeeperTestSuite) TestGenesisState() {
 	fixedAuction := s.createFixedPriceAuction(
 		s.addr(0),
@@ -114,3 +113,5 @@ func (s *KeeperTestSuite) TestGenesisState() {
 	})
 	s.Require().Equal(genState, s.keeper.ExportGenesis(s.ctx))
 }
+
+// TODO: add cases for allowed bidders

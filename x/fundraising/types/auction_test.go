@@ -19,7 +19,6 @@ func TestUnpackAuction(t *testing.T) {
 			types.NewBaseAuction(
 				1,
 				types.AuctionTypeFixedPrice,
-				nil,
 				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				types.SellingReserveAddress(1).String(),
 				types.PayingReserveAddress(1).String(),
@@ -28,11 +27,11 @@ func TestUnpackAuction(t *testing.T) {
 				"denom4",
 				types.VestingReserveAddress(1).String(),
 				[]types.VestingSchedule{},
-				sdk.NewInt64Coin("denom3", 1_000_000_000_000),
 				time.Now().AddDate(0, 0, -1),
 				[]time.Time{time.Now().AddDate(0, 1, -1)},
 				types.AuctionStatusStarted,
 			),
+			sdk.NewInt64Coin("denom3", 1_000_000_000_000),
 		),
 	}
 
@@ -58,7 +57,6 @@ func TestShouldAuctionStarted(t *testing.T) {
 	auction := types.BaseAuction{
 		Id:                    1,
 		Type:                  types.AuctionTypeFixedPrice,
-		AllowedBidders:        nil,
 		Auctioneer:            sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 		SellingReserveAddress: types.SellingReserveAddress(1).String(),
 		PayingReserveAddress:  types.PayingReserveAddress(1).String(),
@@ -67,7 +65,6 @@ func TestShouldAuctionStarted(t *testing.T) {
 		PayingCoinDenom:       "denom4",
 		VestingReserveAddress: types.VestingReserveAddress(1).String(),
 		VestingSchedules:      []types.VestingSchedule{},
-		RemainingSellingCoin:  sdk.NewInt64Coin("denom3", 1_000_000_000_000),
 		StartTime:             types.MustParseRFC3339("2021-12-01T00:00:00Z"),
 		EndTimes:              []time.Time{types.MustParseRFC3339("2021-12-15T00:00:00Z")},
 		Status:                types.AuctionStatusStandBy,
@@ -93,7 +90,6 @@ func TestShouldAuctionClosed(t *testing.T) {
 	auction := types.BaseAuction{
 		Id:                    1,
 		Type:                  types.AuctionTypeFixedPrice,
-		AllowedBidders:        nil,
 		Auctioneer:            sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 		SellingReserveAddress: types.SellingReserveAddress(1).String(),
 		PayingReserveAddress:  types.PayingReserveAddress(1).String(),
@@ -102,7 +98,6 @@ func TestShouldAuctionClosed(t *testing.T) {
 		PayingCoinDenom:       "denom4",
 		VestingReserveAddress: types.VestingReserveAddress(1).String(),
 		VestingSchedules:      []types.VestingSchedule{},
-		RemainingSellingCoin:  sdk.NewInt64Coin("denom3", 1_000_000_000_000),
 		StartTime:             types.MustParseRFC3339("2021-12-01T00:00:00Z"),
 		EndTimes:              []time.Time{types.MustParseRFC3339("2021-12-15T00:00:00Z")},
 		Status:                types.AuctionStatusStandBy,
@@ -162,56 +157,6 @@ func TestVestingReserveAddress(t *testing.T) {
 	} {
 		t.Run("", func(t *testing.T) {
 			require.Equal(t, tc.expected, types.VestingReserveAddress(tc.auctionId).String())
-		})
-	}
-}
-
-func TestValidateAllowedBidders(t *testing.T) {
-	for _, tc := range []struct {
-		name            string
-		bidders         []types.AllowedBidder
-		totalSellingAmt sdk.Int
-		expectedErr     error
-	}{
-		{
-			"happy case",
-			[]types.AllowedBidder{
-				{Bidder: sdk.AccAddress(crypto.AddressHash([]byte("Bidder"))).String(), MaxBidAmount: sdk.NewInt(100000)},
-			},
-			sdk.NewInt(100000),
-			nil,
-		},
-		{
-			"invalid case #1",
-			[]types.AllowedBidder{
-				{Bidder: sdk.AccAddress(crypto.AddressHash([]byte("Bidder"))).String(), MaxBidAmount: sdk.Int{}},
-			},
-			sdk.NewInt(100000),
-			types.ErrInvalidMaxBidAmount,
-		},
-		{
-			"invalid case #2",
-			[]types.AllowedBidder{
-				{Bidder: sdk.AccAddress(crypto.AddressHash([]byte("Bidder"))).String(), MaxBidAmount: sdk.ZeroInt()},
-			},
-			sdk.NewInt(100000),
-			types.ErrInvalidMaxBidAmount,
-		},
-		{
-			"invalid case #3",
-			[]types.AllowedBidder{
-				{Bidder: sdk.AccAddress(crypto.AddressHash([]byte("Bidder"))).String(), MaxBidAmount: sdk.NewInt(1000000000000000)},
-			},
-			sdk.NewInt(100000),
-			types.ErrInsufficientRemainingAmount,
-		},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			err := types.ValidateAllowedBidders(tc.bidders, tc.totalSellingAmt)
-			if tc.expectedErr == nil {
-				require.NoError(t, err)
-			}
-			require.ErrorIs(t, err, tc.expectedErr)
 		})
 	}
 }

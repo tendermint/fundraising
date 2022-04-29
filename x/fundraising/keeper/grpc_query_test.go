@@ -4,6 +4,7 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/tendermint/fundraising/x/fundraising"
 	"github.com/tendermint/fundraising/x/fundraising/types"
@@ -168,6 +169,141 @@ func (s *KeeperTestSuite) TestGRPCAuction() {
 			}
 		})
 	}
+}
+
+func (s *KeeperTestSuite) TestGRPCAllowedBidder() {
+	auction := s.createFixedPriceAuction(
+		s.addr(0),
+		parseDec("1"),
+		parseCoin("500000000000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 1, 0),
+		true,
+	)
+
+	bidder := s.addr(1)
+	maxBidAmt := parseInt("100_000_000")
+	s.addAllowedBidder(auction.Id, bidder, maxBidAmt)
+
+	for _, tc := range []struct {
+		name      string
+		req       *types.QueryAllowedBidderRequest
+		expectErr bool
+		postRun   func(*types.QueryAllowedBidderResponse)
+	}{
+		{
+			"nil request",
+			nil,
+			true,
+			nil,
+		},
+		{
+			"auction id not found",
+			&types.QueryAllowedBidderRequest{
+				AuctionId: 5,
+				Bidder:    s.addr(1).String(),
+			},
+			true,
+			nil,
+		},
+		{
+			"bidder not found",
+			&types.QueryAllowedBidderRequest{
+				AuctionId: 1,
+				Bidder:    s.addr(10).String(),
+			},
+			true,
+			nil,
+		},
+		{
+			"query by auction id and bidder",
+			&types.QueryAllowedBidderRequest{
+				AuctionId: 1,
+				Bidder:    s.addr(1).String(),
+			},
+			false,
+			func(resp *types.QueryAllowedBidderResponse) {
+				s.Require().Equal(bidder.String(), resp.AllowedBidder.Bidder)
+				s.Require().Equal(maxBidAmt, resp.AllowedBidder.MaxBidAmount)
+			},
+		},
+	} {
+		s.Run(tc.name, func() {
+			resp, err := s.querier.AllowedBidder(sdk.WrapSDKContext(s.ctx), tc.req)
+			if tc.expectErr {
+				s.Require().Error(err)
+			} else {
+				s.Require().NoError(err)
+				tc.postRun(resp)
+			}
+		})
+	}
+
+}
+
+func (s *KeeperTestSuite) TestGRPCAllowedBidders() {
+	auction := s.createFixedPriceAuction(
+		s.addr(0),
+		parseDec("1"),
+		parseCoin("500000000000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 1, 0),
+		true,
+	)
+
+	s.addAllowedBidder(auction.Id, s.addr(1), parseInt("100_000_000"))
+	s.addAllowedBidder(auction.Id, s.addr(2), parseInt("200_000_000"))
+	s.addAllowedBidder(auction.Id, s.addr(3), parseInt("300_000_000"))
+	s.addAllowedBidder(auction.Id, s.addr(4), parseInt("400_000_000"))
+	s.addAllowedBidder(auction.Id, s.addr(5), parseInt("500_000_000"))
+
+	for _, tc := range []struct {
+		name      string
+		req       *types.QueryAllowedBiddersRequest
+		expectErr bool
+		postRun   func(*types.QueryAllowedBiddersResponse)
+	}{
+		{
+			"nil request",
+			nil,
+			true,
+			nil,
+		},
+		{
+			"auction id not found",
+			&types.QueryAllowedBiddersRequest{
+				AuctionId:  5,
+				Pagination: &query.PageRequest{},
+			},
+			true,
+			nil,
+		},
+		{
+			"query by auction id",
+			&types.QueryAllowedBiddersRequest{
+				AuctionId: 1,
+			},
+			false,
+			func(resp *types.QueryAllowedBiddersResponse) {
+				s.Require().Len(resp.AllowedBidders, 5)
+			},
+		},
+	} {
+		s.Run(tc.name, func() {
+			resp, err := s.querier.AllowedBidders(sdk.WrapSDKContext(s.ctx), tc.req)
+			if tc.expectErr {
+				s.Require().Error(err)
+			} else {
+				s.Require().NoError(err)
+				tc.postRun(resp)
+			}
+		})
+	}
+
 }
 
 func (s *KeeperTestSuite) TestGRPCBids() {
