@@ -15,6 +15,14 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 		panic(err)
 	}
 
+	// Prevents from nil slice
+	if genState.Params.AuctionCreationFee == nil || len(genState.Params.AuctionCreationFee) == 0 {
+		genState.Params.AuctionCreationFee = sdk.Coins{}
+	}
+	if genState.Params.PlaceBidFee == nil || len(genState.Params.PlaceBidFee) == 0 {
+		genState.Params.PlaceBidFee = sdk.Coins{}
+	}
+
 	k.SetParams(ctx, genState.Params)
 
 	for _, auction := range genState.Auctions {
@@ -53,6 +61,14 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 	params := k.GetParams(ctx)
 	bids := k.GetBids(ctx)
 	queues := k.GetVestingQueues(ctx)
+
+	// Prevents from nil slice
+	if params.AuctionCreationFee == nil || len(params.AuctionCreationFee) == 0 {
+		params.AuctionCreationFee = sdk.Coins{}
+	}
+	if params.PlaceBidFee == nil || len(params.PlaceBidFee) == 0 {
+		params.PlaceBidFee = sdk.Coins{}
+	}
 
 	auctions := []*codectypes.Any{}
 	allowedBidderRecords := []types.AllowedBidderRecord{}
