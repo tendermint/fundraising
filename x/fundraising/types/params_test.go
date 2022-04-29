@@ -20,6 +20,7 @@ func TestParams(t *testing.T) {
 	paramsStr := `auction_creation_fee:
 - denom: stake
   amount: "100000000"
+place_bid_fee: []
 extended_period: 1
 `
 	require.Equal(t, paramsStr, defaultParams.String())
@@ -37,6 +38,13 @@ func TestParamsValidate(t *testing.T) {
 			"EmptyAuctionCreationFee",
 			func(params *types.Params) {
 				params.AuctionCreationFee = sdk.NewCoins()
+			},
+			"",
+		},
+		{
+			"EmptyPlaceBidFee",
+			func(params *types.Params) {
+				params.PlaceBidFee = sdk.NewCoins()
 			},
 			"",
 		},

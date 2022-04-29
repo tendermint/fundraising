@@ -38,6 +38,10 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		return types.Bid{}, types.ErrNotAllowedBidder
 	}
 
+	if err := k.PayPlaceBidFee(ctx, msg.GetBidder()); err != nil {
+		return types.Bid{}, sdkerrors.Wrap(err, "failed to pay place bid fee")
+	}
+
 	bid := types.Bid{
 		AuctionId: msg.AuctionId,
 		Id:        k.GetNextBidIdWithUpdate(ctx, auction.GetId()),
@@ -63,7 +67,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		bidPayingAmt := bid.ConvertToPayingAmount(payingCoinDenom)
 		bidPayingCoin := sdk.NewCoin(payingCoinDenom, bidPayingAmt)
 		if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), bidPayingCoin); err != nil {
-			return types.Bid{}, err
+			return types.Bid{}, sdkerrors.Wrap(err, "failed to reserve paying coin")
 		}
 
 		// Subtract bid amount from the remaining
@@ -80,7 +84,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		}
 
 		if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), msg.Coin); err != nil {
-			return types.Bid{}, err
+			return types.Bid{}, sdkerrors.Wrap(err, "failed to reserve paying coin")
 		}
 
 	case types.BidTypeBatchMany:
@@ -92,7 +96,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		reserveCoin := sdk.NewCoin(payingCoinDenom, reserveAmt)
 
 		if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), reserveCoin); err != nil {
-			return types.Bid{}, err
+			return types.Bid{}, sdkerrors.Wrap(err, "failed to reserve paying coin")
 		}
 	}
 
@@ -254,13 +258,17 @@ func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "bid price and coin amount must be changed")
 	}
 
+	if err := k.PayPlaceBidFee(ctx, msg.GetBidder()); err != nil {
+		return err
+	}
+
 	// Reserve bid amount difference
 	switch bid.Type {
 	case types.BidTypeBatchWorth:
 		diffReserveCoin := msg.Coin.Sub(bid.Coin)
 		if diffReserveCoin.IsPositive() {
 			if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), diffReserveCoin); err != nil {
-				return err
+				return sdkerrors.Wrap(err, "failed to reserve paying coin")
 			}
 		}
 	case types.BidTypeBatchMany:
@@ -270,7 +278,7 @@ func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) error {
 		diffReserveCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), diffReserveAmt)
 		if diffReserveCoin.IsPositive() {
 			if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), diffReserveCoin); err != nil {
-				return err
+				return sdkerrors.Wrap(err, "failed to reserve paying coin")
 			}
 		}
 	}
