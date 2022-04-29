@@ -57,7 +57,7 @@ jobs:
         run: go test -v -coverprofile=coverage.xml -covermode=atomic ./...
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           fail_ci_if_error: true
           verbose: true
@@ -85,7 +85,7 @@ jobs:
             echo "Excluding ${filename} from coverage report..."
             sed -i "/$(echo $filename | sed 's/\//\\\//g')/d" coverage.txt
           done
-      - uses: codecov/codecov-action@v2.1.0
+      - uses: codecov/codecov-action@v3
         with:
           file: ./coverage.txt
 
@@ -112,6 +112,6 @@ jobs:
             echo "Excluding ${filename} from coverage report..."
             sed -i "/$(echo $filename | sed 's/\//\\\//g')/d" coverage.txt
           done
-      - uses: codecov/codecov-action@v2.1.0
+      - uses: codecov/codecov-action@v3
         with:
           file: ./coverage.txt
