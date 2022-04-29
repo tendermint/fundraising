@@ -63,13 +63,15 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 		}
 		auctions = append(auctions, auctionAny)
 
-		k.IterateAllowedBiddersByAuction(ctx, auction.GetId(), func(ab types.AllowedBidder) (stop bool, err error) {
+		if err := k.IterateAllowedBiddersByAuction(ctx, auction.GetId(), func(ab types.AllowedBidder) (stop bool, err error) {
 			allowedBidderRecords = append(allowedBidderRecords, types.AllowedBidderRecord{
 				AuctionId:     auction.GetId(),
 				AllowedBidder: ab,
 			})
 			return false, nil
-		})
+		}); err != nil {
+			panic(err)
+		}
 	}
 
 	return &types.GenesisState{
