@@ -161,6 +161,19 @@ test-sim-after-import: runsim
 	@echo "Running application simulation-after-import. This may take several minutes..."
 	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 2 2 TestAppSimulationAfterImport
 
+test-sim-nondeterminism-long:
+	@echo "Running non-determinism test..."
+	@go test -mod=readonly $(SIMAPP) -run TestAppStateDeterminism -Enabled=true \
+		-NumBlocks=100 -BlockSize=100 -Commit=true -Period=0 -v -timeout 1h
+
+test-sim-import-export-long: runsim
+	@echo "Running application import/export simulation. This may take several minutes..."
+	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 5 5 TestAppImportExport
+
+test-sim-after-import-long: runsim
+	@echo "Running application simulation-after-import. This may take several minutes..."
+	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 5 5 TestAppSimulationAfterImport
+
 # test-sim-ci: Run lightweight simulation for CI pipeline
 test-sim-ci:
 	@echo "Running application benchmark for numBlocks=$(SIM_CI_NUM_BLOCKS), blockSize=$(SIM_CI_BLOCK_SIZE)"
@@ -184,8 +197,11 @@ test-sim-profile:
 
 .PHONY: \
 test-sim-nondeterminism \
+test-sim-nondeterminism-long \
 test-sim-import-export \
+test-sim-import-export-long \
 test-sim-after-import \
+test-sim-after-import-long \
 test-sim-ci \
 test-sim-profile \
 test-sim-benchmark
