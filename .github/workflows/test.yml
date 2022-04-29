@@ -22,7 +22,7 @@ jobs:
         go-arch: ["amd64", "arm64"]
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2.1.3
+      - uses: actions/setup-go@v3.0.0
         with:
           go-version: 1.17
       - uses: technote-space/get-diff-action@v4
@@ -49,7 +49,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - uses: actions/setup-go@v2
+      - uses: actions/setup-go@v3.0.0
         with:
           go-version: 1.17
 
@@ -67,7 +67,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - uses: actions/setup-go@v3.0.0
         with:
           go-version: 1.17
       - name: display go version
@@ -94,7 +94,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - uses: actions/setup-go@v3.0.0
         with:
           go-version: 1.17
       - name: display go version
