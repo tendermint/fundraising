@@ -351,8 +351,8 @@ func SimulateMsgPlaceBid(ak types.AccountKeeper, bk types.BankKeeper, k keeper.K
 			maxBidAmt = maxBidAmt.Add(allowedBidder.MaxBidAmount)
 		}
 
-		newAllowedBidder := types.NewAllowedBidder(auction.GetId(), bidder, maxBidAmt)
-		if err := k.AddAllowedBidders(ctx, []types.AllowedBidder{newAllowedBidder}); err != nil {
+		newAllowedBidder := types.NewAllowedBidder(bidder, maxBidAmt)
+		if err := k.AddAllowedBidders(ctx, auction.GetId(), []types.AllowedBidder{newAllowedBidder}); err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgPlaceBid, "failed to add allowed bidders"), nil, nil
 		}
 

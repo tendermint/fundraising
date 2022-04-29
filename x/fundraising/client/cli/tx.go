@@ -416,9 +416,9 @@ $ %s tx %s add-allowed-bidder 1 10000000000 --from mykey
 				return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "maximum bid price must be a positive integer")
 			}
 
-			msg := types.NewAddAllowedBidder(
+			msg := types.NewMsgAddAllowedBidder(
+				auctionId,
 				types.AllowedBidder{
-					AuctionId:    auctionId,
 					Bidder:       bidderAddr.String(),
 					MaxBidAmount: maxBidAmt,
 				},

@@ -377,16 +377,16 @@ func (s *KeeperTestSuite) TestAddAllowedBidders() {
 		{
 			"single bidder",
 			[]types.AllowedBidder{
-				{AuctionId: auction.GetId(), Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(100_000_000)},
+				{Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(100_000_000)},
 			},
 			nil,
 		},
 		{
 			"multiple bidders",
 			[]types.AllowedBidder{
-				{AuctionId: auction.GetId(), Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(100_000_000)},
-				{AuctionId: auction.GetId(), Bidder: s.addr(2).String(), MaxBidAmount: sdk.NewInt(500_000_000)},
-				{AuctionId: auction.GetId(), Bidder: s.addr(3).String(), MaxBidAmount: sdk.NewInt(800_000_000)},
+				{Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(100_000_000)},
+				{Bidder: s.addr(2).String(), MaxBidAmount: sdk.NewInt(500_000_000)},
+				{Bidder: s.addr(3).String(), MaxBidAmount: sdk.NewInt(800_000_000)},
 			},
 			nil,
 		},
@@ -399,27 +399,27 @@ func (s *KeeperTestSuite) TestAddAllowedBidders() {
 		{
 			"zero maximum bid amount",
 			[]types.AllowedBidder{
-				{AuctionId: auction.GetId(), Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(0)},
+				{Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(0)},
 			},
 			types.ErrInvalidMaxBidAmount,
 		},
 		{
 			"negative maximum bid amount",
 			[]types.AllowedBidder{
-				{AuctionId: auction.GetId(), Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(-1)},
+				{Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(-1)},
 			},
 			types.ErrInvalidMaxBidAmount,
 		},
 		{
 			"exceed the total selling amount",
 			[]types.AllowedBidder{
-				{AuctionId: auction.GetId(), Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(500_000_000_001)},
+				{Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(500_000_000_001)},
 			},
 			types.ErrInsufficientRemainingAmount,
 		},
 	} {
 		s.Run(tc.name, func() {
-			err := s.keeper.AddAllowedBidders(s.ctx, tc.bidders)
+			err := s.keeper.AddAllowedBidders(s.ctx, auction.GetId(), tc.bidders)
 			if tc.expectedErr != nil {
 				s.Require().ErrorIs(err, tc.expectedErr)
 				return
@@ -446,9 +446,9 @@ func (s *KeeperTestSuite) TestAddAllowedBidders_Length() {
 	s.Require().Len(s.keeper.GetAllowedBiddersByAuction(s.ctx, auction.GetId()), 0)
 
 	// Add some bidders
-	s.Require().NoError(s.keeper.AddAllowedBidders(s.ctx, []types.AllowedBidder{
-		{AuctionId: auction.GetId(), Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(100_000_000)},
-		{AuctionId: auction.GetId(), Bidder: s.addr(2).String(), MaxBidAmount: sdk.NewInt(500_000_000)},
+	s.Require().NoError(s.keeper.AddAllowedBidders(s.ctx, auction.GetId(), []types.AllowedBidder{
+		{Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(100_000_000)},
+		{Bidder: s.addr(2).String(), MaxBidAmount: sdk.NewInt(500_000_000)},
 	}))
 
 	auction, found = s.keeper.GetAuction(s.ctx, auction.GetId())
@@ -456,10 +456,10 @@ func (s *KeeperTestSuite) TestAddAllowedBidders_Length() {
 	s.Require().Len(s.keeper.GetAllowedBiddersByAuction(s.ctx, auction.GetId()), 2)
 
 	// Add more bidders
-	s.Require().NoError(s.keeper.AddAllowedBidders(s.ctx, []types.AllowedBidder{
-		{AuctionId: auction.GetId(), Bidder: s.addr(3).String(), MaxBidAmount: sdk.NewInt(100_000_000)},
-		{AuctionId: auction.GetId(), Bidder: s.addr(4).String(), MaxBidAmount: sdk.NewInt(100_000_000)},
-		{AuctionId: auction.GetId(), Bidder: s.addr(5).String(), MaxBidAmount: sdk.NewInt(100_000_000)},
+	s.Require().NoError(s.keeper.AddAllowedBidders(s.ctx, auction.GetId(), []types.AllowedBidder{
+		{Bidder: s.addr(3).String(), MaxBidAmount: sdk.NewInt(100_000_000)},
+		{Bidder: s.addr(4).String(), MaxBidAmount: sdk.NewInt(100_000_000)},
+		{Bidder: s.addr(5).String(), MaxBidAmount: sdk.NewInt(100_000_000)},
 	}))
 
 	auction, found = s.keeper.GetAuction(s.ctx, auction.GetId())
@@ -484,12 +484,12 @@ func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 	s.Require().Len(s.keeper.GetAllowedBiddersByAuction(s.ctx, startedAuction.Id), 0)
 
 	// Add 5 bidders with different maximum bid amount
-	s.Require().NoError(s.keeper.AddAllowedBidders(s.ctx, []types.AllowedBidder{
-		{AuctionId: auction.GetId(), Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(100_000_000)},
-		{AuctionId: auction.GetId(), Bidder: s.addr(2).String(), MaxBidAmount: sdk.NewInt(200_000_000)},
-		{AuctionId: auction.GetId(), Bidder: s.addr(3).String(), MaxBidAmount: sdk.NewInt(300_000_000)},
-		{AuctionId: auction.GetId(), Bidder: s.addr(4).String(), MaxBidAmount: sdk.NewInt(400_000_000)},
-		{AuctionId: auction.GetId(), Bidder: s.addr(5).String(), MaxBidAmount: sdk.NewInt(500_000_000)},
+	s.Require().NoError(s.keeper.AddAllowedBidders(s.ctx, auction.GetId(), []types.AllowedBidder{
+		{Bidder: s.addr(1).String(), MaxBidAmount: sdk.NewInt(100_000_000)},
+		{Bidder: s.addr(2).String(), MaxBidAmount: sdk.NewInt(200_000_000)},
+		{Bidder: s.addr(3).String(), MaxBidAmount: sdk.NewInt(300_000_000)},
+		{Bidder: s.addr(4).String(), MaxBidAmount: sdk.NewInt(400_000_000)},
+		{Bidder: s.addr(5).String(), MaxBidAmount: sdk.NewInt(500_000_000)},
 	}))
 	s.Require().Len(s.keeper.GetAllowedBiddersByAuction(s.ctx, auction.GetId()), 5)
 

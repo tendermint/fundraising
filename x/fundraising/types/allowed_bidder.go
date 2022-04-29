@@ -1,11 +1,13 @@
 package types
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+)
 
 // NewAllowedBidder returns a new AllowedBidder.
-func NewAllowedBidder(auctionId uint64, bidderAddr sdk.AccAddress, maxBidAmount sdk.Int) AllowedBidder {
+func NewAllowedBidder(bidderAddr sdk.AccAddress, maxBidAmount sdk.Int) AllowedBidder {
 	return AllowedBidder{
-		AuctionId:    auctionId,
 		Bidder:       bidderAddr.String(),
 		MaxBidAmount: maxBidAmount,
 	}
@@ -20,11 +22,15 @@ func (ab AllowedBidder) GetBidder() sdk.AccAddress {
 	return addr
 }
 
-// GetAllowedBiddersMap returns allowed bidders map.
-func GetAllowedBiddersMap(allowedBidders []AllowedBidder) map[string]sdk.Int { // map(bidder => maxBidAmount)
-	allowedBiddersMap := make(map[string]sdk.Int)
-	for _, allowedBidder := range allowedBidders {
-		allowedBiddersMap[allowedBidder.Bidder] = allowedBidder.MaxBidAmount
+func (ab AllowedBidder) Validate() error {
+	if _, err := sdk.AccAddressFromBech32(ab.Bidder); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, err.Error())
 	}
-	return allowedBiddersMap
+	if ab.MaxBidAmount.IsNil() {
+		return ErrInvalidMaxBidAmount
+	}
+	if !ab.MaxBidAmount.IsPositive() {
+		return ErrInvalidMaxBidAmount
+	}
+	return nil
 }

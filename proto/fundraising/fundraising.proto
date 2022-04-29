@@ -199,14 +199,11 @@ message VestingQueue {
 message AllowedBidder {
   option (gogoproto.goproto_getters) = false;
 
-  // auction_id specifies the id of the auction
-  uint64 auction_id = 1;
-
   // bidder specifies the bech32-encoded address that bids for the auction
-  string bidder = 2;
+  string bidder = 1;
 
   // max_bid_amount specifies the maximum bid amount that the bidder can bid
-  string max_bid_amount = 3 [
+  string max_bid_amount = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];

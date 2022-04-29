@@ -224,9 +224,12 @@ message MsgModifyBidResponse {}
 message MsgAddAllowedBidder {
   option (gogoproto.goproto_getters) = false;
 
+  // auction_id specifies the auction id
+  uint64 auction_id = 1;
+
   // allowed_bidder specifies the bidder who is allowed to bid and their maximum
   // bid amount
-  AllowedBidder allowed_bidder = 1 [ (gogoproto.nullable) = false ];
+  AllowedBidder allowed_bidder = 2 [ (gogoproto.nullable) = false ];
 }
 
 message MsgAddAllowedBidderResponse {}

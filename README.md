@@ -1,5 +1,8 @@
 # Fundraising Module
 
+[![codecov](https://codecov.io/gh/tendermint/fundraising/branch/main/graph/badge.svg?token=rXg5Q0Aahz)](https://codecov.io/gh/tendermint/fundraising)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/tendermint/fundraising)](https://pkg.go.dev/github.com/tendermint/fundraising)
+
 The fundraising module is a Cosmos SDK module that serves the fundraising feature that provides an oppotunity for new projects to onboard into the Cosmos ecosystem. The fundraising module allow projects to raise funds and increase their brand awareness before launching their projects. 
 
 The fundraising module is built using Cosmos SDK and Tendermint and created with [Starport](https://github.com/tendermint/starport).

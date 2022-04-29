@@ -20608,10 +20608,6 @@ paths:
                 items:
                   type: object
                   properties:
-                    auction_id:
-                      type: string
-                      format: uint64
-                      title: auction_id specifies the id of the auction
                     bidder:
                       type: string
                       title: >-
@@ -20918,10 +20914,6 @@ paths:
               allowed_bidder:
                 type: object
                 properties:
-                  auction_id:
-                    type: string
-                    format: uint64
-                    title: auction_id specifies the id of the auction
                   bidder:
                     type: string
                     title: >-
@@ -38938,10 +38930,6 @@ definitions:
   tendermint.fundraising.AllowedBidder:
     type: object
     properties:
-      auction_id:
-        type: string
-        format: uint64
-        title: auction_id specifies the id of the auction
       bidder:
         type: string
         title: bidder specifies the bech32-encoded address that bids for the auction
@@ -39092,10 +39080,6 @@ definitions:
       allowed_bidder:
         type: object
         properties:
-          auction_id:
-            type: string
-            format: uint64
-            title: auction_id specifies the id of the auction
           bidder:
             type: string
             title: >-
@@ -39120,10 +39104,6 @@ definitions:
         items:
           type: object
           properties:
-            auction_id:
-              type: string
-              format: uint64
-              title: auction_id specifies the id of the auction
             bidder:
               type: string
               title: >-

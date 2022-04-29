@@ -225,7 +225,6 @@ func (s *KeeperTestSuite) TestGRPCAllowedBidder() {
 			},
 			false,
 			func(resp *types.QueryAllowedBidderResponse) {
-				s.Require().Equal(auction.Id, resp.AllowedBidder.AuctionId)
 				s.Require().Equal(bidder.String(), resp.AllowedBidder.Bidder)
 				s.Require().Equal(maxBidAmt, resp.AllowedBidder.MaxBidAmount)
 			},

@@ -44,7 +44,6 @@ func TestGenesisState_Validate(t *testing.T) {
 	)
 
 	validAllowedBidder := types.AllowedBidder{
-		AuctionId:    1,
 		Bidder:       validAddr.String(),
 		MaxBidAmount: sdk.NewInt(10_000_000),
 	}
@@ -86,7 +85,12 @@ func TestGenesisState_Validate(t *testing.T) {
 
 				genState.Params = params
 				genState.Auctions = []*codectypes.Any{auctionAny}
-				genState.AllowedBidders = []types.AllowedBidder{validAllowedBidder}
+				genState.AllowedBidderRecords = []types.AllowedBidderRecord{
+					{
+						AuctionId:     1,
+						AllowedBidder: validAllowedBidder,
+					},
+				}
 				genState.Bids = []types.Bid{validBid}
 				genState.VestingQueues = []types.VestingQueue{validVestingQueue}
 			},
@@ -265,11 +269,13 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "invalid allowed bidder - invalid max bid amount",
 			configure: func(genState *types.GenesisState) {
-				genState.AllowedBidders = []types.AllowedBidder{
+				genState.AllowedBidderRecords = []types.AllowedBidderRecord{
 					{
-						AuctionId:    1,
-						Bidder:       validAddr.String(),
-						MaxBidAmount: sdk.NewInt(0),
+						AuctionId: 1,
+						AllowedBidder: types.AllowedBidder{
+							Bidder:       validAddr.String(),
+							MaxBidAmount: sdk.NewInt(0),
+						},
 					},
 				}
 			},

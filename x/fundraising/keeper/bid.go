@@ -33,9 +33,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		}
 	}
 
-	allowedBidders := k.GetAllowedBiddersByAuction(ctx, auction.GetId())
-	allowedBiddersMap := types.GetAllowedBiddersMap(allowedBidders)
-	_, found = allowedBiddersMap[msg.Bidder]
+	_, found = k.GetAllowedBidder(ctx, auction.GetId(), msg.GetBidder())
 	if !found {
 		return types.Bid{}, types.ErrNotAllowedBidder
 	}

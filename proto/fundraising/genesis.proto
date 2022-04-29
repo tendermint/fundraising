@@ -22,8 +22,8 @@ message GenesisState {
   repeated google.protobuf.Any auctions = 2
       [ (cosmos_proto.accepts_interface) = "AuctionI" ];
 
-  // allowed_bidders define the allowed bidders list for the auction
-  repeated AllowedBidder allowed_bidders = 3 [ (gogoproto.nullable) = false ];
+  // allowed_bidder_records define the allowed bidder records for the auction
+  repeated AllowedBidderRecord allowed_bidder_records = 3 [ (gogoproto.nullable) = false ];
 
   // bids define the bid records used for genesis state
   repeated Bid bids = 4 [ (gogoproto.nullable) = false ];
@@ -31,4 +31,12 @@ message GenesisState {
   // vesting_queues define the vesting queue records used for genesis
   // state
   repeated VestingQueue vesting_queues = 5 [ (gogoproto.nullable) = false ];
+}
+
+message AllowedBidderRecord {
+  // auction_ id specifies index of the auction
+  uint64 auction_id = 1;
+
+  // allowed_bidder specifies allowed bidder for the auction
+  AllowedBidder allowed_bidder = 2 [ (gogoproto.nullable) = false ];
 }

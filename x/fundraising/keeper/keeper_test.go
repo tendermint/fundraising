@@ -118,7 +118,7 @@ func (s *KeeperTestSuite) addAllowedBidder(auctionId uint64, bidder sdk.AccAddre
 		maxBidAmt = maxBidAmt.Add(allowedBidder.MaxBidAmount)
 	}
 
-	s.keeper.SetAllowedBidder(s.ctx, types.NewAllowedBidder(auctionId, bidder, maxBidAmt))
+	s.keeper.SetAllowedBidder(s.ctx, auctionId, types.NewAllowedBidder(bidder, maxBidAmt))
 }
 
 func (s *KeeperTestSuite) placeBidFixedPrice(

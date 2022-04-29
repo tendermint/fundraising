@@ -165,10 +165,6 @@ func (k Querier) AllowedBidders(c context.Context, req *types.QueryAllowedBidder
 			return false, nil
 		}
 
-		if allowedBidder.AuctionId != req.AuctionId {
-			return false, nil
-		}
-
 		if accumulate {
 			allowedBidders = append(allowedBidders, allowedBidder)
 		}

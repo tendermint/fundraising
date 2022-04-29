@@ -1159,7 +1159,6 @@ func (s *TxCmdTestSuite) TestNewQueryAllowedBidderCmd() {
 			},
 			"",
 			func(resp types.QueryAllowedBidderResponse) {
-				s.Require().Equal(uint64(1), resp.AllowedBidder.AuctionId)
 				s.Require().Equal(val.Address.String(), resp.AllowedBidder.Bidder)
 				s.Require().Equal(maxBidAmt, resp.AllowedBidder.MaxBidAmount)
 			},

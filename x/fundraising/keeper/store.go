@@ -90,10 +90,10 @@ func (k Keeper) GetAllowedBidder(ctx sdk.Context, auctionId uint64, bidderAddr s
 }
 
 // SetAllowedBidder stores an allowed bidder object for the auction.
-func (k Keeper) SetAllowedBidder(ctx sdk.Context, allowedBidder types.AllowedBidder) {
+func (k Keeper) SetAllowedBidder(ctx sdk.Context, auctionId uint64, allowedBidder types.AllowedBidder) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshal(&allowedBidder)
-	store.Set(types.GetAllowedBidderKey(allowedBidder.AuctionId, allowedBidder.GetBidder()), bz)
+	store.Set(types.GetAllowedBidderKey(auctionId, allowedBidder.GetBidder()), bz)
 }
 
 // GetAllowedBiddersByAuction returns allowed bidders list for the auction.

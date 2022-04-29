@@ -563,9 +563,9 @@ func TestAddAllowedBidder(t *testing.T) {
 	}{
 		{
 			"", // empty means no error expected
-			types.NewAddAllowedBidder(
+			types.NewMsgAddAllowedBidder(
+				1,
 				types.AllowedBidder{
-					uint64(1),
 					sdk.AccAddress(crypto.AddressHash([]byte("Bidder"))).String(),
 					sdk.NewInt(100_000_000),
 				},

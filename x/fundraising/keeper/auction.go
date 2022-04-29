@@ -236,9 +236,14 @@ func (k Keeper) CancelAuction(ctx sdk.Context, msg *types.MsgCancelAuction) erro
 // It doesn't have any auctioneer's verification logic because the module is fundamentally designed
 // to delegate full authorization to an external module.
 // It is up to an external module to freely add necessary verification and operations depending on their use cases.
-func (k Keeper) AddAllowedBidders(ctx sdk.Context, allowedBidders []types.AllowedBidder) error {
+func (k Keeper) AddAllowedBidders(ctx sdk.Context, auctionId uint64, allowedBidders []types.AllowedBidder) error {
 	if len(allowedBidders) == 0 {
 		return types.ErrEmptyAllowedBidders
+	}
+
+	auction, found := k.GetAuction(ctx, auctionId)
+	if !found {
+		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", auctionId)
 	}
 
 	// Call the before allowed bidders added hook
@@ -246,11 +251,6 @@ func (k Keeper) AddAllowedBidders(ctx sdk.Context, allowedBidders []types.Allowe
 
 	// Store new allowed bidders
 	for _, ab := range allowedBidders {
-		auction, found := k.GetAuction(ctx, ab.AuctionId)
-		if !found {
-			return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", ab.AuctionId)
-		}
-
 		if err := ab.Validate(); err != nil {
 			return err
 		}
@@ -259,7 +259,7 @@ func (k Keeper) AddAllowedBidders(ctx sdk.Context, allowedBidders []types.Allowe
 			return types.ErrInsufficientRemainingAmount
 		}
 
-		k.SetAllowedBidder(ctx, ab)
+		k.SetAllowedBidder(ctx, auctionId, ab)
 	}
 
 	return nil
@@ -281,7 +281,7 @@ func (k Keeper) UpdateAllowedBidder(ctx sdk.Context, auctionId uint64, bidder sd
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "bidder %s is not found", bidder.String())
 	}
 
-	allowedBidder := types.NewAllowedBidder(auctionId, bidder, maxBidAmount)
+	allowedBidder := types.NewAllowedBidder(bidder, maxBidAmount)
 
 	if err := allowedBidder.Validate(); err != nil {
 		return err
@@ -290,7 +290,7 @@ func (k Keeper) UpdateAllowedBidder(ctx sdk.Context, auctionId uint64, bidder sd
 	// Call the before allowed bidders updated hook
 	k.BeforeAllowedBidderUpdated(ctx, auctionId, bidder, maxBidAmount)
 
-	k.SetAllowedBidder(ctx, allowedBidder)
+	k.SetAllowedBidder(ctx, auctionId, allowedBidder)
 
 	return nil
 }

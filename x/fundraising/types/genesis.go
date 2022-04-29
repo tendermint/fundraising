@@ -5,16 +5,17 @@ import (
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // DefaultGenesisState returns the default fundraising genesis state
 func DefaultGenesisState() *GenesisState {
 	return &GenesisState{
-		Params:         DefaultParams(),
-		Auctions:       []*codectypes.Any{},
-		AllowedBidders: []AllowedBidder{},
-		Bids:           []Bid{},
-		VestingQueues:  []VestingQueue{},
+		Params:               DefaultParams(),
+		Auctions:             []*codectypes.Any{},
+		AllowedBidderRecords: []AllowedBidderRecord{},
+		Bids:                 []Bid{},
+		VestingQueues:        []VestingQueue{},
 	}
 }
 
@@ -36,8 +37,8 @@ func (gs GenesisState) Validate() error {
 		}
 	}
 
-	for _, ab := range gs.AllowedBidders {
-		if err := ab.Validate(); err != nil {
+	for _, r := range gs.AllowedBidderRecords {
+		if err := r.Validate(); err != nil {
 			return err
 		}
 	}
@@ -58,17 +59,11 @@ func (gs GenesisState) Validate() error {
 }
 
 // Validate validates AllowedBidder.
-func (ab AllowedBidder) Validate() error {
-	if _, err := sdk.AccAddressFromBech32(ab.Bidder); err != nil {
-		return err
+func (r AllowedBidderRecord) Validate() error {
+	if r.AuctionId == 0 {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "auction id cannot be 0")
 	}
-	if ab.MaxBidAmount.IsNil() {
-		return ErrInvalidMaxBidAmount
-	}
-	if !ab.MaxBidAmount.IsPositive() {
-		return ErrInvalidMaxBidAmount
-	}
-	return nil
+	return r.AllowedBidder.Validate()
 }
 
 // Validate validates Bid.

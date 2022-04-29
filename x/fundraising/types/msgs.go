@@ -345,11 +345,13 @@ func (msg MsgModifyBid) GetBidder() sdk.AccAddress {
 	return addr
 }
 
-// NewAddAllowedBidder creates a new MsgAddAllowedBidder.
-func NewAddAllowedBidder(
+// NewMsgAddAllowedBidder creates a new MsgAddAllowedBidder.
+func NewMsgAddAllowedBidder(
+	auctionId uint64,
 	allowedBidder AllowedBidder,
 ) *MsgAddAllowedBidder {
 	return &MsgAddAllowedBidder{
+		AuctionId:     auctionId,
 		AllowedBidder: allowedBidder,
 	}
 }

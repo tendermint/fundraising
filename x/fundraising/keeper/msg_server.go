@@ -87,7 +87,7 @@ func (m msgServer) AddAllowedBidder(goCtx context.Context, msg *types.MsgAddAllo
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	if EnableAddAllowedBidder {
-		if err := m.Keeper.AddAllowedBidders(ctx, []types.AllowedBidder{msg.AllowedBidder}); err != nil {
+		if err := m.Keeper.AddAllowedBidders(ctx, msg.AuctionId, []types.AllowedBidder{msg.AllowedBidder}); err != nil {
 			return nil, err
 		}
 	} else {

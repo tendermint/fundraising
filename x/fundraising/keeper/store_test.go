@@ -69,11 +69,11 @@ func (s *KeeperTestSuite) TestAllowedBidderByAuction() {
 
 	// Add new allowed bidders
 	newAllowedBidders := []types.AllowedBidder{
-		{AuctionId: auction.Id, Bidder: s.addr(1).String(), MaxBidAmount: parseInt("100000")},
-		{AuctionId: auction.Id, Bidder: s.addr(2).String(), MaxBidAmount: parseInt("100000")},
-		{AuctionId: auction.Id, Bidder: s.addr(3).String(), MaxBidAmount: parseInt("100000")},
+		{Bidder: s.addr(1).String(), MaxBidAmount: parseInt("100000")},
+		{Bidder: s.addr(2).String(), MaxBidAmount: parseInt("100000")},
+		{Bidder: s.addr(3).String(), MaxBidAmount: parseInt("100000")},
 	}
-	err := s.keeper.AddAllowedBidders(s.ctx, newAllowedBidders)
+	err := s.keeper.AddAllowedBidders(s.ctx, auction.Id, newAllowedBidders)
 	s.Require().NoError(err)
 
 	allowedBidders = s.keeper.GetAllowedBiddersByAuction(s.ctx, auction.Id)
