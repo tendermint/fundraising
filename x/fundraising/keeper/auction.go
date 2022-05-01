@@ -28,7 +28,7 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 	}
 
 	if len(msg.VestingSchedules) > types.MaxNumVestingSchedules {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "maximum number of vesting schedules is %d", types.MaxNumVestingSchedules)
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "exceed maximum number of vesting schedules")
 	}
 
 	nextId := k.GetNextAuctionIdWithUpdate(ctx)

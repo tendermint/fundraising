@@ -310,48 +310,41 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_CancelAuction() {
 	s.Require().True(s.getBalance(sellingReserveAddr, sellingCoinDenom).IsZero())
 }
 
-func (s *KeeperTestSuite) TestBatchAuction_AuctionStatus() {
-	standByAuction := s.createBatchAuction(
-		s.addr(0),
-		parseDec("1"),
-		parseDec("0.1"),
-		parseCoin("5000_000_000denom1"),
+func (s *KeeperTestSuite) TestFixedPriceAuction_MaxNumVestingSchedules() {
+	fixedPriceAuction := types.NewMsgCreateFixedPriceAuction(
+		s.addr(0).String(),
+		parseDec("0.5"),
+		parseCoin("500_000_000_000denom1"),
 		"denom2",
 		[]types.VestingSchedule{},
-		1,
-		sdk.MustNewDecFromStr("0.2"),
-		time.Now().AddDate(0, 6, 0),
-		time.Now().AddDate(0, 6, 0).AddDate(0, 1, 0),
-		true,
-	)
-
-	auction, found := s.keeper.GetAuction(s.ctx, standByAuction.GetId())
-	s.Require().True(found)
-	s.Require().Equal(types.AuctionStatusStandBy, auction.GetStatus())
-
-	feePool := s.app.DistrKeeper.GetFeePool(s.ctx)
-	auctionCreationFee := s.keeper.GetParams(s.ctx).AuctionCreationFee
-	s.Require().True(feePool.CommunityPool.IsEqual(sdk.NewDecCoinsFromCoins(auctionCreationFee...)))
-
-	startedAuction := s.createBatchAuction(
-		s.addr(1),
-		parseDec("0.5"),
-		parseDec("0.1"),
-		parseCoin("5000_000_000denom3"),
-		"denom4",
-		[]types.VestingSchedule{},
-		1,
-		sdk.MustNewDecFromStr("0.2"),
 		time.Now().AddDate(0, 0, -1),
 		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
-		true,
 	)
 
-	auction, found = s.keeper.GetAuction(s.ctx, startedAuction.GetId())
-	s.Require().True(found)
-	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
-}
+	params := s.keeper.GetParams(s.ctx)
+	s.fundAddr(s.addr(0), params.AuctionCreationFee.Add(fixedPriceAuction.SellingCoin))
 
+	// Invalid number of vesting schedules
+	numSchedules := types.MaxNumVestingSchedules + 1
+	schedules := make([]types.VestingSchedule, numSchedules)
+	totalWeight := sdk.ZeroDec()
+	for i := range schedules {
+		var schedule types.VestingSchedule
+		if i == numSchedules-1 {
+			schedule.Weight = sdk.OneDec().Sub(totalWeight)
+		} else {
+			schedule.Weight = sdk.OneDec().Quo(sdk.NewDec(int64(numSchedules)))
+		}
+		schedule.ReleaseTime = time.Now().AddDate(0, 0, i)
+
+		totalWeight = totalWeight.Add(schedule.Weight)
+		schedules[i] = schedule
+	}
+	fixedPriceAuction.VestingSchedules = schedules
+
+	_, err := s.keeper.CreateFixedPriceAuction(s.ctx, fixedPriceAuction)
+	s.Require().EqualError(err, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "exceed maximum number of vesting schedules").Error())
+}
 func (s *KeeperTestSuite) TestAddAllowedBidders() {
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(0),
@@ -544,4 +537,91 @@ func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 			s.Require().Equal(tc.maxBidAmount, allowedBidder.MaxBidAmount)
 		})
 	}
+}
+
+func (s *KeeperTestSuite) TestBatchAuction_AuctionStatus() {
+	standByAuction := s.createBatchAuction(
+		s.addr(0),
+		parseDec("1"),
+		parseDec("0.1"),
+		parseCoin("5000_000_000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		1,
+		sdk.MustNewDecFromStr("0.2"),
+		time.Now().AddDate(0, 6, 0),
+		time.Now().AddDate(0, 6, 0).AddDate(0, 1, 0),
+		true,
+	)
+
+	auction, found := s.keeper.GetAuction(s.ctx, standByAuction.GetId())
+	s.Require().True(found)
+	s.Require().Equal(types.AuctionStatusStandBy, auction.GetStatus())
+
+	feePool := s.app.DistrKeeper.GetFeePool(s.ctx)
+	auctionCreationFee := s.keeper.GetParams(s.ctx).AuctionCreationFee
+	s.Require().True(feePool.CommunityPool.IsEqual(sdk.NewDecCoinsFromCoins(auctionCreationFee...)))
+
+	startedAuction := s.createBatchAuction(
+		s.addr(1),
+		parseDec("0.5"),
+		parseDec("0.1"),
+		parseCoin("5000_000_000denom3"),
+		"denom4",
+		[]types.VestingSchedule{},
+		1,
+		sdk.MustNewDecFromStr("0.2"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+		true,
+	)
+
+	auction, found = s.keeper.GetAuction(s.ctx, startedAuction.GetId())
+	s.Require().True(found)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+}
+
+func (s *KeeperTestSuite) TestBatchAuction_MaxNumVestingSchedules() {
+	batchAuction := types.NewMsgCreateBatchAuction(
+		s.addr(0).String(),
+		parseDec("1"),
+		parseDec("0.1"),
+		parseCoin("5000_000_000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		1,
+		sdk.MustNewDecFromStr("0.2"),
+		time.Now().AddDate(0, 6, 0),
+		time.Now().AddDate(0, 6, 0).AddDate(0, 1, 0),
+	)
+
+	params := s.keeper.GetParams(s.ctx)
+	s.fundAddr(s.addr(0), params.AuctionCreationFee.Add(batchAuction.SellingCoin))
+
+	// Invalid max extended round
+	batchAuction.MaxExtendedRound = types.MaxExtendedRound + 1
+
+	_, err := s.keeper.CreateBatchAuction(s.ctx, batchAuction)
+	s.Require().EqualError(err, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "exceed maximum extended round").Error())
+
+	// Invalid number of vesting schedules
+	numSchedules := types.MaxNumVestingSchedules + 1
+	schedules := make([]types.VestingSchedule, numSchedules)
+	totalWeight := sdk.ZeroDec()
+	for i := range schedules {
+		var schedule types.VestingSchedule
+		if i == numSchedules-1 {
+			schedule.Weight = sdk.OneDec().Sub(totalWeight)
+		} else {
+			schedule.Weight = sdk.OneDec().Quo(sdk.NewDec(int64(numSchedules)))
+		}
+		schedule.ReleaseTime = time.Now().AddDate(0, 0, i)
+
+		totalWeight = totalWeight.Add(schedule.Weight)
+		schedules[i] = schedule
+	}
+	batchAuction.VestingSchedules = schedules
+
+	_, err = s.keeper.CreateBatchAuction(s.ctx, batchAuction)
+	s.Require().EqualError(err, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "exceed maximum number of vesting schedules").Error())
 }
