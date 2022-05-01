@@ -53,10 +53,8 @@ type AuctionI interface {
 	GetStatus() AuctionStatus
 	SetStatus(AuctionStatus) error
 
-	GetAllowedBiddersMap() map[string]sdk.Int
-
-	GetMaxBidAmount(bidder string) sdk.Int
-	SetMaxBidAmount(bidder string, maxBidAmt sdk.Int) error
+	ShouldAuctionStarted(t time.Time) bool
+	ShouldAuctionClosed(t time.Time) bool
 
 	Validate() error
 }
@@ -90,7 +88,6 @@ type BaseAuction struct {
 ```go
 // AllowedBidder defines a bidder who is allowed to bid with max number of bids.
 type AllowedBidder struct {
-	AuctionId       uint64  // id of the auction
 	Bidder          string  // a bidder who is allowed to bid
 	MaxBidAmount    uint64  // a maximum amount of bids per bidder
 }
@@ -200,7 +197,6 @@ const (
 	// Bid_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy of a batch auction
 	BidTypeBatchMany    BidType = 3
 )
-
 ```
 
 For `FixedPriceAuction`,
