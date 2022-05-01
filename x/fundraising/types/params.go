@@ -12,9 +12,11 @@ import (
 // Parameter store keys.
 var (
 	KeyAuctionCreationFee = []byte("AuctionCreationFee")
+	KeyPlaceBidFee        = []byte("PlaceBidFee")
 	KeyExtendedPeriod     = []byte("ExtendedPeriod")
 
 	DefaultAuctionCreationFee = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100_000_000)))
+	DefaultPlaceBidFee        = sdk.Coins{}
 	DefaultExtendedPeriod     = uint32(1)
 )
 
@@ -29,6 +31,7 @@ func ParamKeyTable() paramstypes.KeyTable {
 func DefaultParams() Params {
 	return Params{
 		AuctionCreationFee: DefaultAuctionCreationFee,
+		PlaceBidFee:        DefaultPlaceBidFee,
 		ExtendedPeriod:     DefaultExtendedPeriod,
 	}
 }
@@ -37,6 +40,7 @@ func DefaultParams() Params {
 func (p *Params) ParamSetPairs() paramstypes.ParamSetPairs {
 	return paramstypes.ParamSetPairs{
 		paramstypes.NewParamSetPair(KeyAuctionCreationFee, &p.AuctionCreationFee, validateAuctionCreationFee),
+		paramstypes.NewParamSetPair(KeyPlaceBidFee, &p.PlaceBidFee, validatePlaceBidFee),
 		paramstypes.NewParamSetPair(KeyExtendedPeriod, &p.ExtendedPeriod, validateExtendedPeriod),
 	}
 }
@@ -64,6 +68,19 @@ func (p Params) Validate() error {
 }
 
 func validateAuctionCreationFee(i interface{}) error {
+	v, ok := i.(sdk.Coins)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if err := v.Validate(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validatePlaceBidFee(i interface{}) error {
 	v, ok := i.(sdk.Coins)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)

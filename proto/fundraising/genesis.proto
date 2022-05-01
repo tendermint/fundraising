@@ -23,7 +23,8 @@ message GenesisState {
       [ (cosmos_proto.accepts_interface) = "AuctionI" ];
 
   // allowed_bidder_records define the allowed bidder records for the auction
-  repeated AllowedBidderRecord allowed_bidder_records = 3 [ (gogoproto.nullable) = false ];
+  repeated AllowedBidderRecord allowed_bidder_records = 3
+      [ (gogoproto.nullable) = false ];
 
   // bids define the bid records used for genesis state
   repeated Bid bids = 4 [ (gogoproto.nullable) = false ];
