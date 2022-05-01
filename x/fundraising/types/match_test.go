@@ -62,6 +62,7 @@ func TestMatch(t *testing.T) {
 	}
 
 	for _, tc := range []struct {
+		name                string
 		allowedBidders      map[string]sdk.Int
 		sellingCoinAmt      sdk.Int
 		bids                []types.Bid
@@ -72,6 +73,7 @@ func TestMatch(t *testing.T) {
 		matchResultByBidder map[string]*types.BidderMatchResult
 	}{
 		{
+			"basic case",
 			allowedBidders1,
 			sdk.NewInt(100_000000),
 			bids1,
@@ -87,24 +89,26 @@ func TestMatch(t *testing.T) {
 			},
 		},
 	} {
-		var allowedBidders []types.AllowedBidder
-		for bidder, maxBidAmt := range tc.allowedBidders {
-			allowedBidders = append(allowedBidders, types.AllowedBidder{
-				Bidder:       bidder,
-				MaxBidAmount: maxBidAmt,
-			})
-		}
-		prices, bidsByPrice := types.BidsByPrice(tc.bids)
-		matchRes, matched := types.Match(tc.matchPrice, prices, bidsByPrice, tc.sellingCoinAmt, allowedBidders)
-		require.Equal(t, tc.matched, matched)
-		if matched {
-			require.True(sdk.IntEq(t, tc.matchedAmt, matchRes.MatchedAmount))
-			var matchedBidIds []uint64
-			for _, bid := range matchRes.MatchedBids {
-				matchedBidIds = append(matchedBidIds, bid.Id)
+		t.Run(tc.name, func(t *testing.T) {
+			var allowedBidders []types.AllowedBidder
+			for bidder, maxBidAmt := range tc.allowedBidders {
+				allowedBidders = append(allowedBidders, types.AllowedBidder{
+					Bidder:       bidder,
+					MaxBidAmount: maxBidAmt,
+				})
 			}
-			require.Equal(t, tc.matchedBidIds, matchedBidIds)
-			require.Equal(t, tc.matchResultByBidder, matchRes.MatchResultByBidder)
-		}
+			prices, bidsByPrice := types.BidsByPrice(tc.bids)
+			matchRes, matched := types.Match(tc.matchPrice, prices, bidsByPrice, tc.sellingCoinAmt, allowedBidders)
+			require.Equal(t, tc.matched, matched)
+			if matched {
+				require.True(sdk.IntEq(t, tc.matchedAmt, matchRes.MatchedAmount))
+				var matchedBidIds []uint64
+				for _, bid := range matchRes.MatchedBids {
+					matchedBidIds = append(matchedBidIds, bid.Id)
+				}
+				require.Equal(t, tc.matchedBidIds, matchedBidIds)
+				require.Equal(t, tc.matchResultByBidder, matchRes.MatchResultByBidder)
+			}
+		})
 	}
 }
