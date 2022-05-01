@@ -236,6 +236,6 @@ proto-format:
 ###############################################################################
 
 localnet: 
-	starport chain serve -r -v -c ./config-test.yml
+	ignite chain serve -r -v -c ./config-test.yml
 
 .PHONY: localnet
