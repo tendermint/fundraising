@@ -55,6 +55,9 @@ func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI
 
 	bids := k.GetBidsByAuctionId(ctx, auction.GetId())
 	prices, bidsByPrice := types.BidsByPrice(bids)
+	sellingAmt := auction.GetSellingCoin().Amount
+
+	allowedBidders := k.GetAllowedBiddersByAuction(ctx, auction.GetId())
 
 	matchRes := &types.MatchResult{
 		MatchPrice:          sdk.Dec{},
@@ -72,7 +75,7 @@ func (k Keeper) CalculateBatchAllocation(ctx sdk.Context, auction types.AuctionI
 		// Note that our goal is to find the first true(matched) condition, starting
 		// from the lowest price.
 		i = (len(prices) - 1) - i
-		res, matched := types.Match(auction, prices[i], prices, bidsByPrice)
+		res, matched := types.Match(prices[i], prices, bidsByPrice, sellingAmt, allowedBidders)
 		if matched { // If we found a valid matching price, store the result
 			matchRes = res
 		}

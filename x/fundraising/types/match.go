@@ -15,12 +15,16 @@ type BidderMatchResult struct {
 }
 
 // Match returns the match result for all bids that correspond with the auction.
-func Match(auction AuctionI, matchPrice sdk.Dec, prices []sdk.Dec, bidsByPrice map[string][]Bid) (res *MatchResult, matched bool) {
-	biddableAmtByBidder := auction.GetAllowedBiddersMap()
+func Match(matchPrice sdk.Dec, prices []sdk.Dec, bidsByPrice map[string][]Bid, sellingAmt sdk.Int, allowedBidders []AllowedBidder) (res *MatchResult, matched bool) {
 	res = &MatchResult{
 		MatchPrice:          matchPrice,
 		MatchedAmount:       sdk.ZeroInt(),
 		MatchResultByBidder: map[string]*BidderMatchResult{},
+	}
+
+	biddableAmtByBidder := map[string]sdk.Int{}
+	for _, allowedBidder := range allowedBidders {
+		biddableAmtByBidder[allowedBidder.Bidder] = allowedBidder.MaxBidAmount
 	}
 
 	for _, price := range prices {
@@ -39,7 +43,7 @@ func Match(auction AuctionI, matchPrice sdk.Dec, prices []sdk.Dec, bidsByPrice m
 			biddableAmt := biddableAmtByBidder[bid.Bidder]
 			matchAmt := sdk.MinInt(bidAmt, biddableAmtByBidder[bid.Bidder])
 
-			if res.MatchedAmount.Add(matchAmt).GT(auction.GetSellingCoin().Amount) {
+			if res.MatchedAmount.Add(matchAmt).GT(sellingAmt) {
 				// Including this bid will exceed the auction's selling amount.
 				return nil, false
 			}

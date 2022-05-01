@@ -2,9 +2,9 @@ package types
 
 import (
 	"fmt"
-	time "time"
+	"time"
 
-	proto "github.com/gogo/protobuf/proto"
+	"github.com/gogo/protobuf/proto"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -31,16 +31,15 @@ var (
 // NewBaseAuction creates a new BaseAuction object
 //nolint:interfacer
 func NewBaseAuction(
-	id uint64, typ AuctionType, allowedBidders []AllowedBidder, auctioneerAddr string,
-	sellingPoolAddr string, payingPoolAddr string, startPrice sdk.Dec,
-	sellingCoin sdk.Coin, payingCoinDenom string, vestingPoolAddr string,
-	vestingSchedules []VestingSchedule, remainingSellingCoin sdk.Coin,
+	id uint64, typ AuctionType, auctioneerAddr string,
+	sellingPoolAddr string, payingPoolAddr string,
+	startPrice sdk.Dec, sellingCoin sdk.Coin, payingCoinDenom string,
+	vestingPoolAddr string, vestingSchedules []VestingSchedule,
 	startTime time.Time, endTimes []time.Time, status AuctionStatus,
 ) *BaseAuction {
 	return &BaseAuction{
 		Id:                    id,
 		Type:                  typ,
-		AllowedBidders:        allowedBidders,
 		Auctioneer:            auctioneerAddr,
 		SellingReserveAddress: sellingPoolAddr,
 		PayingReserveAddress:  payingPoolAddr,
@@ -49,7 +48,6 @@ func NewBaseAuction(
 		PayingCoinDenom:       payingCoinDenom,
 		VestingReserveAddress: vestingPoolAddr,
 		VestingSchedules:      vestingSchedules,
-		RemainingSellingCoin:  remainingSellingCoin,
 		StartTime:             startTime,
 		EndTimes:              endTimes,
 		Status:                status,
@@ -71,15 +69,6 @@ func (ba BaseAuction) GetType() AuctionType {
 
 func (ba *BaseAuction) SetType(typ AuctionType) error {
 	ba.Type = typ
-	return nil
-}
-
-func (ba BaseAuction) GetAllowedBidders() []AllowedBidder {
-	return ba.AllowedBidders
-}
-
-func (ba *BaseAuction) SetAllowedBidders(bidders []AllowedBidder) error {
-	ba.AllowedBidders = bidders
 	return nil
 }
 
@@ -159,15 +148,6 @@ func (ba *BaseAuction) SetVestingSchedules(schedules []VestingSchedule) error {
 	return nil
 }
 
-func (ba BaseAuction) GetRemainingSellingCoin() sdk.Coin {
-	return ba.RemainingSellingCoin
-}
-
-func (ba *BaseAuction) SetRemainingSellingCoin(coin sdk.Coin) error {
-	ba.RemainingSellingCoin = coin
-	return nil
-}
-
 func (ba BaseAuction) GetStartTime() time.Time {
 	return ba.StartTime
 }
@@ -227,37 +207,7 @@ func (ba BaseAuction) Validate() error {
 	if err := ValidateVestingSchedules(ba.VestingSchedules, ba.EndTimes[len(ba.EndTimes)-1]); err != nil {
 		return err
 	}
-	if err := ValidateAllowedBidders(ba.AllowedBidders, ba.SellingCoin.Amount); err != nil {
-		return err
-	}
 	return nil
-}
-
-func (ba BaseAuction) GetMaxBidAmount(addr string) sdk.Int {
-	maxBidAmt := sdk.ZeroInt()
-	for _, ab := range ba.GetAllowedBidders() {
-		if ab.Bidder == addr {
-			maxBidAmt = ab.MaxBidAmount
-		}
-	}
-	return maxBidAmt
-}
-
-func (ba *BaseAuction) SetMaxBidAmount(addr string, maxBidAmt sdk.Int) error {
-	for i, ab := range ba.GetAllowedBidders() {
-		if ab.Bidder == addr {
-			ba.GetAllowedBidders()[i].MaxBidAmount = maxBidAmt
-		}
-	}
-	return nil
-}
-
-func (ba BaseAuction) GetAllowedBiddersMap() map[string]sdk.Int { // map(bidder => maxBidAmount)
-	absMap := make(map[string]sdk.Int)
-	for _, ab := range ba.GetAllowedBidders() {
-		absMap[ab.Bidder] = ab.MaxBidAmount
-	}
-	return absMap
 }
 
 // ShouldAuctionStarted returns true if the start time is equal or before the given time t.
@@ -272,9 +222,10 @@ func (ba BaseAuction) ShouldAuctionClosed(t time.Time) bool {
 }
 
 // NewFixedPriceAuction returns a new fixed price auction.
-func NewFixedPriceAuction(baseAuction *BaseAuction) *FixedPriceAuction {
+func NewFixedPriceAuction(baseAuction *BaseAuction, remainingSellingCoin sdk.Coin) *FixedPriceAuction {
 	return &FixedPriceAuction{
-		BaseAuction: baseAuction,
+		BaseAuction:          baseAuction,
+		RemainingSellingCoin: remainingSellingCoin,
 	}
 }
 
@@ -300,9 +251,6 @@ type AuctionI interface {
 	GetType() AuctionType
 	SetType(AuctionType) error
 
-	GetAllowedBidders() []AllowedBidder
-	SetAllowedBidders([]AllowedBidder) error
-
 	GetAuctioneer() sdk.AccAddress
 	SetAuctioneer(sdk.AccAddress) error
 
@@ -327,9 +275,6 @@ type AuctionI interface {
 	GetVestingSchedules() []VestingSchedule
 	SetVestingSchedules([]VestingSchedule) error
 
-	GetRemainingSellingCoin() sdk.Coin
-	SetRemainingSellingCoin(sdk.Coin) error
-
 	GetStartTime() time.Time
 	SetStartTime(time.Time) error
 
@@ -342,10 +287,8 @@ type AuctionI interface {
 	ShouldAuctionStarted(t time.Time) bool
 	ShouldAuctionClosed(t time.Time) bool
 
-	GetAllowedBiddersMap() map[string]sdk.Int
-
-	GetMaxBidAmount(bidder string) sdk.Int
-	SetMaxBidAmount(bidder string, maxBidAmt sdk.Int) error
+	// GetMaxBidAmount(bidder string) sdk.Int
+	// SetMaxBidAmount(bidder string, maxBidAmt sdk.Int) error
 
 	Validate() error
 }
@@ -451,20 +394,4 @@ func PayingReserveAddress(auctionId uint64) sdk.AccAddress {
 // VestingReserveAddress returns the vesting reserve address with the given auction id.
 func VestingReserveAddress(auctionId uint64) sdk.AccAddress {
 	return DeriveAddress(ReserveAddressType, ModuleName, VestingReserveAddressPrefix+ModuleAddressNameSplitter+fmt.Sprint(auctionId))
-}
-
-// ValidateAllowedBidders validates allowed bidders.
-func ValidateAllowedBidders(bidders []AllowedBidder, totalSellingAmt sdk.Int) error {
-	for _, b := range bidders {
-		if b.MaxBidAmount.IsNil() {
-			return ErrInvalidMaxBidAmount
-		}
-		if !b.MaxBidAmount.IsPositive() {
-			return ErrInvalidMaxBidAmount
-		}
-		if b.MaxBidAmount.GT(totalSellingAmt) {
-			return ErrInsufficientRemainingAmount
-		}
-	}
-	return nil
 }

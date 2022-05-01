@@ -94,16 +94,8 @@ func TestMatch(t *testing.T) {
 				MaxBidAmount: maxBidAmt,
 			})
 		}
-		auction := &types.BatchAuction{
-			BaseAuction: &types.BaseAuction{
-				Type:            types.AuctionTypeBatch,
-				AllowedBidders:  allowedBidders,
-				SellingCoin:     sdk.NewCoin(sellingCoinDenom, tc.sellingCoinAmt),
-				PayingCoinDenom: payingCoinDenom,
-			},
-		}
 		prices, bidsByPrice := types.BidsByPrice(tc.bids)
-		matchRes, matched := types.Match(auction, tc.matchPrice, prices, bidsByPrice)
+		matchRes, matched := types.Match(tc.matchPrice, prices, bidsByPrice, tc.sellingCoinAmt, allowedBidders)
 		require.Equal(t, tc.matched, matched)
 		if matched {
 			require.True(sdk.IntEq(t, tc.matchedAmt, matchRes.MatchedAmount))

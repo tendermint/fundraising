@@ -109,11 +109,10 @@ func (k Keeper) BeforeBidModified(
 // BeforeAllowedBiddersAdded - call hook if registered
 func (k Keeper) BeforeAllowedBiddersAdded(
 	ctx sdk.Context,
-	auctionId uint64,
 	allowedBidders []types.AllowedBidder,
 ) {
 	if k.hooks != nil {
-		k.hooks.BeforeAllowedBiddersAdded(ctx, auctionId, allowedBidders)
+		k.hooks.BeforeAllowedBiddersAdded(ctx, allowedBidders)
 	}
 }
 

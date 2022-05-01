@@ -7,6 +7,7 @@ import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 import "google/api/annotations.proto";
 import "fundraising/fundraising.proto";
+import "fundraising/params.proto";
 
 option go_package = "github.com/tendermint/fundraising/x/fundraising/types";
 
@@ -26,6 +27,20 @@ service Query {
   rpc Auction(QueryAuctionRequest) returns (QueryAuctionResponse) {
     option (google.api.http).get =
         "/cosmos/fundraising/v1beta1/auctions/{auction_id}";
+  }
+
+  // AllowedBidder returns the specific allowed bidder information.
+  rpc AllowedBidder(QueryAllowedBidderRequest)
+      returns (QueryAllowedBidderResponse) {
+    option (google.api.http).get = "/cosmos/fundraising/v1beta1/auctions/"
+                                   "{auction_id}/allowed_bidders/{bidder}";
+  }
+
+  // AllowedBidders returns all allowed bidders for the auction.
+  rpc AllowedBidders(QueryAllowedBiddersRequest)
+      returns (QueryAllowedBiddersResponse) {
+    option (google.api.http).get =
+        "/cosmos/fundraising/v1beta1/auctions/{auction_id}/allowed_bidders";
   }
 
   // Bids returns all bids.
@@ -80,6 +95,36 @@ message QueryAuctionRequest { uint64 auction_id = 1; }
 message QueryAuctionResponse {
   google.protobuf.Any auction = 1
       [ (cosmos_proto.accepts_interface) = "AuctionI" ];
+}
+
+// QueryAllowedBidderRequest is the request type for the Query/AllowedBidder RPC
+// method.
+message QueryAllowedBidderRequest {
+  uint64 auction_id = 1;
+  string bidder = 2;
+}
+
+// QueryAllowedBidderResponse is the response type for the Query/AllowedBidder
+// RPC method.
+message QueryAllowedBidderResponse {
+  AllowedBidder allowed_bidder = 1 [ (gogoproto.nullable) = false ];
+}
+
+// QueryAllowedBiddersRequest is the request type for the Query/AllowedBidders
+// RPC method.
+message QueryAllowedBiddersRequest {
+  uint64 auction_id = 1;
+
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryAllowedBiddersResponse is the response type for the Query/AllowedBidders
+// RPC method.
+message QueryAllowedBiddersResponse {
+  repeated AllowedBidder allowed_bidders = 1 [ (gogoproto.nullable) = false ];
+
+  // pagination defines the pagination in the response
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // QueryBidsRequest is request type for the Query/Bids RPC method.

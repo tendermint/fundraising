@@ -48,7 +48,7 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_AuctionStatus() {
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 }
 
-func (s *KeeperTestSuite) TestFixedPriceAuction_CalculateAllocation_BidwithPayingCoinDenom() {
+func (s *KeeperTestSuite) TestFixedPriceAuction_BidWithPayingCoinDenom() {
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("0.5"),
@@ -60,23 +60,20 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_CalculateAllocation_BidwithPayin
 		true,
 	)
 
-	a, found := s.keeper.GetAuction(s.ctx, startedAuction.GetId())
+	auction, found := s.keeper.GetAuction(s.ctx, startedAuction.GetId())
 	s.Require().True(found)
 
-	bidder := s.addr(1)
-	s.addAllowedBidder(a.GetId(), bidder, parseInt("1_000_000_000"))
-
-	s.placeBidFixedPrice(a.GetId(), bidder, a.GetStartPrice(), parseCoin("1_000_000denom2"), true)
-	s.placeBidFixedPrice(a.GetId(), bidder, a.GetStartPrice(), parseCoin("1_000_000denom2"), true)
-	s.placeBidFixedPrice(a.GetId(), bidder, a.GetStartPrice(), parseCoin("1_000_000denom2"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(1), auction.GetStartPrice(), parseCoin("1_000_000denom2"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(1), auction.GetStartPrice(), parseCoin("1_000_000denom2"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(1), auction.GetStartPrice(), parseCoin("1_000_000denom2"), true)
 
 	// Make sure allocate amount is equal to the total bid amount made by the same bidder
-	mInfo := s.keeper.CalculateFixedPriceAllocation(s.ctx, a)
-	allocateAmt := mInfo.AllocationMap[bidder.String()]
+	mInfo := s.keeper.CalculateFixedPriceAllocation(s.ctx, auction)
+	allocateAmt := mInfo.AllocationMap[s.addr(1).String()]
 	s.Require().Equal(allocateAmt, parseCoin("6_000_000denom1").Amount)
 }
 
-func (s *KeeperTestSuite) TestFixedPriceAuction_CalculateAllocation_BidwithSellingCoinDenom() {
+func (s *KeeperTestSuite) TestFixedPriceAuction_BidWithSellingCoinDenom() {
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("0.5"),
@@ -88,23 +85,20 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_CalculateAllocation_BidwithSelli
 		true,
 	)
 
-	a, found := s.keeper.GetAuction(s.ctx, startedAuction.GetId())
+	auction, found := s.keeper.GetAuction(s.ctx, startedAuction.GetId())
 	s.Require().True(found)
 
-	bidder := s.addr(1)
-	s.addAllowedBidder(a.GetId(), bidder, parseInt("1_000_000_000"))
-
-	s.placeBidFixedPrice(a.GetId(), bidder, a.GetStartPrice(), parseCoin("2_000_000denom1"), true)
-	s.placeBidFixedPrice(a.GetId(), bidder, a.GetStartPrice(), parseCoin("2_000_000denom1"), true)
-	s.placeBidFixedPrice(a.GetId(), bidder, a.GetStartPrice(), parseCoin("2_000_000denom1"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(1), auction.GetStartPrice(), parseCoin("1_000_000denom1"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(1), auction.GetStartPrice(), parseCoin("1_000_000denom1"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(1), auction.GetStartPrice(), parseCoin("1_000_000denom1"), true)
 
 	// Make sure allocate amount is equal to the total bid amount made by the same bidder
-	mInfo := s.keeper.CalculateFixedPriceAllocation(s.ctx, a)
-	allocateAmt := mInfo.AllocationMap[bidder.String()]
-	s.Require().Equal(allocateAmt, parseCoin("6_000_000denom1").Amount)
+	mInfo := s.keeper.CalculateFixedPriceAllocation(s.ctx, auction)
+	allocateAmt := mInfo.AllocationMap[s.addr(1).String()]
+	s.Require().Equal(allocateAmt, parseCoin("3_000_000denom1").Amount)
 }
 
-func (s *KeeperTestSuite) TestFixedPriceAuction_CalculateAllocation_mixed() {
+func (s *KeeperTestSuite) TestFixedPriceAuction_BidWithBoth() {
 	startedAuction := s.createFixedPriceAuction(
 		s.addr(0),
 		parseDec("0.5"),
@@ -116,20 +110,19 @@ func (s *KeeperTestSuite) TestFixedPriceAuction_CalculateAllocation_mixed() {
 		true,
 	)
 
-	a, found := s.keeper.GetAuction(s.ctx, startedAuction.GetId())
+	auction, found := s.keeper.GetAuction(s.ctx, startedAuction.GetId())
 	s.Require().True(found)
 
-	bidder := s.addr(1)
-	s.addAllowedBidder(a.GetId(), bidder, parseInt("1_000_000_000"))
-
-	s.placeBidFixedPrice(a.GetId(), bidder, a.GetStartPrice(), parseCoin("2_000_000denom1"), true)
-	s.placeBidFixedPrice(a.GetId(), bidder, a.GetStartPrice(), parseCoin("2_000_000denom1"), true)
-	s.placeBidFixedPrice(a.GetId(), bidder, a.GetStartPrice(), parseCoin("2_000_000denom2"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(1), auction.GetStartPrice(), parseCoin("2_000_000denom1"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(1), auction.GetStartPrice(), parseCoin("2_000_000denom1"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(1), auction.GetStartPrice(), parseCoin("2_000_000denom2"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(2), auction.GetStartPrice(), parseCoin("1_000_000denom1"), true)
+	s.placeBidFixedPrice(auction.GetId(), s.addr(2), auction.GetStartPrice(), parseCoin("1_000_000denom2"), true)
 
 	// Make sure allocate amount is equal to the total bid amount made by the same bidder
-	mInfo := s.keeper.CalculateFixedPriceAllocation(s.ctx, a)
-	allocateAmt := mInfo.AllocationMap[bidder.String()]
-	s.Require().Equal(allocateAmt, parseCoin("8_000_000denom2").Amount)
+	mInfo := s.keeper.CalculateFixedPriceAllocation(s.ctx, auction)
+	s.Require().Equal(mInfo.AllocationMap[s.addr(1).String()], parseCoin("8_000_000denom2").Amount)
+	s.Require().Equal(mInfo.AllocationMap[s.addr(2).String()], parseCoin("3_000_000denom2").Amount)
 }
 
 func (s *KeeperTestSuite) TestFixedPriceAuction_AllocateSellingCoin() {
@@ -374,7 +367,7 @@ func (s *KeeperTestSuite) TestAddAllowedBidders() {
 	auction, found := s.keeper.GetAuction(s.ctx, startedAuction.GetId())
 	s.Require().True(found)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
-	s.Require().Len(auction.GetAllowedBidders(), 0)
+	s.Require().Len(s.keeper.GetAllowedBiddersByAuction(s.ctx, startedAuction.Id), 0)
 
 	for _, tc := range []struct {
 		name        string
@@ -450,7 +443,7 @@ func (s *KeeperTestSuite) TestAddAllowedBidders_Length() {
 
 	auction, found := s.keeper.GetAuction(s.ctx, startedAuction.GetId())
 	s.Require().True(found)
-	s.Require().Len(auction.GetAllowedBidders(), 0)
+	s.Require().Len(s.keeper.GetAllowedBiddersByAuction(s.ctx, auction.GetId()), 0)
 
 	// Add some bidders
 	s.Require().NoError(s.keeper.AddAllowedBidders(s.ctx, auction.GetId(), []types.AllowedBidder{
@@ -460,7 +453,7 @@ func (s *KeeperTestSuite) TestAddAllowedBidders_Length() {
 
 	auction, found = s.keeper.GetAuction(s.ctx, auction.GetId())
 	s.Require().True(found)
-	s.Require().Len(auction.GetAllowedBidders(), 2)
+	s.Require().Len(s.keeper.GetAllowedBiddersByAuction(s.ctx, auction.GetId()), 2)
 
 	// Add more bidders
 	s.Require().NoError(s.keeper.AddAllowedBidders(s.ctx, auction.GetId(), []types.AllowedBidder{
@@ -471,7 +464,7 @@ func (s *KeeperTestSuite) TestAddAllowedBidders_Length() {
 
 	auction, found = s.keeper.GetAuction(s.ctx, auction.GetId())
 	s.Require().True(found)
-	s.Require().Len(auction.GetAllowedBidders(), 5)
+	s.Require().Len(s.keeper.GetAllowedBiddersByAuction(s.ctx, auction.GetId()), 5)
 }
 
 func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
@@ -488,7 +481,7 @@ func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 
 	auction, found := s.keeper.GetAuction(s.ctx, startedAuction.GetId())
 	s.Require().True(found)
-	s.Require().Len(auction.GetAllowedBidders(), 0)
+	s.Require().Len(s.keeper.GetAllowedBiddersByAuction(s.ctx, startedAuction.Id), 0)
 
 	// Add 5 bidders with different maximum bid amount
 	s.Require().NoError(s.keeper.AddAllowedBidders(s.ctx, auction.GetId(), []types.AllowedBidder{
@@ -498,10 +491,7 @@ func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 		{Bidder: s.addr(4).String(), MaxBidAmount: sdk.NewInt(400_000_000)},
 		{Bidder: s.addr(5).String(), MaxBidAmount: sdk.NewInt(500_000_000)},
 	}))
-
-	auction, found = s.keeper.GetAuction(s.ctx, startedAuction.GetId())
-	s.Require().True(found)
-	s.Require().Len(auction.GetAllowedBidders(), 5)
+	s.Require().Len(s.keeper.GetAllowedBiddersByAuction(s.ctx, auction.GetId()), 5)
 
 	for _, tc := range []struct {
 		name         string
@@ -544,12 +534,14 @@ func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 
 			auction, found = s.keeper.GetAuction(s.ctx, auction.GetId())
 			s.Require().True(found)
-			s.Require().Len(auction.GetAllowedBidders(), 5)
 
-			// Check if it is sucessfully updated
-			allowedBiddersMap := auction.GetAllowedBiddersMap()
-			maxBidAmt := allowedBiddersMap[tc.bidder.String()]
-			s.Require().Equal(tc.maxBidAmount, maxBidAmt)
+			allowedBidders := s.keeper.GetAllowedBiddersByAuction(s.ctx, startedAuction.Id)
+			s.Require().Len(allowedBidders, 5)
+
+			// Check if it is successfully updated
+			allowedBidder, found := s.keeper.GetAllowedBidder(s.ctx, auction.GetId(), tc.bidder)
+			s.Require().True(found)
+			s.Require().Equal(tc.maxBidAmount, allowedBidder.MaxBidAmount)
 		})
 	}
 }

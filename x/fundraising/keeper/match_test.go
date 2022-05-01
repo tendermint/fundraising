@@ -5,7 +5,6 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/tendermint/fundraising/x/fundraising/types"
 
 	_ "github.com/stretchr/testify/suite"

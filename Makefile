@@ -126,7 +126,6 @@ test-all: test-unit test-race test-cover
 test-unit: 
 	@VERSION=$(VERSION) go test -mod=readonly -tags='norace' $(PACKAGES_NOSIMULATION)
 
-
 test-race:
 	@go test -mod=readonly -timeout 30m -race -coverprofile=coverage.txt -covermode=atomic -tags='ledger test_ledger_mock' ./...
 

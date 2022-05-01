@@ -1,17 +1,16 @@
 syntax = "proto3";
 package tendermint.fundraising;
 
-// this line is used by starport scaffolding # genesis/proto/import
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 import "fundraising/fundraising.proto";
+import "fundraising/params.proto";
 
 option go_package = "github.com/tendermint/fundraising/x/fundraising/types";
 
 // GenesisState defines the fundraising module's genesis state.
 message GenesisState {
-  // this line is used by starport scaffolding # genesis/proto/state
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
@@ -23,10 +22,21 @@ message GenesisState {
   repeated google.protobuf.Any auctions = 2
       [ (cosmos_proto.accepts_interface) = "AuctionI" ];
 
-  // bids defines the bid records used for genesis state
-  repeated Bid bids = 3 [ (gogoproto.nullable) = false ];
+  // allowed_bidder_records define the allowed bidder records for the auction
+  repeated AllowedBidderRecord allowed_bidder_records = 3 [ (gogoproto.nullable) = false ];
 
-  // vesting_queues defines the vesting queue records used for genesis
+  // bids define the bid records used for genesis state
+  repeated Bid bids = 4 [ (gogoproto.nullable) = false ];
+
+  // vesting_queues define the vesting queue records used for genesis
   // state
-  repeated VestingQueue vesting_queues = 4 [ (gogoproto.nullable) = false ];
+  repeated VestingQueue vesting_queues = 5 [ (gogoproto.nullable) = false ];
+}
+
+message AllowedBidderRecord {
+  // auction_ id specifies index of the auction
+  uint64 auction_id = 1;
+
+  // allowed_bidder specifies allowed bidder for the auction
+  AllowedBidder allowed_bidder = 2 [ (gogoproto.nullable) = false ];
 }

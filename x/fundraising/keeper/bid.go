@@ -33,7 +33,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		}
 	}
 
-	_, found = auction.GetAllowedBiddersMap()[msg.Bidder]
+	_, found = k.GetAllowedBidder(ctx, auction.GetId(), msg.GetBidder())
 	if !found {
 		return types.Bid{}, types.ErrNotAllowedBidder
 	}
@@ -57,6 +57,8 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 			return types.Bid{}, err
 		}
 
+		fa := auction.(*types.FixedPriceAuction)
+
 		// Reserve bid amount
 		bidPayingAmt := bid.ConvertToPayingAmount(payingCoinDenom)
 		bidPayingCoin := sdk.NewCoin(payingCoinDenom, bidPayingAmt)
@@ -67,14 +69,13 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		// Subtract bid amount from the remaining
 		bidSellingAmt := bid.ConvertToSellingAmount(payingCoinDenom)
 		bidSellingCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidSellingAmt)
-		remaining := auction.GetRemainingSellingCoin().Sub(bidSellingCoin)
+		fa.RemainingSellingCoin = fa.RemainingSellingCoin.Sub(bidSellingCoin)
 
-		_ = auction.SetRemainingSellingCoin(remaining)
-		k.SetAuction(ctx, auction)
+		k.SetAuction(ctx, fa)
 		bid.SetMatched(true)
 
 	case types.BidTypeBatchWorth:
-		if err := k.ValidateBatchWorthBid(auction, bid); err != nil {
+		if err := k.ValidateBatchWorthBid(ctx, auction, bid); err != nil {
 			return types.Bid{}, err
 		}
 
@@ -83,7 +84,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		}
 
 	case types.BidTypeBatchMany:
-		if err := k.ValidateBatchManyBid(auction, bid); err != nil {
+		if err := k.ValidateBatchManyBid(ctx, auction, bid); err != nil {
 			return types.Bid{}, err
 		}
 
@@ -131,7 +132,7 @@ func (k Keeper) ValidateFixedPriceBid(ctx sdk.Context, auction types.AuctionI, b
 	// For remaining coin validation, convert bid amount in selling coin denom
 	bidAmt := bid.ConvertToSellingAmount(auction.GetPayingCoinDenom())
 	bidCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidAmt)
-	remainingCoin := auction.GetRemainingSellingCoin()
+	remainingCoin := auction.(*types.FixedPriceAuction).RemainingSellingCoin
 
 	if remainingCoin.IsLT(bidCoin) {
 		return sdkerrors.Wrapf(types.ErrInsufficientRemainingAmount, "remaining selling coin amount %s", remainingCoin)
@@ -146,11 +147,15 @@ func (k Keeper) ValidateFixedPriceBid(ctx sdk.Context, auction types.AuctionI, b
 		}
 	}
 
+	allowedBidder, found := k.GetAllowedBidder(ctx, bid.AuctionId, bid.GetBidder())
+	if !found {
+		return sdkerrors.Wrap(sdkerrors.ErrNotFound, "bidder is not found in allowed bidder list")
+	}
+
 	totalBidAmt = totalBidAmt.Add(bidAmt)
-	maxBidAmt := auction.GetMaxBidAmount(bid.Bidder)
 
 	// The total bid amount can't be greater than the bidder's maximum bid amount
-	if totalBidAmt.GT(maxBidAmt) {
+	if totalBidAmt.GT(allowedBidder.MaxBidAmount) {
 		return types.ErrOverMaxBidAmountLimit
 	}
 
@@ -158,7 +163,7 @@ func (k Keeper) ValidateFixedPriceBid(ctx sdk.Context, auction types.AuctionI, b
 }
 
 // ValidateBatchWorthBid validates a batch worth bid type.
-func (k Keeper) ValidateBatchWorthBid(auction types.AuctionI, bid types.Bid) error {
+func (k Keeper) ValidateBatchWorthBid(ctx sdk.Context, auction types.AuctionI, bid types.Bid) error {
 	if auction.GetType() != types.AuctionTypeBatch {
 		return types.ErrIncorrectAuctionType
 	}
@@ -167,11 +172,15 @@ func (k Keeper) ValidateBatchWorthBid(auction types.AuctionI, bid types.Bid) err
 		return types.ErrIncorrectCoinDenom
 	}
 
+	allowedBidder, found := k.GetAllowedBidder(ctx, bid.AuctionId, bid.GetBidder())
+	if !found {
+		return sdkerrors.Wrap(sdkerrors.ErrNotFound, "bidder is not found in allowed bidder list")
+	}
+
 	bidAmt := bid.ConvertToSellingAmount(auction.GetPayingCoinDenom())
-	maxBidAmt := auction.GetMaxBidAmount(bid.Bidder)
 
 	// The total bid amount can't be greater than the bidder's maximum bid amount
-	if bidAmt.GT(maxBidAmt) {
+	if bidAmt.GT(allowedBidder.MaxBidAmount) {
 		return types.ErrOverMaxBidAmountLimit
 	}
 
@@ -179,7 +188,7 @@ func (k Keeper) ValidateBatchWorthBid(auction types.AuctionI, bid types.Bid) err
 }
 
 // ValidateBatchManyBid validates a batch many bid type.
-func (k Keeper) ValidateBatchManyBid(auction types.AuctionI, bid types.Bid) error {
+func (k Keeper) ValidateBatchManyBid(ctx sdk.Context, auction types.AuctionI, bid types.Bid) error {
 	if auction.GetType() != types.AuctionTypeBatch {
 		return types.ErrIncorrectAuctionType
 	}
@@ -188,11 +197,15 @@ func (k Keeper) ValidateBatchManyBid(auction types.AuctionI, bid types.Bid) erro
 		return types.ErrIncorrectCoinDenom
 	}
 
+	allowedBidder, found := k.GetAllowedBidder(ctx, bid.AuctionId, bid.GetBidder())
+	if !found {
+		return sdkerrors.Wrap(sdkerrors.ErrNotFound, "bidder is not found in allowed bidder list")
+	}
+
 	bidAmt := bid.ConvertToSellingAmount(auction.GetPayingCoinDenom())
-	maxBidAmt := auction.GetMaxBidAmount(bid.Bidder)
 
 	// The total bid amount can't be greater than the bidder's maximum bid amount
-	if bidAmt.GT(maxBidAmt) {
+	if bidAmt.GT(allowedBidder.MaxBidAmount) {
 		return types.ErrOverMaxBidAmountLimit
 	}
 
@@ -237,7 +250,6 @@ func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "bid price or coin amount cannot be lower")
 	}
 
-	// TODO: add test case
 	if msg.Price.Equal(bid.Price) && msg.Coin.Amount.Equal(bid.Coin.Amount) {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "bid price and coin amount must be changed")
 	}
@@ -251,9 +263,9 @@ func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) error {
 				return err
 			}
 		}
-	case types.BidTypeBatchMany: // TODO: add test case
-		prevReserveAmt := msg.Coin.Amount.ToDec().Mul(msg.Price).Ceil()
-		currReserveAmt := bid.Coin.Amount.ToDec().Mul(bid.Price).Ceil()
+	case types.BidTypeBatchMany:
+		prevReserveAmt := bid.Coin.Amount.ToDec().Mul(bid.Price).Ceil()
+		currReserveAmt := msg.Coin.Amount.ToDec().Mul(msg.Price).Ceil()
 		diffReserveAmt := currReserveAmt.Sub(prevReserveAmt).TruncateInt()
 		diffReserveCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), diffReserveAmt)
 		if diffReserveCoin.IsPositive() {

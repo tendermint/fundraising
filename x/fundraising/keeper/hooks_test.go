@@ -85,7 +85,6 @@ func (h *MockFundraisingHooksReceiver) BeforeBidModified(
 
 func (h *MockFundraisingHooksReceiver) BeforeAllowedBiddersAdded(
 	ctx sdk.Context,
-	auctionId uint64,
 	allowedBidders []types.AllowedBidder,
 ) {
 	h.BeforeAllowedBiddersAddedValid = true
@@ -178,7 +177,8 @@ func (s *KeeperTestSuite) TestHooks() {
 	s.Require().True(found)
 
 	// Add allowed bidder
-	s.addAllowedBidder(auction.GetId(), s.addr(3), parseInt("100_000_000_000"))
+	allowedBidders := []types.AllowedBidder{types.NewAllowedBidder(s.addr(3), parseInt("100_000_000_000"))}
+	s.Require().NoError(s.keeper.AddAllowedBidders(s.ctx, auction.GetId(), allowedBidders))
 	s.Require().True(fundraisingHooksReceiver.BeforeAllowedBiddersAddedValid)
 
 	// Update the allowed bidder

@@ -85,7 +85,7 @@ Description of the parameters:
 [start_price]: the start price of the selling coin that is proportional to the paying coin denom 
 [selling_coin]: the selling amount of coin for the auction
 [paying_coin_denom]: the paying coin denom that the auctioneer wants to exchange with
-[vesting_schedules]: the vesting schedules that release the paying coins to the autioneer
+[vesting_schedules]: the vesting schedules that release the paying coins to the auctioneer
 [start_time]: the start time of the auction
 [end_time]: the end time of the auction
 `,
@@ -413,10 +413,10 @@ $ %s tx %s add-allowed-bidder 1 10000000000 --from mykey
 
 			maxBidAmt, ok := sdk.NewIntFromString(args[2])
 			if !ok {
-				return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "maxium bid price must be a positive integer")
+				return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "maximum bid price must be a positive integer")
 			}
 
-			msg := types.NewAddAllowedBidder(
+			msg := types.NewMsgAddAllowedBidder(
 				auctionId,
 				types.AllowedBidder{
 					Bidder:       bidderAddr.String(),
