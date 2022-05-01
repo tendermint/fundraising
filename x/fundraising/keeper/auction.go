@@ -33,12 +33,12 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 
 	nextId := k.GetNextAuctionIdWithUpdate(ctx)
 
-	if err := k.ReserveCreationFee(ctx, msg.GetAuctioneer()); err != nil {
-		return nil, err
+	if err := k.PayCreationFee(ctx, msg.GetAuctioneer()); err != nil {
+		return nil, sdkerrors.Wrap(err, "failed to pay auction creation fee")
 	}
 
 	if err := k.ReserveSellingCoin(ctx, nextId, msg.GetAuctioneer(), msg.SellingCoin); err != nil {
-		return nil, err
+		return nil, sdkerrors.Wrap(err, "failed to reserve selling coin")
 	}
 
 	ba := types.NewBaseAuction(
@@ -116,12 +116,12 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 
 	nextId := k.GetNextAuctionIdWithUpdate(ctx)
 
-	if err := k.ReserveCreationFee(ctx, msg.GetAuctioneer()); err != nil {
-		return nil, err
+	if err := k.PayCreationFee(ctx, msg.GetAuctioneer()); err != nil {
+		return nil, sdkerrors.Wrap(err, "failed to pay auction creation fee")
 	}
 
 	if err := k.ReserveSellingCoin(ctx, nextId, msg.GetAuctioneer(), msg.SellingCoin); err != nil {
-		return nil, err
+		return nil, sdkerrors.Wrap(err, "failed to reserve selling coin")
 	}
 
 	endTimes := []time.Time{msg.EndTime} // it is an array data type to handle BatchAuction

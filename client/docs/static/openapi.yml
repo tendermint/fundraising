@@ -22055,8 +22055,33 @@ paths:
 
                         signatures required by gogoproto.
                     title: >-
-                      auction_creation_fee specifies the fee for fundraising
-                      creation fee.
+                      auction_creation_fee specifies the fee for auction
+                      creation.
+
+                      this prevents from spamming attack and it is collected in
+                      the community
+
+                      pool
+                  place_bid_fee:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        denom:
+                          type: string
+                        amount:
+                          type: string
+                      description: >-
+                        Coin defines a token with a denomination and an amount.
+
+
+                        NOTE: The amount field is an Int which implements the
+                        custom method
+
+                        signatures required by gogoproto.
+                    title: >-
+                      place_bid_fee specifies the fee for placing a bid for an
+                      auction.
 
                       this prevents from spamming attack and it is collected in
                       the community
@@ -39061,7 +39086,28 @@ definitions:
             NOTE: The amount field is an Int which implements the custom method
             signatures required by gogoproto.
         title: >-
-          auction_creation_fee specifies the fee for fundraising creation fee.
+          auction_creation_fee specifies the fee for auction creation.
+
+          this prevents from spamming attack and it is collected in the
+          community
+
+          pool
+      place_bid_fee:
+        type: array
+        items:
+          type: object
+          properties:
+            denom:
+              type: string
+            amount:
+              type: string
+          description: |-
+            Coin defines a token with a denomination and an amount.
+
+            NOTE: The amount field is an Int which implements the custom method
+            signatures required by gogoproto.
+        title: >-
+          place_bid_fee specifies the fee for placing a bid for an auction.
 
           this prevents from spamming attack and it is collected in the
           community
@@ -39701,8 +39747,31 @@ definitions:
 
                 signatures required by gogoproto.
             title: >-
-              auction_creation_fee specifies the fee for fundraising creation
-              fee.
+              auction_creation_fee specifies the fee for auction creation.
+
+              this prevents from spamming attack and it is collected in the
+              community
+
+              pool
+          place_bid_fee:
+            type: array
+            items:
+              type: object
+              properties:
+                denom:
+                  type: string
+                amount:
+                  type: string
+              description: >-
+                Coin defines a token with a denomination and an amount.
+
+
+                NOTE: The amount field is an Int which implements the custom
+                method
+
+                signatures required by gogoproto.
+            title: >-
+              place_bid_fee specifies the fee for placing a bid for an auction.
 
               this prevents from spamming attack and it is collected in the
               community
