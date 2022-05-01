@@ -98,7 +98,7 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 	k.paramSpace.SetParamSet(ctx, &params)
 }
 
-// PayCreationFee reserves the auction creation fee to the fee collector account.
+// PayCreationFee sends the auction creation fee to the fee collector account.
 func (k Keeper) PayCreationFee(ctx sdk.Context, auctioneerAddr sdk.AccAddress) error {
 	params := k.GetParams(ctx)
 
@@ -108,7 +108,7 @@ func (k Keeper) PayCreationFee(ctx sdk.Context, auctioneerAddr sdk.AccAddress) e
 	return nil
 }
 
-// PayPlaceBidFee reserves the fee when placing a bid for an auction to the fee collector account.
+// PayPlaceBidFee sends the fee when placing a bid for an auction to the fee collector account.
 func (k Keeper) PayPlaceBidFee(ctx sdk.Context, bidderAddr sdk.AccAddress) error {
 	params := k.GetParams(ctx)
 

@@ -16,7 +16,7 @@ var (
 	KeyExtendedPeriod     = []byte("ExtendedPeriod")
 
 	DefaultAuctionCreationFee = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100_000_000)))
-	DefaultPlaceBidFee        = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(0)))
+	DefaultPlaceBidFee        = sdk.Coins{}
 	DefaultExtendedPeriod     = uint32(1)
 )
 

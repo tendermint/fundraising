@@ -258,10 +258,6 @@ func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "bid price and coin amount must be changed")
 	}
 
-	if err := k.PayPlaceBidFee(ctx, msg.GetBidder()); err != nil {
-		return err
-	}
-
 	// Reserve bid amount difference
 	switch bid.Type {
 	case types.BidTypeBatchWorth:
