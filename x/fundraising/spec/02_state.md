@@ -93,7 +93,6 @@ type AllowedBidder struct {
 }
 ```
 
-
 ## Vesting
 ```go
 // VestingSchedule defines the vesting schedule for the owner of an auction.
@@ -136,11 +135,10 @@ type FixedPriceAuction struct {
 // BatchAuction defines the batch auction type 
 type BatchAuction struct {
     *BaseAuction
-	
 	MinBidPrice			sdk.Dec	// the minimum bid price that bidders must provide
 	MatchedPrice		sdk.Dec	// the matched price of the auction (a.k.a., winning price)
-    MaxExtendedRound    uint32  // a maximum number of extended rounds
-    ExtendedRate        sdk.Dec // rate that determines if the auction needs another round, compared to the number of the matched bids at the previous end time.
+    MaxExtendedRound    uint32  // the maximum number of extended rounds
+    ExtendedRate        sdk.Dec // the rate that determines if the auction needs another round; compared to the number of the matched bids at the previous end time.
 }
 ```
 

@@ -9,7 +9,6 @@ The `fundraising` module contains the following parameters:
 | AuctionCreationFee         | sdk.Coins | [{"denom":"stake","amount":"100000000"}]       |
 | PlaceBidFee                | sdk.Coins | [{"denom":"stake","amount":"0"}]               |
 | ExtendedPeriod             | uint32    | 3600 * 24                                      |
-| | |
 
 ## AuctionCreationFee
 

@@ -40,11 +40,11 @@ As explained in `Design Decision`, bidders are not allowed to place their bids u
 
 ## Batch Auction
 
-A `BatchAuction` is different from `FixedPriceAuction`. It provides an interesting and dynamic way for bidders to participate in an auction. The module expects an external module (being as an auctioneer) to create a batch auction by setting parameters needed for an auction. The creation process is the same as a fixed price auction creation. For a batch auction. there is no fixed price. A matched price (final price) gets determined by a number of bids with their bidding prices and amounts. When an auction is started, allowed bidders start to place their bids with the bidding price that they think each selling coin is worth. Bidders’ bidding amount is reserved once they place their bids until the end of an auction. They can’t cancel their bids, but they can modify them with higher bidding price or increasing amount. Since there is no guarantee that a bid gets matched to win the auction, it is up to allowed bidders to carefully monitor the demand and place or modify their bids accordingly. At the end of an auction, the module gets all recorded bids and calculate a matched price (final price) with a number of bids with bidding prices and amounts. 
+A `BatchAuction` provides a sophisticated and dynamic way for allowed bidders to participate in an auction. The module expects an external module (being as an auctioneer) to create a batch auction by setting parameters needed for an auction. The creation process is the same as a fixed price auction. There is no fixed price in a batch auction. A matched price (final price) gets determined at the end of an auction. When an auction is started, allowed bidders start to place their bids with the bidding price that they think each selling coin is worth. When they place their bids, bidding amount is reserved in a module account until the end of an auction. It is important to note that there is no guarantee that a bid gets matched to win the auction. It depends on market demand for the selling coin. Bidders have no option to cancel their bids, but they have an option to modify them with either higher bidding price or increasing amount. It is recommended that allowed bidders need to carefully monitor the demand until the auction ends and adjust their bids accordingly. At the end of an auction, the module brings all recorded bids and calculates a matched price (final price) with a number of bids with bidding prices and amounts. The module finalizes matched bids and distribute them to the corresponding bidders. Then the module refunds unmatched bids to the corresponding bidders.
 
 ### What an auctioneer does:
 
-When an auctioneer creates this batch auction, it must determine the following parameters.
+When an auctioneer creates a batch auction, it must determine the following parameters.
 
 - `SellingCoin`: the denom and total amount of selling coins to be auctioned,
 - `PayingCoinDenom`: the denom of coins to be used for payment,
@@ -80,5 +80,5 @@ The auction will end when the last time of `EndTimes` is arrived.
 
 ### How `MatchedPrice` is determined:
 
-Once the auction period ends, the bids are ordered in descending order of the bid prices to determine `MatchedPrice`. `MatchedPrice` is determined by finding the lowest price among the bid prices satisfying that the total amount of selling coins placed at more than or equal to the price is less the entire offering `SellingCoin`.
+Once an auction period ends, stored bids are ordered in a descending order by the bid prices and bid ids to determine `MatchedPrice`. `MatchedPrice` gets determined by finding the lowest price among the bid prices satisfying that the total amount of selling coins placed at more than or equal to the price is less the entire offering `SellingCoin`.
 The bidders who placed at the higher price than the matched price become the matched bidders and get the selling coins at the same price, which is `MatchedPrice`. 

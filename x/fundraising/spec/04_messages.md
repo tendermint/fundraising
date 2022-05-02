@@ -32,7 +32,7 @@ type MsgCreateBatchAuction struct {
 	MaxExtendedRound uint32            // a maximum number of extended rounds
 	ExtendedRate     sdk.Dec           // rate that determines if the auction needs another round, compared to the number of the matched bids at the previous end time.
 	StartTime        time.Time         // the start time of the auction
-	EndTimes         []time.Time       // the end times of the auction
+	EndTime          time.Time         // the end times of the auction
 }
 ```
 
@@ -58,7 +58,6 @@ type MsgPlaceBid struct {
 	Coin            sdk.Coin // targeted amount of coin that the bidder bids; the denom must be either the denom or SellingCoin or PayingCoinDenom
 }
 ```
-
 
 ## MsgModifyBid
 ```go
@@ -88,6 +87,7 @@ make install-testing
 ```go
 // MsgAddAllowedBidder defines a SDK message to add an allowed bidder
 type MsgAddAllowedBidder struct {
+	AuctionId       uint64        // id of the auction
 	AllowedBidder   AllowedBidder // the bidder and their maximum bid amount
 }
 ```
