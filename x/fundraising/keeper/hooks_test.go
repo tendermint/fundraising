@@ -64,6 +64,7 @@ func (h *MockFundraisingHooksReceiver) BeforeAuctionCanceled(
 func (h *MockFundraisingHooksReceiver) BeforeBidPlaced(
 	ctx sdk.Context,
 	auctionId uint64,
+	bidId uint64,
 	bidder string,
 	bidType types.BidType,
 	price sdk.Dec,
@@ -75,6 +76,7 @@ func (h *MockFundraisingHooksReceiver) BeforeBidPlaced(
 func (h *MockFundraisingHooksReceiver) BeforeBidModified(
 	ctx sdk.Context,
 	auctionId uint64,
+	bidId uint64,
 	bidder string,
 	bidType types.BidType,
 	price sdk.Dec,

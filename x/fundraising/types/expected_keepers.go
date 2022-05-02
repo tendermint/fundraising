@@ -70,6 +70,7 @@ type FundraisingHooks interface {
 	BeforeBidPlaced(
 		ctx sdk.Context,
 		auctionId uint64,
+		bidId uint64,
 		bidder string,
 		bidType BidType,
 		price sdk.Dec,
@@ -79,6 +80,7 @@ type FundraisingHooks interface {
 	BeforeBidModified(
 		ctx sdk.Context,
 		auctionId uint64,
+		bidId uint64,
 		bidder string,
 		bidType BidType,
 		price sdk.Dec,

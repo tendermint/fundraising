@@ -101,7 +101,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 	}
 
 	// Call before bid placed hook
-	k.BeforeBidPlaced(ctx, bid.AuctionId, bid.Bidder, bid.Type, bid.Price, bid.Coin)
+	k.BeforeBidPlaced(ctx, bid.AuctionId, bid.Id, bid.Bidder, bid.Type, bid.Price, bid.Coin)
 
 	k.SetBid(ctx, bid)
 
@@ -283,7 +283,7 @@ func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) error {
 	bid.Coin = msg.Coin
 
 	// Call the before mid modified hook
-	k.BeforeBidModified(ctx, bid.AuctionId, bid.Bidder, bid.Type, bid.Price, bid.Coin)
+	k.BeforeBidModified(ctx, bid.AuctionId, bid.Id, bid.Bidder, bid.Type, bid.Price, bid.Coin)
 
 	k.SetBid(ctx, bid)
 

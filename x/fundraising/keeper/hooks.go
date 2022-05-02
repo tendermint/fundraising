@@ -82,13 +82,14 @@ func (k Keeper) BeforeAuctionCanceled(
 func (k Keeper) BeforeBidPlaced(
 	ctx sdk.Context,
 	auctionId uint64,
+	bidId uint64,
 	bidder string,
 	bidType types.BidType,
 	price sdk.Dec,
 	coin sdk.Coin,
 ) {
 	if k.hooks != nil {
-		k.hooks.BeforeBidPlaced(ctx, auctionId, bidder, bidType, price, coin)
+		k.hooks.BeforeBidPlaced(ctx, auctionId, bidId, bidder, bidType, price, coin)
 	}
 }
 
@@ -96,13 +97,14 @@ func (k Keeper) BeforeBidPlaced(
 func (k Keeper) BeforeBidModified(
 	ctx sdk.Context,
 	auctionId uint64,
+	bidId uint64,
 	bidder string,
 	bidType types.BidType,
 	price sdk.Dec,
 	coin sdk.Coin,
 ) {
 	if k.hooks != nil {
-		k.hooks.BeforeBidModified(ctx, auctionId, bidder, bidType, price, coin)
+		k.hooks.BeforeBidModified(ctx, auctionId, bidId, bidder, bidType, price, coin)
 	}
 }
 

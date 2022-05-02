@@ -81,26 +81,28 @@ func (h MultiFundraisingHooks) BeforeAuctionCanceled(
 func (h MultiFundraisingHooks) BeforeBidPlaced(
 	ctx sdk.Context,
 	auctionId uint64,
+	bidId uint64,
 	bidder string,
 	bidType BidType,
 	price sdk.Dec,
 	coin sdk.Coin,
 ) {
 	for i := range h {
-		h[i].BeforeBidPlaced(ctx, auctionId, bidder, bidType, price, coin)
+		h[i].BeforeBidPlaced(ctx, auctionId, bidId, bidder, bidType, price, coin)
 	}
 }
 
 func (h MultiFundraisingHooks) BeforeBidModified(
 	ctx sdk.Context,
 	auctionId uint64,
+	bidId uint64,
 	bidder string,
 	bidType BidType,
 	price sdk.Dec,
 	coin sdk.Coin,
 ) {
 	for i := range h {
-		h[i].BeforeBidModified(ctx, auctionId, bidder, bidType, price, coin)
+		h[i].BeforeBidModified(ctx, auctionId, bidId, bidder, bidType, price, coin)
 	}
 }
 
