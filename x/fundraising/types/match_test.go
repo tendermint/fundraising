@@ -54,13 +54,6 @@ func TestMatch(t *testing.T) {
 		bidders = append(bidders, testAddr(i).String())
 	}
 
-	allowedBidders1 := map[string]sdk.Int{
-		bidders[0]: sdk.NewInt(100_000000),
-	}
-	bids1 := []types.Bid{
-		newBid(1, types.BidTypeBatchWorth, bidders[0], parseDec("1.0"), sdk.NewInt(100_000000)),
-	}
-
 	for _, tc := range []struct {
 		name                string
 		allowedBidders      map[string]sdk.Int
@@ -74,9 +67,13 @@ func TestMatch(t *testing.T) {
 	}{
 		{
 			"basic case",
-			allowedBidders1,
+			map[string]sdk.Int{
+				bidders[0]: sdk.NewInt(100_000000),
+			},
 			sdk.NewInt(100_000000),
-			bids1,
+			[]types.Bid{
+				newBid(1, types.BidTypeBatchWorth, bidders[0], parseDec("1.0"), sdk.NewInt(100_000000)),
+			},
 			parseDec("1.0"),
 			true,
 			sdk.NewInt(100_000000),
@@ -87,6 +84,38 @@ func TestMatch(t *testing.T) {
 					MatchedAmount: sdk.NewInt(100_000000),
 				},
 			},
+		},
+		{
+			"partial match",
+			map[string]sdk.Int{
+				bidders[0]: sdk.NewInt(50_000000),
+			},
+			sdk.NewInt(100_000000),
+			[]types.Bid{
+				newBid(1, types.BidTypeBatchWorth, bidders[0], parseDec("1.0"), sdk.NewInt(100_000000)),
+			},
+			parseDec("1.0"),
+			true,
+			sdk.NewInt(50_000000),
+			[]uint64{1},
+			map[string]*types.BidderMatchResult{
+				bidders[0]: {
+					PayingAmount:  sdk.NewInt(50_000000),
+					MatchedAmount: sdk.NewInt(50_000000),
+				},
+			},
+		},
+		{
+			"no match",
+			map[string]sdk.Int{
+				bidders[0]: sdk.NewInt(100_000000),
+			},
+			sdk.NewInt(100_000000),
+			[]types.Bid{
+				newBid(1, types.BidTypeBatchWorth, bidders[0], parseDec("1.0"), sdk.NewInt(100_000000)),
+			},
+			parseDec("1.1"),
+			false, sdk.Int{}, nil, nil,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
