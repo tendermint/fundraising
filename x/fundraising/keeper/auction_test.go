@@ -604,6 +604,8 @@ func (s *KeeperTestSuite) TestBatchAuction_MaxNumVestingSchedules() {
 	_, err := s.keeper.CreateBatchAuction(s.ctx, batchAuction)
 	s.Require().EqualError(err, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "exceed maximum extended round").Error())
 
+	batchAuction.MaxExtendedRound = 1
+
 	// Invalid number of vesting schedules
 	numSchedules := types.MaxNumVestingSchedules + 1
 	schedules := make([]types.VestingSchedule, numSchedules)
