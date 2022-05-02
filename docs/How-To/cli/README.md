@@ -6,25 +6,27 @@ Description: A high-level overview of how the command-line interface (CLI) works
 
 ## Synopsis
 
-This document provides a high-level overview of how the command line (CLI) interface works for the `fundraising` module. To set up a local testing environment, it requires the latest Ignite CLI. If you don't have Starport set up in your local machine, see [this Starport guide](https://docs.ignite.com/#install-starport) to install it. Run this command under the project root directory `$ starport chain serve -c config-test.yml` or simply `$ make localnet`.
+This document provides a high-level overview of how the command line (CLI) interface works for the `fundraising` module. To set up a local testing environment, it requires the latest Ignite CLI. If you don't have Ignite CLI set up in your local machine, see [this guide](https://docs.ignite.com/#install-ignite-cli) to install it. Run this command under the project root directory `$ ignite chain serve -c config-test.yml` or simply `$ make localnet`.
 
 Note that [jq](https://stedolan.github.io/jq/) is recommended to be installed as it is used to process JSON throughout the document.
 
 ## Command Line Interface
 
-- [Transaction](#transaction)
-  - [CreateFixedPriceAuction](#createfixedpriceauction)
-  - [CreateBatchAuction](#createbatchauction)
-  - [CancelAuction](#cancelauction)
-  - [AddAllowedBidder](#addallowedbidder)
-  - [PlaceBid](#placebid)
-  - [ModifyBid](#modifybid)
-- [Query](#query)
-  - [Params](#params)
-  - [Auctions](#auctions)
-  - [Auction](#auction)
-  - [Bids](#bids)
-  - [Vestings](#vestings)
+- [Transaction](#Transaction)
+  - [CreateFixedPriceAuction](#CreateFixedPriceAuction)
+  - [CreateBatchAuction](#CreateBatchAuction)
+  - [CancelAuction](#CancelAuction)
+  - [AddAllowedBidder](#AddAllowedBidder)
+  - [PlaceBid](#PlaceBid)
+  - [ModifyBid](#ModifyBid)
+- [Query](#Query)
+  - [Params](#Params)
+  - [Auctions](#Auctions)
+  - [Auction](#Auction)
+  - [AllowedBidder](#AllowedBidder)
+  - [AllowedBidders](#AllowedBidders)
+  - [Bids](#Bids)
+  - [Vestings](#Vestings)
 
 # Transaction
 
@@ -57,7 +59,7 @@ Field description of the input file
 
 Example of input as JSON:
 
-An auctioneer creates a fixed price auction for `1000000000000denom1` selling coin where the start price is `2.0`. It means that the price of `1denom1` is `2denom2`. The auctioneer sets their vesting schedules for themselves to receive the accumulated paying coin amount. This is a gesture for taking responsibility for auction participants.
+An auctioneer creates a fixed price auction for `1000000000000denom1` selling coin where the start price is 2.0. It means that the price of 1 of denom1 is 2 of denom2. The auctioneer sets their vesting schedules for themselves to receive the accumulated paying coin amount when the auction ends. This is a gesture for taking responsibility for their auction participants.
 
 ```json
 {
@@ -69,16 +71,16 @@ An auctioneer creates a fixed price auction for `1000000000000denom1` selling co
   "paying_coin_denom": "denom2",
   "vesting_schedules": [
     {
-      "release_time": "2022-06-21T00:00:00Z",
+      "release_time": "2023-01-01T00:00:00Z",
       "weight": "0.500000000000000000"
     },
     {
-      "release_time": "2022-12-21T00:00:00Z",
+      "release_time": "2023-06-01T00:00:00Z",
       "weight": "0.500000000000000000"
     }
   ],
-  "start_time": "2022-02-01T00:00:00Z",
-  "end_time": "2022-03-01T00:00:00Z"
+  "start_time": "2022-05-01T00:00:00Z",
+  "end_time": "2022-06-01T00:00:00Z"
 }
 ```
 
@@ -99,6 +101,9 @@ fundraisingd tx fundraising create-fixed-price-auction auction.json \
 #
 # Query all auctions
 fundraisingd q fundraising auctions -o json | jq
+
+# Query to see if the selling coin is safely reserved
+fundraisingd q bank balances <selling_reserve_address> -o json | jq
 ```
 
 ## CreateBatchAuction
@@ -144,18 +149,18 @@ An auctioneer creates a batch price auction for `1000000000000denom1` selling co
   "paying_coin_denom": "denom2",
   "vesting_schedules": [
     {
-      "release_time": "2023-06-01T00:00:00Z",
+      "release_time": "2023-01-01T00:00:00Z",
       "weight": "0.500000000000000000"
     },
     {
-      "release_time": "2023-12-01T00:00:00Z",
+      "release_time": "2023-06-01T00:00:00Z",
       "weight": "0.500000000000000000"
     }
   ],
   "max_extended_round": 2,
   "extended_round_rate": "0.150000000000000000",
-  "start_time": "2022-02-01T00:00:00Z",
-  "end_time": "2022-06-20T00:00:00Z"
+  "start_time": "2022-05-01T00:00:00Z",
+  "end_time": "2022-06-01T00:00:00Z"
 }
 ```
 
@@ -178,7 +183,7 @@ fundraisingd tx fundraising create-batch-auction auction-batch.json \
 fundraisingd q fundraising auctions -o json | jq
 
 # Query to see if the selling coin is safely reserved
-fundraisingd q bank balances cosmos1wl90665mfk3pgg095qhmlgha934exjvv437acgq42zw0sg94flestth4zu -o json | jq
+fundraisingd q bank balances <selling_reserve_address> -o json | jq
 ```
 
 ## CancelAuction
@@ -229,8 +234,12 @@ add-allowed-bidder [auction-id] [bidder] [max-bid-amount]
 Example command:
 
 ```bash
-# Add bob's address to allowed bidder list
-fundraisingd tx fundraising add-allowed-bidder 1 cosmos1mzgucqnfr2l8cj5apvdpllhzt4zeuh2cshz5xu 1000000000 \
+#
+# Once again, this CLI command is not available in mainnet environment
+#
+
+# Bob adds himself in the auction's allowed bidders list
+fundraisingd tx fundraising add-allowed-bidder 1 cosmos1mzgucqnfr2l8cj5apvdpllhzt4zeuh2cshz5xu 2000000000 \
 --chain-id fundraising \
 --from bob \
 --keyring-backend test \
@@ -238,10 +247,10 @@ fundraisingd tx fundraising add-allowed-bidder 1 cosmos1mzgucqnfr2l8cj5apvdpllhz
 --yes \
 --output json | jq
 
-# Add steve's address to allowed bidder list
-fundraisingd tx fundraising add-allowed-bidder 1 cosmos185fflsvwrz0cx46w6qada7mdy92m6kx4gqx0ny 1000000000 \
+# Steve adds himself in the auction's allowed bidders list
+fundraisingd tx fundraising add-allowed-bidder 2 cosmos185fflsvwrz0cx46w6qada7mdy92m6kx4gqx0ny 5000000000 \
 --chain-id fundraising \
---from bob \
+--from steve \
 --keyring-backend test \
 --broadcast-mode block \
 --yes \
@@ -250,8 +259,10 @@ fundraisingd tx fundraising add-allowed-bidder 1 cosmos185fflsvwrz0cx46w6qada7md
 #
 # Tips
 #
-# Query the auction to see if bob is in the allowed bidder list
-fundraisingd q fundraising auction 1 -o json | jq
+# Query the allowed bidders list for the auction
+fundraisingd q fundraising allowed-bidders 1 -o json | jq
+fundraisingd q fundraising allowed-bidder 1 cosmos1mzgucqnfr2l8cj5apvdpllhzt4zeuh2cshz5xu -o json | jq
+fundraisingd q fundraising allowed-bidder 1 cosmos185fflsvwrz0cx46w6qada7mdy92m6kx4gqx0ny -o json | jq
 ```
 
 ## PlaceBid
@@ -275,7 +286,7 @@ Example command:
 
 ```bash
 # Place a fixed price bid type for the fixed price auction
-fundraisingd tx fundraising bid 1 fixed-price 1.0 5000000denom2 \
+fundraisingd tx fundraising bid 1 fixed-price 2.0 5000000denom2 \
 --chain-id fundraising \
 --from bob \
 --keyring-backend test \
@@ -284,18 +295,18 @@ fundraisingd tx fundraising bid 1 fixed-price 1.0 5000000denom2 \
 --output json | jq
 
 # Place a batch-worth bid type for the batch auction
-fundraisingd tx fundraising bid 1 batch-worth 0.35 10000000denom2 \
+fundraisingd tx fundraising bid 2 batch-worth 0.35 10000000denom2 \
 --chain-id fundraising \
---from bob \
+--from steve \
 --keyring-backend test \
 --broadcast-mode block \
 --yes \
 --output json | jq
 
 # Place a batch-many bid type for the batch auction
-fundraisingd tx fundraising bid 1 batch-many 0.4 10000000denom1 \
+fundraisingd tx fundraising bid 2 batch-many 0.4 10000000denom1 \
 --chain-id fundraising \
---from bob \
+--from steve \
 --keyring-backend test \
 --broadcast-mode block \
 --yes \
@@ -306,6 +317,7 @@ fundraisingd tx fundraising bid 1 batch-many 0.4 10000000denom1 \
 #
 # Query all bids that belong to the auction
 fundraisingd q fundraising bids 1 -o json | jq
+fundraisingd q fundraising bids 2 -o json | jq
 ```
 
 ## ModifyBid
@@ -356,7 +368,7 @@ fundraisingd q fundraising bids 1 -o json | jq
 
 # Query
 
-+++ https://github.com/tendermint/fundraising/blob/main/proto/fundraising/query.proto#L14-L48
++++ https://github.com/tendermint/fundraising/blob/main/proto/fundraising/query.proto#L15-L63
 
 ## Params 
 
@@ -399,7 +411,7 @@ fundraisingd q fundraising auctions \
 --status AUCTION_STATUS_STANDBY \
 -o json | jq
 
-# Query for all auctions with the given auctino type
+# Query for all auctions with the given auction type
 # Ref: https://github.com/tendermint/fundraising/blob/main/x/fundraising/spec/02_state.md#auction-type
 fundraisingd q fundraising auctions \
 --type AUCTION_TYPE_FIXED_PRICE \
@@ -421,6 +433,42 @@ Example command:
 ```bash
 # Query for the specific auction with the auction id
 fundraisingd q fundraising auction 1 \
+-o json | jq
+```
+
+## AllowedBidder
+
+This command is used to query the specific allowed bidder information.
+
+Usage
+
+```bash
+allowed-bidder [auction-id] [bidder]
+```
+
+Example command:
+
+```bash
+# Query for a specific allowed bidders for the auction
+fundraisingd q fundraising allowed-bidder 1 cosmos1mzgucqnfr2l8cj5apvdpllhzt4zeuh2cshz5xu \
+-o json | jq
+```
+
+## AllowedBidders
+
+This command is used to query all allowed bidders list for the auction.
+
+Usage
+
+```bash
+allowed-bidders [auction-id]
+```
+
+Example command:
+
+```bash
+# Query for a specific allowed bidders for the auction
+fundraisingd q fundraising allowed-bidders 1 \
 -o json | jq
 ```
 

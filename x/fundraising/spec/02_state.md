@@ -53,10 +53,8 @@ type AuctionI interface {
 	GetStatus() AuctionStatus
 	SetStatus(AuctionStatus) error
 
-	GetAllowedBiddersMap() map[string]sdk.Int
-
-	GetMaxBidAmount(bidder string) sdk.Int
-	SetMaxBidAmount(bidder string, maxBidAmt sdk.Int) error
+	ShouldAuctionStarted(t time.Time) bool
+	ShouldAuctionClosed(t time.Time) bool
 
 	Validate() error
 }
@@ -90,12 +88,10 @@ type BaseAuction struct {
 ```go
 // AllowedBidder defines a bidder who is allowed to bid with max number of bids.
 type AllowedBidder struct {
-	AuctionId       uint64  // id of the auction
 	Bidder          string  // a bidder who is allowed to bid
 	MaxBidAmount    uint64  // a maximum amount of bids per bidder
 }
 ```
-
 
 ## Vesting
 ```go
@@ -139,11 +135,10 @@ type FixedPriceAuction struct {
 // BatchAuction defines the batch auction type 
 type BatchAuction struct {
     *BaseAuction
-	
 	MinBidPrice			sdk.Dec	// the minimum bid price that bidders must provide
 	MatchedPrice		sdk.Dec	// the matched price of the auction (a.k.a., winning price)
-    MaxExtendedRound    uint32  // a maximum number of extended rounds
-    ExtendedRate        sdk.Dec // rate that determines if the auction needs another round, compared to the number of the matched bids at the previous end time.
+    MaxExtendedRound    uint32  // the maximum number of extended rounds
+    ExtendedRate        sdk.Dec // the rate that determines if the auction needs another round; compared to the number of the matched bids at the previous end time.
 }
 ```
 
@@ -200,7 +195,6 @@ const (
 	// Bid_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy of a batch auction
 	BidTypeBatchMany    BidType = 3
 )
-
 ```
 
 For `FixedPriceAuction`,

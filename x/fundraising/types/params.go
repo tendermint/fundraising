@@ -9,12 +9,25 @@ import (
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
+const (
+	// MaxNumVestingSchedules is the maximum number of vesting schedules in an auction
+	// It prevents from a malicious auctioneer to set an infinite number of vesting schedules
+	// when they create an auction
+	MaxNumVestingSchedules = 100
+
+	// MaxExtendedRound is the maximum extend rounds for a batch auction to have
+	// It prevents from a batch auction to extend its rounds forever
+	MaxExtendedRound = 30
+)
+
 // Parameter store keys.
 var (
 	KeyAuctionCreationFee = []byte("AuctionCreationFee")
+	KeyPlaceBidFee        = []byte("PlaceBidFee")
 	KeyExtendedPeriod     = []byte("ExtendedPeriod")
 
 	DefaultAuctionCreationFee = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100_000_000)))
+	DefaultPlaceBidFee        = sdk.Coins{}
 	DefaultExtendedPeriod     = uint32(1)
 )
 
@@ -29,6 +42,7 @@ func ParamKeyTable() paramstypes.KeyTable {
 func DefaultParams() Params {
 	return Params{
 		AuctionCreationFee: DefaultAuctionCreationFee,
+		PlaceBidFee:        DefaultPlaceBidFee,
 		ExtendedPeriod:     DefaultExtendedPeriod,
 	}
 }
@@ -37,6 +51,7 @@ func DefaultParams() Params {
 func (p *Params) ParamSetPairs() paramstypes.ParamSetPairs {
 	return paramstypes.ParamSetPairs{
 		paramstypes.NewParamSetPair(KeyAuctionCreationFee, &p.AuctionCreationFee, validateAuctionCreationFee),
+		paramstypes.NewParamSetPair(KeyPlaceBidFee, &p.PlaceBidFee, validatePlaceBidFee),
 		paramstypes.NewParamSetPair(KeyExtendedPeriod, &p.ExtendedPeriod, validateExtendedPeriod),
 	}
 }
@@ -64,6 +79,19 @@ func (p Params) Validate() error {
 }
 
 func validateAuctionCreationFee(i interface{}) error {
+	v, ok := i.(sdk.Coins)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if err := v.Validate(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validatePlaceBidFee(i interface{}) error {
 	v, ok := i.(sdk.Coins)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)

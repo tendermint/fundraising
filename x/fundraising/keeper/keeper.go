@@ -6,7 +6,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -99,12 +98,22 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 	k.paramSpace.SetParamSet(ctx, &params)
 }
 
-// ReserveCreationFee reserves the auction creation fee to the fee collector account.
-func (k Keeper) ReserveCreationFee(ctx sdk.Context, auctioneerAddr sdk.AccAddress) error {
+// PayCreationFee sends the auction creation fee to the fee collector account.
+func (k Keeper) PayCreationFee(ctx sdk.Context, auctioneerAddr sdk.AccAddress) error {
 	params := k.GetParams(ctx)
 
 	if err := k.distrKeeper.FundCommunityPool(ctx, params.AuctionCreationFee, auctioneerAddr); err != nil {
-		return sdkerrors.Wrap(err, "failed to reserve auction creation fee to the community pool")
+		return err
+	}
+	return nil
+}
+
+// PayPlaceBidFee sends the fee when placing a bid for an auction to the fee collector account.
+func (k Keeper) PayPlaceBidFee(ctx sdk.Context, bidderAddr sdk.AccAddress) error {
+	params := k.GetParams(ctx)
+
+	if err := k.distrKeeper.FundCommunityPool(ctx, params.PlaceBidFee, bidderAddr); err != nil {
+		return err
 	}
 	return nil
 }
@@ -112,7 +121,7 @@ func (k Keeper) ReserveCreationFee(ctx sdk.Context, auctioneerAddr sdk.AccAddres
 // ReserveSellingCoin reserves the selling coin to the selling reserve account.
 func (k Keeper) ReserveSellingCoin(ctx sdk.Context, auctionId uint64, auctioneerAddr sdk.AccAddress, sellingCoin sdk.Coin) error {
 	if err := k.bankKeeper.SendCoins(ctx, auctioneerAddr, types.SellingReserveAddress(auctionId), sdk.NewCoins(sellingCoin)); err != nil {
-		return sdkerrors.Wrap(err, "failed to reserve selling coin")
+		return err
 	}
 	return nil
 }
@@ -120,7 +129,7 @@ func (k Keeper) ReserveSellingCoin(ctx sdk.Context, auctionId uint64, auctioneer
 // ReservePayingCoin reserves paying coin to the paying reserve account.
 func (k Keeper) ReservePayingCoin(ctx sdk.Context, auctionId uint64, bidderAddr sdk.AccAddress, payingCoin sdk.Coin) error {
 	if err := k.bankKeeper.SendCoins(ctx, bidderAddr, types.PayingReserveAddress(auctionId), sdk.NewCoins(payingCoin)); err != nil {
-		return sdkerrors.Wrap(err, "failed to reserve paying coin")
+		return err
 	}
 	return nil
 }

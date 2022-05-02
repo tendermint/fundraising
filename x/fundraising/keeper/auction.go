@@ -27,14 +27,18 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be set after the current time")
 	}
 
+	if len(msg.VestingSchedules) > types.MaxNumVestingSchedules {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "exceed maximum number of vesting schedules")
+	}
+
 	nextId := k.GetNextAuctionIdWithUpdate(ctx)
 
-	if err := k.ReserveCreationFee(ctx, msg.GetAuctioneer()); err != nil {
-		return nil, err
+	if err := k.PayCreationFee(ctx, msg.GetAuctioneer()); err != nil {
+		return nil, sdkerrors.Wrap(err, "failed to pay auction creation fee")
 	}
 
 	if err := k.ReserveSellingCoin(ctx, nextId, msg.GetAuctioneer(), msg.SellingCoin); err != nil {
-		return nil, err
+		return nil, sdkerrors.Wrap(err, "failed to reserve selling coin")
 	}
 
 	ba := types.NewBaseAuction(
@@ -102,14 +106,22 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be set after the current time")
 	}
 
+	if len(msg.VestingSchedules) > types.MaxNumVestingSchedules {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "exceed maximum number of vesting schedules")
+	}
+
+	if msg.MaxExtendedRound > types.MaxExtendedRound {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "exceed maximum extended round")
+	}
+
 	nextId := k.GetNextAuctionIdWithUpdate(ctx)
 
-	if err := k.ReserveCreationFee(ctx, msg.GetAuctioneer()); err != nil {
-		return nil, err
+	if err := k.PayCreationFee(ctx, msg.GetAuctioneer()); err != nil {
+		return nil, sdkerrors.Wrap(err, "failed to pay auction creation fee")
 	}
 
 	if err := k.ReserveSellingCoin(ctx, nextId, msg.GetAuctioneer(), msg.SellingCoin); err != nil {
-		return nil, err
+		return nil, sdkerrors.Wrap(err, "failed to reserve selling coin")
 	}
 
 	endTimes := []time.Time{msg.EndTime} // it is an array data type to handle BatchAuction

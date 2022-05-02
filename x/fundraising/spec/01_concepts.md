@@ -4,28 +4,27 @@
 
 ## Fundraising Module
 
-The `x/fundraising` module is a Cosmos SDK module that provides a functionality to raise funds for a new project to onboard the ecosystem. It helps them to increase their brand awareness before launching a project. 
+The `x/fundraising` module is a Cosmos SDK module that provides a functionality to raise funds for a new project to onboard the ecosystem. It helps them to increase their brand awareness before launching their project. 
 
-## Important Design Decision
+## Design Decision
 
-The module is fundamentally designed to delegate authorization to an external module to add allowed bidder list `AllowedBidders` for an auction. When an auction is created, it is always closed state. It means that there is no single bidder who is authorized to place a bid for the selling coin unless they are added in the auction's allowed bidders list.
+The module is fundamentally designed to delegate authorization to an external module to add allowed bidder list for an auction. When an auction is created, it is closed state. It means that there is no bidder who is authorized to place a bid. The bidder must be added by an external module. 
 
 ## Auction Type
 
-The module allows the creation of two different types of an auction. 
+The module allows the creation of the following auction types:
 
 * `FixedPriceAuction` 
 * `BatchAuction`
 
 ## Fixed Price Auction
 
-A fixed price auction is to sell a given amount of coins on a first-come and first-served basis. An external module creates a fixed price auction by setting parameters, such as start price for each coin, how many coins they are selling, what coin they are accepting in return, vesting schedules for them to receive paying coin, when to start and end, and so forth. When the auction is created successfully, the external module needs to add allowed bidders by using the implemented `AddAllowedBidders` function. During this step, they can limit a bidder’s maximum bid amount `MaxBidAmount`.
+A FixedPriceAuction is to sell a given amount of coins in a fixed price. It is first-come and first-served basis. The module expects an external module or a project to create a fixed price auction by setting parameters needed for an auction, such as how many coins to sell, what type of coin denomination is payable by a bidder in exchange for the selling coin, fixed price for each selling coin, start and end time for the auction, and etc.  When an auction is created successfully by paying a creation fee, the module expects an external module (being as an auctioneer) to add allowed bidders list for the auction. In this process, the external module has a control over who can place a bid and the bidder’s maximum amount to place a bid for the auction. When an auction is started, allowed bidders can start to place their bids until the auction ends; however, as it is first-come and first-served basis, the selling amount of coin can be sold at any time. The distribution of selling coin will occur when the auction is ended.
 
 ### What an auctioneer does:
 
 A fixed price auction must determine the following parameters:
 
-- `AllowedBidders`: the list of the bidders to be allowed to participate in the auction,
 - `StartPrice`: fixed amount of the paying coins to get a selling coins (i.e., amount of paying coins per selling coin),
 - `SellingCoin`: the denom and total amount of selling coin to be auctioned,
 - `PayingCoinDenom`: the denom of coin to be used for payment,
@@ -33,30 +32,20 @@ A fixed price auction must determine the following parameters:
 - `EndTime`: when the auction ends,
 - `VestingSchedules`: the vesting schedules to allocate the sold amounts of paying coins to the auctioneer.
 
-The auctioneer can cancel the auction before `StartTime`.
-
-In `AllowedBidders`, each bidder can be set with `MaxBidAmount`, which is the maximum number of selling coins that the bidder can get.
+Note that the auctioneer can cancel the auction as long as an auction has not started.
 
 ### What a bidder can/cannot do:
 
-A bidder only listed in `AllowedBidders` can place a new bid with a fixed amount of either paying coins or selling coins. 
-A bidder cannot modify or cancel the existing bid it previously placed.
-
-### When the auction ends:
-
-The auction will end either when `EndTime` is arrived or when the entire `SellingCoin` is sold out.
-
-
+As explained in `Design Decision`, bidders are not allowed to place their bids unless they are listed in `AllowedBidders` for an auction. Allowed bidders can place their bids either with paying coin denom (willing to pay in exchange of the selling coin) or selling coin denom (how many selling coins that a bidder is willing to buy). The module takes care of it. Once bids are placed, they can't be canceled. Bids can only be modified with higher bidding price or increasing bidding amount.
 
 ## Batch Auction
 
-This batch auction allows each bidder to participate in the auction by placing limit orders with a bid price chosen freely at any time within the auction period. An order book is created to record the bids with various bid prices.
+A `BatchAuction` provides a sophisticated and dynamic way for allowed bidders to participate in an auction. The module expects an external module (being as an auctioneer) to create a batch auction by setting parameters needed for an auction. The creation process is the same as a fixed price auction. There is no fixed price in a batch auction. A matched price (final price) gets determined at the end of an auction. When an auction is started, allowed bidders start to place their bids with the bidding price that they think each selling coin is worth. When they place their bids, bidding amount is reserved in a module account until the end of an auction. It is important to note that there is no guarantee that a bid gets matched to win the auction. It depends on market demand for the selling coin. Bidders have no option to cancel their bids, but they have an option to modify them with either higher bidding price or increasing amount. It is recommended that allowed bidders need to carefully monitor the demand until the auction ends and adjust their bids accordingly. At the end of an auction, the module brings all recorded bids and calculates a matched price (final price) with a number of bids with bidding prices and amounts. The module finalizes matched bids and distribute them to the corresponding bidders. Then the module refunds unmatched bids to the corresponding bidders.
 
 ### What an auctioneer does:
 
-When an auctioneer creates this batch auction, it must determine the following parameters.
+When an auctioneer creates a batch auction, it must determine the following parameters.
 
-- `AllowedBidders`: the list of the bidders to be allowed to participate in the auction,
 - `SellingCoin`: the denom and total amount of selling coins to be auctioned,
 - `PayingCoinDenom`: the denom of coins to be used for payment,
 - `StartTime`: when the auction starts,
@@ -66,10 +55,9 @@ When an auctioneer creates this batch auction, it must determine the following p
 - `MaxExtendedRound`: the maximum number of additional round for bidding,
 - `ExtendedRoundRate`: the condition in a reduction rate of the number of the matched bids.
 
-The auctioneer can cancel the auction before `StartTime`.
-In `AllowedBidders`, each bidder can be set with `MaxBidAmount`, which is the maximum number of selling coins that the bidder can get.
-Note that the extended round is to prevent the auction sniping, which is, e.g., to bid large amount of selling coins with a bid price slightly higher than the matched price, where this kind of last moment bid as auction sniping results in a sudden reduction of the matched bids. 
-In order to provide more opportunity to bidders in case of auction sniping, the extended round is given if the reduction of the matched bids are more than `ExtendedRoundRate` compared to the number of matched bids at the previous end time.
+Note that the auctioneer can cancel the auction as long as an auction has not started. Also, the extended round is to prevent the auction sniping technique, which is, e.g., to bid large amount of selling coins with a bid price slightly higher than the matched price, where this kind of last moment bid as auction sniping results in a sudden reduction of the matched bids. 
+
+In order to provide more opportunity to bidders in case of auction sniping, the extended round is triggered if the reduction of the matched bids are more than `ExtendedRoundRate` compared to the number of matched bids at the previous end time.
 
 ### What a bidder can/cannot do:
 
@@ -92,5 +80,5 @@ The auction will end when the last time of `EndTimes` is arrived.
 
 ### How `MatchedPrice` is determined:
 
-Once the auction period ends, the bids are ordered in descending order of the bid prices to determine `MatchedPrice`. `MatchedPrice` is determined by finding the lowest price among the bid prices satisfying that the total amount of selling coins placed at more than or equal to the price is less the entire offering `SellingCoin`.
+Once an auction period ends, stored bids are ordered in a descending order by the bid prices and bid ids to determine `MatchedPrice`. `MatchedPrice` gets determined by finding the lowest price among the bid prices satisfying that the total amount of selling coins placed at more than or equal to the price is less the entire offering `SellingCoin`.
 The bidders who placed at the higher price than the matched price become the matched bidders and get the selling coins at the same price, which is `MatchedPrice`. 
