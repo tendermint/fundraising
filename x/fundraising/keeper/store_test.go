@@ -159,9 +159,13 @@ func (s *KeeperTestSuite) TestIterateBids() {
 
 func (s *KeeperTestSuite) TestVestingQueue() {
 	vestingQueue := types.NewVestingQueue(
-		1, s.addr(1), parseCoin("100_000_000denom1"),
-		types.MustParseRFC3339("2023-01-01T00:00:00Z"), false,
+		1,
+		s.addr(1),
+		parseCoin("100_000_000denom1"),
+		types.MustParseRFC3339("2023-01-01T00:00:00Z"),
+		false,
 	)
+	s.keeper.SetVestingQueue(s.ctx, vestingQueue)
 
 	vq := s.keeper.GetVestingQueue(s.ctx, 1, vestingQueue.ReleaseTime)
 	s.Require().EqualValues(vestingQueue, vq)
