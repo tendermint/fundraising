@@ -61,13 +61,14 @@ func Match(matchPrice sdk.Dec, prices []sdk.Dec, bidsByPrice map[string][]Bid, s
 			bidderRes.MatchedAmount = bidderRes.MatchedAmount.Add(matchAmt)
 			bidderRes.PayingAmount = bidderRes.PayingAmount.Add(payingAmt)
 
-			biddableAmtByBidder[bid.Bidder] = biddableAmt.Sub(matchAmt)
 			if matchAmt.IsPositive() {
+				biddableAmtByBidder[bid.Bidder] = biddableAmt.Sub(matchAmt)
 				res.MatchedBids = append(res.MatchedBids, bid)
+				res.MatchedAmount = res.MatchedAmount.Add(matchAmt)
+				matched = true
 			}
-			res.MatchedAmount = res.MatchedAmount.Add(matchAmt)
 		}
 	}
 
-	return res, true
+	return res, matched
 }
