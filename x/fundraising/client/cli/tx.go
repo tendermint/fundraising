@@ -381,6 +381,8 @@ $ %s tx %s bid 1 1 1.0 100000000denom2 --from mykey
 }
 
 func NewAddAllowedBidderCmd() *cobra.Command {
+	bech32PrefixValAddr := sdk.GetConfig().GetBech32ValidatorAddrPrefix()
+
 	cmd := &cobra.Command{
 		Use:   "add-allowed-bidder [auction-id] [bidder] [max-bid-amount]",
 		Args:  cobra.ExactArgs(3),
@@ -390,9 +392,9 @@ func NewAddAllowedBidderCmd() *cobra.Command {
 This message is available for testing purpose and it is only accessible when you build the binary with testing mode.
 		
 Example:
-$ %s tx %s add-allowed-bidder 1 10000000000 --from mykey 
+$ %s tx %s add-allowed-bidder 1 %s1mzgucqnfr2l8cj5apvdpllhzt4zeuh2cshz5xu 10000000000 --from mykey 
 `,
-				version.AppName, types.ModuleName,
+				version.AppName, types.ModuleName, bech32PrefixValAddr,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {

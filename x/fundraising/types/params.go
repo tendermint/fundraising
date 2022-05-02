@@ -9,6 +9,17 @@ import (
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
+const (
+	// MaxNumVestingSchedules is the maximum number of vesting schedules in an auction
+	// It prevents from a malicious auctioneer to set an infinite number of vesting schedules
+	// when they create an auction
+	MaxNumVestingSchedules = 100
+
+	// MaxExtendedRound is the maximum extend rounds for a batch auction to have
+	// It prevents from a batch auction to extend its rounds forever
+	MaxExtendedRound = 30
+)
+
 // Parameter store keys.
 var (
 	KeyAuctionCreationFee = []byte("AuctionCreationFee")

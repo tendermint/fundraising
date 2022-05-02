@@ -87,7 +87,7 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.MustParseRFC3339("2022-06-01T22:08:41+00:00"),
+						time.Now().AddDate(0, 1, 0).AddDate(0, 6, 0),
 						sdk.ZeroDec(),
 					},
 				},
@@ -104,7 +104,7 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.MustParseRFC3339("2022-06-01T22:08:41+00:00"),
+						time.Now().AddDate(0, 1, 0).AddDate(0, 6, 0),
 						sdk.MustNewDecFromStr("1.1"),
 					},
 				},
@@ -138,11 +138,11 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.MustParseRFC3339("2022-12-01T22:00:00+00:00"),
+						time.Now().AddDate(0, 1, 0).AddDate(0, 6, 0),
 						sdk.MustNewDecFromStr("0.5"),
 					},
 					{
-						types.MustParseRFC3339("2022-06-01T22:00:00+00:00"),
+						time.Now().AddDate(0, 1, 0).AddDate(0, 3, 0),
 						sdk.MustNewDecFromStr("0.5"),
 					},
 				},
@@ -159,11 +159,11 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.MustParseRFC3339("2022-06-01T22:00:00+00:00"),
+						time.Now().AddDate(0, 1, 0).AddDate(0, 6, 0),
 						sdk.MustNewDecFromStr("0.5"),
 					},
 					{
-						types.MustParseRFC3339("2022-12-01T22:00:00+00:00"),
+						time.Now().AddDate(0, 1, 0).AddDate(1, 0, 0),
 						sdk.MustNewDecFromStr("0.3"),
 					},
 				},
@@ -281,7 +281,7 @@ func TestMsgCreateBatchAuction(t *testing.T) {
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.MustParseRFC3339("2022-06-01T22:08:41+00:00"),
+						time.Now().AddDate(0, 1, 0).AddDate(0, 6, 0),
 						sdk.ZeroDec(),
 					},
 				},
@@ -301,7 +301,7 @@ func TestMsgCreateBatchAuction(t *testing.T) {
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.MustParseRFC3339("2022-06-01T22:08:41+00:00"),
+						time.Now().AddDate(0, 1, 0).AddDate(0, 6, 0),
 						sdk.MustNewDecFromStr("1.1"),
 					},
 				},
@@ -321,7 +321,7 @@ func TestMsgCreateBatchAuction(t *testing.T) {
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.MustParseRFC3339("2022-06-01T22:08:41+00:00"),
+						time.Now(),
 						sdk.MustNewDecFromStr("1.0"),
 					},
 				},
@@ -341,11 +341,11 @@ func TestMsgCreateBatchAuction(t *testing.T) {
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.MustParseRFC3339("2022-12-01T22:00:00+00:00"),
+						time.Now().AddDate(0, 1, 0).AddDate(0, 6, 0),
 						sdk.MustNewDecFromStr("0.5"),
 					},
 					{
-						types.MustParseRFC3339("2022-06-01T22:00:00+00:00"),
+						time.Now().AddDate(0, 1, 0).AddDate(0, 3, 0),
 						sdk.MustNewDecFromStr("0.5"),
 					},
 				},
@@ -365,11 +365,11 @@ func TestMsgCreateBatchAuction(t *testing.T) {
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.MustParseRFC3339("2022-06-01T22:00:00+00:00"),
+						time.Now().AddDate(0, 1, 0).AddDate(0, 6, 0),
 						sdk.MustNewDecFromStr("0.5"),
 					},
 					{
-						types.MustParseRFC3339("2022-12-01T22:00:00+00:00"),
+						time.Now().AddDate(0, 1, 0).AddDate(1, 0, 0),
 						sdk.MustNewDecFromStr("0.3"),
 					},
 				},

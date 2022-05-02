@@ -9,7 +9,6 @@ The `fundraising` module contains the following parameters:
 | AuctionCreationFee         | sdk.Coins | [{"denom":"stake","amount":"100000000"}]       |
 | PlaceBidFee                | sdk.Coins | [{"denom":"stake","amount":"0"}]               |
 | ExtendedPeriod             | uint32    | 3600 * 24                                      |
-| | |
 
 ## AuctionCreationFee
 
@@ -22,3 +21,15 @@ The `fundraising` module contains the following parameters:
 ## ExtendedPeriod
 
 `ExtendedPeriod` is the extended period that determines how long the extended auction round is.
+
+# Global constants
+
+There are some global constants defined in `x/fundraising/types/params.go`.
+
+## MaxNumVestingSchedules
+
+`MaxNumVestingSchedules` is the maximum number of vesting schedules for an auction to have. It is set to `50`.
+
+## MaxExtendedRound
+
+`MaxExtendedRound` is the maximum number of extended round for a batch auction to have. It is set to `30`.

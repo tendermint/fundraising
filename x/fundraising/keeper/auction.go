@@ -27,6 +27,10 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be set after the current time")
 	}
 
+	if len(msg.VestingSchedules) > types.MaxNumVestingSchedules {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "exceed maximum number of vesting schedules")
+	}
+
 	nextId := k.GetNextAuctionIdWithUpdate(ctx)
 
 	if err := k.PayCreationFee(ctx, msg.GetAuctioneer()); err != nil {
@@ -100,6 +104,14 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuction) (types.AuctionI, error) {
 	if ctx.BlockTime().After(msg.EndTime) { // EndTime < CurrentTime
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "end time must be set after the current time")
+	}
+
+	if len(msg.VestingSchedules) > types.MaxNumVestingSchedules {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "exceed maximum number of vesting schedules")
+	}
+
+	if msg.MaxExtendedRound > types.MaxExtendedRound {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "exceed maximum extended round")
 	}
 
 	nextId := k.GetNextAuctionIdWithUpdate(ctx)

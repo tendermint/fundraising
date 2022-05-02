@@ -287,9 +287,6 @@ type AuctionI interface {
 	ShouldAuctionStarted(t time.Time) bool
 	ShouldAuctionClosed(t time.Time) bool
 
-	// GetMaxBidAmount(bidder string) sdk.Int
-	// SetMaxBidAmount(bidder string, maxBidAmt sdk.Int) error
-
 	Validate() error
 }
 
