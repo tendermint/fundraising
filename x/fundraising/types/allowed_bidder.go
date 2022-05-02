@@ -22,6 +22,7 @@ func (ab AllowedBidder) GetBidder() sdk.AccAddress {
 	return addr
 }
 
+// Validate validates allowed bidder object.
 func (ab AllowedBidder) Validate() error {
 	if _, err := sdk.AccAddressFromBech32(ab.Bidder); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, err.Error())

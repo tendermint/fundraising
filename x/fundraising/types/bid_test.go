@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/tendermint/fundraising/x/fundraising/types"
+	"github.com/tendermint/tendermint/crypto"
 )
 
 func TestConvertToSellingAmount(t *testing.T) {
@@ -107,4 +108,23 @@ func TestConvertToPayingAmount(t *testing.T) {
 		payingAmt := tc.bid.ConvertToPayingAmount(payingCoinDenom)
 		require.Equal(t, tc.expectedAmt, payingAmt)
 	}
+}
+
+func TestSetMatched(t *testing.T) {
+	bidder := sdk.AccAddress(crypto.AddressHash([]byte("Bidder")))
+
+	bid := types.NewBid(
+		1,
+		bidder,
+		1,
+		types.BidTypeFixedPrice,
+		sdk.MustNewDecFromStr("0.5"),
+		sdk.NewCoin("denom1", sdk.NewInt(100_000)),
+		false,
+	)
+	require.False(t, bid.IsMatched)
+	require.Equal(t, bidder, bid.GetBidder())
+
+	bid.SetMatched(true)
+	require.True(t, bid.IsMatched)
 }

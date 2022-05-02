@@ -290,7 +290,7 @@ in our technical spec docs. https://github.com/tendermint/fundraising/blob/main/
 				return err
 			}
 
-			bidType, err := parseBidType(args[1])
+			bidType, err := ParseBidType(args[1])
 			if err != nil {
 				return fmt.Errorf("parse order direction: %w", err)
 			}

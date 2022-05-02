@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto"
@@ -14,28 +15,28 @@ import (
 )
 
 func TestUnpackAuction(t *testing.T) {
-	auction := []types.AuctionI{
-		types.NewFixedPriceAuction(
-			types.NewBaseAuction(
-				1,
-				types.AuctionTypeFixedPrice,
-				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
-				types.SellingReserveAddress(1).String(),
-				types.PayingReserveAddress(1).String(),
-				sdk.MustNewDecFromStr("0.5"),
-				sdk.NewInt64Coin("denom3", 1_000_000_000_000),
-				"denom4",
-				types.VestingReserveAddress(1).String(),
-				[]types.VestingSchedule{},
-				time.Now().AddDate(0, 0, -1),
-				[]time.Time{time.Now().AddDate(0, 1, -1)},
-				types.AuctionStatusStarted,
-			),
+	auction := types.NewFixedPriceAuction(
+		types.NewBaseAuction(
+			1,
+			types.AuctionTypeFixedPrice,
+			sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
+			types.SellingReserveAddress(1).String(),
+			types.PayingReserveAddress(1).String(),
+			sdk.MustNewDecFromStr("0.5"),
 			sdk.NewInt64Coin("denom3", 1_000_000_000_000),
+			"denom4",
+			types.VestingReserveAddress(1).String(),
+			[]types.VestingSchedule{
+				{ReleaseTime: types.MustParseRFC3339("2023-01-01T00:00:00Z"), Weight: sdk.OneDec()},
+			},
+			types.MustParseRFC3339("2022-01-01T00:00:00Z"),
+			[]time.Time{types.MustParseRFC3339("2022-02-01T00:00:00Z")},
+			types.AuctionStatusStarted,
 		),
-	}
+		sdk.NewInt64Coin("denom3", 1_000_000_000_000),
+	)
 
-	any, err := types.PackAuction(auction[0])
+	any, err := types.PackAuction(auction)
 	require.NoError(t, err)
 
 	marshaled, err := any.Marshal()
@@ -49,8 +50,130 @@ func TestUnpackAuction(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, marshaled, reMarshal)
 
-	_, err = types.UnpackAuction(&any2)
+	auction2, err := types.UnpackAuction(&any2)
 	require.NoError(t, err)
+
+	require.Equal(t, auction.Id, auction2.GetId())
+	require.Equal(t, auction.Type, auction2.GetType())
+	require.Equal(t, auction.Auctioneer, auction2.GetAuctioneer().String())
+	require.Equal(t, auction.SellingCoin, auction2.GetSellingCoin())
+	require.Equal(t, auction.PayingCoinDenom, auction2.GetPayingCoinDenom())
+	require.Equal(t, auction.StartPrice, auction2.GetStartPrice())
+	require.Equal(t, auction.SellingReserveAddress, auction2.GetSellingReserveAddress().String())
+	require.Equal(t, auction.SellingReserveAddress, auction2.GetSellingReserveAddress().String())
+	require.Equal(t, auction.PayingReserveAddress, auction2.GetPayingReserveAddress().String())
+	require.Equal(t, auction.VestingReserveAddress, auction2.GetVestingReserveAddress().String())
+	require.Equal(t, auction.VestingSchedules, auction2.GetVestingSchedules())
+	require.Equal(t, auction.StartTime.UTC(), auction2.GetStartTime().UTC())
+	require.Equal(t, auction.EndTimes[0].UTC(), auction2.GetEndTimes()[0].UTC())
+	require.Equal(t, auction.Status, auction2.GetStatus())
+}
+
+func TestUnpackAuctionJSON(t *testing.T) {
+	auction := types.NewFixedPriceAuction(
+		types.NewBaseAuction(
+			1,
+			types.AuctionTypeFixedPrice,
+			sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
+			types.SellingReserveAddress(1).String(),
+			types.PayingReserveAddress(1).String(),
+			sdk.MustNewDecFromStr("0.5"),
+			sdk.NewInt64Coin("denom1", 1_000_000_000_000),
+			"denom2",
+			types.VestingReserveAddress(1).String(),
+			[]types.VestingSchedule{},
+			time.Now().AddDate(0, 0, -1),
+			[]time.Time{time.Now().AddDate(0, 1, -1)},
+			types.AuctionStatusStarted,
+		),
+		sdk.NewInt64Coin("denom2", 1_000_000_000_000),
+	)
+
+	any, err := types.PackAuction(auction)
+	require.NoError(t, err)
+
+	registry := codectypes.NewInterfaceRegistry()
+	types.RegisterInterfaces(registry)
+	cdc := codec.NewProtoCodec(registry)
+
+	bz := cdc.MustMarshalJSON(any)
+
+	var any2 codectypes.Any
+	err = cdc.UnmarshalJSON(bz, &any2)
+	require.NoError(t, err)
+
+	auction2, err := types.UnpackAuction(&any2)
+	require.NoError(t, err)
+
+	require.Equal(t, uint64(1), auction2.GetId())
+}
+
+func TestUnpackAuctions(t *testing.T) {
+	auction := []types.AuctionI{
+		types.NewFixedPriceAuction(
+			types.NewBaseAuction(
+				1,
+				types.AuctionTypeFixedPrice,
+				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
+				types.SellingReserveAddress(1).String(),
+				types.PayingReserveAddress(1).String(),
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.NewInt64Coin("denom1", 1_000_000_000_000),
+				"denom2",
+				types.VestingReserveAddress(1).String(),
+				[]types.VestingSchedule{},
+				time.Now().AddDate(0, 0, -1),
+				[]time.Time{time.Now().AddDate(0, 1, -1)},
+				types.AuctionStatusStarted,
+			),
+			sdk.NewInt64Coin("denom2", 1_000_000_000_000),
+		),
+		types.NewBatchAuction(
+			types.NewBaseAuction(
+				2,
+				types.AuctionTypeFixedPrice,
+				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
+				types.SellingReserveAddress(1).String(),
+				types.PayingReserveAddress(1).String(),
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.NewInt64Coin("denom3", 1_000_000_000_000),
+				"denom4",
+				types.VestingReserveAddress(1).String(),
+				[]types.VestingSchedule{},
+				time.Now().AddDate(0, 0, -1),
+				[]time.Time{time.Now().AddDate(0, 1, -1)},
+				types.AuctionStatusStarted,
+			),
+			sdk.MustNewDecFromStr("0.1"),
+			sdk.ZeroDec(),
+			uint32(3),
+			sdk.MustNewDecFromStr("0.15"),
+		),
+	}
+
+	any, err := types.PackAuction(auction[0])
+	require.NoError(t, err)
+
+	any2, err := types.PackAuction(auction[1])
+	require.NoError(t, err)
+
+	anyAuctions := []*codectypes.Any{any, any2}
+	auctions, err := types.UnpackAuctions(anyAuctions)
+	require.NoError(t, err)
+
+	registry := codectypes.NewInterfaceRegistry()
+	types.RegisterInterfaces(registry)
+	cdc := codec.NewProtoCodec(registry)
+
+	bz1 := types.MustMarshalAuction(cdc, auctions[0])
+	auction1 := types.MustUnmarshalAuction(cdc, bz1)
+	_, ok := auction1.(*types.FixedPriceAuction)
+	require.True(t, ok)
+
+	bz2 := types.MustMarshalAuction(cdc, auctions[1])
+	auction2 := types.MustUnmarshalAuction(cdc, bz2)
+	_, ok = auction2.(*types.BatchAuction)
+	require.True(t, ok)
 }
 
 func TestShouldAuctionStarted(t *testing.T) {
