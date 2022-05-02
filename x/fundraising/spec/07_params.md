@@ -28,7 +28,7 @@ There are some global constants defined in `x/fundraising/types/params.go`.
 
 ## MaxNumVestingSchedules
 
-`MaxNumVestingSchedules` is the maximum number of vesting schedules for an auction to have. It is set to `50`.
+`MaxNumVestingSchedules` is the maximum number of vesting schedules for an auction to have. It is set to `100`.
 
 ## MaxExtendedRound
 
