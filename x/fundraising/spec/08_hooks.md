@@ -41,6 +41,7 @@ BeforeAuctionCanceled(
 BeforeBidPlaced(
     ctx sdk.Context,
     auctionId uint64,
+    bidId uint64,
     bidder string,
     bidType BidType,
     price sdk.Dec,
@@ -50,6 +51,7 @@ BeforeBidPlaced(
 BeforeBidModified(
     ctx sdk.Context,
     auctionId uint64,
+    bidId uint64,
     bidder string,
     bidType BidType,
     price sdk.Dec,
