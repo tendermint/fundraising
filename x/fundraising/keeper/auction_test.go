@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -677,7 +676,7 @@ func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 
 func (s *KeeperTestSuite) TestRefundPayingCoin() {
 	auction := s.createBatchAuction(
-		s.addr(1),
+		s.addr(0),
 		parseDec("1.0"),
 		parseDec("0.5"),
 		parseCoin("100_000_000denom1"),
@@ -692,12 +691,17 @@ func (s *KeeperTestSuite) TestRefundPayingCoin() {
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
 	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("1"), parseCoin("50_000_000denom1"), sdk.NewInt(1_000_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("1"), parseCoin("60_000_000denom1"), sdk.NewInt(1_000_000_000), true)
+	refundBid := s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("0.9"), parseCoin("60_000_000denom1"), sdk.NewInt(1_000_000_000), true)
 
 	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
 	s.Require().True(found)
 
 	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
 
-	fmt.Println(s.fullString(a.GetId(), mInfo))
+	err := s.keeper.RefundPayingCoin(s.ctx, a, mInfo)
+	s.Require().NoError(err)
+
+	expectedAmt := refundBid.ConvertToPayingAmount(auction.GetPayingCoinDenom())
+	bidderBalance := s.getBalance(s.addr(2), auction.GetPayingCoinDenom()).Amount
+	s.Require().Equal(expectedAmt, bidderBalance)
 }
