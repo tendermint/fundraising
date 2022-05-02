@@ -705,3 +705,163 @@ func (s *KeeperTestSuite) TestRefundPayingCoin() {
 	bidderBalance := s.getBalance(s.addr(2), auction.GetPayingCoinDenom()).Amount
 	s.Require().Equal(expectedAmt, bidderBalance)
 }
+
+func (s *KeeperTestSuite) TestCloseFixedPriceAuction() {
+	auction := s.createFixedPriceAuction(
+		s.addr(0),
+		parseDec("1"),
+		parseCoin("1_000_000_000_000denom1"),
+		"denom2",
+		[]types.VestingSchedule{
+			{ReleaseTime: types.MustParseRFC3339("2023-01-01T00:00:00Z"), Weight: sdk.OneDec()},
+		},
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	s.placeBidFixedPrice(auction.Id, s.addr(1), parseDec("1"), parseCoin("250_000_000denom1"), true)
+	s.placeBidFixedPrice(auction.Id, s.addr(2), parseDec("1"), parseCoin("250_000_000denom1"), true)
+	s.placeBidFixedPrice(auction.Id, s.addr(3), parseDec("1"), parseCoin("250_000_000denom1"), true)
+	s.placeBidFixedPrice(auction.Id, s.addr(4), parseDec("1"), parseCoin("250_000_000denom1"), true)
+
+	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
+	s.Require().True(found)
+
+	s.keeper.CloseFixedPriceAuction(s.ctx, a)
+
+	s.Require().Equal(parseCoin("999000000000denom1"), s.getBalance(s.addr(0), a.GetSellingCoin().Denom))
+	s.Require().Equal(parseCoin("0denom2"), s.getBalance(s.addr(0), a.GetPayingCoinDenom()))
+	s.Require().Equal(parseCoin("250_000_000denom1"), s.getBalance(s.addr(1), a.GetSellingCoin().Denom))
+	s.Require().Equal(parseCoin("250_000_000denom1"), s.getBalance(s.addr(2), a.GetSellingCoin().Denom))
+	s.Require().Equal(parseCoin("250_000_000denom1"), s.getBalance(s.addr(3), a.GetSellingCoin().Denom))
+	s.Require().Equal(parseCoin("250_000_000denom1"), s.getBalance(s.addr(4), a.GetSellingCoin().Denom))
+	s.Require().Len(s.keeper.GetVestingQueues(s.ctx), len(a.GetVestingSchedules()))
+}
+
+func (s *KeeperTestSuite) TestCloseBatchAuction() {
+	// Close a batch auction right away by setting MaxExtendedRound to 0 value
+	maxExtendedRound := uint32(0)
+
+	auction := s.createBatchAuction(
+		s.addr(0),
+		parseDec("0.5"),
+		parseDec("0.1"),
+		parseCoin("10_000_000_000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		maxExtendedRound,
+		sdk.MustNewDecFromStr("0.2"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("0.9"), parseCoin("200_000_000denom1"), sdk.NewInt(1_000_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("0.8"), parseCoin("200_000_000denom1"), sdk.NewInt(1_000_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(3), parseDec("0.7"), parseCoin("100_000_000denom1"), sdk.NewInt(1_000_000_000), true)
+
+	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
+	s.Require().True(found)
+
+	s.keeper.CloseBatchAuction(s.ctx, a)
+
+	s.Require().Equal(parseCoin("350000000denom2"), s.getBalance(s.addr(0), a.GetPayingCoinDenom()))
+	s.Require().Equal(parseCoin("9500000000denom1"), s.getBalance(s.addr(0), a.GetSellingCoin().Denom))
+	s.Require().Equal(parseCoin("200_000_000denom1"), s.getBalance(s.addr(1), a.GetSellingCoin().Denom))
+	s.Require().Equal(parseCoin("200_000_000denom1"), s.getBalance(s.addr(2), a.GetSellingCoin().Denom))
+	s.Require().Equal(parseCoin("100_000_000denom1"), s.getBalance(s.addr(3), a.GetSellingCoin().Denom))
+	s.Require().Len(s.keeper.GetVestingQueues(s.ctx), len(a.GetVestingSchedules()))
+}
+
+func (s *KeeperTestSuite) TestCloseBatchAuction_ExtendRound() {
+	// Extend round for a batch auction by setting MaxExtendedRound to non zero value
+	maxExtendedRound := uint32(5)
+	extendedRoundRate := parseDec("0.2")
+
+	auction := s.createBatchAuction(
+		s.addr(0),
+		parseDec("0.5"),
+		parseDec("0.1"),
+		parseCoin("10_000_000_000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		maxExtendedRound,
+		extendedRoundRate,
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("0.9"), parseCoin("200_000_000denom1"), sdk.NewInt(1_000_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("0.8"), parseCoin("200_000_000denom1"), sdk.NewInt(1_000_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(3), parseDec("0.7"), parseCoin("100_000_000denom1"), sdk.NewInt(1_000_000_000), true)
+
+	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
+	s.Require().True(found)
+	s.Require().Len(a.GetEndTimes(), 1)
+
+	s.keeper.CloseBatchAuction(s.ctx, auction)
+
+	// Extended round must be triggered
+	a, found = s.keeper.GetAuction(s.ctx, auction.Id)
+	s.Require().True(found)
+	s.Require().Len(a.GetEndTimes(), 2)
+
+	// Auction sniping occurs
+	s.placeBidBatchMany(auction.Id, s.addr(4), parseDec("0.85"), parseCoin("9_800_000_000denom1"), sdk.NewInt(100_000_000_000), true)
+
+	s.keeper.CloseBatchAuction(s.ctx, a)
+
+	a, found = s.keeper.GetAuction(s.ctx, auction.Id)
+	s.Require().True(found)
+	s.Require().Len(a.GetEndTimes(), 3)
+}
+
+func (s *KeeperTestSuite) TestCloseBatchAuction_Valid() {
+	// Extend round for a batch auction by setting MaxExtendedRound to non zero value
+	maxExtendedRound := uint32(5)
+	extendedRoundRate := parseDec("0.2")
+
+	auction := s.createBatchAuction(
+		s.addr(0),
+		parseDec("0.5"),
+		parseDec("0.1"),
+		parseCoin("10_000_000_000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		maxExtendedRound,
+		extendedRoundRate,
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("0.9"), parseCoin("200_000_000denom1"), sdk.NewInt(1_000_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("0.8"), parseCoin("200_000_000denom1"), sdk.NewInt(1_000_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(3), parseDec("0.7"), parseCoin("100_000_000denom1"), sdk.NewInt(1_000_000_000), true)
+
+	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
+	s.Require().True(found)
+	s.Require().Len(a.GetEndTimes(), 1)
+
+	s.keeper.CloseBatchAuction(s.ctx, auction)
+
+	// Extended round must be triggered
+	a, found = s.keeper.GetAuction(s.ctx, auction.Id)
+	s.Require().True(found)
+	s.Require().Len(a.GetEndTimes(), 2)
+
+	// Auction sniping occurs
+	s.placeBidBatchMany(auction.Id, s.addr(4), parseDec("0.85"), parseCoin("9_500_000_000denom1"), sdk.NewInt(100_000_000_000), true)
+
+	s.keeper.CloseBatchAuction(s.ctx, a)
+
+	a, found = s.keeper.GetAuction(s.ctx, auction.Id)
+	s.Require().True(found)
+	s.Require().Len(a.GetEndTimes(), 2)
+}

@@ -10,8 +10,8 @@ import (
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
 
-// TODO: these helper functions below are taken from keeper_test package
-//       move these to separate file
+// These helper functions below are taken from keeper_test package
+// move these to separate file
 
 func testAddr(addrNum int) sdk.AccAddress {
 	addr := make(sdk.AccAddress, 20)
