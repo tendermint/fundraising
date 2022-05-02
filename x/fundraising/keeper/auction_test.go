@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -672,4 +673,31 @@ func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 			s.Require().Equal(tc.maxBidAmount, allowedBidder.MaxBidAmount)
 		})
 	}
+}
+
+func (s *KeeperTestSuite) TestRefundPayingCoin() {
+	auction := s.createBatchAuction(
+		s.addr(1),
+		parseDec("1.0"),
+		parseDec("0.5"),
+		parseCoin("100_000_000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		1,
+		sdk.MustNewDecFromStr("0.2"),
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("1"), parseCoin("50_000_000denom1"), sdk.NewInt(1_000_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("1"), parseCoin("60_000_000denom1"), sdk.NewInt(1_000_000_000), true)
+
+	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
+	s.Require().True(found)
+
+	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
+
+	fmt.Println(s.fullString(a.GetId(), mInfo))
 }

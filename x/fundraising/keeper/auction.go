@@ -484,7 +484,6 @@ func (k Keeper) CloseBatchAuction(ctx sdk.Context, auction types.AuctionI) {
 		return
 	}
 
-	// TODO: what if no matched bids for the auction?
 	// Extend round since there is no last matched length to compare with
 	lastMatchedLen := k.GetLastMatchedBidsLen(ctx, ba.GetId())
 	if lastMatchedLen == 0 {
@@ -492,7 +491,6 @@ func (k Keeper) CloseBatchAuction(ctx sdk.Context, auction types.AuctionI) {
 		return
 	}
 
-	// TODO: add test case
 	mInfo := k.CalculateBatchAllocation(ctx, auction)
 
 	currDec := sdk.NewDec(mInfo.MatchedLen)
