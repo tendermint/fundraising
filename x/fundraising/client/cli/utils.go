@@ -81,8 +81,8 @@ func (req BatchAuctionRequest) String() string {
 	return string(result)
 }
 
-// parseBidType parses bid type string and returns types.BidType.
-func parseBidType(s string) (types.BidType, error) {
+// ParseBidType parses bid type string and returns types.BidType.
+func ParseBidType(s string) (types.BidType, error) {
 	switch strings.ToLower(s) {
 	case "fixed-price", "fp", "f":
 		return types.BidTypeFixedPrice, nil

@@ -135,3 +135,17 @@ func TestValidateVestingSchedules(t *testing.T) {
 		})
 	}
 }
+
+func TestSetReleased(t *testing.T) {
+	vestingQueue := types.NewVestingQueue(
+		1,
+		sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))),
+		sdk.NewInt64Coin("denom1", 10000000),
+		types.MustParseRFC3339("2021-11-01T00:00:00Z"),
+		false,
+	)
+	require.False(t, vestingQueue.Released)
+
+	vestingQueue.SetReleased(true)
+	require.True(t, vestingQueue.Released)
+}

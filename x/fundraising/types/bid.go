@@ -4,6 +4,19 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// NewBid returns a new Bid.
+func NewBid(auctionId uint64, bidder sdk.AccAddress, bidId uint64, bidType BidType, price sdk.Dec, coin sdk.Coin, isMatched bool) Bid {
+	return Bid{
+		AuctionId: auctionId,
+		Bidder:    bidder.String(),
+		Id:        bidId,
+		Type:      bidType,
+		Price:     price,
+		Coin:      coin,
+		IsMatched: isMatched,
+	}
+}
+
 func (b Bid) GetBidder() sdk.AccAddress {
 	addr, err := sdk.AccAddressFromBech32(b.Bidder)
 	if err != nil {

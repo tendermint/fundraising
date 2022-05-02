@@ -342,18 +342,18 @@ Example command:
 
 ```bash
 # Modify the bid price
-fundraisingd tx fundraising modify-bid 1 1 0.45 10000000denom2 \
+fundraisingd tx fundraising modify-bid 2 1 0.38 10000000denom2 \
 --chain-id fundraising \
---from bob \
+--from steve \
 --keyring-backend test \
 --broadcast-mode block \
 --yes \
 --output json | jq
 
 # Modify the bid amount
-fundraisingd tx fundraising modify-bid 1 2 0.35 25000000denom1 \
+fundraisingd tx fundraising modify-bid 2 2 0.4 15000000denom1 \
 --chain-id fundraising \
---from bob \
+--from steve \
 --keyring-backend test \
 --broadcast-mode block \
 --yes \

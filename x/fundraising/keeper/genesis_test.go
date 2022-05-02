@@ -113,5 +113,3 @@ func (s *KeeperTestSuite) TestGenesisState() {
 	})
 	s.Require().Equal(genState, s.keeper.ExportGenesis(s.ctx))
 }
-
-// TODO: add cases for allowed bidders
