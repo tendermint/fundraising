@@ -2,9 +2,9 @@ package types
 
 import (
 	"fmt"
-	time "time"
+	"time"
 
-	proto "github.com/gogo/protobuf/proto"
+	"github.com/gogo/protobuf/proto"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"

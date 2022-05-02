@@ -110,10 +110,7 @@ func (s *KeeperTestSuite) createBatchAuction(
 }
 
 func (s *KeeperTestSuite) addAllowedBidder(auctionId uint64, bidder sdk.AccAddress, maxBidAmt sdk.Int) {
-	auction, found := s.keeper.GetAuction(s.ctx, auctionId)
-	s.Require().True(found)
-
-	allowedBidder, found := s.keeper.GetAllowedBidder(s.ctx, auction.GetId(), bidder)
+	allowedBidder, found := s.keeper.GetAllowedBidder(s.ctx, auctionId, bidder)
 	if found {
 		maxBidAmt = maxBidAmt.Add(allowedBidder.MaxBidAmount)
 	}
