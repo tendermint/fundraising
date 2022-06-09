@@ -36,6 +36,33 @@ func (k Keeper) BeforeFixedPriceAuctionCreated(
 	}
 }
 
+// AfterFixedPriceAuctionCreated - call hook if registered
+func (k Keeper) AfterFixedPriceAuctionCreated(
+	ctx sdk.Context,
+	auctionId uint64,
+	auctioneer string,
+	startPrice sdk.Dec,
+	sellingCoin sdk.Coin,
+	payingCoinDenom string,
+	vestingSchedules []types.VestingSchedule,
+	startTime time.Time,
+	endTime time.Time,
+) {
+	if k.hooks != nil {
+		k.hooks.AfterFixedPriceAuctionCreated(
+			ctx,
+			auctionId,
+			auctioneer,
+			startPrice,
+			sellingCoin,
+			payingCoinDenom,
+			vestingSchedules,
+			startTime,
+			endTime,
+		)
+	}
+}
+
 // BeforeBatchAuctionCreated - call hook if registered
 func (k Keeper) BeforeBatchAuctionCreated(
 	ctx sdk.Context,
@@ -53,6 +80,39 @@ func (k Keeper) BeforeBatchAuctionCreated(
 	if k.hooks != nil {
 		k.hooks.BeforeBatchAuctionCreated(
 			ctx,
+			auctioneer,
+			startPrice,
+			minBidPrice,
+			sellingCoin,
+			payingCoinDenom,
+			vestingSchedules,
+			maxExtendedRound,
+			extendedRoundRate,
+			startTime,
+			endTime,
+		)
+	}
+}
+
+// AfterBatchAuctionCreated - call hook if registered
+func (k Keeper) AfterBatchAuctionCreated(
+	ctx sdk.Context,
+	auctionId uint64,
+	auctioneer string,
+	startPrice sdk.Dec,
+	minBidPrice sdk.Dec,
+	sellingCoin sdk.Coin,
+	payingCoinDenom string,
+	vestingSchedules []types.VestingSchedule,
+	maxExtendedRound uint32,
+	extendedRoundRate sdk.Dec,
+	startTime time.Time,
+	endTime time.Time,
+) {
+	if k.hooks != nil {
+		k.hooks.AfterBatchAuctionCreated(
+			ctx,
+			auctionId,
 			auctioneer,
 			startPrice,
 			minBidPrice,

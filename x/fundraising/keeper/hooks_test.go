@@ -15,7 +15,9 @@ var _ types.FundraisingHooks = &MockFundraisingHooksReceiver{}
 // MockFundraisingHooksReceiver event hooks for governance proposal object (noalias)
 type MockFundraisingHooksReceiver struct {
 	BeforeFixedPriceAuctionCreatedValid bool
+	AfterFixedPriceAuctionCreatedValid  bool
 	BeforeBatchAuctionCreatedValid      bool
+	AfterBatchAuctionCreatedValid       bool
 	BeforeAuctionCanceledValid          bool
 	BeforeBidPlacedValid                bool
 	BeforeBidModifiedValid              bool
@@ -37,6 +39,20 @@ func (h *MockFundraisingHooksReceiver) BeforeFixedPriceAuctionCreated(
 	h.BeforeFixedPriceAuctionCreatedValid = true
 }
 
+func (h *MockFundraisingHooksReceiver) AfterFixedPriceAuctionCreated(
+	ctx sdk.Context,
+	auctionId uint64,
+	auctioneer string,
+	startPrice sdk.Dec,
+	sellingCoin sdk.Coin,
+	payingCoinDenom string,
+	vestingSchedules []types.VestingSchedule,
+	startTime time.Time,
+	endTime time.Time,
+) {
+	h.AfterFixedPriceAuctionCreatedValid = true
+}
+
 func (h *MockFundraisingHooksReceiver) BeforeBatchAuctionCreated(
 	ctx sdk.Context,
 	auctioneer string,
@@ -51,6 +67,23 @@ func (h *MockFundraisingHooksReceiver) BeforeBatchAuctionCreated(
 	endTime time.Time,
 ) {
 	h.BeforeBatchAuctionCreatedValid = true
+}
+
+func (h *MockFundraisingHooksReceiver) AfterBatchAuctionCreated(
+	ctx sdk.Context,
+	auctionId uint64,
+	auctioneer string,
+	startPrice sdk.Dec,
+	minBidPrice sdk.Dec,
+	sellingCoin sdk.Coin,
+	payingCoinDenom string,
+	vestingSchedules []types.VestingSchedule,
+	maxExtendedRound uint32,
+	extendedRoundRate sdk.Dec,
+	startTime time.Time,
+	endTime time.Time,
+) {
+	h.AfterBatchAuctionCreatedValid = true
 }
 
 func (h *MockFundraisingHooksReceiver) BeforeAuctionCanceled(
@@ -117,7 +150,9 @@ func (s *KeeperTestSuite) TestHooks() {
 	s.keeper.SetHooks(types.NewMultiFundraisingHooks(&fundraisingHooksReceiver))
 
 	s.Require().False(fundraisingHooksReceiver.BeforeFixedPriceAuctionCreatedValid)
+	s.Require().False(fundraisingHooksReceiver.AfterFixedPriceAuctionCreatedValid)
 	s.Require().False(fundraisingHooksReceiver.BeforeBatchAuctionCreatedValid)
+	s.Require().False(fundraisingHooksReceiver.AfterBatchAuctionCreatedValid)
 	s.Require().False(fundraisingHooksReceiver.BeforeAuctionCanceledValid)
 	s.Require().False(fundraisingHooksReceiver.BeforeBidPlacedValid)
 	s.Require().False(fundraisingHooksReceiver.BeforeBidModifiedValid)
@@ -137,6 +172,7 @@ func (s *KeeperTestSuite) TestHooks() {
 		true,
 	)
 	s.Require().True(fundraisingHooksReceiver.BeforeFixedPriceAuctionCreatedValid)
+	s.Require().True(fundraisingHooksReceiver.AfterFixedPriceAuctionCreatedValid)
 
 	// Create a batch auction
 	batchAuction := s.createBatchAuction(
@@ -153,6 +189,7 @@ func (s *KeeperTestSuite) TestHooks() {
 		true,
 	)
 	s.Require().True(fundraisingHooksReceiver.BeforeBatchAuctionCreatedValid)
+	s.Require().True(fundraisingHooksReceiver.AfterBatchAuctionCreatedValid)
 
 	// Create auction that is stand by status
 	standByAuction := s.createFixedPriceAuction(
