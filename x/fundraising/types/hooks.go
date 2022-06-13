@@ -38,6 +38,32 @@ func (h MultiFundraisingHooks) BeforeFixedPriceAuctionCreated(
 	}
 }
 
+func (h MultiFundraisingHooks) AfterFixedPriceAuctionCreated(
+	ctx sdk.Context,
+	auctionId uint64,
+	auctioneer string,
+	startPrice sdk.Dec,
+	sellingCoin sdk.Coin,
+	payingCoinDenom string,
+	vestingSchedules []VestingSchedule,
+	startTime,
+	endTime time.Time,
+) {
+	for i := range h {
+		h[i].AfterFixedPriceAuctionCreated(
+			ctx,
+			auctionId,
+			auctioneer,
+			startPrice,
+			sellingCoin,
+			payingCoinDenom,
+			vestingSchedules,
+			startTime,
+			endTime,
+		)
+	}
+}
+
 func (h MultiFundraisingHooks) BeforeBatchAuctionCreated(
 	ctx sdk.Context,
 	auctioneer string,
@@ -54,6 +80,38 @@ func (h MultiFundraisingHooks) BeforeBatchAuctionCreated(
 	for i := range h {
 		h[i].BeforeBatchAuctionCreated(
 			ctx,
+			auctioneer,
+			startPrice,
+			minBidPrice,
+			sellingCoin,
+			payingCoinDenom,
+			vestingSchedules,
+			maxExtendedRound,
+			extendedRoundRate,
+			startTime,
+			endTime,
+		)
+	}
+}
+
+func (h MultiFundraisingHooks) AfterBatchAuctionCreated(
+	ctx sdk.Context,
+	auctionId uint64,
+	auctioneer string,
+	startPrice sdk.Dec,
+	minBidPrice sdk.Dec,
+	sellingCoin sdk.Coin,
+	payingCoinDenom string,
+	vestingSchedules []VestingSchedule,
+	maxExtendedRound uint32,
+	extendedRoundRate sdk.Dec,
+	startTime time.Time,
+	endTime time.Time,
+) {
+	for i := range h {
+		h[i].AfterBatchAuctionCreated(
+			ctx,
+			auctionId,
 			auctioneer,
 			startPrice,
 			minBidPrice,

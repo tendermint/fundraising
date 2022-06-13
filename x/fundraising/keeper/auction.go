@@ -78,6 +78,19 @@ func (k Keeper) CreateFixedPriceAuction(ctx sdk.Context, msg *types.MsgCreateFix
 
 	k.SetAuction(ctx, auction)
 
+	// Call hook after storing an auction
+	k.AfterFixedPriceAuctionCreated(
+		ctx,
+		auction.Id,
+		auction.Auctioneer,
+		auction.StartPrice,
+		auction.SellingCoin,
+		auction.PayingCoinDenom,
+		auction.VestingSchedules,
+		auction.StartTime,
+		auction.EndTimes[0],
+	)
+
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeCreateFixedPriceAuction,
@@ -171,6 +184,22 @@ func (k Keeper) CreateBatchAuction(ctx sdk.Context, msg *types.MsgCreateBatchAuc
 	)
 
 	k.SetAuction(ctx, auction)
+
+	// Call hook after storing an auction
+	k.AfterBatchAuctionCreated(
+		ctx,
+		auction.Id,
+		auction.Auctioneer,
+		auction.StartPrice,
+		auction.MinBidPrice,
+		auction.SellingCoin,
+		auction.PayingCoinDenom,
+		auction.VestingSchedules,
+		auction.MaxExtendedRound,
+		auction.ExtendedRoundRate,
+		auction.StartTime,
+		auction.EndTimes[0],
+	)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
