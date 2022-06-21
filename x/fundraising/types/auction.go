@@ -73,7 +73,10 @@ func (ba *BaseAuction) SetType(typ AuctionType) error {
 }
 
 func (ba BaseAuction) GetAuctioneer() sdk.AccAddress {
-	addr, _ := sdk.AccAddressFromBech32(ba.Auctioneer)
+	addr, err := sdk.AccAddressFromBech32(ba.Auctioneer)
+	if err != nil {
+		panic(err)
+	}
 	return addr
 }
 
@@ -83,7 +86,10 @@ func (ba *BaseAuction) SetAuctioneer(addr sdk.AccAddress) error {
 }
 
 func (ba BaseAuction) GetSellingReserveAddress() sdk.AccAddress {
-	addr, _ := sdk.AccAddressFromBech32(ba.SellingReserveAddress)
+	addr, err := sdk.AccAddressFromBech32(ba.SellingReserveAddress)
+	if err != nil {
+		panic(err)
+	}
 	return addr
 }
 
@@ -93,7 +99,10 @@ func (ba *BaseAuction) SetSellingReserveAddress(addr sdk.AccAddress) error {
 }
 
 func (ba BaseAuction) GetPayingReserveAddress() sdk.AccAddress {
-	addr, _ := sdk.AccAddressFromBech32(ba.PayingReserveAddress)
+	addr, err := sdk.AccAddressFromBech32(ba.PayingReserveAddress)
+	if err != nil {
+		panic(err)
+	}
 	return addr
 }
 
@@ -130,7 +139,10 @@ func (ba *BaseAuction) SetPayingCoinDenom(denom string) error {
 }
 
 func (ba BaseAuction) GetVestingReserveAddress() sdk.AccAddress {
-	addr, _ := sdk.AccAddressFromBech32(ba.VestingReserveAddress)
+	addr, err := sdk.AccAddressFromBech32(ba.VestingReserveAddress)
+	if err != nil {
+		panic(err)
+	}
 	return addr
 }
 
