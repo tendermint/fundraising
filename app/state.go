@@ -98,9 +98,9 @@ func AppStateFn(cdc codec.JSONCodec, simManager *module.SimulationManager) simty
 			notBondedTokens = notBondedTokens.Add(val.GetTokens())
 		}
 		notBondedCoins := sdk.NewCoin(stakingState.Params.BondDenom, notBondedTokens)
+
 		// edit bank state to make it have the not bonded pool tokens
 		bankStateBz, ok := rawState[banktypes.ModuleName]
-		// TODO(fdymylja/jonathan): should we panic in this case
 		if !ok {
 			panic("bank genesis state is missing")
 		}
