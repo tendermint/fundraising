@@ -10,14 +10,14 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	pruningtypes "github.com/cosmos/cosmos-sdk/pruning/types"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
-	store "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	utilcli "github.com/cosmos/cosmos-sdk/testutil/cli"
 	"github.com/cosmos/cosmos-sdk/testutil/network"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ignite/cli/ignite/pkg/cosmoscmd"
+	fundraisingtypes "github.com/tendermint/fundraising/pkg/types"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 	dbm "github.com/tendermint/tm-db"
 
@@ -37,13 +37,13 @@ type TxCmdTestSuite struct {
 	denom2 string
 }
 
-func NewAppConstructor(encodingCfg cosmoscmd.EncodingConfig) network.AppConstructor {
+func NewAppConstructor(encodingCfg fundraisingtypes.EncodingConfig) network.AppConstructor {
 	return func(val network.Validator) servertypes.Application {
 		return chain.New(
 			val.Ctx.Logger, dbm.NewMemDB(), nil, true, make(map[int64]bool), val.Ctx.Config.RootDir, 0,
 			encodingCfg,
 			simapp.EmptyAppOptions{},
-			baseapp.SetPruning(store.NewPruningOptionsFromString(val.AppConfig.Pruning)),
+			baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.AppConfig.Pruning)),
 			baseapp.SetMinGasPrices(val.AppConfig.MinGasPrices),
 		)
 	}
@@ -58,7 +58,7 @@ func (s *TxCmdTestSuite) SetupTest() {
 
 	keeper.EnableAddAllowedBidder = true
 
-	encodingCfg := cosmoscmd.MakeEncodingConfig(chain.ModuleBasics)
+	encodingCfg := fundraisingtypes.MakeEncodingConfig(chain.ModuleBasics)
 
 	cfg := network.DefaultConfig()
 	cfg.NumValidators = 1
@@ -68,10 +68,12 @@ func (s *TxCmdTestSuite) SetupTest() {
 	cfg.StakingTokens = sdk.NewInt(100_000_000_000_000) // stake denom
 
 	s.cfg = cfg
-	s.network = network.New(s.T(), cfg)
+	var err error
+	s.network, err = network.New(s.T(), s.T().TempDir(), cfg)
+	s.Require().NoError(err)
 	s.denom1, s.denom2 = fmt.Sprintf("%stoken", s.network.Validators[0].Moniker), s.cfg.BondDenom
 
-	_, err := s.network.WaitForHeight(1)
+	_, err = s.network.WaitForHeight(1)
 	s.Require().NoError(err)
 }
 
@@ -835,7 +837,7 @@ func (s *QueryCmdTestSuite) SetupTest() {
 
 	keeper.EnableAddAllowedBidder = true
 
-	encodingCfg := cosmoscmd.MakeEncodingConfig(chain.ModuleBasics)
+	encodingCfg := fundraisingtypes.MakeEncodingConfig(chain.ModuleBasics)
 
 	cfg := network.DefaultConfig()
 	cfg.NumValidators = 2
@@ -845,10 +847,12 @@ func (s *QueryCmdTestSuite) SetupTest() {
 	cfg.StakingTokens = sdk.NewInt(100_000_000_000_000) // stake denom
 
 	s.cfg = cfg
-	s.network = network.New(s.T(), cfg)
+	var err error
+	s.network, err = network.New(s.T(), s.T().TempDir(), cfg)
+	s.Require().NoError(err)
 	s.denom1, s.denom2 = fmt.Sprintf("%stoken", s.network.Validators[0].Moniker), s.cfg.BondDenom
 
-	_, err := s.network.WaitForHeight(1)
+	_, err = s.network.WaitForHeight(1)
 	s.Require().NoError(err)
 }
 

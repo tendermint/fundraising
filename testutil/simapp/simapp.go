@@ -2,6 +2,7 @@ package simapp
 
 import (
 	"encoding/json"
+	fundraisingtypes "github.com/tendermint/fundraising/pkg/types"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -9,7 +10,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	"github.com/ignite/cli/ignite/pkg/cosmoscmd"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -41,7 +41,7 @@ var defaultConsensusParams = &abci.ConsensusParams{
 func New(dir string) *app.App {
 	db := tmdb.NewMemDB()
 	logger := log.NewNopLogger()
-	encCdc := cosmoscmd.MakeEncodingConfig(app.ModuleBasics)
+	encCdc := fundraisingtypes.MakeEncodingConfig(app.ModuleBasics)
 
 	a := app.New(
 		logger, db, nil, true, map[int64]bool{}, dir, 0, encCdc, simapp.EmptyAppOptions{},

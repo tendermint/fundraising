@@ -4,13 +4,13 @@ import (
 	"os"
 
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
-	"github.com/ignite/cli/ignite/pkg/cosmoscmd"
 
 	"github.com/tendermint/fundraising/app"
+	fundraisingtypes "github.com/tendermint/fundraising/pkg/types"
 )
 
 func main() {
-	rootCmd, _ := cosmoscmd.NewRootCmd(
+	rootCmd, _ := fundraisingtypes.NewRootCmd(
 		app.Name,
 		app.AccountAddressPrefix,
 		app.DefaultNodeHome,
@@ -18,7 +18,7 @@ func main() {
 		app.ModuleBasics,
 		app.New,
 	)
-	if err := svrcmd.Execute(rootCmd, app.DefaultNodeHome); err != nil {
+	if err := svrcmd.Execute(rootCmd, "", app.DefaultNodeHome); err != nil {
 		os.Exit(1)
 	}
 }
