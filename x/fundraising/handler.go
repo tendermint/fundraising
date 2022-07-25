@@ -10,6 +10,7 @@ import (
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
 
+// NewHandler returns a new msg handler.
 func NewHandler(k keeper.Keeper) sdk.Handler {
 	msgServer := keeper.NewMsgServerImpl(k)
 

@@ -126,7 +126,6 @@ test-all: test-unit test-race test-cover
 test-unit: 
 	@VERSION=$(VERSION) go test -mod=readonly -tags='norace' $(PACKAGES_NOSIMULATION)
 
-
 test-race:
 	@go test -mod=readonly -timeout 30m -race -coverprofile=coverage.txt -covermode=atomic -tags='ledger test_ledger_mock' ./...
 
@@ -135,43 +134,77 @@ test-cover:
 
 .PHONY: test test-all test-unit test-race test-cover
 
-SIM_NUM_BLOCKS ?= 500
-SIM_BLOCK_SIZE ?= 200
+SIM_NUM_BLOCKS ?= 100
+SIM_BLOCK_SIZE ?= 50
 SIM_CI_NUM_BLOCKS ?= 200
 SIM_CI_BLOCK_SIZE ?= 26
 SIM_PERIOD ?= 50
 SIM_COMMIT ?= true
 SIM_TIMEOUT ?= 24h
 
-## test-sim-nondeterminism: Run simulation test checking for app state nondeterminism
+# test-sim-nondeterminism: Run simulation test checking for app state nondeterminism
 test-sim-nondeterminism:
 	@echo "Running non-determinism test..."
 	@VERSION=$(VERSION) go test -mod=readonly $(SIMAPP) -run TestAppStateDeterminism -Enabled=true \
 		-NumBlocks=$(SIM_NUM_BLOCKS) -BlockSize=$(SIM_BLOCK_SIZE) -Commit=$(SIM_COMMIT) -Period=$(SIM_PERIOD)  \
 		-v -timeout $(SIM_TIMEOUT)
 
-## test-sim-ci: Run lightweight simulation for CI pipeline
+# test-sim-import-export: Run simulation test checking import and export app state determinism
+# go get github.com/cosmos/tools/cmd/runsim@v1.0.0
+test-sim-import-export: runsim
+	@echo "Running application import/export simulation. This may take several minutes..."
+	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 2 2 TestAppImportExport
+
+# test-sim-after-import: Run simulation test checking import after simulation
+# go get github.com/cosmos/tools/cmd/runsim@v1.0.0
+test-sim-after-import: runsim
+	@echo "Running application simulation-after-import. This may take several minutes..."
+	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 2 2 TestAppSimulationAfterImport
+
+test-sim-nondeterminism-long:
+	@echo "Running non-determinism test..."
+	@go test -mod=readonly $(SIMAPP) -run TestAppStateDeterminism -Enabled=true \
+		-NumBlocks=100 -BlockSize=100 -Commit=true -Period=0 -v -timeout 1h
+
+test-sim-import-export-long: runsim
+	@echo "Running application import/export simulation. This may take several minutes..."
+	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 5 5 TestAppImportExport
+
+test-sim-after-import-long: runsim
+	@echo "Running application simulation-after-import. This may take several minutes..."
+	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 5 5 TestAppSimulationAfterImport
+
+# test-sim-ci: Run lightweight simulation for CI pipeline
 test-sim-ci:
 	@echo "Running application benchmark for numBlocks=$(SIM_CI_NUM_BLOCKS), blockSize=$(SIM_CI_BLOCK_SIZE)"
 	@VERSION=$(VERSION) go test -mod=readonly -benchmem -run=^$$ $(SIMAPP) -bench ^BenchmarkSimulation$$  \
 		-Enabled=true -NumBlocks=$(SIM_CI_NUM_BLOCKS) -BlockSize=$(SIM_CI_BLOCK_SIZE) -Commit=$(SIM_COMMIT) \
 		-Period=$(SIM_PERIOD) -timeout $(SIM_TIMEOUT)
 
-## test-sim-benchmark: Run heavy benchmarking simulation
+# test-sim-benchmark: Run heavy benchmarking simulation
 test-sim-benchmark:
 	@echo "Running application benchmark for numBlocks=$(SIM_NUM_BLOCKS), blockSize=$(SIM_BLOCK_SIZE). This may take awhile!"
 	@VERSION=$(VERSION) go test -mod=readonly -benchmem -run=^$$ $(SIMAPP) -bench ^BenchmarkSimulation$$  \
 		-Enabled=true -NumBlocks=$(SIM_NUM_BLOCKS) -BlockSize=$(SIM_BLOCK_SIZE) -Period=$(SIM_PERIOD) \
 		-Commit=$(SIM_COMMIT) timeout $(SIM_TIMEOUT)
 
-## test-sim-benchmark: Run heavy benchmarking simulation with CPU and memory profiling
+# test-sim-benchmark: Run heavy benchmarking simulation with CPU and memory profiling
 test-sim-profile:
 	@echo "Running application benchmark for numBlocks=$(SIM_NUM_BLOCKS), blockSize=$(SIM_BLOCK_SIZE). This may take awhile!"
 	@VERSION=$(VERSION) go test -mod=readonly -benchmem -run=^$$ $(SIMAPP) -bench ^BenchmarkSimulation$$ \
 		-Enabled=true -NumBlocks=$(SIM_NUM_BLOCKS) -BlockSize=$(SIM_BLOCK_SIZE) -Period=$(SIM_PERIOD) \
 		-Commit=$(SIM_COMMIT) timeout $(SIM_TIMEOUT)-cpuprofile cpu.out -memprofile mem.out
 
-.PHONY: test-sim-nondeterminism test-sim-ci test-sim-profile test-sim-benchmark
+.PHONY: \
+test-sim-nondeterminism \
+test-sim-nondeterminism-long \
+test-sim-import-export \
+test-sim-import-export-long \
+test-sim-after-import \
+test-sim-after-import-long \
+test-sim-ci \
+test-sim-profile \
+test-sim-benchmark
 
 ###############################################################################
 ###                                Protobuf                                 ###
@@ -203,6 +236,6 @@ proto-format:
 ###############################################################################
 
 localnet: 
-	starport chain serve -r -v -c ./config-test.yml
+	ignite chain serve -r -v -c ./config-test.yml
 
 .PHONY: localnet

@@ -19,7 +19,6 @@ func (s *KeeperTestSuite) TestDefaultGenesis() {
 	s.Require().Equal(genState, got)
 }
 
-// TODO: add simple and complex cases
 func (s *KeeperTestSuite) TestGenesisState() {
 	fixedAuction := s.createFixedPriceAuction(
 		s.addr(0),
@@ -56,7 +55,7 @@ func (s *KeeperTestSuite) TestGenesisState() {
 
 	// Modify the current block time a day after the end time
 	s.ctx = s.ctx.WithBlockTime(fixedAuction.GetEndTimes()[0].AddDate(0, 0, 1))
-	fundraising.EndBlocker(s.ctx, s.keeper)
+	fundraising.BeginBlocker(s.ctx, s.keeper)
 
 	batchAuction := s.createBatchAuction(
 		s.addr(3),
@@ -90,7 +89,7 @@ func (s *KeeperTestSuite) TestGenesisState() {
 
 	// Modify the time to make the first and second vesting queues over
 	s.ctx = s.ctx.WithBlockTime(fixedAuction.VestingSchedules[1].ReleaseTime.AddDate(0, 0, 1))
-	fundraising.EndBlocker(s.ctx, s.keeper)
+	fundraising.BeginBlocker(s.ctx, s.keeper)
 
 	queues := s.keeper.GetVestingQueuesByAuctionId(s.ctx, 1)
 	s.Require().Len(queues, 4)

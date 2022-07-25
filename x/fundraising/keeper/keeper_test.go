@@ -110,19 +110,12 @@ func (s *KeeperTestSuite) createBatchAuction(
 }
 
 func (s *KeeperTestSuite) addAllowedBidder(auctionId uint64, bidder sdk.AccAddress, maxBidAmt sdk.Int) {
-	auction, found := s.keeper.GetAuction(s.ctx, auctionId)
-	s.Require().True(found)
-
-	prevMaxBidAmt, found := auction.GetAllowedBiddersMap()[bidder.String()]
+	allowedBidder, found := s.keeper.GetAllowedBidder(s.ctx, auctionId, bidder)
 	if found {
-		maxBidAmt = maxBidAmt.Add(prevMaxBidAmt)
+		maxBidAmt = maxBidAmt.Add(allowedBidder.MaxBidAmount)
 	}
 
-	err := s.keeper.AddAllowedBidders(s.ctx, auctionId, []types.AllowedBidder{
-		// {Bidder: bidder.String(), MaxBidAmount: sdk.NewInt(1000000000000)},
-		{Bidder: bidder.String(), MaxBidAmount: maxBidAmt},
-	})
-	s.Require().NoError(err)
+	s.keeper.SetAllowedBidder(s.ctx, auctionId, types.NewAllowedBidder(bidder, maxBidAmt))
 }
 
 func (s *KeeperTestSuite) placeBidFixedPrice(
@@ -140,7 +133,6 @@ func (s *KeeperTestSuite) placeBidFixedPrice(
 	var maxBidAmt sdk.Int
 
 	if coin.Denom == auction.GetPayingCoinDenom() {
-		fundAmt = coin.Amount
 		fundCoin = coin
 		maxBidAmt = coin.Amount.ToDec().QuoTruncate(price).TruncateInt()
 	} else {
@@ -262,7 +254,7 @@ func (s *KeeperTestSuite) fullString(auctionId uint64, mInfo keeper.MatchingInfo
 
 	payingCoinDenom := auction.GetPayingCoinDenom()
 	bids := s.keeper.GetBidsByAuctionId(s.ctx, auctionId)
-	bids = types.SortByBidPrice(bids)
+	bids = types.SortBids(bids)
 
 	var b strings.Builder
 

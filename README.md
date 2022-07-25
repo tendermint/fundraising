@@ -1,8 +1,11 @@
 # Fundraising Module
 
-The fundraising module is a Cosmos SDK module that serves the fundraising feature that provides an oppotunity for new projects to onboard into the Cosmos ecosystem. The fundraising module allow projects to raise funds and increase their brand awareness before launching their projects. 
+[![codecov](https://codecov.io/gh/tendermint/fundraising/branch/main/graph/badge.svg?token=rXg5Q0Aahz)](https://codecov.io/gh/tendermint/fundraising)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/tendermint/fundraising)](https://pkg.go.dev/github.com/tendermint/fundraising)
 
-The fundraising module is built using Cosmos SDK and Tendermint and created with [Starport](https://github.com/tendermint/starport).
+The fundraising module is a Cosmos SDK module that serves the fundraising feature that provides an opportunity for new projects to onboard into the Cosmos ecosystem. The fundraising module allows projects to raise funds and increase their brand awareness before launching their projects. 
+
+The fundraising module is built using Cosmos SDK and Tendermint and created with [Ignite CLI](https://github.com/ignite-hq/cli).
 
 - [main](https://github.com/tendermint/fundraising/tree/main) branch for the latest 
 - [releases](https://github.com/tendermint/fundraising/releases) for the latest release
@@ -14,7 +17,7 @@ If you haven't already, install Golang by following the official Go [install doc
 Requirement | Notes
 ----------- | -----------------
 Go          | version 1.17 or higher
-Cosmos SDK  | v0.45.1
+Cosmos SDK  | v0.45.3
 
 ## Installation
 
@@ -41,3 +44,7 @@ These documents can help you start using the fundraising module.
 ## Contributing
 
 We welcome contributions from everyone. The [main](https://github.com/tendermint/fundraising/tree/main) branch contains the development version of the code. You can branch of from main and create a pull request, or maintain your own fork and submit a cross-repository pull request. If you're not sure where to start check out [CONTRIBUTING.md](./CONTRIBUTING.md) for our guidelines and policies for how we develop the fundraising module. Thank you to everyone who has contributed to the fundraising module!
+
+## License
+
+This software is licensed under the Apache 2.0 license.

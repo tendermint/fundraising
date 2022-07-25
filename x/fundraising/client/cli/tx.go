@@ -85,7 +85,7 @@ Description of the parameters:
 [start_price]: the start price of the selling coin that is proportional to the paying coin denom 
 [selling_coin]: the selling amount of coin for the auction
 [paying_coin_denom]: the paying coin denom that the auctioneer wants to exchange with
-[vesting_schedules]: the vesting schedules that release the paying coins to the autioneer
+[vesting_schedules]: the vesting schedules that release the paying coins to the auctioneer
 [start_time]: the start time of the auction
 [end_time]: the end time of the auction
 `,
@@ -290,7 +290,7 @@ in our technical spec docs. https://github.com/tendermint/fundraising/blob/main/
 				return err
 			}
 
-			bidType, err := parseBidType(args[1])
+			bidType, err := ParseBidType(args[1])
 			if err != nil {
 				return fmt.Errorf("parse order direction: %w", err)
 			}
@@ -381,6 +381,8 @@ $ %s tx %s bid 1 1 1.0 100000000denom2 --from mykey
 }
 
 func NewAddAllowedBidderCmd() *cobra.Command {
+	bech32PrefixValAddr := sdk.GetConfig().GetBech32ValidatorAddrPrefix()
+
 	cmd := &cobra.Command{
 		Use:   "add-allowed-bidder [auction-id] [bidder] [max-bid-amount]",
 		Args:  cobra.ExactArgs(3),
@@ -390,9 +392,9 @@ func NewAddAllowedBidderCmd() *cobra.Command {
 This message is available for testing purpose and it is only accessible when you build the binary with testing mode.
 		
 Example:
-$ %s tx %s add-allowed-bidder 1 10000000000 --from mykey 
+$ %s tx %s add-allowed-bidder 1 %s1mzgucqnfr2l8cj5apvdpllhzt4zeuh2cshz5xu 10000000000 --from mykey 
 `,
-				version.AppName, types.ModuleName,
+				version.AppName, types.ModuleName, bech32PrefixValAddr,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -413,10 +415,10 @@ $ %s tx %s add-allowed-bidder 1 10000000000 --from mykey
 
 			maxBidAmt, ok := sdk.NewIntFromString(args[2])
 			if !ok {
-				return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "maxium bid price must be a positive integer")
+				return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "maximum bid price must be a positive integer")
 			}
 
-			msg := types.NewAddAllowedBidder(
+			msg := types.NewMsgAddAllowedBidder(
 				auctionId,
 				types.AllowedBidder{
 					Bidder:       bidderAddr.String(),

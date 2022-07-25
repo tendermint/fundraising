@@ -18,8 +18,35 @@ BeforeFixedPriceAuctionCreated(
     endTime time.Time,
 )
 
+AfterFixedPriceAuctionCreated(
+    ctx sdk.Context,
+    auctionId uint64,
+    auctioneer string,
+    startPrice sdk.Dec,
+    sellingCoin sdk.Coin,
+    payingCoinDenom string,
+    vestingSchedules []VestingSchedule,
+    startTime time.Time,
+    endTime time.Time,
+)
+
 BeforeBatchAuctionCreated(
     ctx sdk.Context,
+    auctioneer string,
+    startPrice sdk.Dec,
+    minBidPrice sdk.Dec,
+    sellingCoin sdk.Coin,
+    payingCoinDenom string,
+    vestingSchedules []VestingSchedule,
+    maxExtendedRound uint32,
+    extendedRoundRate sdk.Dec,
+    startTime time.Time,
+    endTime time.Time,
+)
+
+AfterBatchAuctionCreated(
+    ctx sdk.Context,
+    auctionId uint64,
     auctioneer string,
     startPrice sdk.Dec,
     minBidPrice sdk.Dec,
@@ -41,6 +68,7 @@ BeforeAuctionCanceled(
 BeforeBidPlaced(
     ctx sdk.Context,
     auctionId uint64,
+    bidId uint64,
     bidder string,
     bidType BidType,
     price sdk.Dec,
@@ -50,6 +78,7 @@ BeforeBidPlaced(
 BeforeBidModified(
     ctx sdk.Context,
     auctionId uint64,
+    bidId uint64,
     bidder string,
     bidType BidType,
     price sdk.Dec,
@@ -58,7 +87,6 @@ BeforeBidModified(
 
 BeforeAllowedBiddersAdded(
     ctx sdk.Context,
-    auctionId uint64,
     allowedBidders []AllowedBidder,
 )
 

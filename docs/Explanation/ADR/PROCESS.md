@@ -14,7 +14,7 @@
 
 ADR creation is an **iterative** process. Instead of trying to solve all decisions in a single ADR pull request, we MUST initially understand the problem and collect feedback by having conversations in a GitHub Issue.
 
-1. Every ADR proposal SHOULD start with a [new GitHub issue](https://github.com/tendermint/starport/issues/new/choose) or be a result of existing Issues. The Issue must contain a brief proposal summary.
+1. Every ADR proposal SHOULD start with a [new GitHub issue](https://github.com/tendermint/fundraising/issues/new/choose) or be a result of existing Issues. The Issue must contain a brief proposal summary.
 
 2. After the motivation is validated, create a new document that is on the `adr-template.md`.
 

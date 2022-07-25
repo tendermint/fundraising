@@ -20,6 +20,9 @@ type BankKeeper interface {
 	SpendableCoins(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
 	SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
 	InputOutputCoins(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error
+	// MintCoins and SendCoinsFromModuleToAccount are used only for simulation test codes
+	MintCoins(ctx sdk.Context, name string, amt sdk.Coins) error
+	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
 }
 
 // DistrKeeper is the keeper of the distribution store
@@ -44,8 +47,35 @@ type FundraisingHooks interface {
 		endTime time.Time,
 	)
 
+	AfterFixedPriceAuctionCreated(
+		ctx sdk.Context,
+		auctionId uint64,
+		auctioneer string,
+		startPrice sdk.Dec,
+		sellingCoin sdk.Coin,
+		payingCoinDenom string,
+		vestingSchedules []VestingSchedule,
+		startTime time.Time,
+		endTime time.Time,
+	)
+
 	BeforeBatchAuctionCreated(
 		ctx sdk.Context,
+		auctioneer string,
+		startPrice sdk.Dec,
+		minBidPrice sdk.Dec,
+		sellingCoin sdk.Coin,
+		payingCoinDenom string,
+		vestingSchedules []VestingSchedule,
+		maxExtendedRound uint32,
+		extendedRoundRate sdk.Dec,
+		startTime time.Time,
+		endTime time.Time,
+	)
+
+	AfterBatchAuctionCreated(
+		ctx sdk.Context,
+		auctionId uint64,
 		auctioneer string,
 		startPrice sdk.Dec,
 		minBidPrice sdk.Dec,
@@ -67,6 +97,7 @@ type FundraisingHooks interface {
 	BeforeBidPlaced(
 		ctx sdk.Context,
 		auctionId uint64,
+		bidId uint64,
 		bidder string,
 		bidType BidType,
 		price sdk.Dec,
@@ -76,6 +107,7 @@ type FundraisingHooks interface {
 	BeforeBidModified(
 		ctx sdk.Context,
 		auctionId uint64,
+		bidId uint64,
 		bidder string,
 		bidType BidType,
 		price sdk.Dec,
@@ -84,7 +116,6 @@ type FundraisingHooks interface {
 
 	BeforeAllowedBiddersAdded(
 		ctx sdk.Context,
-		auctionId uint64,
 		allowedBidders []AllowedBidder,
 	)
 

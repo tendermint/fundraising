@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -14,16 +15,19 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/tendermint/fundraising/x/fundraising/client/cli"
 	"github.com/tendermint/fundraising/x/fundraising/keeper"
+	"github.com/tendermint/fundraising/x/fundraising/simulation"
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
 
 var (
-	_ module.AppModule      = AppModule{}
-	_ module.AppModuleBasic = AppModuleBasic{}
+	_ module.AppModule           = AppModule{}
+	_ module.AppModuleBasic      = AppModuleBasic{}
+	_ module.AppModuleSimulation = AppModule{}
 )
 
 // ----------------------------------------------------------------------------
@@ -32,10 +36,10 @@ var (
 
 // AppModuleBasic implements the AppModuleBasic interface for the module.
 type AppModuleBasic struct {
-	cdc codec.BinaryCodec
+	cdc codec.Codec
 }
 
-func NewAppModuleBasic(cdc codec.BinaryCodec) AppModuleBasic {
+func NewAppModuleBasic(cdc codec.Codec) AppModuleBasic {
 	return AppModuleBasic{cdc: cdc}
 }
 
@@ -169,11 +173,43 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 func (AppModule) ConsensusVersion() uint64 { return 2 }
 
 // BeginBlock executes all ABCI BeginBlock logic respective to the module.
-func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
+func (am AppModule) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {
+	BeginBlocker(ctx, am.keeper)
+}
 
 // EndBlock executes all ABCI EndBlock logic respective to the module.
 // It returns no validator updates.
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
-	EndBlocker(ctx, am.keeper)
 	return []abci.ValidatorUpdate{}
+}
+
+// ----------------------------------------------------------------------------
+// AppModuleSimulation
+// ----------------------------------------------------------------------------
+
+// GenerateGenesisState creates a randomized GenState of the module.
+func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
+	simulation.RandomizedGenState(simState)
+}
+
+// ProposalContents doesn't return any content functions for governance proposals.
+func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedProposalContent {
+	return nil
+}
+
+// RandomizedParams creates randomized  param changes for the simulator.
+func (am AppModule) RandomizedParams(r *rand.Rand) []simtypes.ParamChange {
+	return simulation.ParamChanges(r)
+}
+
+// RegisterStoreDecoder registers store decoders.
+func (am AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {
+	sdr[types.StoreKey] = simulation.NewDecodeStore(am.cdc)
+}
+
+// WeightedOperations returns the all the gov module operations with their respective weights.
+func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
+	return simulation.WeightedOperations(
+		simState.AppParams, simState.Cdc, am.accountKeeper, am.bankKeeper, am.keeper,
+	)
 }

@@ -5,15 +5,17 @@ import (
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // DefaultGenesisState returns the default fundraising genesis state
 func DefaultGenesisState() *GenesisState {
 	return &GenesisState{
-		Params:        DefaultParams(),
-		Auctions:      []*codectypes.Any{},
-		Bids:          []Bid{},
-		VestingQueues: []VestingQueue{},
+		Params:               DefaultParams(),
+		Auctions:             []*codectypes.Any{},
+		AllowedBidderRecords: []AllowedBidderRecord{},
+		Bids:                 []Bid{},
+		VestingQueues:        []VestingQueue{},
 	}
 }
 
@@ -35,6 +37,12 @@ func (gs GenesisState) Validate() error {
 		}
 	}
 
+	for _, r := range gs.AllowedBidderRecords {
+		if err := r.Validate(); err != nil {
+			return err
+		}
+	}
+
 	for _, b := range gs.Bids {
 		if err := b.Validate(); err != nil {
 			return err
@@ -50,13 +58,21 @@ func (gs GenesisState) Validate() error {
 	return nil
 }
 
+// Validate validates AllowedBidder.
+func (r AllowedBidderRecord) Validate() error {
+	if r.AuctionId == 0 {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "auction id cannot be 0")
+	}
+	return r.AllowedBidder.Validate()
+}
+
 // Validate validates Bid.
 func (b Bid) Validate() error {
 	if _, err := sdk.AccAddressFromBech32(b.Bidder); err != nil {
 		return err
 	}
 	if !b.Price.IsPositive() {
-		return fmt.Errorf("bid price must be positve value: %s", b.Price.String())
+		return fmt.Errorf("bid price must be positive value: %s", b.Price.String())
 	}
 	if err := b.Coin.Validate(); err != nil {
 		return err

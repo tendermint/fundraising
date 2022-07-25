@@ -1,6 +1,7 @@
 package cli_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -120,4 +121,31 @@ func TestParseBatchAuction(t *testing.T) {
 	require.Equal(t, uint32(3), auction.MaxExtendedRound)
 	require.Equal(t, sdk.MustNewDecFromStr("0.2"), auction.ExtendedRoundRate)
 	require.EqualValues(t, expSchedules, auction.VestingSchedules)
+}
+
+func TestParseBidType(t *testing.T) {
+	for _, tc := range []struct {
+		bidType     string
+		expectedErr error
+	}{
+		{"fixed-price", nil},
+		{"fp", nil},
+		{"f", nil},
+		{"batch-worth", nil},
+		{"bw", nil},
+		{"w", nil},
+		{"batch-many", nil},
+		{"bm", nil},
+		{"m", nil},
+		{"fixedprice", fmt.Errorf("invalid bid type: %s", "fixedprice")},
+		{"batchworth", fmt.Errorf("invalid bid type: %s", "batchworth")},
+		{"batchmany", fmt.Errorf("invalid bid type: %s", "batchmany")},
+	} {
+		_, err := cli.ParseBidType(tc.bidType)
+		if tc.expectedErr == nil {
+			require.NoError(t, err)
+		} else {
+			require.Error(t, err)
+		}
+	}
 }

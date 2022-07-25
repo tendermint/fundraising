@@ -38,6 +38,32 @@ func (h MultiFundraisingHooks) BeforeFixedPriceAuctionCreated(
 	}
 }
 
+func (h MultiFundraisingHooks) AfterFixedPriceAuctionCreated(
+	ctx sdk.Context,
+	auctionId uint64,
+	auctioneer string,
+	startPrice sdk.Dec,
+	sellingCoin sdk.Coin,
+	payingCoinDenom string,
+	vestingSchedules []VestingSchedule,
+	startTime,
+	endTime time.Time,
+) {
+	for i := range h {
+		h[i].AfterFixedPriceAuctionCreated(
+			ctx,
+			auctionId,
+			auctioneer,
+			startPrice,
+			sellingCoin,
+			payingCoinDenom,
+			vestingSchedules,
+			startTime,
+			endTime,
+		)
+	}
+}
+
 func (h MultiFundraisingHooks) BeforeBatchAuctionCreated(
 	ctx sdk.Context,
 	auctioneer string,
@@ -68,6 +94,38 @@ func (h MultiFundraisingHooks) BeforeBatchAuctionCreated(
 	}
 }
 
+func (h MultiFundraisingHooks) AfterBatchAuctionCreated(
+	ctx sdk.Context,
+	auctionId uint64,
+	auctioneer string,
+	startPrice sdk.Dec,
+	minBidPrice sdk.Dec,
+	sellingCoin sdk.Coin,
+	payingCoinDenom string,
+	vestingSchedules []VestingSchedule,
+	maxExtendedRound uint32,
+	extendedRoundRate sdk.Dec,
+	startTime time.Time,
+	endTime time.Time,
+) {
+	for i := range h {
+		h[i].AfterBatchAuctionCreated(
+			ctx,
+			auctionId,
+			auctioneer,
+			startPrice,
+			minBidPrice,
+			sellingCoin,
+			payingCoinDenom,
+			vestingSchedules,
+			maxExtendedRound,
+			extendedRoundRate,
+			startTime,
+			endTime,
+		)
+	}
+}
+
 func (h MultiFundraisingHooks) BeforeAuctionCanceled(
 	ctx sdk.Context,
 	auctionId uint64,
@@ -81,36 +139,37 @@ func (h MultiFundraisingHooks) BeforeAuctionCanceled(
 func (h MultiFundraisingHooks) BeforeBidPlaced(
 	ctx sdk.Context,
 	auctionId uint64,
+	bidId uint64,
 	bidder string,
 	bidType BidType,
 	price sdk.Dec,
 	coin sdk.Coin,
 ) {
 	for i := range h {
-		h[i].BeforeBidPlaced(ctx, auctionId, bidder, bidType, price, coin)
+		h[i].BeforeBidPlaced(ctx, auctionId, bidId, bidder, bidType, price, coin)
 	}
 }
 
 func (h MultiFundraisingHooks) BeforeBidModified(
 	ctx sdk.Context,
 	auctionId uint64,
+	bidId uint64,
 	bidder string,
 	bidType BidType,
 	price sdk.Dec,
 	coin sdk.Coin,
 ) {
 	for i := range h {
-		h[i].BeforeBidModified(ctx, auctionId, bidder, bidType, price, coin)
+		h[i].BeforeBidModified(ctx, auctionId, bidId, bidder, bidType, price, coin)
 	}
 }
 
 func (h MultiFundraisingHooks) BeforeAllowedBiddersAdded(
 	ctx sdk.Context,
-	auctionId uint64,
 	allowedBidders []AllowedBidder,
 ) {
 	for i := range h {
-		h[i].BeforeAllowedBiddersAdded(ctx, auctionId, allowedBidders)
+		h[i].BeforeAllowedBiddersAdded(ctx, allowedBidders)
 	}
 }
 

@@ -20,9 +20,6 @@ type AuctionI interface {
 	GetType() AuctionType
 	SetType(AuctionType) error
 
-	GetAllowedBidders() []AllowedBidder
-	SetAllowedBidders([]AllowedBidder) error
-
 	GetAuctioneer() string
 	SetAuctioneer(string) error
 
@@ -47,9 +44,6 @@ type AuctionI interface {
 	GetVestingSchedules() []VestingSchedule
 	SetVestingSchedules([]VestingSchedule) error
 	
-	GetRemainingSellingCoin() sdk.Coin
-	SetRemainingSellingCoin(sdk.Coin) error
-	
 	GetStartTime() time.Time
 	SetStartTime(time.Time) error
 
@@ -59,16 +53,14 @@ type AuctionI interface {
 	GetStatus() AuctionStatus
 	SetStatus(AuctionStatus) error
 
-	GetAllowedBiddersMap() map[string]sdk.Int
-
-	GetMaxBidAmount(bidder string) sdk.Int
-	SetMaxBidAmount(bidder string, maxBidAmt sdk.Int) error
+	ShouldAuctionStarted(t time.Time) bool
+	ShouldAuctionClosed(t time.Time) bool
 
 	Validate() error
 }
 ```
 
-## Base Auction
+## BaseAuction
 
 A base auction stores all requisite fields directly in a struct.
 
@@ -79,7 +71,6 @@ A base auction stores all requisite fields directly in a struct.
 type BaseAuction struct {
 	Id                    uint64            // id of the auction
 	Type                  AuctionType       // the auction type; currently FixedPrice and English are supported
-	AllowedBidders        []AllowedBidder   // the bidders who are allowed to bid
 	Auctioneer            string            // the owner of the auction
 	SellingReserveAddress string            // the reserve account to collect selling coins from the auctioneer
 	PayingReserveAddress  string            // the reserve account to collect paying coins from the bidders
@@ -88,22 +79,21 @@ type BaseAuction struct {
 	PayingCoinDenom       string            // the denom that the auctioneer receives to raise funds
 	VestingReserveAddress string            // the reserve account that releases the accumulated paying coins based on the schedules
 	VestingSchedules      []VestingSchedule // the vesting schedules for the auction
-	RemainingSellingCoin  sdk.Coin          // the remaining amount of coin to sell
 	StartTime             time.Time         // the start time of the auction
 	EndTimes              []time.Time       // the end times of the auction; it is an array since extended round(s) can occur
 	Status                AuctionStatus     // the auction status
 }
+```
 
+```go
 // AllowedBidder defines a bidder who is allowed to bid with max number of bids.
 type AllowedBidder struct {
 	Bidder          string  // a bidder who is allowed to bid
-	MaxBidAmount    uint64  // a maximum amount of bids per bidder
+	MaxBidAmount    sdk.Int // a maximum amount of bids per bidder
 }
 ```
 
-
 ## Vesting
-
 ```go
 // VestingSchedule defines the vesting schedule for the owner of an auction.
 type VestingSchedule struct {
@@ -139,16 +129,16 @@ const (
 // FixedPriceAuction defines the fixed price auction type
 type FixedPriceAuction struct {
 	*BaseAuction
+	RemainingSellingCoin sdk.Coin // the remaining amount of coin to sell
 }
 
 // BatchAuction defines the batch auction type 
 type BatchAuction struct {
     *BaseAuction
-	
 	MinBidPrice			sdk.Dec	// the minimum bid price that bidders must provide
 	MatchedPrice		sdk.Dec	// the matched price of the auction (a.k.a., winning price)
-    MaxExtendedRound    uint32  // a maximum number of extended rounds
-    ExtendedRate        sdk.Dec // rate that determines if the auction needs another round, compared to the number of the matched bids at the previous end time.
+    MaxExtendedRound    uint32  // the maximum number of extended rounds
+    ExtendedRate        sdk.Dec // the rate that determines if the auction needs another round; compared to the number of the matched bids at the previous end time.
 }
 ```
 
@@ -205,7 +195,6 @@ const (
 	// Bid_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy of a batch auction
 	BidTypeBatchMany    BidType = 3
 )
-
 ```
 
 For `FixedPriceAuction`,
@@ -241,6 +230,10 @@ Stores are KVStores in the multi-store. The key to find the store is the first p
 ### The key to retrieve the auction object from the auction id
 
 - `AuctionKey: 0x21 | AuctionId -> ProtocolBuffer(Auction)`
+
+### The key to retrieve the allowed bidder object for the auction
+
+- `AllowedBidderKey: 0x22 | AuctionId | BidderAddrLen (1 byte) | BidderAddr -> ProtocolBuffer(AllowedBidder)`
 
 ### The key to retrieve the bid object from the auction id and bid id
 

@@ -6,9 +6,7 @@ At the end of each end block, the `fundraising` module operates the following ex
 
 The module first gets all auctions registered in the store and proceed operations depending on auction status.
 
-
 If the auction status is `AuctionStatusStandBy` and if the start time of the auction is passed, the auction status is updated to `AuctionStatusStarted`. 
-
 
 For a batch auction, if the auction status is `AuctionStatusStarted` and if an end time of `EndTimes` of the auction is arrived yet, `MatchedPrice` is calculated and the matched bids that have the bid price higher than or equal to `MatchedPrice` are counted. According to `MaxExtendedRound` and `ExtendedRate`, whether the auction ends or the auction is extended with another extended round is determined. 
 

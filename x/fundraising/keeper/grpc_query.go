@@ -103,6 +103,81 @@ func (k Querier) Auction(c context.Context, req *types.QueryAuctionRequest) (*ty
 	return &types.QueryAuctionResponse{Auction: auctionAny}, nil
 }
 
+// AllowedBidder queries the specific allowed bidder information.
+func (k Querier) AllowedBidder(c context.Context, req *types.QueryAllowedBidderRequest) (*types.QueryAllowedBidderResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	if req.AuctionId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "auction id cannot be 0")
+	}
+
+	if req.Bidder == "" {
+		return nil, status.Error(codes.InvalidArgument, "empty bidder address")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+
+	_, found := k.GetAuction(ctx, req.AuctionId)
+	if !found {
+		return nil, status.Errorf(codes.NotFound, "auction %d not found", req.AuctionId)
+	}
+
+	bidderAddr, err := sdk.AccAddressFromBech32(req.Bidder)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "bidder address %s is not valid", req.Bidder)
+	}
+
+	allowedBidder, found := k.GetAllowedBidder(ctx, req.AuctionId, bidderAddr)
+	if !found {
+		return nil, status.Errorf(codes.NotFound, "allowed bidder by auction id %d and bidder address %s doesn't exist", req.AuctionId, req.Bidder)
+	}
+
+	return &types.QueryAllowedBidderResponse{AllowedBidder: allowedBidder}, nil
+}
+
+// AllowedBidders queries all allowed bidders for the auction.
+func (k Querier) AllowedBidders(c context.Context, req *types.QueryAllowedBiddersRequest) (*types.QueryAllowedBiddersResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	if req.AuctionId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "auction id cannot be 0")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+
+	_, found := k.GetAuction(ctx, req.AuctionId)
+	if !found {
+		return nil, status.Errorf(codes.NotFound, "auction %d not found", req.AuctionId)
+	}
+
+	store := ctx.KVStore(k.storeKey)
+	abStore := prefix.NewStore(store, types.GetAllowedBiddersByAuctionKeyPrefix(req.AuctionId))
+
+	var allowedBidders []types.AllowedBidder
+	pageRes, err := query.FilteredPaginate(abStore, req.Pagination, func(key, value []byte, accumulate bool) (bool, error) {
+		var allowedBidder types.AllowedBidder
+		err := k.cdc.Unmarshal(value, &allowedBidder)
+		if err != nil {
+			return false, nil
+		}
+
+		if accumulate {
+			allowedBidders = append(allowedBidders, allowedBidder)
+		}
+
+		return true, nil
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &types.QueryAllowedBiddersResponse{AllowedBidders: allowedBidders, Pagination: pageRes}, nil
+}
+
 // Bids queries all bids for the auction.
 func (k Querier) Bids(c context.Context, req *types.QueryBidsRequest) (*types.QueryBidsResponse, error) {
 	if req == nil {

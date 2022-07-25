@@ -31,7 +31,7 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 			),
 		},
 		{
-			"start price must be positve: invalid request",
+			"start price must be positive: invalid request",
 			types.NewMsgCreateFixedPriceAuction(
 				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0"),
@@ -87,7 +87,7 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.MustParseRFC3339("2022-06-01T22:08:41+00:00"),
+						time.Now().AddDate(0, 1, 0).AddDate(0, 6, 0),
 						sdk.ZeroDec(),
 					},
 				},
@@ -104,7 +104,7 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.MustParseRFC3339("2022-06-01T22:08:41+00:00"),
+						time.Now().AddDate(0, 1, 0).AddDate(0, 6, 0),
 						sdk.MustNewDecFromStr("1.1"),
 					},
 				},
@@ -138,11 +138,11 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.MustParseRFC3339("2022-12-01T22:00:00+00:00"),
+						time.Now().AddDate(0, 1, 0).AddDate(0, 6, 0),
 						sdk.MustNewDecFromStr("0.5"),
 					},
 					{
-						types.MustParseRFC3339("2022-06-01T22:00:00+00:00"),
+						time.Now().AddDate(0, 1, 0).AddDate(0, 3, 0),
 						sdk.MustNewDecFromStr("0.5"),
 					},
 				},
@@ -159,11 +159,11 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.MustParseRFC3339("2022-06-01T22:00:00+00:00"),
+						time.Now().AddDate(0, 1, 0).AddDate(0, 6, 0),
 						sdk.MustNewDecFromStr("0.5"),
 					},
 					{
-						types.MustParseRFC3339("2022-12-01T22:00:00+00:00"),
+						time.Now().AddDate(0, 1, 0).AddDate(1, 0, 0),
 						sdk.MustNewDecFromStr("0.3"),
 					},
 				},
@@ -212,7 +212,7 @@ func TestMsgCreateBatchAuction(t *testing.T) {
 			),
 		},
 		{
-			"start price must be positve: invalid request",
+			"start price must be positive: invalid request",
 			types.NewMsgCreateBatchAuction(
 				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0"),
@@ -281,7 +281,7 @@ func TestMsgCreateBatchAuction(t *testing.T) {
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.MustParseRFC3339("2022-06-01T22:08:41+00:00"),
+						time.Now().AddDate(0, 1, 0).AddDate(0, 6, 0),
 						sdk.ZeroDec(),
 					},
 				},
@@ -301,7 +301,7 @@ func TestMsgCreateBatchAuction(t *testing.T) {
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.MustParseRFC3339("2022-06-01T22:08:41+00:00"),
+						time.Now().AddDate(0, 1, 0).AddDate(0, 6, 0),
 						sdk.MustNewDecFromStr("1.1"),
 					},
 				},
@@ -321,7 +321,7 @@ func TestMsgCreateBatchAuction(t *testing.T) {
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.MustParseRFC3339("2022-06-01T22:08:41+00:00"),
+						time.Now(),
 						sdk.MustNewDecFromStr("1.0"),
 					},
 				},
@@ -341,11 +341,11 @@ func TestMsgCreateBatchAuction(t *testing.T) {
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.MustParseRFC3339("2022-12-01T22:00:00+00:00"),
+						time.Now().AddDate(0, 1, 0).AddDate(0, 6, 0),
 						sdk.MustNewDecFromStr("0.5"),
 					},
 					{
-						types.MustParseRFC3339("2022-06-01T22:00:00+00:00"),
+						time.Now().AddDate(0, 1, 0).AddDate(0, 3, 0),
 						sdk.MustNewDecFromStr("0.5"),
 					},
 				},
@@ -365,11 +365,11 @@ func TestMsgCreateBatchAuction(t *testing.T) {
 				"denom1",
 				[]types.VestingSchedule{
 					{
-						types.MustParseRFC3339("2022-06-01T22:00:00+00:00"),
+						time.Now().AddDate(0, 1, 0).AddDate(0, 6, 0),
 						sdk.MustNewDecFromStr("0.5"),
 					},
 					{
-						types.MustParseRFC3339("2022-12-01T22:00:00+00:00"),
+						time.Now().AddDate(0, 1, 0).AddDate(1, 0, 0),
 						sdk.MustNewDecFromStr("0.3"),
 					},
 				},
@@ -380,7 +380,7 @@ func TestMsgCreateBatchAuction(t *testing.T) {
 			),
 		},
 		{
-			"extend rate must be positve: invalid request",
+			"extend rate must be positive: invalid request",
 			types.NewMsgCreateBatchAuction(
 				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0.5"),
@@ -462,7 +462,7 @@ func TestMsgPlaceBid(t *testing.T) {
 			),
 		},
 		{
-			"bid price must be positve value: invalid request",
+			"bid price must be positive value: invalid request",
 			types.NewMsgPlaceBid(
 				uint64(1),
 				sdk.AccAddress(crypto.AddressHash([]byte("Bidder"))).String(),
@@ -517,7 +517,7 @@ func TestMsgModifyBid(t *testing.T) {
 			),
 		},
 		{
-			"bid price must be positve value: invalid request",
+			"bid price must be positive value: invalid request",
 			types.NewMsgModifyBid(
 				uint64(1),
 				sdk.AccAddress(crypto.AddressHash([]byte("Bidder"))).String(),
@@ -563,8 +563,8 @@ func TestAddAllowedBidder(t *testing.T) {
 	}{
 		{
 			"", // empty means no error expected
-			types.NewAddAllowedBidder(
-				uint64(1),
+			types.NewMsgAddAllowedBidder(
+				1,
 				types.AllowedBidder{
 					sdk.AccAddress(crypto.AddressHash([]byte("Bidder"))).String(),
 					sdk.NewInt(100_000_000),

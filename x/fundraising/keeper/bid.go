@@ -33,9 +33,13 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		}
 	}
 
-	_, found = auction.GetAllowedBiddersMap()[msg.Bidder]
+	_, found = k.GetAllowedBidder(ctx, auction.GetId(), msg.GetBidder())
 	if !found {
 		return types.Bid{}, types.ErrNotAllowedBidder
+	}
+
+	if err := k.PayPlaceBidFee(ctx, msg.GetBidder()); err != nil {
+		return types.Bid{}, sdkerrors.Wrap(err, "failed to pay place bid fee")
 	}
 
 	bid := types.Bid{
@@ -48,6 +52,8 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		IsMatched: false,
 	}
 
+	payingCoinDenom := auction.GetPayingCoinDenom()
+
 	// Place a bid depending on the bid type
 	switch bid.Type {
 	case types.BidTypeFixedPrice:
@@ -55,22 +61,21 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 			return types.Bid{}, err
 		}
 
-		payingCoinDenom := auction.GetPayingCoinDenom()
+		fa := auction.(*types.FixedPriceAuction)
 
 		// Reserve bid amount
 		bidPayingAmt := bid.ConvertToPayingAmount(payingCoinDenom)
 		bidPayingCoin := sdk.NewCoin(payingCoinDenom, bidPayingAmt)
 		if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), bidPayingCoin); err != nil {
-			return types.Bid{}, err
+			return types.Bid{}, sdkerrors.Wrap(err, "failed to reserve paying coin")
 		}
 
 		// Subtract bid amount from the remaining
 		bidSellingAmt := bid.ConvertToSellingAmount(payingCoinDenom)
 		bidSellingCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidSellingAmt)
-		remaining := auction.GetRemainingSellingCoin().Sub(bidSellingCoin)
+		fa.RemainingSellingCoin = fa.RemainingSellingCoin.Sub(bidSellingCoin)
 
-		_ = auction.SetRemainingSellingCoin(remaining)
-		k.SetAuction(ctx, auction)
+		k.SetAuction(ctx, fa)
 		bid.SetMatched(true)
 
 	case types.BidTypeBatchWorth:
@@ -79,7 +84,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 		}
 
 		if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), msg.Coin); err != nil {
-			return types.Bid{}, err
+			return types.Bid{}, sdkerrors.Wrap(err, "failed to reserve paying coin")
 		}
 
 	case types.BidTypeBatchMany:
@@ -87,16 +92,16 @@ func (k Keeper) PlaceBid(ctx sdk.Context, msg *types.MsgPlaceBid) (types.Bid, er
 			return types.Bid{}, err
 		}
 
-		reserveAmt := bid.ConvertToPayingAmount(auction.GetPayingCoinDenom())
-		reserveCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), reserveAmt)
+		reserveAmt := bid.ConvertToPayingAmount(payingCoinDenom)
+		reserveCoin := sdk.NewCoin(payingCoinDenom, reserveAmt)
 
 		if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), reserveCoin); err != nil {
-			return types.Bid{}, err
+			return types.Bid{}, sdkerrors.Wrap(err, "failed to reserve paying coin")
 		}
 	}
 
 	// Call before bid placed hook
-	k.BeforeBidPlaced(ctx, bid.AuctionId, bid.Bidder, bid.Type, bid.Price, bid.Coin)
+	k.BeforeBidPlaced(ctx, bid.AuctionId, bid.Id, bid.Bidder, bid.Type, bid.Price, bid.Coin)
 
 	k.SetBid(ctx, bid)
 
@@ -131,7 +136,7 @@ func (k Keeper) ValidateFixedPriceBid(ctx sdk.Context, auction types.AuctionI, b
 	// For remaining coin validation, convert bid amount in selling coin denom
 	bidAmt := bid.ConvertToSellingAmount(auction.GetPayingCoinDenom())
 	bidCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, bidAmt)
-	remainingCoin := auction.GetRemainingSellingCoin()
+	remainingCoin := auction.(*types.FixedPriceAuction).RemainingSellingCoin
 
 	if remainingCoin.IsLT(bidCoin) {
 		return sdkerrors.Wrapf(types.ErrInsufficientRemainingAmount, "remaining selling coin amount %s", remainingCoin)
@@ -139,17 +144,22 @@ func (k Keeper) ValidateFixedPriceBid(ctx sdk.Context, auction types.AuctionI, b
 
 	// Get the total bid amount by the bidder
 	totalBidAmt := sdk.ZeroInt()
-	for _, b := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
-		if b.Bidder == bid.Bidder {
-			totalBidAmt = totalBidAmt.Add(b.ConvertToSellingAmount(auction.GetPayingCoinDenom()))
+	for _, bid := range k.GetBidsByBidder(ctx, bid.GetBidder()) {
+		if bid.AuctionId == auction.GetId() {
+			bidSellingAmt := bid.ConvertToSellingAmount(auction.GetPayingCoinDenom())
+			totalBidAmt = totalBidAmt.Add(bidSellingAmt)
 		}
 	}
 
+	allowedBidder, found := k.GetAllowedBidder(ctx, bid.AuctionId, bid.GetBidder())
+	if !found {
+		return sdkerrors.Wrap(sdkerrors.ErrNotFound, "bidder is not found in allowed bidder list")
+	}
+
 	totalBidAmt = totalBidAmt.Add(bidAmt)
-	maxBidAmt := auction.GetMaxBidAmount(bid.Bidder)
 
 	// The total bid amount can't be greater than the bidder's maximum bid amount
-	if totalBidAmt.GT(maxBidAmt) {
+	if totalBidAmt.GT(allowedBidder.MaxBidAmount) {
 		return types.ErrOverMaxBidAmountLimit
 	}
 
@@ -166,11 +176,15 @@ func (k Keeper) ValidateBatchWorthBid(ctx sdk.Context, auction types.AuctionI, b
 		return types.ErrIncorrectCoinDenom
 	}
 
+	allowedBidder, found := k.GetAllowedBidder(ctx, bid.AuctionId, bid.GetBidder())
+	if !found {
+		return sdkerrors.Wrap(sdkerrors.ErrNotFound, "bidder is not found in allowed bidder list")
+	}
+
 	bidAmt := bid.ConvertToSellingAmount(auction.GetPayingCoinDenom())
-	maxBidAmt := auction.GetMaxBidAmount(bid.Bidder)
 
 	// The total bid amount can't be greater than the bidder's maximum bid amount
-	if bidAmt.GT(maxBidAmt) {
+	if bidAmt.GT(allowedBidder.MaxBidAmount) {
 		return types.ErrOverMaxBidAmountLimit
 	}
 
@@ -187,11 +201,15 @@ func (k Keeper) ValidateBatchManyBid(ctx sdk.Context, auction types.AuctionI, bi
 		return types.ErrIncorrectCoinDenom
 	}
 
+	allowedBidder, found := k.GetAllowedBidder(ctx, bid.AuctionId, bid.GetBidder())
+	if !found {
+		return sdkerrors.Wrap(sdkerrors.ErrNotFound, "bidder is not found in allowed bidder list")
+	}
+
 	bidAmt := bid.ConvertToSellingAmount(auction.GetPayingCoinDenom())
-	maxBidAmt := auction.GetMaxBidAmount(bid.Bidder)
 
 	// The total bid amount can't be greater than the bidder's maximum bid amount
-	if bidAmt.GT(maxBidAmt) {
+	if bidAmt.GT(allowedBidder.MaxBidAmount) {
 		return types.ErrOverMaxBidAmountLimit
 	}
 
@@ -233,28 +251,31 @@ func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) error {
 	}
 
 	if msg.Price.LT(bid.Price) || msg.Coin.Amount.LT(bid.Coin.Amount) {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "bid price or coin amount cannot be lower")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "bid price or coin amount cannot be lower")
 	}
 
 	if msg.Price.Equal(bid.Price) && msg.Coin.Amount.Equal(bid.Coin.Amount) {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "bid price and coin amount must be changed")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "bid price and coin amount must be changed")
 	}
 
 	// Reserve bid amount difference
 	switch bid.Type {
 	case types.BidTypeBatchWorth:
-		diffBidCoin := msg.Coin.Sub(bid.Coin)
-		if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), diffBidCoin); err != nil {
-			return err
+		diffReserveCoin := msg.Coin.Sub(bid.Coin)
+		if diffReserveCoin.IsPositive() {
+			if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), diffReserveCoin); err != nil {
+				return sdkerrors.Wrap(err, "failed to reserve paying coin")
+			}
 		}
 	case types.BidTypeBatchMany:
-		prevBidAmt := msg.Coin.Amount.ToDec().Mul(msg.Price)
-		currBidAmt := bid.Coin.Amount.ToDec().Mul(bid.Price)
-		diffBidAmt := prevBidAmt.Sub(currBidAmt).TruncateInt()
-		diffBidCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), diffBidAmt)
-
-		if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), diffBidCoin); err != nil {
-			return err
+		prevReserveAmt := bid.Coin.Amount.ToDec().Mul(bid.Price).Ceil()
+		currReserveAmt := msg.Coin.Amount.ToDec().Mul(msg.Price).Ceil()
+		diffReserveAmt := currReserveAmt.Sub(prevReserveAmt).TruncateInt()
+		diffReserveCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), diffReserveAmt)
+		if diffReserveCoin.IsPositive() {
+			if err := k.ReservePayingCoin(ctx, msg.AuctionId, msg.GetBidder(), diffReserveCoin); err != nil {
+				return sdkerrors.Wrap(err, "failed to reserve paying coin")
+			}
 		}
 	}
 
@@ -262,7 +283,7 @@ func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) error {
 	bid.Coin = msg.Coin
 
 	// Call the before mid modified hook
-	k.BeforeBidModified(ctx, bid.AuctionId, bid.Bidder, bid.Type, bid.Price, bid.Coin)
+	k.BeforeBidModified(ctx, bid.AuctionId, bid.Id, bid.Bidder, bid.Type, bid.Price, bid.Coin)
 
 	k.SetBid(ctx, bid)
 

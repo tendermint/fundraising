@@ -32,10 +32,36 @@ func DeriveAddress(addressType AddressType, moduleName, name string) sdk.AccAddr
 	}
 }
 
-// SortByBidPrice sorts bid array by bid price in descending order.
-func SortByBidPrice(bids []Bid) []Bid {
-	sort.SliceStable(bids, func(i, j int) bool {
-		return bids[i].Price.GT(bids[j].Price)
+// SortBids sorts bid array by bid price in descending order.
+func SortBids(bids []Bid) []Bid {
+	sort.Slice(bids, func(i, j int) bool {
+		if bids[i].Price.GT(bids[j].Price) {
+			return true
+		}
+		return bids[i].Id < bids[j].Id
 	})
 	return bids
+}
+
+func BidsByPrice(bids []Bid) (prices []sdk.Dec, bidsByPrice map[string][]Bid) {
+	bids = SortBids(bids)
+
+	bidsByPrice = map[string][]Bid{} // price => []Bid
+
+	for _, bid := range bids {
+		priceStr := bid.Price.String()
+		bidsByPrice[priceStr] = append(bidsByPrice[priceStr], bid)
+	}
+
+	// Sort prices in descending order.
+	prices = make([]sdk.Dec, len(bidsByPrice))
+	i := 0
+	for priceStr := range bidsByPrice {
+		prices[i] = sdk.MustNewDecFromStr(priceStr)
+		i++
+	}
+	sort.Slice(prices, func(i, j int) bool {
+		return prices[i].GT(prices[j])
+	})
+	return
 }

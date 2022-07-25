@@ -33,6 +33,8 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 		NewQueryParamsCmd(),
 		NewQueryAuctionsCmd(),
 		NewQueryAuctionCmd(),
+		NewQueryAllowedBidderCmd(),
+		NewQueryAllowedBiddersCmd(),
 		NewQueryBidsCmd(),
 		NewQueryVestingsCmd(),
 	)
@@ -54,7 +56,7 @@ $ %s query %s params
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientTxContext(cmd)
+			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
@@ -96,7 +98,7 @@ Auction types: AUCTION_TYPE_FIXED_PRICE and AUCTION_TYPE_ENGLISH
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientTxContext(cmd)
+			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
@@ -137,7 +139,7 @@ func NewQueryAuctionCmd() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Short: "Query a specific auction",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Query details about a speicif auction.
+			fmt.Sprintf(`Query details about a specific auction.
 Example:
 $ %s query %s auction 1
 `,
@@ -145,7 +147,7 @@ $ %s query %s auction 1
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientTxContext(cmd)
+			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
@@ -160,6 +162,105 @@ $ %s query %s auction 1
 			resp, err := queryClient.Auction(cmd.Context(), &types.QueryAuctionRequest{
 				AuctionId: auctionId,
 			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(resp)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func NewQueryAllowedBidderCmd() *cobra.Command {
+	bech32PrefixAccAddr := sdk.GetConfig().GetBech32AccountAddrPrefix()
+
+	cmd := &cobra.Command{
+		Use:   "allowed-bidder [auction-id] [bidder]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Query a specific allowed bidder information",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query details about a specific allowed bidder.
+Example:
+$ %s query %s allowed-bidder 1 %ss1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj
+`,
+				version.AppName, types.ModuleName, bech32PrefixAccAddr,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			auctionId, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "auction-id %s is not valid", args[0])
+			}
+
+			bidderAddr, err := sdk.AccAddressFromBech32(args[1])
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			resp, err := queryClient.AllowedBidder(cmd.Context(), &types.QueryAllowedBidderRequest{
+				AuctionId: auctionId,
+				Bidder:    bidderAddr.String(),
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(resp)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func NewQueryAllowedBiddersCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "allowed-bidders [auction-id]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Query all allowed bidders for the auction",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query all allowed bidders for the auction.
+Example:
+$ %s query %s allowed-bidders 1
+`,
+				version.AppName, types.ModuleName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			auctionId, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "auction-id %s is not valid", args[0])
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			req := &types.QueryAllowedBiddersRequest{
+				AuctionId:  auctionId,
+				Pagination: pageReq,
+			}
+
+			resp, err := queryClient.AllowedBidders(cmd.Context(), req)
 			if err != nil {
 				return err
 			}
@@ -193,7 +294,7 @@ $ %s query %s bids 1 --matched-bidder
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientTxContext(cmd)
+			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
@@ -248,7 +349,7 @@ $ %s query %s vestings 1
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientTxContext(cmd)
+			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}

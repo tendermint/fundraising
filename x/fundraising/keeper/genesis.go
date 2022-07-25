@@ -15,18 +15,27 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 		panic(err)
 	}
 
+	// Prevents from nil slice
+	if len(genState.Params.AuctionCreationFee) == 0 {
+		genState.Params.AuctionCreationFee = sdk.Coins{}
+	}
+	if len(genState.Params.PlaceBidFee) == 0 {
+		genState.Params.PlaceBidFee = sdk.Coins{}
+	}
+
 	k.SetParams(ctx, genState.Params)
 
-	for i, auction := range genState.Auctions {
+	for _, auction := range genState.Auctions {
 		auction, err := types.UnpackAuction(auction)
 		if err != nil {
 			panic(err)
 		}
+		k.GetNextAuctionIdWithUpdate(ctx)
 		k.SetAuction(ctx, auction)
+	}
 
-		if i == len(genState.Auctions)-1 {
-			k.SetAuctionId(ctx, auction.GetId())
-		}
+	for _, record := range genState.AllowedBidderRecords {
+		k.SetAllowedBidder(ctx, record.AuctionId, record.AllowedBidder)
 	}
 
 	for _, bid := range genState.Bids {
@@ -34,7 +43,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 		if !found {
 			panic(fmt.Sprintf("auction %d is not found", bid.AuctionId))
 		}
-
+		k.GetNextBidIdWithUpdate(ctx, bid.AuctionId)
 		k.SetBid(ctx, bid)
 	}
 
@@ -43,7 +52,6 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 		if !found {
 			panic(fmt.Sprintf("auction %d is not found", queue.AuctionId))
 		}
-
 		k.SetVestingQueue(ctx, queue)
 	}
 }
@@ -54,19 +62,39 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 	bids := k.GetBids(ctx)
 	queues := k.GetVestingQueues(ctx)
 
+	// Prevents from nil slice
+	if len(params.AuctionCreationFee) == 0 {
+		params.AuctionCreationFee = sdk.Coins{}
+	}
+	if len(params.PlaceBidFee) == 0 {
+		params.PlaceBidFee = sdk.Coins{}
+	}
+
 	auctions := []*codectypes.Any{}
+	allowedBidderRecords := []types.AllowedBidderRecord{}
 	for _, auction := range k.GetAuctions(ctx) {
 		auctionAny, err := types.PackAuction(auction)
 		if err != nil {
 			panic(err)
 		}
 		auctions = append(auctions, auctionAny)
+
+		if err := k.IterateAllowedBiddersByAuction(ctx, auction.GetId(), func(ab types.AllowedBidder) (stop bool, err error) {
+			allowedBidderRecords = append(allowedBidderRecords, types.AllowedBidderRecord{
+				AuctionId:     auction.GetId(),
+				AllowedBidder: ab,
+			})
+			return false, nil
+		}); err != nil {
+			panic(err)
+		}
 	}
 
 	return &types.GenesisState{
-		Params:        params,
-		Auctions:      auctions,
-		Bids:          bids,
-		VestingQueues: queues,
+		Params:               params,
+		Auctions:             auctions,
+		AllowedBidderRecords: allowedBidderRecords,
+		Bids:                 bids,
+		VestingQueues:        queues,
 	}
 }
