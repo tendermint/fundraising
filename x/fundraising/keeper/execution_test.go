@@ -64,7 +64,7 @@ func (s *KeeperTestSuite) TestEndBlockerStartedStatus() {
 	bid3 := s.placeBidFixedPrice(auction.GetId(), s.addr(3), sdk.OneDec(), parseCoin("20000000denom2"), true)
 
 	totalBidCoin := bid1.Coin.Add(bid2.Coin).Add(bid3.Coin)
-	receiveAmt := totalBidCoin.Amount.ToDec().QuoTruncate(auction.GetStartPrice()).TruncateInt()
+	receiveAmt := sdk.NewDecFromInt(totalBidCoin.Amount).QuoTruncate(auction.GetStartPrice()).TruncateInt()
 	receiveCoin := sdk.NewCoin(auction.GetSellingCoin().Denom, receiveAmt)
 
 	payingReserve := s.getBalance(auction.GetPayingReserveAddress(), auction.GetPayingCoinDenom())
