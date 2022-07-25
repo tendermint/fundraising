@@ -1,6 +1,7 @@
 package simulation
 
 import (
+	"github.com/ignite/cli/ignite/pkg/cosmoscmd"
 	"math/rand"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -10,7 +11,6 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
-	"github.com/tendermint/spm/cosmoscmd"
 
 	appparams "github.com/tendermint/fundraising/app/params"
 	"github.com/tendermint/fundraising/x/fundraising/keeper"

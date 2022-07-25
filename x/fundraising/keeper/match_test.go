@@ -517,7 +517,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2() {
 	reservedMatchedAmt4 := sdk.NewDec(100_000_000).Mul(matchingPrice).Ceil().TruncateInt()
 	reservedMatchedAmt5 := sdk.NewDec(300_000_000).Mul(matchingPrice).Ceil().TruncateInt()
 	reservedMatchedAmt8 := sdk.NewDec(500_000_000).Mul(matchingPrice).Ceil().TruncateInt()
-	reservedMatchedAmt_Zero := sdk.NewDec(0)
+	reservedMatchedAmt_Zero := sdk.NewInt(0)
 
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(1).String()], reservedmatchedAmt1)
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], reservedMatchedAmt2)
