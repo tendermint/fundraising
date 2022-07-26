@@ -850,6 +850,7 @@ func (s *QueryCmdTestSuite) SetupTest() {
 	s.cfg = cfg
 	var err error
 	s.network, err = network.New(s.T(), s.T().TempDir(), cfg)
+	s.Require().NoError(err)
 	s.denom1, s.denom2 = fmt.Sprintf("%stoken", s.network.Validators[0].Moniker), s.cfg.BondDenom
 
 	_, err = s.network.WaitForHeight(1)
