@@ -33,7 +33,7 @@ func (k Keeper) ApplyVestingSchedules(ctx sdk.Context, auction types.AuctionI) e
 
 		remaining := reserveCoin
 		for i, schedule := range auction.GetVestingSchedules() {
-			payingAmt := reserveCoin.Amount.ToDec().MulTruncate(schedule.Weight).TruncateInt()
+			payingAmt := sdk.NewDecFromInt(reserveCoin.Amount).MulTruncate(schedule.Weight).TruncateInt()
 
 			// All the remaining paying coin goes to the last vesting queue
 			if i == vsLen-1 {
