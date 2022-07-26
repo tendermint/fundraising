@@ -268,8 +268,8 @@ func (k Keeper) ModifyBid(ctx sdk.Context, msg *types.MsgModifyBid) error {
 			}
 		}
 	case types.BidTypeBatchMany:
-		prevReserveAmt := bid.Coin.Amount.ToDec().Mul(bid.Price).Ceil()
-		currReserveAmt := msg.Coin.Amount.ToDec().Mul(msg.Price).Ceil()
+		prevReserveAmt := sdk.NewDecFromInt(bid.Coin.Amount).Mul(bid.Price).Ceil()
+		currReserveAmt := sdk.NewDecFromInt(msg.Coin.Amount).Mul(msg.Price).Ceil()
 		diffReserveAmt := currReserveAmt.Sub(prevReserveAmt).TruncateInt()
 		diffReserveCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), diffReserveAmt)
 		if diffReserveCoin.IsPositive() {

@@ -36,7 +36,7 @@ func Match(matchPrice sdk.Dec, prices []sdk.Dec, bidsByPrice map[string][]Bid, s
 			var bidAmt sdk.Int
 			switch bid.Type {
 			case BidTypeBatchWorth:
-				bidAmt = bid.Coin.Amount.ToDec().QuoTruncate(matchPrice).TruncateInt()
+				bidAmt = sdk.NewDecFromInt(bid.Coin.Amount).QuoTruncate(matchPrice).TruncateInt()
 			case BidTypeBatchMany:
 				bidAmt = bid.Coin.Amount
 			}

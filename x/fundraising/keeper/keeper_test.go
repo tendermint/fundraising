@@ -134,9 +134,9 @@ func (s *KeeperTestSuite) placeBidFixedPrice(
 
 	if coin.Denom == auction.GetPayingCoinDenom() {
 		fundCoin = coin
-		maxBidAmt = coin.Amount.ToDec().QuoTruncate(price).TruncateInt()
+		maxBidAmt = sdk.NewDecFromInt(coin.Amount).QuoTruncate(price).TruncateInt()
 	} else {
-		fundAmt = coin.Amount.ToDec().Mul(price).Ceil().TruncateInt()
+		fundAmt = sdk.NewDecFromInt(coin.Amount).Mul(price).Ceil().TruncateInt()
 		fundCoin = sdk.NewCoin(auction.GetPayingCoinDenom(), fundAmt)
 		maxBidAmt = coin.Amount
 	}
@@ -197,7 +197,7 @@ func (s *KeeperTestSuite) placeBidBatchMany(
 	s.Require().True(found)
 
 	if fund {
-		fundAmt := coin.Amount.ToDec().Mul(price).Ceil().TruncateInt()
+		fundAmt := sdk.NewDecFromInt(coin.Amount).Mul(price).Ceil().TruncateInt()
 		fundCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), fundAmt)
 
 		s.fundAddr(bidder, sdk.NewCoins(fundCoin))
@@ -297,7 +297,7 @@ func (s *KeeperTestSuite) fullString(auctionId uint64, mInfo keeper.MatchingInfo
 
 // bodSellingAmount exchanges to selling coin amount (PayingCoinAmount/Price).
 func bidSellingAmount(price sdk.Dec, coin sdk.Coin) sdk.Int {
-	return coin.Amount.ToDec().QuoTruncate(price).TruncateInt()
+	return sdk.NewDecFromInt(coin.Amount).QuoTruncate(price).TruncateInt()
 }
 
 // parseCoin parses string and returns sdk.Coin.
