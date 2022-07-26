@@ -187,7 +187,7 @@ func (s *KeeperTestSuite) TestVestingQueueIterator() {
 			Weight:      sdk.MustNewDecFromStr("0.5"),
 		},
 	} {
-		payingAmt := reserveCoin.Amount.ToDec().MulTruncate(vs.Weight).TruncateInt()
+		payingAmt := sdk.NewDecFromInt(reserveCoin.Amount).MulTruncate(vs.Weight).TruncateInt()
 
 		s.keeper.SetVestingQueue(s.ctx, types.VestingQueue{
 			AuctionId:   uint64(1),
@@ -217,7 +217,7 @@ func (s *KeeperTestSuite) TestVestingQueueIterator() {
 			Weight:      sdk.MustNewDecFromStr("0.25"),
 		},
 	} {
-		payingAmt := reserveCoin.Amount.ToDec().MulTruncate(vs.Weight).TruncateInt()
+		payingAmt := sdk.NewDecFromInt(reserveCoin.Amount).MulTruncate(vs.Weight).TruncateInt()
 
 		s.keeper.SetVestingQueue(s.ctx, types.VestingQueue{
 			AuctionId:   uint64(2),
