@@ -1,6 +1,7 @@
 package simulation
 
 import (
+	"github.com/tendermint/fundraising/cmd"
 	"math/rand"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -10,7 +11,6 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
-	"github.com/tendermint/spm/cosmoscmd"
 
 	appparams "github.com/tendermint/fundraising/app/params"
 	"github.com/tendermint/fundraising/x/fundraising/keeper"
@@ -140,7 +140,7 @@ func SimulateMsgCreateFixedPriceAuction(ak types.AccountKeeper, bk types.BankKee
 		txCtx := simulation.OperationInput{
 			R:               r,
 			App:             app,
-			TxGen:           cosmoscmd.MakeEncodingConfig(simapp.ModuleBasics).TxConfig,
+			TxGen:           cmd.MakeEncodingConfig(simapp.ModuleBasics).TxConfig,
 			Cdc:             nil,
 			Msg:             msg,
 			MsgType:         msg.Type(),
@@ -210,7 +210,7 @@ func SimulateMsgCreateBatchAuction(ak types.AccountKeeper, bk types.BankKeeper, 
 		txCtx := simulation.OperationInput{
 			R:               r,
 			App:             app,
-			TxGen:           cosmoscmd.MakeEncodingConfig(simapp.ModuleBasics).TxConfig,
+			TxGen:           cmd.MakeEncodingConfig(simapp.ModuleBasics).TxConfig,
 			Cdc:             nil,
 			Msg:             msg,
 			MsgType:         msg.Type(),
@@ -271,7 +271,7 @@ func SimulateMsgCancelAuction(ak types.AccountKeeper, bk types.BankKeeper, k kee
 		txCtx := simulation.OperationInput{
 			R:               r,
 			App:             app,
-			TxGen:           cosmoscmd.MakeEncodingConfig(simapp.ModuleBasics).TxConfig,
+			TxGen:           cmd.MakeEncodingConfig(simapp.ModuleBasics).TxConfig,
 			Cdc:             nil,
 			Msg:             msg,
 			MsgType:         msg.Type(),
@@ -367,7 +367,7 @@ func SimulateMsgPlaceBid(ak types.AccountKeeper, bk types.BankKeeper, k keeper.K
 		txCtx := simulation.OperationInput{
 			R:               r,
 			App:             app,
-			TxGen:           cosmoscmd.MakeEncodingConfig(simapp.ModuleBasics).TxConfig,
+			TxGen:           cmd.MakeEncodingConfig(simapp.ModuleBasics).TxConfig,
 			Cdc:             nil,
 			Msg:             msg,
 			MsgType:         msg.Type(),
