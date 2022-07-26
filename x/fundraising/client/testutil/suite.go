@@ -2,6 +2,7 @@ package testutil
 
 import (
 	"fmt"
+	"github.com/tendermint/fundraising/cmd"
 	"strconv"
 	"time"
 
@@ -17,7 +18,6 @@ import (
 	utilcli "github.com/cosmos/cosmos-sdk/testutil/cli"
 	"github.com/cosmos/cosmos-sdk/testutil/network"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/tendermint/starport/starport/pkg/cosmoscmd"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 	dbm "github.com/tendermint/tm-db"
 
@@ -37,7 +37,7 @@ type TxCmdTestSuite struct {
 	denom2 string
 }
 
-func NewAppConstructor(encodingCfg cosmoscmd.EncodingConfig) network.AppConstructor {
+func NewAppConstructor(encodingCfg cmd.EncodingConfig) network.AppConstructor {
 	return func(val network.Validator) servertypes.Application {
 		return chain.New(
 			val.Ctx.Logger, dbm.NewMemDB(), nil, true, make(map[int64]bool), val.Ctx.Config.RootDir, 0,
@@ -58,7 +58,7 @@ func (s *TxCmdTestSuite) SetupTest() {
 
 	keeper.EnableAddAllowedBidder = true
 
-	encodingCfg := cosmoscmd.MakeEncodingConfig(chain.ModuleBasics)
+	encodingCfg := cmd.MakeEncodingConfig(chain.ModuleBasics)
 
 	cfg := network.DefaultConfig()
 	cfg.NumValidators = 1
@@ -835,7 +835,7 @@ func (s *QueryCmdTestSuite) SetupTest() {
 
 	keeper.EnableAddAllowedBidder = true
 
-	encodingCfg := cosmoscmd.MakeEncodingConfig(chain.ModuleBasics)
+	encodingCfg := cmd.MakeEncodingConfig(chain.ModuleBasics)
 
 	cfg := network.DefaultConfig()
 	cfg.NumValidators = 2
