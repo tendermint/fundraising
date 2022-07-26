@@ -105,7 +105,7 @@ func SimulateMsgCreateFixedPriceAuction(ak types.AccountKeeper, bk types.BankKee
 		spendable := bk.SpendableCoins(ctx, account.GetAddress())
 
 		params := k.GetParams(ctx)
-		_, hasNeg := spendable.SafeSub(params.AuctionCreationFee)
+		_, hasNeg := spendable.SafeSub(params.AuctionCreationFee...)
 		if hasNeg {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgCreateFixedPriceAuction, "insufficient balance for auction creation fee"), nil, nil
 		}
@@ -123,7 +123,7 @@ func SimulateMsgCreateFixedPriceAuction(ak types.AccountKeeper, bk types.BankKee
 		}
 
 		// Call spendable coins here again to get the funded balances
-		_, hasNeg = bk.SpendableCoins(ctx, account.GetAddress()).SafeSub(sdk.NewCoins(sellingCoin))
+		_, hasNeg = bk.SpendableCoins(ctx, account.GetAddress()).SafeSub(sdk.NewCoins(sellingCoin)...)
 		if hasNeg {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgCreateFixedPriceAuction, "insufficient balance to reserve selling coin"), nil, nil
 		}
@@ -169,7 +169,7 @@ func SimulateMsgCreateBatchAuction(ak types.AccountKeeper, bk types.BankKeeper, 
 		spendable := bk.SpendableCoins(ctx, account.GetAddress())
 
 		params := k.GetParams(ctx)
-		_, hasNeg := spendable.SafeSub(params.AuctionCreationFee)
+		_, hasNeg := spendable.SafeSub(params.AuctionCreationFee...)
 		if hasNeg {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgCreateBatchAuction, "insufficient balance for auction creation fee"), nil, nil
 		}
@@ -190,7 +190,7 @@ func SimulateMsgCreateBatchAuction(ak types.AccountKeeper, bk types.BankKeeper, 
 		}
 
 		// Call spendable coins here again to get the funded balances
-		_, hasNeg = bk.SpendableCoins(ctx, account.GetAddress()).SafeSub(sdk.NewCoins(sellingCoin))
+		_, hasNeg = bk.SpendableCoins(ctx, account.GetAddress()).SafeSub(sdk.NewCoins(sellingCoin)...)
 		if hasNeg {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgCreateBatchAuction, "insufficient balance to reserve selling coin"), nil, nil
 		}
