@@ -2,9 +2,10 @@ package testutil
 
 import (
 	"fmt"
-	"github.com/tendermint/fundraising/cmd"
 	"strconv"
 	"time"
+
+	"github.com/tendermint/fundraising/cmd"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"

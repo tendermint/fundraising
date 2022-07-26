@@ -1,8 +1,9 @@
 package simulation
 
 import (
-	"github.com/tendermint/fundraising/cmd"
 	"math/rand"
+
+	"github.com/tendermint/fundraising/cmd"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"

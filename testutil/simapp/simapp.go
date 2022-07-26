@@ -2,8 +2,9 @@ package simapp
 
 import (
 	"encoding/json"
-	"github.com/tendermint/fundraising/cmd"
 	"time"
+
+	"github.com/tendermint/fundraising/cmd"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/simapp"
