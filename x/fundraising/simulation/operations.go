@@ -3,6 +3,8 @@ package simulation
 import (
 	"math/rand"
 
+	"github.com/tendermint/fundraising/cmd"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/simapp"
@@ -10,7 +12,6 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
-	"github.com/tendermint/spm/cosmoscmd"
 
 	appparams "github.com/tendermint/fundraising/app/params"
 	"github.com/tendermint/fundraising/x/fundraising/keeper"
@@ -104,7 +105,7 @@ func SimulateMsgCreateFixedPriceAuction(ak types.AccountKeeper, bk types.BankKee
 		spendable := bk.SpendableCoins(ctx, account.GetAddress())
 
 		params := k.GetParams(ctx)
-		_, hasNeg := spendable.SafeSub(params.AuctionCreationFee)
+		_, hasNeg := spendable.SafeSub(params.AuctionCreationFee...)
 		if hasNeg {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgCreateFixedPriceAuction, "insufficient balance for auction creation fee"), nil, nil
 		}
@@ -122,7 +123,7 @@ func SimulateMsgCreateFixedPriceAuction(ak types.AccountKeeper, bk types.BankKee
 		}
 
 		// Call spendable coins here again to get the funded balances
-		_, hasNeg = bk.SpendableCoins(ctx, account.GetAddress()).SafeSub(sdk.NewCoins(sellingCoin))
+		_, hasNeg = bk.SpendableCoins(ctx, account.GetAddress()).SafeSub(sdk.NewCoins(sellingCoin)...)
 		if hasNeg {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgCreateFixedPriceAuction, "insufficient balance to reserve selling coin"), nil, nil
 		}
@@ -140,7 +141,7 @@ func SimulateMsgCreateFixedPriceAuction(ak types.AccountKeeper, bk types.BankKee
 		txCtx := simulation.OperationInput{
 			R:               r,
 			App:             app,
-			TxGen:           cosmoscmd.MakeEncodingConfig(simapp.ModuleBasics).TxConfig,
+			TxGen:           cmd.MakeEncodingConfig(simapp.ModuleBasics).TxConfig,
 			Cdc:             nil,
 			Msg:             msg,
 			MsgType:         msg.Type(),
@@ -168,7 +169,7 @@ func SimulateMsgCreateBatchAuction(ak types.AccountKeeper, bk types.BankKeeper, 
 		spendable := bk.SpendableCoins(ctx, account.GetAddress())
 
 		params := k.GetParams(ctx)
-		_, hasNeg := spendable.SafeSub(params.AuctionCreationFee)
+		_, hasNeg := spendable.SafeSub(params.AuctionCreationFee...)
 		if hasNeg {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgCreateBatchAuction, "insufficient balance for auction creation fee"), nil, nil
 		}
@@ -189,7 +190,7 @@ func SimulateMsgCreateBatchAuction(ak types.AccountKeeper, bk types.BankKeeper, 
 		}
 
 		// Call spendable coins here again to get the funded balances
-		_, hasNeg = bk.SpendableCoins(ctx, account.GetAddress()).SafeSub(sdk.NewCoins(sellingCoin))
+		_, hasNeg = bk.SpendableCoins(ctx, account.GetAddress()).SafeSub(sdk.NewCoins(sellingCoin)...)
 		if hasNeg {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgCreateBatchAuction, "insufficient balance to reserve selling coin"), nil, nil
 		}
@@ -210,7 +211,7 @@ func SimulateMsgCreateBatchAuction(ak types.AccountKeeper, bk types.BankKeeper, 
 		txCtx := simulation.OperationInput{
 			R:               r,
 			App:             app,
-			TxGen:           cosmoscmd.MakeEncodingConfig(simapp.ModuleBasics).TxConfig,
+			TxGen:           cmd.MakeEncodingConfig(simapp.ModuleBasics).TxConfig,
 			Cdc:             nil,
 			Msg:             msg,
 			MsgType:         msg.Type(),
@@ -271,7 +272,7 @@ func SimulateMsgCancelAuction(ak types.AccountKeeper, bk types.BankKeeper, k kee
 		txCtx := simulation.OperationInput{
 			R:               r,
 			App:             app,
-			TxGen:           cosmoscmd.MakeEncodingConfig(simapp.ModuleBasics).TxConfig,
+			TxGen:           cmd.MakeEncodingConfig(simapp.ModuleBasics).TxConfig,
 			Cdc:             nil,
 			Msg:             msg,
 			MsgType:         msg.Type(),
@@ -367,7 +368,7 @@ func SimulateMsgPlaceBid(ak types.AccountKeeper, bk types.BankKeeper, k keeper.K
 		txCtx := simulation.OperationInput{
 			R:               r,
 			App:             app,
-			TxGen:           cosmoscmd.MakeEncodingConfig(simapp.ModuleBasics).TxConfig,
+			TxGen:           cmd.MakeEncodingConfig(simapp.ModuleBasics).TxConfig,
 			Cdc:             nil,
 			Msg:             msg,
 			MsgType:         msg.Type(),

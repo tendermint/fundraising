@@ -9,9 +9,12 @@ import (
 	"os"
 	"testing"
 
+	"github.com/tendermint/fundraising/cmd"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/simapp/helpers"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -28,7 +31,6 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 	fundraisingtypes "github.com/tendermint/fundraising/x/fundraising/types"
-	"github.com/tendermint/starport/starport/pkg/cosmoscmd"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -40,8 +42,8 @@ func init() {
 }
 
 type StoreKeysPrefixes struct {
-	A        sdk.StoreKey
-	B        sdk.StoreKey
+	A        storetypes.StoreKey
+	B        storetypes.StoreKey
 	Prefixes [][]byte
 }
 
@@ -65,7 +67,7 @@ func BenchmarkSimulation(b *testing.B) {
 		require.NoError(b, err)
 	})
 
-	encoding := cosmoscmd.MakeEncodingConfig(ModuleBasics)
+	encoding := cmd.MakeEncodingConfig(ModuleBasics)
 	cosmoscmdApp := New(
 		logger, db, nil, true, map[int64]bool{},
 		DefaultNodeHome, simapp.FlagPeriodValue, encoding,
@@ -112,7 +114,7 @@ func TestAppImportExport(t *testing.T) {
 
 	cosmoscmdApp := New(
 		logger, db, nil, true, map[int64]bool{},
-		DefaultNodeHome, simapp.FlagPeriodValue, cosmoscmd.MakeEncodingConfig(ModuleBasics),
+		DefaultNodeHome, simapp.FlagPeriodValue, cmd.MakeEncodingConfig(ModuleBasics),
 		simapp.EmptyAppOptions{}, fauxMerkleModeOpt,
 	)
 
@@ -159,7 +161,7 @@ func TestAppImportExport(t *testing.T) {
 
 	cosmoscmdNewApp := New(
 		log.NewNopLogger(), newDB, nil, true, map[int64]bool{},
-		DefaultNodeHome, simapp.FlagPeriodValue, cosmoscmd.MakeEncodingConfig(ModuleBasics),
+		DefaultNodeHome, simapp.FlagPeriodValue, cmd.MakeEncodingConfig(ModuleBasics),
 		simapp.EmptyAppOptions{}, fauxMerkleModeOpt,
 	)
 
@@ -222,7 +224,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 
 	cosmoscmdApp := New(
 		logger, db, nil, true, map[int64]bool{},
-		DefaultNodeHome, simapp.FlagPeriodValue, cosmoscmd.MakeEncodingConfig(ModuleBasics),
+		DefaultNodeHome, simapp.FlagPeriodValue, cmd.MakeEncodingConfig(ModuleBasics),
 		simapp.EmptyAppOptions{}, fauxMerkleModeOpt,
 	)
 
@@ -273,7 +275,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 
 	cosmoscmdNewApp := New(
 		logger, newDB, nil, true, map[int64]bool{},
-		DefaultNodeHome, simapp.FlagPeriodValue, cosmoscmd.MakeEncodingConfig(ModuleBasics),
+		DefaultNodeHome, simapp.FlagPeriodValue, cmd.MakeEncodingConfig(ModuleBasics),
 		simapp.EmptyAppOptions{}, fauxMerkleModeOpt,
 	)
 
@@ -326,7 +328,7 @@ func TestAppStateDeterminism(t *testing.T) {
 			}
 
 			db := dbm.NewMemDB()
-			encoding := cosmoscmd.MakeEncodingConfig(ModuleBasics)
+			encoding := cmd.MakeEncodingConfig(ModuleBasics)
 			cosmoscmdApp := New(
 				logger, db, nil, true, map[int64]bool{},
 				DefaultNodeHome, simapp.FlagPeriodValue, encoding,

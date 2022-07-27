@@ -116,6 +116,21 @@ clean:
 
 .PHONY: go-mod-cache clean
 
+FIND_ARGS := -name '*.go' -type f -not -name '*.pb.go'
+
+## format: Run gofmt and goimports.
+format:
+	@echo Formatting...
+	@find . $(FIND_ARGS) | xargs gofmt -d -s
+	@find . $(FIND_ARGS) | xargs goimports -w -local github.com/tendermint/spn
+
+## lint: Run Golang CI Lint.
+lint:
+	@echo Running gocilint...
+	@golangci-lint run --out-format=tab --issues-exit-code=0
+
+
+.PHONY: lint format
 ###############################################################################
 ###                           Tests & Simulation                            ###
 ###############################################################################
