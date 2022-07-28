@@ -8,8 +8,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/tendermint/fundraising/x/fundraising/types"
 	"github.com/tendermint/tendermint/crypto"
+
+	"github.com/tendermint/fundraising/x/fundraising/types"
 )
 
 func TestMustParseRFC3339(t *testing.T) {
