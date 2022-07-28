@@ -122,7 +122,7 @@ FIND_ARGS := -name '*.go' -type f -not -name '*.pb.go'
 format:
 	@echo Formatting...
 	@find . $(FIND_ARGS) | xargs gofmt -d -s
-	@find . $(FIND_ARGS) | xargs goimports -w -local github.com/tendermint/spn
+	@find . $(FIND_ARGS) | xargs goimports -w -local github.com/tendermint/fundraising
 
 ## lint: Run Golang CI Lint.
 lint:
