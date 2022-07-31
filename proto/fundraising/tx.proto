@@ -12,12 +12,10 @@ option go_package = "github.com/tendermint/fundraising/x/fundraising/types";
 service Msg {
   // this line is used by Starport scaffolding # proto/tx/rpc
   // Submit a create fixed price auction message.
-  rpc CreateFixedPriceAuction(MsgCreateFixedPriceAuction)
-      returns (MsgCreateFixedPriceAuctionResponse);
+  rpc CreateFixedPriceAuction(MsgCreateFixedPriceAuction) returns (MsgCreateFixedPriceAuctionResponse);
 
   // Submit a create batch auction message.
-  rpc CreateBatchAuction(MsgCreateBatchAuction)
-      returns (MsgCreateBatchAuctionResponse);
+  rpc CreateBatchAuction(MsgCreateBatchAuction) returns (MsgCreateBatchAuctionResponse);
 
   // CancelAuction defines a method to cancel the auction message.
   rpc CancelAuction(MsgCancelAuction) returns (MsgCancelAuctionResponse);
@@ -30,8 +28,7 @@ service Msg {
 
   // AddAllowedBidder defines a method sto add a single allowed bidder message.
   // This is for the testing purpose and it must not be used in mainnet.
-  rpc AddAllowedBidder(MsgAddAllowedBidder)
-      returns (MsgAddAllowedBidderResponse);
+  rpc AddAllowedBidder(MsgAddAllowedBidder) returns (MsgAddAllowedBidderResponse);
 }
 
 // MsgCreateFixedPriceAuction defines a SDK message for creating a fixed price
@@ -43,32 +40,25 @@ message MsgCreateFixedPriceAuction {
   string auctioneer = 1;
 
   // start_price specifies the starting price of the auction
-  string start_price = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
+  string start_price = 2
+      [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
 
   // selling_coin specifies the selling coin for the auction
-  cosmos.base.v1beta1.Coin selling_coin = 3 [
-    (gogoproto.nullable) = false,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
-  ];
+  cosmos.base.v1beta1.Coin selling_coin = 3
+      [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"];
 
   // paying_coin_denom specifies the paying coin denom that bidders use to bid
   // for
   string paying_coin_denom = 4;
 
   // vesting_schedules specifies the vesting schedules for the auction
-  repeated VestingSchedule vesting_schedules = 5
-      [ (gogoproto.nullable) = false ];
+  repeated VestingSchedule vesting_schedules = 5 [(gogoproto.nullable) = false];
 
   // start_time specifies the start time of the plan
-  google.protobuf.Timestamp start_time = 6
-      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
+  google.protobuf.Timestamp start_time = 6 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
 
   // end_time specifies the end time of the plan
-  google.protobuf.Timestamp end_time = 7
-      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
+  google.protobuf.Timestamp end_time = 7 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
 }
 
 // MsgCreateFixedPriceAuctionResponse defines the
@@ -87,30 +77,23 @@ message MsgCreateBatchAuction {
   string auctioneer = 1;
 
   // start_price specifies the starting price of the auction
-  string start_price = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
+  string start_price = 2
+      [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
 
   // min_bid_price specifies the minibum bid price
-  string min_bid_price = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
+  string min_bid_price = 3
+      [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
 
   // selling_coin specifies the selling coin for the auction
-  cosmos.base.v1beta1.Coin selling_coin = 4 [
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin",
-    (gogoproto.nullable) = false
-  ];
+  cosmos.base.v1beta1.Coin selling_coin = 4
+      [(gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin", (gogoproto.nullable) = false];
 
   // paying_coin_denom specifies the paying coin denom that bidders use to bid
   // for
   string paying_coin_denom = 5;
 
   // vesting_schedules specifies the vesting schedules for the auction
-  repeated VestingSchedule vesting_schedules = 6
-      [ (gogoproto.nullable) = false ];
+  repeated VestingSchedule vesting_schedules = 6 [(gogoproto.nullable) = false];
 
   // maximum_extended_round specifies the maximum number of extended rounds for
   // the auction
@@ -118,18 +101,14 @@ message MsgCreateBatchAuction {
 
   // extended_round_rate specifies the rate that decides if the auction needs
   // another round
-  string extended_round_rate = 8 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
+  string extended_round_rate = 8
+      [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
 
   // start_time specifies the start time of the plan
-  google.protobuf.Timestamp start_time = 9
-      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
+  google.protobuf.Timestamp start_time = 9 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
 
   // end_time specifies the end time of the plan
-  google.protobuf.Timestamp end_time = 10
-      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
+  google.protobuf.Timestamp end_time = 10 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
 }
 
 // MsgCreateBatchAuctionResponse defines the
@@ -170,17 +149,12 @@ message MsgPlaceBid { // id specifies index of the auction
   // price specifies the bid price.
   // The bid price must be the start price for fixed price auction whereas
   // the bide price can be any value that the bidder places.
-  string price = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
+  string price = 4 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
 
   // coin specifies the paying amount of coin or the selling amount that the
   // bidder bids
-  cosmos.base.v1beta1.Coin coin = 5 [
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin",
-    (gogoproto.nullable) = false
-  ];
+  cosmos.base.v1beta1.Coin coin = 5
+      [(gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin", (gogoproto.nullable) = false];
 }
 
 // MsgPlaceBidResponse defines the Msg/MsgPlaceBidResponse response type.
@@ -203,17 +177,12 @@ message MsgModifyBid { // id specifies index of the auction
   // price specifies the bid price.
   // the bide price must be above or equal to the original value that the bidder
   // placed.
-  string price = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
+  string price = 4 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
 
   // coin specifies the paying amount of coin or the selling amount that the
   // bidder bids
-  cosmos.base.v1beta1.Coin coin = 5 [
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin",
-    (gogoproto.nullable) = false
-  ];
+  cosmos.base.v1beta1.Coin coin = 5
+      [(gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin", (gogoproto.nullable) = false];
 }
 
 // MsgModifyBidResponse defines the Msg/MsgModifyBidResponse response type.
@@ -229,7 +198,7 @@ message MsgAddAllowedBidder {
 
   // allowed_bidder specifies the bidder who is allowed to bid and their maximum
   // bid amount
-  AllowedBidder allowed_bidder = 2 [ (gogoproto.nullable) = false ];
+  AllowedBidder allowed_bidder = 2 [(gogoproto.nullable) = false];
 }
 
 message MsgAddAllowedBidderResponse {}
