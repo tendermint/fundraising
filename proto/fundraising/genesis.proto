@@ -11,27 +11,25 @@ option go_package = "github.com/tendermint/fundraising/x/fundraising/types";
 
 // GenesisState defines the fundraising module's genesis state.
 message GenesisState {
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
   // params defines all the parameters for the module
-  Params params = 1 [ (gogoproto.nullable) = false ];
+  Params params = 1 [(gogoproto.nullable) = false];
 
   // auctions define the auction interface for genesis state; the module
   // supports FixedPriceAuction or BatchAuction
-  repeated google.protobuf.Any auctions = 2
-      [ (cosmos_proto.accepts_interface) = "AuctionI" ];
+  repeated google.protobuf.Any auctions = 2 [(cosmos_proto.accepts_interface) = "AuctionI"];
 
   // allowed_bidder_records define the allowed bidder records for the auction
-  repeated AllowedBidderRecord allowed_bidder_records = 3
-      [ (gogoproto.nullable) = false ];
+  repeated AllowedBidderRecord allowed_bidder_records = 3 [(gogoproto.nullable) = false];
 
   // bids define the bid records used for genesis state
-  repeated Bid bids = 4 [ (gogoproto.nullable) = false ];
+  repeated Bid bids = 4 [(gogoproto.nullable) = false];
 
   // vesting_queues define the vesting queue records used for genesis
   // state
-  repeated VestingQueue vesting_queues = 5 [ (gogoproto.nullable) = false ];
+  repeated VestingQueue vesting_queues = 5 [(gogoproto.nullable) = false];
 }
 
 message AllowedBidderRecord {
@@ -39,5 +37,5 @@ message AllowedBidderRecord {
   uint64 auction_id = 1;
 
   // allowed_bidder specifies allowed bidder for the auction
-  AllowedBidder allowed_bidder = 2 [ (gogoproto.nullable) = false ];
+  AllowedBidder allowed_bidder = 2 [(gogoproto.nullable) = false];
 }
