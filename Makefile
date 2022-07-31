@@ -225,11 +225,10 @@ test-sim-benchmark
 ###                                Protobuf                                 ###
 ###############################################################################
 
-containerProtoVer=v0.7
-containerProtoImage=tendermintdev/sdk-proto-gen:$(containerProtoVer)
-containerProtoGen=tendermint-fundraising-proto-gen-$(containerProtoVer)
-containerProtoGenSwagger=tendermint-fundraising-proto-gen-swagger-$(containerProtoVer)
-containerProtoFmt=tendermint-fundraising-proto-fmt-$(containerProtoVer)
+protoVer=v0.7
+protoImageName=tendermintdev/sdk-proto-gen:$(protoVer)
+containerProtoGen=tendermint-fundraising-proto-gen-$(protoVer)
+containerProtoFmt=tendermint-fundraising-proto-fmt-$(protoVer)
 
 proto-all: proto-format proto-gen
 
