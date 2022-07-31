@@ -225,19 +225,21 @@ test-sim-benchmark
 ###                                Protobuf                                 ###
 ###############################################################################
 
-containerProtoVer=v0.2
+containerProtoVer=v0.7
 containerProtoImage=tendermintdev/sdk-proto-gen:$(containerProtoVer)
-containerProtoGen=cosmos-sdk-proto-gen-$(containerProtoVer)
-containerProtoGenSwagger=cosmos-sdk-proto-gen-swagger-$(containerProtoVer)
-containerProtoFmt=cosmos-sdk-proto-fmt-$(containerProtoVer)
+containerProtoGen=tendermint-fundraising-proto-gen-$(containerProtoVer)
+containerProtoGenSwagger=tendermint-fundraising-proto-gen-swagger-$(containerProtoVer)
+containerProtoFmt=tendermint-fundraising-proto-fmt-$(containerProtoVer)
 
-proto-all: proto-format proto-gen proto-swagger-gen 
-
-proto-gen:
-	starport generate proto-go
+proto-all: proto-format proto-gen
 
 proto-swagger-gen:
 	starport generate openapi
+
+proto-gen:
+	@echo "Generating Protobuf files"
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoGen}$$"; then docker start -a $(containerProtoGen); else docker run --name $(containerProtoGen) -v $(CURDIR):/workspace --workdir /workspace $(protoImageName) \
+		sh ./scripts/protocgen.sh; fi
 
 proto-format:
 	@echo "Formatting Protobuf files"
