@@ -234,10 +234,10 @@ containerProtoFmt=cosmos-sdk-proto-fmt-$(containerProtoVer)
 proto-all: proto-format proto-gen proto-swagger-gen 
 
 proto-gen:
-	starport generate proto-go
+	ignite generate proto-go
 
 proto-swagger-gen:
-	starport generate openapi
+	ignite generate openapi
 
 proto-format:
 	@echo "Formatting Protobuf files"
