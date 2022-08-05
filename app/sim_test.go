@@ -5,10 +5,11 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/tendermint/fundraising/cmd"
 	"math/rand"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/simapp"
@@ -27,12 +28,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/stretchr/testify/require"
-	fundraisingtypes "github.com/tendermint/fundraising/x/fundraising/types"
+	"github.com/tendermint/fundraising/cmd"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
+
+	fundraisingtypes "github.com/tendermint/fundraising/x/fundraising/types"
 )
 
 func init() {

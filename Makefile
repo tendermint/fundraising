@@ -116,6 +116,21 @@ clean:
 
 .PHONY: go-mod-cache clean
 
+FIND_ARGS := -name '*.go' -type f -not -name '*.pb.go'
+
+## format: Run gofmt and goimports.
+format:
+	@echo Formatting...
+	@find . $(FIND_ARGS) | xargs gofmt -d -s
+	@find . $(FIND_ARGS) | xargs goimports -w -local github.com/tendermint/fundraising
+
+## lint: Run Golang CI Lint.
+lint:
+	@echo Running gocilint...
+	@golangci-lint run --out-format=tab --issues-exit-code=0
+
+
+.PHONY: lint format
 ###############################################################################
 ###                           Tests & Simulation                            ###
 ###############################################################################
@@ -219,10 +234,10 @@ containerProtoFmt=cosmos-sdk-proto-fmt-$(containerProtoVer)
 proto-all: proto-format proto-gen proto-swagger-gen 
 
 proto-gen:
-	starport generate proto-go
+	ignite generate proto-go
 
 proto-swagger-gen:
-	starport generate openapi
+	ignite generate openapi
 
 proto-format:
 	@echo "Formatting Protobuf files"

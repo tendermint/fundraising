@@ -33,7 +33,7 @@ func (b *Bid) SetMatched(status bool) {
 // Note that we take as little coins as possible to prevent from overflowing the remaining selling coin.
 func (b Bid) ConvertToSellingAmount(denom string) (amount sdk.Int) {
 	if b.Coin.Denom == denom {
-		return b.Coin.Amount.ToDec().QuoTruncate(b.Price).TruncateInt() // BidAmount / BidPrice
+		return sdk.NewDecFromInt(b.Coin.Amount).QuoTruncate(b.Price).TruncateInt() // BidAmount / BidPrice
 	}
 	return b.Coin.Amount
 }
@@ -44,5 +44,5 @@ func (b Bid) ConvertToPayingAmount(denom string) (amount sdk.Int) {
 	if b.Coin.Denom == denom {
 		return b.Coin.Amount
 	}
-	return b.Coin.Amount.ToDec().Mul(b.Price).Ceil().TruncateInt() // BidAmount * BidPrice
+	return sdk.NewDecFromInt(b.Coin.Amount).Mul(b.Price).Ceil().TruncateInt() // BidAmount * BidPrice
 }
