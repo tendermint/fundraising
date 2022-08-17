@@ -7,6 +7,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	fundraisingtypes "github.com/tendermint/fundraising/x/fundraising/types"
 )
 

@@ -122,7 +122,7 @@ FIND_ARGS := -name '*.go' -type f -not -name '*.pb.go'
 format:
 	@echo Formatting...
 	@find . $(FIND_ARGS) | xargs gofmt -d -s
-	@find . $(FIND_ARGS) | xargs goimports -w -local github.com/tendermint/spn
+	@find . $(FIND_ARGS) | xargs goimports -w -local github.com/tendermint/fundraising
 
 ## lint: Run Golang CI Lint.
 lint:
@@ -230,10 +230,7 @@ protoImageName=tendermintdev/sdk-proto-gen:$(protoVer)
 containerProtoGen=tendermint-fundraising-proto-gen-$(protoVer)
 containerProtoFmt=tendermint-fundraising-proto-fmt-$(protoVer)
 
-proto-all: proto-format proto-gen
-
-proto-swagger-gen:
-	starport generate openapi
+proto-all: proto-format proto-gen 
 
 proto-gen:
 	@echo "Generating Protobuf files"
