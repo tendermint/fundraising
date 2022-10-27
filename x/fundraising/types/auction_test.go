@@ -67,6 +67,28 @@ func TestUnpackAuction(t *testing.T) {
 	require.Equal(t, auction.StartTime.UTC(), auction2.GetStartTime().UTC())
 	require.Equal(t, auction.EndTimes[0].UTC(), auction2.GetEndTimes()[0].UTC())
 	require.Equal(t, auction.Status, auction2.GetStatus())
+
+	auction2.SetId(5)
+	auction2.SetType(types.AuctionTypeBatch)
+	auction2.SetAuctioneer(sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer2"))))
+	auction2.SetSellingReserveAddress(types.SellingReserveAddress(5))
+	auction2.SetPayingReserveAddress(types.PayingReserveAddress(5))
+	auction2.SetVestingReserveAddress(types.VestingReserveAddress(5))
+	auction2.SetStartPrice(sdk.OneDec())
+	auction2.SetSellingCoin(sdk.NewInt64Coin("denom5", 1_000_000_000_000))
+	auction2.SetPayingCoinDenom("denom6")
+	auction2.SetStartTime(types.MustParseRFC3339("2022-10-01T00:00:00Z"))
+	auction2.SetVestingSchedules([]types.VestingSchedule{{ReleaseTime: types.MustParseRFC3339("2023-01-01T00:00:00Z"), Weight: sdk.OneDec()}})
+	auction2.SetEndTimes([]time.Time{types.MustParseRFC3339("2022-11-01T00:00:00Z")})
+	auction2.SetStatus(types.AuctionStatusStarted)
+
+	require.True(t, auction2.GetId() == 5)
+	require.True(t, auction2.GetType() == types.AuctionTypeBatch)
+	require.True(t, auction2.GetAuctioneer().Equals(sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer2")))))
+	require.True(t, auction2.GetSellingReserveAddress().Equals(types.SellingReserveAddress(5)))
+	require.True(t, auction2.GetPayingReserveAddress().Equals(types.PayingReserveAddress(5)))
+	require.True(t, auction2.GetVestingReserveAddress().Equals(types.VestingReserveAddress(5)))
+	require.True(t, auction2.GetStartPrice().Equal(sdk.OneDec()))
 }
 
 func TestUnpackAuctionJSON(t *testing.T) {

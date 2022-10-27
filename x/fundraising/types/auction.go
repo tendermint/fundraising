@@ -29,6 +29,7 @@ var (
 )
 
 // NewBaseAuction creates a new BaseAuction object
+//
 //nolint:interfacer
 func NewBaseAuction(
 	id uint64, typ AuctionType, auctioneerAddr string,
@@ -382,12 +383,6 @@ func MarshalAuction(cdc codec.BinaryCodec, auction AuctionI) (value []byte, err 
 func UnmarshalAuction(cdc codec.BinaryCodec, value []byte) (auction AuctionI, err error) {
 	err = cdc.UnmarshalInterface(value, &auction)
 	return auction, err
-}
-
-// UnmarshalBid unmarshals bid from a store value.
-func UnmarshalBid(cdc codec.BinaryCodec, value []byte) (b Bid, err error) {
-	err = cdc.Unmarshal(value, &b)
-	return b, err
 }
 
 // SellingReserveAddress returns the selling reserve address with the given auction id.
