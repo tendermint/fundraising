@@ -1,5 +1,7 @@
 package simapp
 
+// DONTCOVER
+
 import (
 	"encoding/json"
 	"time"

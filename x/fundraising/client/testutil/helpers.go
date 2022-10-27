@@ -1,5 +1,7 @@
 package testutil
 
+// DONTCOVER
+
 import (
 	"fmt"
 
