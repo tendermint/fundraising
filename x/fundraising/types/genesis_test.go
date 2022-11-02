@@ -267,6 +267,21 @@ func TestGenesisState_Validate(t *testing.T) {
 			valid: false,
 		},
 		{
+			desc: "invalid bid - invalid price",
+			configure: func(genState *types.GenesisState) {
+				genState.Bids = []types.Bid{
+					{
+						AuctionId: 1,
+						Id:        1,
+						Bidder:    validAddr.String(),
+						Price:     sdk.MustNewDecFromStr("0"),
+						Coin:      sdk.NewInt64Coin("denom2", 100_000),
+					},
+				}
+			},
+			valid: false,
+		},
+		{
 			desc: "invalid allowed bidder - invalid max bid amount",
 			configure: func(genState *types.GenesisState) {
 				genState.AllowedBidderRecords = []types.AllowedBidderRecord{
@@ -276,6 +291,38 @@ func TestGenesisState_Validate(t *testing.T) {
 							Bidder:       validAddr.String(),
 							MaxBidAmount: sdk.NewInt(0),
 						},
+					},
+				}
+			},
+			valid: false,
+		},
+		{
+			desc: "invalid allowed bidder - auction id cannot be 0",
+			configure: func(genState *types.GenesisState) {
+				genState.AllowedBidderRecords = []types.AllowedBidderRecord{
+					{
+						AuctionId: 0,
+						AllowedBidder: types.AllowedBidder{
+							Bidder:       validAddr.String(),
+							MaxBidAmount: sdk.NewInt(100_000),
+						},
+					},
+				}
+			},
+			valid: false,
+		},
+		{
+			desc: "invalid vesting queue - invalid auctioneer address",
+			configure: func(genState *types.GenesisState) {
+				params := types.DefaultParams()
+				genState.Params = params
+				genState.VestingQueues = []types.VestingQueue{
+					{
+						AuctionId:   1,
+						Auctioneer:  "",
+						PayingCoin:  sdk.NewInt64Coin("denom2", 100_000_000),
+						ReleaseTime: types.MustParseRFC3339("2022-12-20T00:00:00Z"),
+						Released:    false,
 					},
 				}
 			},

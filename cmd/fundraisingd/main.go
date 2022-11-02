@@ -1,5 +1,7 @@
 package main
 
+// DONTCOVER
+
 import (
 	"os"
 

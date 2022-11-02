@@ -171,6 +171,18 @@ func TestMsgCreateFixedPriceAuction(t *testing.T) {
 				time.Now().AddDate(0, 1, 0),
 			),
 		},
+		{
+			"invalid auctioneer address: empty address string is not allowed: invalid address",
+			types.NewMsgCreateFixedPriceAuction(
+				"",
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom1",
+				[]types.VestingSchedule{},
+				time.Now(),
+				time.Now().AddDate(0, 1, 0),
+			),
+		},
 	}
 
 	for _, tc := range testCases {
@@ -217,6 +229,21 @@ func TestMsgCreateBatchAuction(t *testing.T) {
 				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
 				sdk.MustNewDecFromStr("0"),
 				sdk.MustNewDecFromStr("0.1"),
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom1",
+				[]types.VestingSchedule{},
+				uint32(2),
+				sdk.MustNewDecFromStr("0.05"),
+				time.Now(),
+				time.Now().AddDate(0, 1, 0),
+			),
+		},
+		{
+			"minimum price must be positive: invalid request",
+			types.NewMsgCreateBatchAuction(
+				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
+				sdk.MustNewDecFromStr("0.1"),
+				sdk.MustNewDecFromStr("0"),
 				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
 				"denom1",
 				[]types.VestingSchedule{},
@@ -394,6 +421,21 @@ func TestMsgCreateBatchAuction(t *testing.T) {
 				time.Now().AddDate(0, 1, 0),
 			),
 		},
+		{
+			"invalid auctioneer address: empty address string is not allowed: invalid address",
+			types.NewMsgCreateBatchAuction(
+				"",
+				sdk.MustNewDecFromStr("0.5"),
+				sdk.MustNewDecFromStr("0.1"),
+				sdk.NewInt64Coin("denom2", 10_000_000_000_000),
+				"denom1",
+				[]types.VestingSchedule{},
+				uint32(2),
+				sdk.MustNewDecFromStr("0.05"),
+				time.Now(),
+				time.Now().AddDate(0, 1, 0),
+			),
+		},
 	}
 
 	for _, tc := range testCases {
@@ -423,6 +465,13 @@ func TestMsgCancelAuction(t *testing.T) {
 			"", // empty means no error expected
 			types.NewMsgCancelAuction(
 				sdk.AccAddress(crypto.AddressHash([]byte("Auctioneer"))).String(),
+				uint64(1),
+			),
+		},
+		{
+			"invalid auctioneer address: empty address string is not allowed: invalid address",
+			types.NewMsgCancelAuction(
+				"",
 				uint64(1),
 			),
 		},
@@ -481,6 +530,16 @@ func TestMsgPlaceBid(t *testing.T) {
 				sdk.NewInt64Coin("denom2", 0),
 			),
 		},
+		{
+			"invalid bidder address: empty address string is not allowed: invalid address",
+			types.NewMsgPlaceBid(
+				uint64(1),
+				"",
+				types.BidTypeBatchWorth,
+				sdk.OneDec(),
+				sdk.NewInt64Coin("denom2", 1000000),
+			),
+		},
 	}
 
 	for _, tc := range testCases {
@@ -536,6 +595,16 @@ func TestMsgModifyBid(t *testing.T) {
 				sdk.NewInt64Coin("denom2", 0),
 			),
 		},
+		{
+			"invalid bidder address: empty address string is not allowed: invalid address",
+			types.NewMsgModifyBid(
+				uint64(1),
+				"",
+				uint64(0),
+				sdk.OneDec(),
+				sdk.NewInt64Coin("denom2", 1000000),
+			),
+		},
 	}
 
 	for _, tc := range testCases {
@@ -567,6 +636,16 @@ func TestAddAllowedBidder(t *testing.T) {
 				1,
 				types.AllowedBidder{
 					sdk.AccAddress(crypto.AddressHash([]byte("Bidder"))).String(),
+					sdk.NewInt(100_000_000),
+				},
+			),
+		},
+		{
+			"invalid bidder address: empty address string is not allowed: invalid address",
+			types.NewMsgAddAllowedBidder(
+				1,
+				types.AllowedBidder{
+					"",
 					sdk.NewInt(100_000_000),
 				},
 			),

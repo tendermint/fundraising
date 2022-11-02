@@ -1,5 +1,7 @@
 package cmd
 
+// DONTCOVER
+
 import sdk "github.com/cosmos/cosmos-sdk/types"
 
 func SetPrefixes(accountAddressPrefix string) {

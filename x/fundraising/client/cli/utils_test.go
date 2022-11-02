@@ -56,7 +56,10 @@ func TestParseFixedPriceAuction(t *testing.T) {
 		},
 	}
 
-	auction, err := cli.ParseFixedPriceAuctionRequest(okJSON.Name())
+	auction, err := cli.ParseFixedPriceAuctionRequest("")
+	require.Error(t, err)
+
+	auction, err = cli.ParseFixedPriceAuctionRequest(okJSON.Name())
 	require.NoError(t, err)
 	require.NotEmpty(t, auction.String())
 	require.Equal(t, sdk.MustNewDecFromStr("1.0"), auction.StartPrice)
@@ -111,7 +114,10 @@ func TestParseBatchAuction(t *testing.T) {
 		},
 	}
 
-	auction, err := cli.ParseBatchAuctionRequest(okJSON.Name())
+	auction, err := cli.ParseBatchAuctionRequest("")
+	require.Error(t, err)
+
+	auction, err = cli.ParseBatchAuctionRequest(okJSON.Name())
 	require.NoError(t, err)
 	require.NotEmpty(t, auction.String())
 	require.Equal(t, sdk.MustNewDecFromStr("1.0"), auction.StartPrice)
@@ -148,4 +154,43 @@ func TestParseBidType(t *testing.T) {
 			require.Error(t, err)
 		}
 	}
+}
+
+func TestParseInvalidAuction(t *testing.T) {
+	invalidFixedAuctionJSON := testutil.WriteToNewTempFile(t, `
+{
+  "start_price": "1.000000000000000000",
+  "selling_coin": {
+    "denom": "denom1",
+    "amount": "1000000000000"
+  },
+  "paying_coin_denom": "denom2",
+  "vesting_schedules": [],
+  "start_time": "2021-11-01T00:00:00Z",
+  "end_time": "2021-12-01T00:00:00Z",,,
+}
+`)
+
+	_, err := cli.ParseFixedPriceAuctionRequest(invalidFixedAuctionJSON.Name())
+	require.Error(t, err)
+
+	invalidBatchAuctionJSON := testutil.WriteToNewTempFile(t, `
+{
+  "start_price": "1",
+  "min_bid_price": "0.100000000000000000",
+  "selling_coin": {
+    "denom": "denom1",
+    "amount": "1000000000000"
+  },
+  "paying_coin_denom": "denom2",
+  "vesting_schedules": [],
+  "max_extended_round": 3,
+  "extended_round_rate": "0.200000000000000000",
+  "start_time": "2021-11-01T00:00:00Z",
+  "end_time": "2021-12-01T00:00:00Z",,,
+}
+`)
+
+	_, err = cli.ParseBatchAuctionRequest(invalidBatchAuctionJSON.Name())
+	require.Error(t, err)
 }
