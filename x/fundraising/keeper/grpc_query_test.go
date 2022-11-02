@@ -200,10 +200,28 @@ func (s *KeeperTestSuite) TestGRPCAllowedBidder() {
 			nil,
 		},
 		{
+			"auction id cannot be 0",
+			&types.QueryAllowedBidderRequest{
+				AuctionId: 0,
+				Bidder:    s.addr(1).String(),
+			},
+			true,
+			nil,
+		},
+		{
 			"auction id not found",
 			&types.QueryAllowedBidderRequest{
 				AuctionId: 5,
 				Bidder:    s.addr(1).String(),
+			},
+			true,
+			nil,
+		},
+		{
+			"bidder cannot be empty address",
+			&types.QueryAllowedBidderRequest{
+				AuctionId: 1,
+				Bidder:    "",
 			},
 			true,
 			nil,
@@ -270,6 +288,15 @@ func (s *KeeperTestSuite) TestGRPCAllowedBidders() {
 		{
 			"nil request",
 			nil,
+			true,
+			nil,
+		},
+		{
+			"auction id cannot be 0",
+			&types.QueryAllowedBiddersRequest{
+				AuctionId:  0,
+				Pagination: &query.PageRequest{},
+			},
 			true,
 			nil,
 		},

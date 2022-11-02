@@ -48,6 +48,8 @@ func SellingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 				sellingCoinDenom := auction.GetSellingCoin().Denom
 				spendable := k.bankKeeper.SpendableCoins(ctx, sellingReserveAddr)
 				sellingReserve := sdk.NewCoin(sellingCoinDenom, spendable.AmountOf(sellingCoinDenom))
+				fmt.Println("sellingReserve: ", sellingReserve)
+				fmt.Println("auction.GetSellingCoin(): ", auction.GetSellingCoin())
 				if !sellingReserve.IsGTE(auction.GetSellingCoin()) {
 					msg += fmt.Sprintf("\tselling reserve balance %s\n"+
 						"\tselling pool reserve: %v\n"+
