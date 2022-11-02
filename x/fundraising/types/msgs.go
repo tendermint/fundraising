@@ -202,7 +202,7 @@ func (msg MsgCancelAuction) Type() string { return TypeMsgCancelAuction }
 
 func (msg MsgCancelAuction) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Auctioneer); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid auctioneer address %q: %v", msg.Auctioneer, err)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid auctioneer address: %v", err)
 	}
 	return nil
 }

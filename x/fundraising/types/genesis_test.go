@@ -311,6 +311,23 @@ func TestGenesisState_Validate(t *testing.T) {
 			},
 			valid: false,
 		},
+		{
+			desc: "invalid vesting queue - invalid auctioneer address",
+			configure: func(genState *types.GenesisState) {
+				params := types.DefaultParams()
+				genState.Params = params
+				genState.VestingQueues = []types.VestingQueue{
+					{
+						AuctionId:   1,
+						Auctioneer:  "",
+						PayingCoin:  sdk.NewInt64Coin("denom2", 100_000_000),
+						ReleaseTime: types.MustParseRFC3339("2022-12-20T00:00:00Z"),
+						Released:    false,
+					},
+				}
+			},
+			valid: false,
+		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
 			genState := types.DefaultGenesisState()
