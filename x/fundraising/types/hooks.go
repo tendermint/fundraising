@@ -1,5 +1,7 @@
 package types
 
+// DONTCOVER
+
 import (
 	time "time"
 

@@ -11,6 +11,41 @@ import (
 	_ "github.com/stretchr/testify/suite"
 )
 
+func (s *KeeperTestSuite) TestPlaceBid_Validation() {
+	_, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
+		AuctionId: 1,
+		Bidder:    s.addr(2).String(),
+		BidType:   types.BidTypeFixedPrice,
+		Price:     parseDec("0.5"),
+		Coin:      parseCoin("200_000_000denom2"),
+	})
+	s.Require().ErrorIs(err, sdkerrors.ErrNotFound)
+
+	auction := s.createFixedPriceAuction(
+		s.addr(0),
+		parseDec("1"),
+		parseCoin("1_000_000_000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	auction.SetStatus(types.AuctionStatusCancelled)
+	s.keeper.SetAuction(s.ctx, auction)
+
+	_, err = s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
+		AuctionId: auction.Id,
+		Bidder:    s.addr(2).String(),
+		BidType:   types.BidTypeFixedPrice,
+		Price:     parseDec("0.5"),
+		Coin:      parseCoin("200_000_000denom2"),
+	})
+	s.Require().ErrorIs(err, types.ErrInvalidAuctionStatus)
+}
+
 func (s *KeeperTestSuite) TestFixedPrice_InvalidStartPrice() {
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
@@ -257,6 +292,51 @@ func (s *KeeperTestSuite) TestBatchMany_OverMaxBidAmountLimit() {
 		Coin:      parseCoin("500_000_000denom1"),
 	})
 	s.Require().ErrorIs(err, types.ErrOverMaxBidAmountLimit)
+}
+
+func (s *KeeperTestSuite) TestModifyBid_Validation() {
+	err := s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{
+		AuctionId: 1,
+		Bidder:    s.addr(1).String(),
+		BidId:     5,
+		Price:     parseDec("0.8"),
+		Coin:      parseCoin("100_000_000denom2"),
+	})
+	s.Require().ErrorIs(err, sdkerrors.ErrNotFound)
+
+	auction := s.createFixedPriceAuction(
+		s.addr(0),
+		parseDec("1"),
+		parseCoin("1_000_000_000denom1"),
+		"denom2",
+		[]types.VestingSchedule{},
+		time.Now().AddDate(0, 0, -1),
+		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
+		true,
+	)
+	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
+
+	err = s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{
+		AuctionId: 1,
+		Bidder:    s.addr(1).String(),
+		BidId:     5,
+		Price:     parseDec("0.8"),
+		Coin:      parseCoin("100_000_000denom2"),
+	})
+	s.Require().ErrorIs(err, types.ErrIncorrectAuctionType)
+
+	auction.SetStatus(types.AuctionStatusCancelled)
+	s.keeper.SetAuction(s.ctx, auction)
+
+	err = s.keeper.ModifyBid(s.ctx, &types.MsgModifyBid{
+		AuctionId: 1,
+		Bidder:    s.addr(1).String(),
+		BidId:     5,
+		Price:     parseDec("0.8"),
+		Coin:      parseCoin("100_000_000denom2"),
+	})
+	s.Require().ErrorIs(err, types.ErrInvalidAuctionStatus)
+
 }
 
 func (s *KeeperTestSuite) TestModifyBid_BidTypeWorth() {

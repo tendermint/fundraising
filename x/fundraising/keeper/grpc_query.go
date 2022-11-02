@@ -248,8 +248,8 @@ func queryAllBids(ctx sdk.Context, k Querier, store sdk.KVStore, req *types.Quer
 	bidStore := prefix.NewStore(store, types.BidKeyPrefix)
 
 	pageRes, err = query.FilteredPaginate(bidStore, req.Pagination, func(key, value []byte, accumulate bool) (bool, error) {
-		bid, err := types.UnmarshalBid(k.cdc, value)
-		if err != nil {
+		var bid types.Bid
+		if err := k.cdc.Unmarshal(value, &bid); err != nil {
 			return false, nil
 		}
 
@@ -320,8 +320,8 @@ func queryBidsByIsMatched(ctx sdk.Context, k Querier, store sdk.KVStore, req *ty
 	bidStore := prefix.NewStore(store, types.BidKeyPrefix)
 
 	pageRes, err = query.FilteredPaginate(bidStore, req.Pagination, func(key, value []byte, accumulate bool) (bool, error) {
-		bid, err := types.UnmarshalBid(k.cdc, value)
-		if err != nil {
+		var bid types.Bid
+		if err := k.cdc.Unmarshal(value, &bid); err != nil {
 			return false, nil
 		}
 

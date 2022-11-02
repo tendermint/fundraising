@@ -1,10 +1,10 @@
 package cli
 
+// DONTCOVER
+
 import (
 	flag "github.com/spf13/pflag"
 )
-
-// DONTCOVER
 
 const (
 	FlagAuctionStatus = "status"

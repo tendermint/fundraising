@@ -13,6 +13,9 @@ import (
 )
 
 func (s *KeeperTestSuite) TestSellingPoolReserveAmountInvariant() {
+	logger := s.keeper.Logger(s.ctx)
+	logger.Info("TestSellingPoolReserveAmountInvariant")
+
 	// Create a fixed price auction that has started status
 	auction := s.createFixedPriceAuction(
 		s.addr(0),
@@ -45,6 +48,9 @@ func (s *KeeperTestSuite) TestSellingPoolReserveAmountInvariant() {
 }
 
 func (s *KeeperTestSuite) TestPayingPoolReserveAmountInvariant() {
+	logger := s.keeper.Logger(s.ctx)
+	logger.Info("TestPayingPoolReserveAmountInvariant")
+
 	k, ctx := s.keeper, s.ctx
 
 	auction := s.createFixedPriceAuction(
@@ -85,6 +91,9 @@ func (s *KeeperTestSuite) TestPayingPoolReserveAmountInvariant() {
 }
 
 func (s *KeeperTestSuite) TestVestingPoolReserveAmountInvariant() {
+	logger := s.keeper.Logger(s.ctx)
+	logger.Info("TestVestingPoolReserveAmountInvariant")
+
 	k, ctx := s.keeper, s.ctx
 
 	auction := s.createFixedPriceAuction(
