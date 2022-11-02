@@ -1,5 +1,7 @@
 package cmd
 
+// DONTCOVER
+
 import (
 	"os"
 	"path/filepath"
