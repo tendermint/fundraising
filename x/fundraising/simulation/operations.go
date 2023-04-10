@@ -1,6 +1,8 @@
 package simulation
 
 import (
+	"math/rand"
+
 	simappparams "cosmossdk.io/simapp/params"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -8,10 +10,10 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
+
 	appparams "github.com/tendermint/fundraising/app/params"
 	"github.com/tendermint/fundraising/x/fundraising/keeper"
 	"github.com/tendermint/fundraising/x/fundraising/types"
-	"math/rand"
 )
 
 // Simulation operation weights constants.
