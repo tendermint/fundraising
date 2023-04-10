@@ -224,7 +224,7 @@ func AppStateFromGenesisFileFn(r io.Reader, cdc codec.JSONCodec, genesisFile str
 	for i, acc := range authGenesis.Accounts {
 		// Pick a random private key, since we don't know the actual key
 		// This should be fine as it's only used for mock Tendermint validators
-		// and these Keys are never actually used to sign by mock Tendermint.
+		// and these keys are never actually used to sign by mock Tendermint.
 		privkeySeed := make([]byte, 15)
 		if _, err := r.Read(privkeySeed); err != nil {
 			panic(err)

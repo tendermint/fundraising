@@ -180,8 +180,7 @@ type App struct {
 	invCheckPeriod uint
 
 	// keys to access the substores
-	// Keys substore
-	Keys    map[string]*storetypes.KVStoreKey
+	keys    map[string]*storetypes.KVStoreKey
 	tkeys   map[string]*storetypes.TransientStoreKey
 	memKeys map[string]*storetypes.MemoryStoreKey
 
@@ -265,7 +264,7 @@ func New(
 		appCodec:          appCodec,
 		interfaceRegistry: interfaceRegistry,
 		invCheckPeriod:    invCheckPeriod,
-		Keys:              keys,
+		keys:              keys,
 		tkeys:             tkeys,
 		memKeys:           memKeys,
 	}
@@ -658,7 +657,7 @@ func (app *App) InterfaceRegistry() types.InterfaceRegistry {
 //
 // NOTE: This is solely to be used for testing purposes.
 func (app *App) GetKey(storeKey string) *storetypes.KVStoreKey {
-	return app.Keys[storeKey]
+	return app.keys[storeKey]
 }
 
 // GetTKey returns the TransientStoreKey for the provided store key.

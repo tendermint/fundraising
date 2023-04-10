@@ -234,22 +234,22 @@ func TestAppImportExport(t *testing.T) {
 	fmt.Printf("comparing stores...\n")
 
 	storeKeysPrefixes := []StoreKeysPrefixes{
-		{bApp.Keys[authtypes.StoreKey], newApp.Keys[authtypes.StoreKey], [][]byte{}},
-		{bApp.Keys[stakingtypes.StoreKey], newApp.Keys[stakingtypes.StoreKey],
+		{bApp.GetKey(authtypes.StoreKey), newApp.GetKey(authtypes.StoreKey), [][]byte{}},
+		{bApp.GetKey(stakingtypes.StoreKey), newApp.GetKey(stakingtypes.StoreKey),
 			[][]byte{
 				stakingtypes.UnbondingQueueKey, stakingtypes.RedelegationQueueKey, stakingtypes.ValidatorQueueKey,
 				stakingtypes.HistoricalInfoKey,
 			}}, // ordering may change but it doesn't matter
-		{bApp.Keys[slashingtypes.StoreKey], newApp.Keys[slashingtypes.StoreKey], [][]byte{}},
-		{bApp.Keys[minttypes.StoreKey], newApp.Keys[minttypes.StoreKey], [][]byte{}},
-		{bApp.Keys[distrtypes.StoreKey], newApp.Keys[distrtypes.StoreKey], [][]byte{}},
-		{bApp.Keys[banktypes.StoreKey], newApp.Keys[banktypes.StoreKey], [][]byte{banktypes.BalancesPrefix}},
-		{bApp.Keys[paramstypes.StoreKey], newApp.Keys[paramstypes.StoreKey], [][]byte{}},
-		{bApp.Keys[govtypes.StoreKey], newApp.Keys[govtypes.StoreKey], [][]byte{}},
-		{bApp.Keys[evidencetypes.StoreKey], newApp.Keys[evidencetypes.StoreKey], [][]byte{}},
-		{bApp.Keys[capabilitytypes.StoreKey], newApp.Keys[capabilitytypes.StoreKey], [][]byte{}},
+		{bApp.GetKey(slashingtypes.StoreKey), newApp.GetKey(slashingtypes.StoreKey), [][]byte{}},
+		{bApp.GetKey(minttypes.StoreKey), newApp.GetKey(minttypes.StoreKey), [][]byte{}},
+		{bApp.GetKey(distrtypes.StoreKey), newApp.GetKey(distrtypes.StoreKey), [][]byte{}},
+		{bApp.GetKey(banktypes.StoreKey), newApp.GetKey(banktypes.StoreKey), [][]byte{banktypes.BalancesPrefix}},
+		{bApp.GetKey(paramstypes.StoreKey), newApp.GetKey(paramstypes.StoreKey), [][]byte{}},
+		{bApp.GetKey(govtypes.StoreKey), newApp.GetKey(govtypes.StoreKey), [][]byte{}},
+		{bApp.GetKey(evidencetypes.StoreKey), newApp.GetKey(evidencetypes.StoreKey), [][]byte{}},
+		{bApp.GetKey(capabilitytypes.StoreKey), newApp.GetKey(capabilitytypes.StoreKey), [][]byte{}},
 		{bApp.GetKey(authzkeeper.StoreKey), newApp.GetKey(authzkeeper.StoreKey), [][]byte{authzkeeper.GrantKey, authzkeeper.GrantQueuePrefix}},
-		{bApp.Keys[fundraisingtypes.StoreKey], newApp.Keys[fundraisingtypes.StoreKey], [][]byte{}},
+		{bApp.GetKey(fundraisingtypes.StoreKey), newApp.GetKey(fundraisingtypes.StoreKey), [][]byte{}},
 	}
 
 	for _, skp := range storeKeysPrefixes {
@@ -308,7 +308,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		os.Stdout,
 		bApp.BaseApp,
 		app.AppStateFn(bApp.AppCodec(), bApp.SimulationManager()),
-		simtypes.RandomAccounts, // replace with own random account function if using Keys other than secp256k1
+		simtypes.RandomAccounts, // replace with own random account function if using keys other than secp256k1
 		simtestutil.SimulationOperations(bApp, bApp.AppCodec(), config),
 		bApp.ModuleAccountAddrs(),
 		config,
@@ -376,7 +376,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		os.Stdout,
 		newApp.BaseApp,
 		app.AppStateFn(bApp.AppCodec(), bApp.SimulationManager()),
-		simtypes.RandomAccounts, // Replace with own random account function if using Keys other than secp256k1
+		simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
 		simtestutil.SimulationOperations(newApp, newApp.AppCodec(), config),
 		bApp.ModuleAccountAddrs(),
 		config,
@@ -442,7 +442,7 @@ func TestAppStateDeterminism(t *testing.T) {
 				os.Stdout,
 				bApp.BaseApp,
 				app.AppStateFn(bApp.AppCodec(), bApp.SimulationManager()),
-				simtypes.RandomAccounts, // Replace with own random account function if using Keys other than secp256k1
+				simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
 				simtestutil.SimulationOperations(bApp, bApp.AppCodec(), config),
 				bApp.ModuleAccountAddrs(),
 				config,
