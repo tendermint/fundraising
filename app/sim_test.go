@@ -1,4 +1,4 @@
-package app
+package app_test
 
 // DONTCOVER
 
@@ -8,13 +8,15 @@ import (
 	"math/rand"
 	"os"
 	"testing"
+	"time"
 
-	"github.com/stretchr/testify/require"
-
+	dbm "github.com/cometbft/cometbft-db"
+	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/libs/log"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/simapp"
-	"github.com/cosmos/cosmos-sdk/simapp/helpers"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -27,19 +29,18 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
+	simcli "github.com/cosmos/cosmos-sdk/x/simulation/client/cli"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/log"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	dbm "github.com/tendermint/tm-db"
+	"github.com/stretchr/testify/require"
 
+	"github.com/tendermint/fundraising/app"
 	"github.com/tendermint/fundraising/cmd"
 	fundraisingtypes "github.com/tendermint/fundraising/x/fundraising/types"
 )
 
 func init() {
-	simapp.GetSimulatorFlags()
+	simcli.GetSimulatorFlags()
 }
 
 type StoreKeysPrefixes struct {
@@ -56,147 +57,199 @@ func fauxMerkleModeOpt(bapp *baseapp.BaseApp) {
 
 // go test ./app -v -benchmem -run=^$ -bench ^BenchmarkSimulation -Commit=true -cpuprofile cpu.out
 func BenchmarkSimulation(b *testing.B) {
-	simapp.FlagSeedValue = 10
-	simapp.FlagVerboseValue = true
+	simcli.FlagSeedValue = 10
+	simcli.FlagVerboseValue = true
 
-	config, db, dir, logger, _, err := simapp.SetupSimulation("goleveldb-app-sim", "Simulation")
+	config := simcli.NewConfigFromFlags()
+	config.ChainID = app.DefaultChainID
+	db, dir, logger, _, err := simtestutil.SetupSimulation(
+		config,
+		"leveldb-app-sim",
+		"Simulation",
+		simcli.FlagVerboseValue,
+		simcli.FlagEnabledValue,
+	)
 	require.NoError(b, err, "simulation setup failed")
 
 	b.Cleanup(func() {
-		db.Close()
-		err = os.RemoveAll(dir)
-		require.NoError(b, err)
+		require.NoError(b, db.Close())
+		require.NoError(b, os.RemoveAll(dir))
 	})
 
-	encoding := cmd.MakeEncodingConfig(ModuleBasics)
-	cosmoscmdApp := New(
-		logger, db, nil, true, map[int64]bool{},
-		DefaultNodeHome, simapp.FlagPeriodValue, encoding,
-		simapp.EmptyAppOptions{}, fauxMerkleModeOpt,
+	encoding := cmd.MakeEncodingConfig(app.ModuleBasics)
+	cosmoscmdApp := app.New(
+		logger,
+		db,
+		nil,
+		true,
+		map[int64]bool{},
+		app.DefaultNodeHome,
+		0,
+		encoding,
+		simtestutil.EmptyAppOptions{},
+		baseapp.SetChainID(app.DefaultChainID),
 	)
 
-	app, ok := cosmoscmdApp.(*App)
+	bApp, ok := cosmoscmdApp.(*app.App)
 	require.True(b, ok)
 
 	// Run randomized simulations
 	_, simParams, simErr := simulation.SimulateFromSeed(
 		b,
 		os.Stdout,
-		app.GetBaseApp(),
-		simapp.AppStateFn(app.AppCodec(), app.SimulationManager()),
+		bApp.GetBaseApp(),
+		app.AppStateFn(
+			bApp.AppCodec(),
+			bApp.SimulationManager(),
+		),
 		simtypes.RandomAccounts,
-		simapp.SimulationOperations(app, app.AppCodec(), config),
-		app.ModuleAccountAddrs(),
+		simtestutil.SimulationOperations(bApp, bApp.AppCodec(), config),
+		bApp.ModuleAccountAddrs(),
 		config,
-		app.AppCodec(),
+		bApp.AppCodec(),
 	)
 
 	// export state and simParams before the simulation error is checked
-	err = simapp.CheckExportSimulation(app, config, simParams)
+	err = simtestutil.CheckExportSimulation(bApp, config, simParams)
 	require.NoError(b, err)
 	require.NoError(b, simErr)
 
 	if config.Commit {
-		simapp.PrintStats(db)
+		simtestutil.PrintStats(db)
 	}
 }
 
 func TestAppImportExport(t *testing.T) {
-	config, db, dir, logger, skip, err := simapp.SetupSimulation("leveldb-app-sim", "Simulation")
+	config := simcli.NewConfigFromFlags()
+	config.ChainID = app.DefaultChainID
+	db, dir, logger, skip, err := simtestutil.SetupSimulation(
+		config,
+		"leveldb-app-sim",
+		"Simulation",
+		simcli.FlagVerboseValue,
+		simcli.FlagEnabledValue,
+	)
 	if skip {
 		t.Skip("skipping application import/export simulation")
 	}
 	require.NoError(t, err, "simulation setup failed")
 
 	defer func() {
-		db.Close()
+		require.NoError(t, db.Close())
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	cosmoscmdApp := New(
-		logger, db, nil, true, map[int64]bool{},
-		DefaultNodeHome, simapp.FlagPeriodValue, cmd.MakeEncodingConfig(ModuleBasics),
-		simapp.EmptyAppOptions{}, fauxMerkleModeOpt,
+	encoding := cmd.MakeEncodingConfig(app.ModuleBasics)
+	cosmoscmdApp := app.New(
+		logger,
+		db,
+		nil,
+		true,
+		map[int64]bool{},
+		app.DefaultNodeHome,
+		0,
+		encoding,
+		simtestutil.EmptyAppOptions{},
+		baseapp.SetChainID(app.DefaultChainID),
+		fauxMerkleModeOpt,
 	)
 
-	app, ok := cosmoscmdApp.(*App)
+	bApp, ok := cosmoscmdApp.(*app.App)
 	require.True(t, ok)
 
 	// run randomized simulation
 	_, simParams, simErr := simulation.SimulateFromSeed(
 		t,
 		os.Stdout,
-		app.GetBaseApp(),
-		simapp.AppStateFn(app.AppCodec(), app.SimulationManager()),
+		bApp.GetBaseApp(),
+		app.AppStateFn(
+			bApp.AppCodec(),
+			bApp.SimulationManager(),
+		),
 		simtypes.RandomAccounts,
-		simapp.SimulationOperations(app, app.AppCodec(), config),
-		app.ModuleAccountAddrs(),
+		simtestutil.SimulationOperations(bApp, bApp.AppCodec(), config),
+		bApp.ModuleAccountAddrs(),
 		config,
-		app.AppCodec(),
+		bApp.AppCodec(),
 	)
 	require.NoError(t, err)
 
 	// export state and simParams before the simulation error is checked
-	err = simapp.CheckExportSimulation(app, config, simParams)
+	err = simtestutil.CheckExportSimulation(bApp, config, simParams)
 	require.NoError(t, err)
 	require.NoError(t, simErr)
 
 	if config.Commit {
-		simapp.PrintStats(db)
+		simtestutil.PrintStats(db)
 	}
 
 	fmt.Printf("exporting genesis...\n")
 
-	exported, err := app.ExportAppStateAndValidators(false, []string{})
+	exported, err := bApp.ExportAppStateAndValidators(false, []string{}, []string{})
 	require.NoError(t, err)
 
 	fmt.Printf("importing genesis...\n")
 
-	_, newDB, newDir, _, _, err := simapp.SetupSimulation("leveldb-app-sim-2", "Simulation-2")
+	config.ChainID = app.DefaultChainID
+	newDB, newDir, _, _, err := simtestutil.SetupSimulation(
+		config,
+		"leveldb-app-sim-2",
+		"Simulation-2",
+		simcli.FlagVerboseValue,
+		simcli.FlagEnabledValue,
+	)
 	require.NoError(t, err, "simulation setup failed")
 
 	defer func() {
-		newDB.Close()
+		require.NoError(t, newDB.Close())
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	cosmoscmdNewApp := New(
-		log.NewNopLogger(), newDB, nil, true, map[int64]bool{},
-		DefaultNodeHome, simapp.FlagPeriodValue, cmd.MakeEncodingConfig(ModuleBasics),
-		simapp.EmptyAppOptions{}, fauxMerkleModeOpt,
+	cosmoscmdNewApp := app.New(
+		logger,
+		db,
+		nil,
+		true,
+		map[int64]bool{},
+		app.DefaultNodeHome,
+		0,
+		encoding,
+		simtestutil.EmptyAppOptions{},
+		baseapp.SetChainID(app.DefaultChainID),
+		fauxMerkleModeOpt,
 	)
 
-	newApp, ok := cosmoscmdNewApp.(*App)
+	newApp, ok := cosmoscmdNewApp.(*app.App)
 	require.True(t, ok)
 
-	var genesisState GenesisState
+	var genesisState app.GenesisState
 	err = json.Unmarshal(exported.AppState, &genesisState)
 	require.NoError(t, err)
 
-	ctxA := app.NewContext(true, tmproto.Header{Height: app.LastBlockHeight()})
-	ctxB := newApp.NewContext(true, tmproto.Header{Height: app.LastBlockHeight()})
-	newApp.mm.InitGenesis(ctxB, app.AppCodec(), genesisState)
+	ctxA := bApp.NewContext(true, tmproto.Header{Height: bApp.LastBlockHeight()})
+	ctxB := newApp.NewContext(true, tmproto.Header{Height: bApp.LastBlockHeight()})
+	newApp.InitGenesis(ctxB, bApp.AppCodec(), genesisState)
 	newApp.StoreConsensusParams(ctxB, exported.ConsensusParams)
 
 	fmt.Printf("comparing stores...\n")
 
 	storeKeysPrefixes := []StoreKeysPrefixes{
-		{app.keys[authtypes.StoreKey], newApp.keys[authtypes.StoreKey], [][]byte{}},
-		{app.keys[stakingtypes.StoreKey], newApp.keys[stakingtypes.StoreKey],
+		{bApp.Keys[authtypes.StoreKey], newApp.Keys[authtypes.StoreKey], [][]byte{}},
+		{bApp.Keys[stakingtypes.StoreKey], newApp.Keys[stakingtypes.StoreKey],
 			[][]byte{
 				stakingtypes.UnbondingQueueKey, stakingtypes.RedelegationQueueKey, stakingtypes.ValidatorQueueKey,
 				stakingtypes.HistoricalInfoKey,
 			}}, // ordering may change but it doesn't matter
-		{app.keys[slashingtypes.StoreKey], newApp.keys[slashingtypes.StoreKey], [][]byte{}},
-		{app.keys[minttypes.StoreKey], newApp.keys[minttypes.StoreKey], [][]byte{}},
-		{app.keys[distrtypes.StoreKey], newApp.keys[distrtypes.StoreKey], [][]byte{}},
-		{app.keys[banktypes.StoreKey], newApp.keys[banktypes.StoreKey], [][]byte{banktypes.BalancesPrefix}},
-		{app.keys[paramstypes.StoreKey], newApp.keys[paramstypes.StoreKey], [][]byte{}},
-		{app.keys[govtypes.StoreKey], newApp.keys[govtypes.StoreKey], [][]byte{}},
-		{app.keys[evidencetypes.StoreKey], newApp.keys[evidencetypes.StoreKey], [][]byte{}},
-		{app.keys[capabilitytypes.StoreKey], newApp.keys[capabilitytypes.StoreKey], [][]byte{}},
-		{app.GetKey(authzkeeper.StoreKey), newApp.GetKey(authzkeeper.StoreKey), [][]byte{authzkeeper.GrantKey, authzkeeper.GrantQueuePrefix}},
-		{app.keys[fundraisingtypes.StoreKey], newApp.keys[fundraisingtypes.StoreKey], [][]byte{}},
+		{bApp.Keys[slashingtypes.StoreKey], newApp.Keys[slashingtypes.StoreKey], [][]byte{}},
+		{bApp.Keys[minttypes.StoreKey], newApp.Keys[minttypes.StoreKey], [][]byte{}},
+		{bApp.Keys[distrtypes.StoreKey], newApp.Keys[distrtypes.StoreKey], [][]byte{}},
+		{bApp.Keys[banktypes.StoreKey], newApp.Keys[banktypes.StoreKey], [][]byte{banktypes.BalancesPrefix}},
+		{bApp.Keys[paramstypes.StoreKey], newApp.Keys[paramstypes.StoreKey], [][]byte{}},
+		{bApp.Keys[govtypes.StoreKey], newApp.Keys[govtypes.StoreKey], [][]byte{}},
+		{bApp.Keys[evidencetypes.StoreKey], newApp.Keys[evidencetypes.StoreKey], [][]byte{}},
+		{bApp.Keys[capabilitytypes.StoreKey], newApp.Keys[capabilitytypes.StoreKey], [][]byte{}},
+		{bApp.GetKey(authzkeeper.StoreKey), newApp.GetKey(authzkeeper.StoreKey), [][]byte{authzkeeper.GrantKey, authzkeeper.GrantQueuePrefix}},
+		{bApp.Keys[fundraisingtypes.StoreKey], newApp.Keys[fundraisingtypes.StoreKey], [][]byte{}},
 	}
 
 	for _, skp := range storeKeysPrefixes {
@@ -207,51 +260,68 @@ func TestAppImportExport(t *testing.T) {
 		require.Equal(t, len(failedKVAs), len(failedKVBs), "unequal sets of key-values to compare")
 
 		fmt.Printf("compared %d different key/value pairs between %s and %s\n", len(failedKVAs), skp.A, skp.B)
-		require.Equal(t, len(failedKVAs), 0, simapp.GetSimulationLog(skp.A.Name(), app.SimulationManager().StoreDecoders, failedKVAs, failedKVBs))
+		require.Equal(t, len(failedKVAs), 0, simtestutil.GetSimulationLog(skp.A.Name(), bApp.SimulationManager().StoreDecoders, failedKVAs, failedKVBs))
 	}
 }
 
 func TestAppSimulationAfterImport(t *testing.T) {
-	config, db, dir, logger, skip, err := simapp.SetupSimulation("leveldb-app-sim", "Simulation")
+	config := simcli.NewConfigFromFlags()
+	config.ChainID = app.DefaultChainID
+	db, dir, logger, skip, err := simtestutil.SetupSimulation(
+		config,
+		"leveldb-app-sim",
+		"Simulation",
+		simcli.FlagVerboseValue,
+		simcli.FlagEnabledValue,
+	)
 	if skip {
 		t.Skip("skipping application simulation after import")
 	}
 	require.NoError(t, err, "simulation setup failed")
 
 	defer func() {
-		db.Close()
+		require.NoError(t, db.Close())
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	cosmoscmdApp := New(
-		logger, db, nil, true, map[int64]bool{},
-		DefaultNodeHome, simapp.FlagPeriodValue, cmd.MakeEncodingConfig(ModuleBasics),
-		simapp.EmptyAppOptions{}, fauxMerkleModeOpt,
+	encoding := cmd.MakeEncodingConfig(app.ModuleBasics)
+	cosmoscmdApp := app.New(
+		logger,
+		db,
+		nil,
+		true,
+		map[int64]bool{},
+		app.DefaultNodeHome,
+		0,
+		encoding,
+		simtestutil.EmptyAppOptions{},
+		baseapp.SetChainID(app.DefaultChainID),
+		fauxMerkleModeOpt,
 	)
 
-	app, ok := cosmoscmdApp.(*App)
+	bApp, ok := cosmoscmdApp.(*app.App)
 	require.True(t, ok)
 
 	// run randomized simulation
 	stopEarly, simParams, simErr := simulation.SimulateFromSeed(
 		t,
 		os.Stdout,
-		app.BaseApp,
-		AppStateFn(app.AppCodec(), app.SimulationManager()),
-		simtypes.RandomAccounts, // replace with own random account function if using keys other than secp256k1
-		simapp.SimulationOperations(app, app.AppCodec(), config),
-		app.ModuleAccountAddrs(),
+		bApp.BaseApp,
+		app.AppStateFn(bApp.AppCodec(), bApp.SimulationManager()),
+		simtypes.RandomAccounts, // replace with own random account function if using Keys other than secp256k1
+		simtestutil.SimulationOperations(bApp, bApp.AppCodec(), config),
+		bApp.ModuleAccountAddrs(),
 		config,
-		app.AppCodec(),
+		bApp.AppCodec(),
 	)
 
 	// export state and simParams before the simulation error is checked
-	err = simapp.CheckExportSimulation(app, config, simParams)
+	err = simtestutil.CheckExportSimulation(bApp, config, simParams)
 	require.NoError(t, err)
 	require.NoError(t, simErr)
 
 	if config.Commit {
-		simapp.PrintStats(db)
+		simtestutil.PrintStats(db)
 	}
 
 	if stopEarly {
@@ -261,26 +331,40 @@ func TestAppSimulationAfterImport(t *testing.T) {
 
 	fmt.Printf("exporting genesis...\n")
 
-	exported, err := app.ExportAppStateAndValidators(true, []string{})
+	exported, err := bApp.ExportAppStateAndValidators(true, []string{}, []string{})
 	require.NoError(t, err)
 
 	fmt.Printf("importing genesis...\n")
 
-	_, newDB, newDir, _, _, err := simapp.SetupSimulation("leveldb-app-sim-2", "Simulation-2")
+	newDB, newDir, _, _, err := simtestutil.SetupSimulation(
+		config,
+		"leveldb-app-sim-2",
+		"Simulation-2",
+		simcli.FlagVerboseValue,
+		simcli.FlagEnabledValue,
+	)
 	require.NoError(t, err, "simulation setup failed")
 
 	defer func() {
-		newDB.Close()
+		require.NoError(t, newDB.Close())
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	cosmoscmdNewApp := New(
-		logger, newDB, nil, true, map[int64]bool{},
-		DefaultNodeHome, simapp.FlagPeriodValue, cmd.MakeEncodingConfig(ModuleBasics),
-		simapp.EmptyAppOptions{}, fauxMerkleModeOpt,
+	cosmoscmdNewApp := app.New(
+		logger,
+		db,
+		nil,
+		true,
+		map[int64]bool{},
+		app.DefaultNodeHome,
+		0,
+		encoding,
+		simtestutil.EmptyAppOptions{},
+		baseapp.SetChainID(app.DefaultChainID),
+		fauxMerkleModeOpt,
 	)
 
-	newApp, ok := cosmoscmdNewApp.(*App)
+	newApp, ok := cosmoscmdNewApp.(*app.App)
 	require.True(t, ok)
 
 	newApp.InitChain(abci.RequestInitChain{
@@ -291,52 +375,61 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		t,
 		os.Stdout,
 		newApp.BaseApp,
-		AppStateFn(app.AppCodec(), app.SimulationManager()),
-		simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
-		simapp.SimulationOperations(newApp, newApp.AppCodec(), config),
-		app.ModuleAccountAddrs(),
+		app.AppStateFn(bApp.AppCodec(), bApp.SimulationManager()),
+		simtypes.RandomAccounts, // Replace with own random account function if using Keys other than secp256k1
+		simtestutil.SimulationOperations(newApp, newApp.AppCodec(), config),
+		bApp.ModuleAccountAddrs(),
 		config,
-		app.AppCodec(),
+		bApp.AppCodec(),
 	)
 	require.NoError(t, err)
 }
 
 func TestAppStateDeterminism(t *testing.T) {
-	if !simapp.FlagEnabledValue {
+	if !simcli.FlagEnabledValue {
 		t.Skip("skipping application simulation")
 	}
 
-	config := simapp.NewConfigFromFlags()
+	config := simcli.NewConfigFromFlags()
 	config.InitialBlockHeight = 1
 	config.ExportParamsPath = ""
-	config.OnOperation = false
-	config.AllInvariants = false
-	config.ChainID = helpers.SimAppChainID
+	config.OnOperation = true
+	config.AllInvariants = true
 
-	numSeeds := 3
-	numTimesToRunPerSeed := 5
-	appHashList := make([]json.RawMessage, numTimesToRunPerSeed)
-
+	var (
+		r                    = rand.New(rand.NewSource(time.Now().Unix()))
+		numSeeds             = 3
+		numTimesToRunPerSeed = 5
+		appHashList          = make([]json.RawMessage, numTimesToRunPerSeed)
+	)
 	for i := 0; i < numSeeds; i++ {
-		config.Seed = rand.Int63()
+		config.Seed = r.Int63()
 
 		for j := 0; j < numTimesToRunPerSeed; j++ {
 			var logger log.Logger
-			if simapp.FlagVerboseValue {
+			if simcli.FlagVerboseValue {
 				logger = log.TestingLogger()
 			} else {
 				logger = log.NewNopLogger()
 			}
 
 			db := dbm.NewMemDB()
-			encoding := cmd.MakeEncodingConfig(ModuleBasics)
-			cosmoscmdApp := New(
-				logger, db, nil, true, map[int64]bool{},
-				DefaultNodeHome, simapp.FlagPeriodValue, encoding,
-				simapp.EmptyAppOptions{}, fauxMerkleModeOpt,
+			encoding := cmd.MakeEncodingConfig(app.ModuleBasics)
+			cosmoscmdApp := app.New(
+				logger,
+				db,
+				nil,
+				true,
+				map[int64]bool{},
+				app.DefaultNodeHome,
+				0,
+				encoding,
+				simtestutil.EmptyAppOptions{},
+				baseapp.SetChainID(app.DefaultChainID),
+				fauxMerkleModeOpt,
 			)
 
-			app, ok := cosmoscmdApp.(*App)
+			bApp, ok := cosmoscmdApp.(*app.App)
 			require.True(t, ok)
 
 			fmt.Printf(
@@ -347,21 +440,21 @@ func TestAppStateDeterminism(t *testing.T) {
 			_, _, err := simulation.SimulateFromSeed(
 				t,
 				os.Stdout,
-				app.BaseApp,
-				AppStateFn(app.AppCodec(), app.SimulationManager()),
-				simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
-				simapp.SimulationOperations(app, app.AppCodec(), config),
-				app.ModuleAccountAddrs(),
+				bApp.BaseApp,
+				app.AppStateFn(bApp.AppCodec(), bApp.SimulationManager()),
+				simtypes.RandomAccounts, // Replace with own random account function if using Keys other than secp256k1
+				simtestutil.SimulationOperations(bApp, bApp.AppCodec(), config),
+				bApp.ModuleAccountAddrs(),
 				config,
-				app.AppCodec(),
+				bApp.AppCodec(),
 			)
 			require.NoError(t, err)
 
 			if config.Commit {
-				simapp.PrintStats(db)
+				simtestutil.PrintStats(db)
 			}
 
-			appHash := app.LastCommitID().Hash
+			appHash := bApp.LastCommitID().Hash
 			appHashList[j] = appHash
 
 			if j != 0 {

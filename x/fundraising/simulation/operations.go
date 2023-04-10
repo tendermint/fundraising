@@ -1,21 +1,17 @@
 package simulation
 
 import (
-	"math/rand"
-
-	"github.com/tendermint/fundraising/cmd"
-
+	simappparams "cosmossdk.io/simapp/params"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
-
 	appparams "github.com/tendermint/fundraising/app/params"
 	"github.com/tendermint/fundraising/x/fundraising/keeper"
 	"github.com/tendermint/fundraising/x/fundraising/types"
+	"math/rand"
 )
 
 // Simulation operation weights constants.
@@ -97,7 +93,7 @@ func WeightedOperations(
 // nolint: interfacer
 func SimulateMsgCreateFixedPriceAuction(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(
-		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
+		r *rand.Rand, bApp *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 
@@ -140,8 +136,8 @@ func SimulateMsgCreateFixedPriceAuction(ak types.AccountKeeper, bk types.BankKee
 
 		txCtx := simulation.OperationInput{
 			R:               r,
-			App:             app,
-			TxGen:           cmd.MakeEncodingConfig(simapp.ModuleBasics).TxConfig,
+			App:             bApp,
+			TxGen:           simappparams.MakeTestEncodingConfig().TxConfig,
 			Cdc:             nil,
 			Msg:             msg,
 			MsgType:         msg.Type(),
@@ -161,7 +157,7 @@ func SimulateMsgCreateFixedPriceAuction(ak types.AccountKeeper, bk types.BankKee
 // nolint: interfacer
 func SimulateMsgCreateBatchAuction(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(
-		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
+		r *rand.Rand, bApp *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 
@@ -210,8 +206,8 @@ func SimulateMsgCreateBatchAuction(ak types.AccountKeeper, bk types.BankKeeper, 
 
 		txCtx := simulation.OperationInput{
 			R:               r,
-			App:             app,
-			TxGen:           cmd.MakeEncodingConfig(simapp.ModuleBasics).TxConfig,
+			App:             bApp,
+			TxGen:           simappparams.MakeTestEncodingConfig().TxConfig,
 			Cdc:             nil,
 			Msg:             msg,
 			MsgType:         msg.Type(),
@@ -231,7 +227,7 @@ func SimulateMsgCreateBatchAuction(ak types.AccountKeeper, bk types.BankKeeper, 
 // nolint: interfacer
 func SimulateMsgCancelAuction(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(
-		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
+		r *rand.Rand, bApp *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		auctions := k.GetAuctions(ctx)
 		r.Shuffle(len(auctions), func(i, j int) {
@@ -271,8 +267,8 @@ func SimulateMsgCancelAuction(ak types.AccountKeeper, bk types.BankKeeper, k kee
 
 		txCtx := simulation.OperationInput{
 			R:               r,
-			App:             app,
-			TxGen:           cmd.MakeEncodingConfig(simapp.ModuleBasics).TxConfig,
+			App:             bApp,
+			TxGen:           simappparams.MakeTestEncodingConfig().TxConfig,
 			Cdc:             nil,
 			Msg:             msg,
 			MsgType:         msg.Type(),
@@ -292,7 +288,7 @@ func SimulateMsgCancelAuction(ak types.AccountKeeper, bk types.BankKeeper, k kee
 // nolint: interfacer
 func SimulateMsgPlaceBid(ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(
-		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
+		r *rand.Rand, bApp *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		auctions := k.GetAuctions(ctx)
 		if len(auctions) == 0 {
@@ -367,8 +363,8 @@ func SimulateMsgPlaceBid(ak types.AccountKeeper, bk types.BankKeeper, k keeper.K
 
 		txCtx := simulation.OperationInput{
 			R:               r,
-			App:             app,
-			TxGen:           cmd.MakeEncodingConfig(simapp.ModuleBasics).TxConfig,
+			App:             bApp,
+			TxGen:           simappparams.MakeTestEncodingConfig().TxConfig,
 			Cdc:             nil,
 			Msg:             msg,
 			MsgType:         msg.Type(),

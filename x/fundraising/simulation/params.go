@@ -14,9 +14,9 @@ import (
 
 // ParamChanges defines the parameters that can be modified by param change proposals.
 // on the simulation.
-func ParamChanges(r *rand.Rand) []simtypes.ParamChange {
-	return []simtypes.ParamChange{
-		simulation.NewSimParamChange(types.ModuleName, string(types.KeyAuctionCreationFee),
+func ParamChanges(r *rand.Rand) []simtypes.LegacyParamChange {
+	return []simtypes.LegacyParamChange{
+		simulation.NewSimLegacyParamChange(types.ModuleName, string(types.KeyAuctionCreationFee),
 			func(r *rand.Rand) string {
 				bz, err := GenAuctionCreationFee(r).MarshalJSON()
 				if err != nil {
@@ -25,7 +25,7 @@ func ParamChanges(r *rand.Rand) []simtypes.ParamChange {
 				return string(bz)
 			},
 		),
-		simulation.NewSimParamChange(types.ModuleName, string(types.KeyExtendedPeriod),
+		simulation.NewSimLegacyParamChange(types.ModuleName, string(types.KeyExtendedPeriod),
 			func(r *rand.Rand) string {
 				return fmt.Sprintf("%d", GenExtendedPeriod(r))
 			},

@@ -4,17 +4,16 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
-	"github.com/cosmos/cosmos-sdk/simapp"
+	simappparams "cosmossdk.io/simapp/params"
 	"github.com/cosmos/cosmos-sdk/types/kv"
+	"github.com/stretchr/testify/require"
 
 	"github.com/tendermint/fundraising/x/fundraising/simulation"
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
 
 func TestDecodeFarmingStore(t *testing.T) {
-	cdc := simapp.MakeTestEncodingConfig().Codec
+	cdc := simappparams.MakeTestEncodingConfig().Codec
 	dec := simulation.NewDecodeStore(cdc)
 
 	baseAuction := types.BaseAuction{}

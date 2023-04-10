@@ -6,75 +6,68 @@ import (
 	"encoding/json"
 	"time"
 
+	tmdb "github.com/cometbft/cometbft-db"
+	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/libs/log"
+	tmtypes "github.com/cometbft/cometbft/types"
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
-
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/testutil/mock"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/log"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmtypes "github.com/tendermint/tendermint/types"
-	tmdb "github.com/tendermint/tm-db"
 
 	"github.com/tendermint/fundraising/app"
 	"github.com/tendermint/fundraising/cmd"
 )
 
-// defaultConsensusParams defines the default Tendermint consensus params used in testing.
-var defaultConsensusParams = &abci.ConsensusParams{
-	Block: &abci.BlockParams{
-		MaxBytes: 200000,
-		MaxGas:   2000000,
-	},
-	Evidence: &tmproto.EvidenceParams{
-		MaxAgeNumBlocks: 302400,
-		MaxAgeDuration:  504 * time.Hour, // 3 weeks is the max duration
-		MaxBytes:        10000,
-	},
-	Validator: &tmproto.ValidatorParams{
-		PubKeyTypes: []string{
-			tmtypes.ABCIPubKeyTypeEd25519,
-		},
-	},
-}
-
 // New creates application instance with in-memory database and disabled logging.
-func New(dir string) *app.App {
-	db := tmdb.NewMemDB()
-	logger := log.NewNopLogger()
-	encCdc := cmd.MakeEncodingConfig(app.ModuleBasics)
+func New(chainID, dir string) *app.App {
+	var (
+		db     = tmdb.NewMemDB()
+		logger = log.NewNopLogger()
+		encCdc = cmd.MakeEncodingConfig(app.ModuleBasics)
 
-	a := app.New(
-		logger, db, nil, true, map[int64]bool{}, dir, 0, encCdc, simapp.EmptyAppOptions{},
+		a = app.New(
+			logger,
+			db,
+			nil,
+			true,
+			map[int64]bool{},
+			dir,
+			0,
+			encCdc,
+			simtestutil.EmptyAppOptions{},
+			baseapp.SetChainID(chainID),
+		)
+
+		genesisState = app.NewDefaultGenesisState(encCdc.Marshaler)
+		privVal      = mock.NewPV()
+		pubKey, _    = privVal.GetPubKey()
+
+		// create validator set with single validator
+		validator = tmtypes.NewValidator(pubKey, 1)
+		valSet    = tmtypes.NewValidatorSet([]*tmtypes.Validator{validator})
+
+		// generate genesis account
+		senderPrivKey = secp256k1.GenPrivKey()
+		acc           = authtypes.NewBaseAccount(senderPrivKey.PubKey().Address().Bytes(), senderPrivKey.PubKey(), 0, 0)
+		balances      = banktypes.Balance{
+			Address: acc.GetAddress().String(),
+			Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100000000000000))),
+		}
 	)
 
-	genesisState := app.NewDefaultGenesisState(encCdc.Marshaler)
-	privVal := mock.NewPV()
-	pubKey, _ := privVal.GetPubKey()
-	// create validator set with single validator
-	validator := tmtypes.NewValidator(pubKey, 1)
-	valSet := tmtypes.NewValidatorSet([]*tmtypes.Validator{validator})
-
-	// generate genesis account
-	senderPrivKey := secp256k1.GenPrivKey()
-	acc := authtypes.NewBaseAccount(senderPrivKey.PubKey().Address().Bytes(), senderPrivKey.PubKey(), 0, 0)
-	balances := banktypes.Balance{
-		Address: acc.GetAddress().String(),
-		Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100000000000000))),
-	}
-	genesisState = genesisStateWithValSet(&a, encCdc.Marshaler, genesisState, valSet, []authtypes.GenesisAccount{acc}, balances)
-
 	// init chain must be called to stop deliverState from being nil
+	genesisState = genesisStateWithValSet(&a, encCdc.Marshaler, genesisState, valSet, []authtypes.GenesisAccount{acc}, balances)
 	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
 	if err != nil {
 		panic(err)
@@ -84,7 +77,7 @@ func New(dir string) *app.App {
 	a.InitChain(
 		abci.RequestInitChain{
 			Validators:      []abci.ValidatorUpdate{},
-			ConsensusParams: defaultConsensusParams,
+			ConsensusParams: simtestutil.DefaultConsensusParams,
 			AppStateBytes:   stateBytes,
 		},
 	)
@@ -204,7 +197,13 @@ func genesisStateWithValSet(
 	})
 
 	// update total supply
-	bankGenesis := banktypes.NewGenesisState(banktypes.DefaultGenesisState().Params, balances, totalSupply, []banktypes.Metadata{})
+	bankGenesis := banktypes.NewGenesisState(
+		banktypes.DefaultGenesisState().Params,
+		balances,
+		totalSupply,
+		[]banktypes.Metadata{},
+		[]banktypes.SendEnabled{},
+	)
 	genesisState[banktypes.ModuleName] = cdc.MustMarshalJSON(bankGenesis)
 
 	return genesisState

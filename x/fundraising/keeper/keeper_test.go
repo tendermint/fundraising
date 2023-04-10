@@ -7,10 +7,12 @@ import (
 	"testing"
 	"time"
 
+	tmrand "github.com/cometbft/cometbft/libs/rand"
+
 	"github.com/stretchr/testify/suite"
 
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/tendermint/fundraising/app"
 	"github.com/tendermint/fundraising/testutil/simapp"
@@ -33,7 +35,8 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *KeeperTestSuite) SetupTest() {
-	s.app = simapp.New(app.DefaultNodeHome)
+	chainID := "chain-" + tmrand.NewRand().Str(6)
+	s.app = simapp.New(chainID, app.DefaultNodeHome)
 	s.ctx = s.app.BaseApp.NewContext(false, tmproto.Header{})
 	s.ctx = s.ctx.WithBlockTime(time.Now()) // set to current time
 	s.keeper = s.app.FundraisingKeeper

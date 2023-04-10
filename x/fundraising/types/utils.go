@@ -4,9 +4,9 @@ import (
 	"sort"
 	"time"
 
+	"github.com/cometbft/cometbft/crypto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
-	"github.com/tendermint/tendermint/crypto"
 )
 
 // MustParseRFC3339 parses string time to time in RFC3339 format.

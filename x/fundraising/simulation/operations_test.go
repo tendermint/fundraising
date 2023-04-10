@@ -4,13 +4,13 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
-
+	abci "github.com/cometbft/cometbft/abci/types"
+	tmrand "github.com/cometbft/cometbft/libs/rand"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	"github.com/stretchr/testify/require"
 
 	chain "github.com/tendermint/fundraising/app"
 	"github.com/tendermint/fundraising/app/params"
@@ -208,10 +208,11 @@ func TestSimulatePlaceBid(t *testing.T) {
 }
 
 func createTestApp(isCheckTx bool) (*chain.App, sdk.Context) {
-	app := simapp.New(chain.DefaultNodeHome)
+	chainID := "chain-" + tmrand.NewRand().Str(6)
+	app := simapp.New(chainID, chain.DefaultNodeHome)
 
 	ctx := app.BaseApp.NewContext(isCheckTx, tmproto.Header{})
-	app.MintKeeper.SetParams(ctx, minttypes.DefaultParams())
+	_ = app.MintKeeper.SetParams(ctx, minttypes.DefaultParams())
 
 	return app, ctx
 }
