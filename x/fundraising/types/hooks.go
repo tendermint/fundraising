@@ -3,7 +3,7 @@ package types
 // DONTCOVER
 
 import (
-	time "time"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

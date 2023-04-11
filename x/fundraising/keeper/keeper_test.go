@@ -8,11 +8,9 @@ import (
 	"time"
 
 	tmrand "github.com/cometbft/cometbft/libs/rand"
-
-	"github.com/stretchr/testify/suite"
-
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/tendermint/fundraising/app"
 	"github.com/tendermint/fundraising/testutil/simapp"

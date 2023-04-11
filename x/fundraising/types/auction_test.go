@@ -2,14 +2,13 @@ package types_test
 
 import (
 	"testing"
-	time "time"
-
-	"github.com/stretchr/testify/require"
+	"time"
 
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
 
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )

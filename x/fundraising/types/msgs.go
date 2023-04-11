@@ -1,7 +1,7 @@
 package types
 
 import (
-	time "time"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec/legacy"
 	sdk "github.com/cosmos/cosmos-sdk/types"
