@@ -13,7 +13,7 @@ type CosmosApp interface {
 	// Name is the assigned name of the app.
 	Name() string
 
-	// The application types codec.
+	// LegacyAmino the application types codec.
 	// NOTE: This should be sealed before being returned.
 	LegacyAmino() *codec.LegacyAmino
 
