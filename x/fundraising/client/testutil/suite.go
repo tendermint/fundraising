@@ -5,10 +5,13 @@ import (
 	"strconv"
 	"time"
 
-	dbm "github.com/cometbft/cometbft-db"
+	tmdb "github.com/cometbft/cometbft-db"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
+	tmrand "github.com/cometbft/cometbft/libs/rand"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	pruningtypes "github.com/cosmos/cosmos-sdk/store/pruning/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
@@ -16,12 +19,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/testutil/network"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/tendermint/fundraising/cmd"
-
 	chain "github.com/tendermint/fundraising/app"
+	"github.com/tendermint/fundraising/cmd"
 	"github.com/tendermint/fundraising/x/fundraising/client/cli"
 	"github.com/tendermint/fundraising/x/fundraising/keeper"
 	"github.com/tendermint/fundraising/x/fundraising/types"
@@ -37,18 +40,6 @@ type TxCmdTestSuite struct {
 	denom2 string
 }
 
-func NewAppConstructor(encodingCfg cmd.EncodingConfig) network.AppConstructor {
-	return func(val network.ValidatorI) servertypes.Application {
-		return chain.New(
-			val.GetCtx().Logger, dbm.NewMemDB(), nil, true, make(map[int64]bool), val.GetCtx().Config.RootDir, 0,
-			encodingCfg,
-			simtestutil.EmptyAppOptions{},
-			baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.GetAppConfig().Pruning)),
-			baseapp.SetMinGasPrices(val.GetAppConfig().MinGasPrices),
-		)
-	}
-}
-
 // SetupTest creates a new network for _each_ integration test. We create a new
 // network for each test because there are some state modifications that are
 // needed to be made in order to make useful queries. However, we don't want
@@ -58,25 +49,14 @@ func (s *TxCmdTestSuite) SetupTest() {
 
 	keeper.EnableAddAllowedBidder = true
 
-	encodingCfg := cmd.MakeEncodingConfig(chain.ModuleBasics)
-
-	cfg := network.DefaultConfig(func() network.TestFixture {
-		return network.TestFixture{}
-	})
-	cfg.NumValidators = 1
-	cfg.AppConstructor = NewAppConstructor(encodingCfg)
-	cfg.GenesisState = chain.ModuleBasics.DefaultGenesis(cfg.Codec)
-	cfg.AccountTokens = sdk.NewInt(100_000_000_000_000) // node0token denom
-	cfg.StakingTokens = sdk.NewInt(100_000_000_000_000) // stake denom
-
-	s.cfg = cfg
+	s.cfg = DefaultConfig()
 	var err error
-	s.network, err = network.New(s.T(), s.T().TempDir(), cfg)
+	s.network, err = network.New(s.T(), s.T().TempDir(), s.cfg)
 	s.Require().NoError(err)
 	s.denom1, s.denom2 = fmt.Sprintf("%stoken", s.network.Validators[0].Moniker), s.cfg.BondDenom
 
-	_, err = s.network.WaitForHeight(1)
-	s.Require().NoError(err)
+	h, err := s.network.WaitForHeight(1)
+	s.Require().NoError(err, "stalled at height %d", h)
 }
 
 // TearDownTest cleans up the current test network after each test in the suite.
@@ -839,20 +819,10 @@ func (s *QueryCmdTestSuite) SetupTest() {
 
 	keeper.EnableAddAllowedBidder = true
 
-	encodingCfg := cmd.MakeEncodingConfig(chain.ModuleBasics)
-
-	cfg := network.DefaultConfig(func() network.TestFixture {
-		return network.TestFixture{}
-	})
-	cfg.NumValidators = 2
-	cfg.AppConstructor = NewAppConstructor(encodingCfg)
-	cfg.GenesisState = chain.ModuleBasics.DefaultGenesis(cfg.Codec)
-	cfg.AccountTokens = sdk.NewInt(100_000_000_000_000) // node0token denom
-	cfg.StakingTokens = sdk.NewInt(100_000_000_000_000) // stake denom
-
-	s.cfg = cfg
+	s.cfg = DefaultConfig()
+	s.cfg.NumValidators = 2
 	var err error
-	s.network, err = network.New(s.T(), s.T().TempDir(), cfg)
+	s.network, err = network.New(s.T(), s.T().TempDir(), s.cfg)
 	s.Require().NoError(err)
 	s.denom1, s.denom2 = fmt.Sprintf("%stoken", s.network.Validators[0].Moniker), s.cfg.BondDenom
 
@@ -1280,5 +1250,50 @@ func (s *TxCmdTestSuite) TestNewQueryBidsCmd() {
 				s.Require().EqualError(err, tc.expectedErr)
 			}
 		})
+	}
+}
+
+// DefaultConfig will initialize config for the network with custom application,
+// genesis and single validator. All other parameters are inherited from cosmos-sdk/testutil/network.DefaultConfig
+func DefaultConfig() network.Config {
+	var (
+		encoding = cmd.MakeEncodingConfig(chain.ModuleBasics)
+		chainID  = "chain-" + tmrand.NewRand().Str(6)
+	)
+	return network.Config{
+		Codec:             encoding.Marshaler,
+		TxConfig:          encoding.TxConfig,
+		LegacyAmino:       encoding.Amino,
+		InterfaceRegistry: encoding.InterfaceRegistry,
+		AccountRetriever:  authtypes.AccountRetriever{},
+		AppConstructor: func(val network.ValidatorI) servertypes.Application {
+			return chain.New(
+				val.GetCtx().Logger,
+				tmdb.NewMemDB(),
+				nil,
+				true,
+				map[int64]bool{},
+				val.GetCtx().Config.RootDir,
+				0,
+				encoding,
+				simtestutil.EmptyAppOptions{},
+				baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.GetAppConfig().Pruning)),
+				baseapp.SetMinGasPrices(val.GetAppConfig().MinGasPrices),
+				baseapp.SetChainID(chainID),
+			)
+		},
+		GenesisState:    chain.ModuleBasics.DefaultGenesis(encoding.Marshaler),
+		TimeoutCommit:   2 * time.Second,
+		ChainID:         chainID,
+		NumValidators:   1,
+		BondDenom:       sdk.DefaultBondDenom,
+		MinGasPrices:    fmt.Sprintf("0.000006%s", sdk.DefaultBondDenom),
+		AccountTokens:   sdk.NewInt(100_000_000_000_000), // node0token denom,
+		StakingTokens:   sdk.NewInt(100_000_000_000_000), // stake denom
+		BondedTokens:    sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
+		PruningStrategy: pruningtypes.PruningOptionNothing,
+		CleanupDir:      true,
+		SigningAlgo:     string(hd.Secp256k1Type),
+		KeyringOptions:  []keyring.Option{},
 	}
 }

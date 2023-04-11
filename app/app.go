@@ -130,7 +130,6 @@ var (
 		distr.AppModuleBasic{},
 		gov.NewAppModuleBasic(getGovProposalHandlers()),
 		params.AppModuleBasic{},
-		crisis.AppModuleBasic{},
 		slashing.AppModuleBasic{},
 		feegrantmodule.AppModuleBasic{},
 		upgrade.AppModuleBasic{},
@@ -139,6 +138,7 @@ var (
 		vesting.AppModuleBasic{},
 		fundraising.AppModuleBasic{},
 		consensus.AppModuleBasic{},
+		crisis.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -254,6 +254,7 @@ func New(
 		authzkeeper.StoreKey,
 		fundraisingtypes.StoreKey,
 		consensusparamtypes.StoreKey,
+		crisistypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
