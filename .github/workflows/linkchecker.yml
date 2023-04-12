@@ -17,3 +17,5 @@ jobs:
       - uses: gaurav-nelson/github-action-markdown-link-check@1.0.15
         with:
           folder-path: "."
+          use-verbose-mode: 'yes'
+          config-file: '.github/workflows/linkchecker-config.json'
