@@ -70,6 +70,7 @@ func (s *TxCmdTestSuite) TestNewCreateFixedAmountPlanCmd() {
 
 	startTime := time.Now()
 	endTime := startTime.AddDate(0, 1, 0)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	testCases := []struct {
 		name         string
@@ -230,8 +231,6 @@ func (s *TxCmdTestSuite) TestNewCreateFixedAmountPlanCmd() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			s.Require().NoError(s.network.WaitForNextBlock())
-
 			cmd := cli.NewCreateFixedPriceAuctionCmd()
 			clientCtx := val.ClientCtx
 
@@ -254,6 +253,7 @@ func (s *TxCmdTestSuite) TestNewCreateBatchAuctionCmd() {
 
 	startTime := time.Now()
 	endTime := startTime.AddDate(0, 1, 0)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	testCases := []struct {
 		name         string
@@ -432,8 +432,6 @@ func (s *TxCmdTestSuite) TestNewCreateBatchAuctionCmd() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			s.Require().NoError(s.network.WaitForNextBlock())
-
 			cmd := cli.NewCreateBatchAuctionCmd()
 			clientCtx := val.ClientCtx
 
@@ -474,6 +472,7 @@ func (s *TxCmdTestSuite) TestNewCancelAuctionCmd() {
 		}.String()).Name(),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	testCases := []struct {
 		name         string
@@ -510,8 +509,6 @@ func (s *TxCmdTestSuite) TestNewCancelAuctionCmd() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			s.Require().NoError(s.network.WaitForNextBlock())
-
 			cmd := cli.NewCancelAuctionCmd()
 			clientCtx := val.ClientCtx
 
@@ -562,6 +559,7 @@ func (s *TxCmdTestSuite) TestNewPlaceBidCmd() {
 		sdk.NewInt(100_000_000),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	testCases := []struct {
 		name         string
@@ -632,8 +630,6 @@ func (s *TxCmdTestSuite) TestNewPlaceBidCmd() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			s.Require().NoError(s.network.WaitForNextBlock())
-
 			cmd := cli.NewPlaceBidCmd()
 			clientCtx := val.ClientCtx
 
@@ -699,6 +695,7 @@ func (s *TxCmdTestSuite) TestNewModifyBidCmd() {
 		sdk.NewCoin(s.denom2, sdk.NewInt(50_000_000)),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	testCases := []struct {
 		name         string
@@ -797,11 +794,10 @@ func (s *TxCmdTestSuite) TestNewModifyBidCmd() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			s.Require().NoError(s.network.WaitForNextBlock())
-
-			cmd := cli.NewModifyBidCmd()
-			clientCtx := val.ClientCtx
-
+			var (
+				clientCtx = val.ClientCtx
+				cmd       = cli.NewModifyBidCmd()
+			)
 			out, err := utilcli.ExecTestCLICmd(clientCtx, cmd, tc.args)
 
 			if tc.expectErr {
@@ -937,6 +933,7 @@ func (s *TxCmdTestSuite) TestNewQueryAuctionsCmd() {
 		}.String()).Name(),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	for _, tc := range []struct {
 		name        string
@@ -994,6 +991,7 @@ func (s *TxCmdTestSuite) TestNewQueryAuctionCmd() {
 		}.String()).Name(),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	for _, tc := range []struct {
 		name        string
@@ -1017,7 +1015,6 @@ func (s *TxCmdTestSuite) TestNewQueryAuctionCmd() {
 	} {
 		s.Run(tc.name, func() {
 			cmd := cli.NewQueryAuctionCmd()
-
 			out, err := utilcli.ExecTestCLICmd(val.ClientCtx, cmd, tc.args)
 
 			if tc.expectedErr == "" {
@@ -1025,9 +1022,9 @@ func (s *TxCmdTestSuite) TestNewQueryAuctionCmd() {
 				var resp types.QueryAuctionResponse
 				s.Require().NoError(val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp), out.String())
 				tc.postRun(resp)
-			} else {
-				s.Require().EqualError(err, tc.expectedErr)
+				return
 			}
+			s.Require().EqualError(err, tc.expectedErr)
 		})
 	}
 }
@@ -1056,6 +1053,7 @@ func (s *TxCmdTestSuite) TestNewQueryAllowedBiddersCmd() {
 		}.String()).Name(),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	// Add allowed bidder
 	_, err = MsgAddAllowedBidderExec(
@@ -1065,6 +1063,7 @@ func (s *TxCmdTestSuite) TestNewQueryAllowedBiddersCmd() {
 		sdk.NewInt(100_000_000),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	for _, tc := range []struct {
 		name        string
@@ -1086,7 +1085,6 @@ func (s *TxCmdTestSuite) TestNewQueryAllowedBiddersCmd() {
 	} {
 		s.Run(tc.name, func() {
 			cmd := cli.NewQueryAllowedBiddersCmd()
-
 			out, err := utilcli.ExecTestCLICmd(val.ClientCtx, cmd, tc.args)
 
 			if tc.expectedErr == "" {
@@ -1094,9 +1092,9 @@ func (s *TxCmdTestSuite) TestNewQueryAllowedBiddersCmd() {
 				var resp types.QueryAllowedBiddersResponse
 				s.Require().NoError(val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp), out.String())
 				tc.postRun(resp)
-			} else {
-				s.Require().EqualError(err, tc.expectedErr)
+				return
 			}
+			s.Require().EqualError(err, tc.expectedErr)
 		})
 	}
 }
@@ -1136,6 +1134,7 @@ func (s *TxCmdTestSuite) TestNewQueryAllowedBidderCmd() {
 		maxBidAmt,
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	for _, tc := range []struct {
 		name        string
@@ -1159,7 +1158,6 @@ func (s *TxCmdTestSuite) TestNewQueryAllowedBidderCmd() {
 	} {
 		s.Run(tc.name, func() {
 			cmd := cli.NewQueryAllowedBidderCmd()
-
 			out, err := utilcli.ExecTestCLICmd(val.ClientCtx, cmd, tc.args)
 
 			if tc.expectedErr == "" {
@@ -1235,6 +1233,7 @@ func (s *TxCmdTestSuite) TestNewQueryBidsCmd() {
 		sdk.NewCoin(s.denom1, sdk.NewInt(5_000_000)),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	for _, tc := range []struct {
 		name        string
