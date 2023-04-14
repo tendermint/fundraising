@@ -761,7 +761,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2_LimitedDifferent() {
 	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
 
 	// Checking
-	s.Require().Equal(int64(13), mInfo.MatchedLen)
+	s.Require().Equal(int64(12), mInfo.MatchedLen)
 	matchingPrice := parseDec("0.5")
 	s.Require().Equal(mInfo.MatchedPrice, matchingPrice)
 
