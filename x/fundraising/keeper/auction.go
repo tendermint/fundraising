@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -310,7 +311,7 @@ func (k Keeper) AddAllowedBidders(ctx sdk.Context, auctionId uint64, allowedBidd
 // It doesn't have any auctioneer's verification logic because the module is fundamentally designed
 // to delegate full authorization to an external module.
 // It is up to an external module to freely add necessary verification and operations depending on their use cases.
-func (k Keeper) UpdateAllowedBidder(ctx sdk.Context, auctionId uint64, bidder sdk.AccAddress, maxBidAmount sdk.Int) error {
+func (k Keeper) UpdateAllowedBidder(ctx sdk.Context, auctionId uint64, bidder sdk.AccAddress, maxBidAmount math.Int) error {
 	_, found := k.GetAuction(ctx, auctionId)
 	if !found {
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "auction %d is not found", auctionId)

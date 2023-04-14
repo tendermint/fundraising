@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"testing"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
@@ -30,7 +31,7 @@ func TestMatch(t *testing.T) {
 		sellingCoinDenom = "selling"
 	)
 
-	newBid := func(id uint64, typ types.BidType, bidder string, price sdk.Dec, bidAmt sdk.Int) types.Bid {
+	newBid := func(id uint64, typ types.BidType, bidder string, price sdk.Dec, bidAmt math.Int) types.Bid {
 		var coin sdk.Coin
 		switch typ {
 		case types.BidTypeBatchWorth:
@@ -56,18 +57,18 @@ func TestMatch(t *testing.T) {
 
 	for _, tc := range []struct {
 		name                string
-		allowedBidders      map[string]sdk.Int
-		sellingCoinAmt      sdk.Int
+		allowedBidders      map[string]math.Int
+		sellingCoinAmt      math.Int
 		bids                []types.Bid
 		matchPrice          sdk.Dec
 		matched             bool
-		matchedAmt          sdk.Int
+		matchedAmt          math.Int
 		matchedBidIds       []uint64 // should be sorted
 		matchResultByBidder map[string]*types.BidderMatchResult
 	}{
 		{
 			"basic case",
-			map[string]sdk.Int{
+			map[string]math.Int{
 				bidders[0]: sdk.NewInt(100_000000),
 			},
 			sdk.NewInt(100_000000),
@@ -87,7 +88,7 @@ func TestMatch(t *testing.T) {
 		},
 		{
 			"partial match",
-			map[string]sdk.Int{
+			map[string]math.Int{
 				bidders[0]: sdk.NewInt(50_000000),
 			},
 			sdk.NewInt(100_000000),
@@ -107,7 +108,7 @@ func TestMatch(t *testing.T) {
 		},
 		{
 			"no match",
-			map[string]sdk.Int{
+			map[string]math.Int{
 				bidders[0]: sdk.NewInt(100_000000),
 			},
 			sdk.NewInt(100_000000),
@@ -115,7 +116,7 @@ func TestMatch(t *testing.T) {
 				newBid(1, types.BidTypeBatchWorth, bidders[0], parseDec("1.0"), sdk.NewInt(100_000000)),
 			},
 			parseDec("1.1"),
-			false, sdk.Int{}, nil, nil,
+			false, math.Int{}, nil, nil,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -130,7 +131,7 @@ func TestMatch(t *testing.T) {
 			matchRes, matched := types.Match(tc.matchPrice, prices, bidsByPrice, tc.sellingCoinAmt, allowedBidders)
 			require.Equal(t, tc.matched, matched)
 			if matched {
-				require.True(sdk.IntEq(t, tc.matchedAmt, matchRes.MatchedAmount))
+				require.True(math.IntEq(t, tc.matchedAmt, matchRes.MatchedAmount))
 				var matchedBidIds []uint64
 				for _, bid := range matchRes.MatchedBids {
 					matchedBidIds = append(matchedBidIds, bid.Id)

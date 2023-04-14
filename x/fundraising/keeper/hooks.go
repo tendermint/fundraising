@@ -3,6 +3,7 @@ package keeper
 import (
 	"time"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/tendermint/fundraising/x/fundraising/types"
@@ -183,7 +184,7 @@ func (k Keeper) BeforeAllowedBidderUpdated(
 	ctx sdk.Context,
 	auctionId uint64,
 	bidder sdk.AccAddress,
-	maxBidAmount sdk.Int,
+	maxBidAmount math.Int,
 ) {
 	if k.hooks != nil {
 		k.hooks.BeforeAllowedBidderUpdated(ctx, auctionId, bidder, maxBidAmount)
@@ -194,8 +195,8 @@ func (k Keeper) BeforeAllowedBidderUpdated(
 func (k Keeper) BeforeSellingCoinsAllocated(
 	ctx sdk.Context,
 	auctionId uint64,
-	allocationMap map[string]sdk.Int,
-	refundMap map[string]sdk.Int,
+	allocationMap map[string]math.Int,
+	refundMap map[string]math.Int,
 ) {
 	if k.hooks != nil {
 		k.hooks.BeforeSellingCoinsAllocated(ctx, auctionId, allocationMap, refundMap)

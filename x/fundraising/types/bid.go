@@ -1,6 +1,7 @@
 package types
 
 import (
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -31,7 +32,7 @@ func (b *Bid) SetMatched(status bool) {
 
 // ConvertToSellingAmount converts to selling amount depending on the bid coin denom.
 // Note that we take as little coins as possible to prevent from overflowing the remaining selling coin.
-func (b Bid) ConvertToSellingAmount(denom string) (amount sdk.Int) {
+func (b Bid) ConvertToSellingAmount(denom string) (amount math.Int) {
 	if b.Coin.Denom == denom {
 		return sdk.NewDecFromInt(b.Coin.Amount).QuoTruncate(b.Price).TruncateInt() // BidAmount / BidPrice
 	}
@@ -40,7 +41,7 @@ func (b Bid) ConvertToSellingAmount(denom string) (amount sdk.Int) {
 
 // ConvertToPayingAmount converts to paying amount depending on the bid coin denom.
 // Note that we take as many coins as possible by ceiling numbers from bidder.
-func (b Bid) ConvertToPayingAmount(denom string) (amount sdk.Int) {
+func (b Bid) ConvertToPayingAmount(denom string) (amount math.Int) {
 	if b.Coin.Denom == denom {
 		return b.Coin.Amount
 	}

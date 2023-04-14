@@ -5,6 +5,7 @@ package testutil
 import (
 	"fmt"
 
+	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/testutil"
@@ -81,7 +82,7 @@ func MsgPlaceBidExec(clientCtx client.Context,
 func MsgAddAllowedBidderExec(clientCtx client.Context,
 	from string,
 	auctionId uint64,
-	maxBidAmt sdk.Int,
+	maxBidAmt math.Int,
 	extraAtgs ...string,
 ) (testutil.BufferWriter, error) {
 

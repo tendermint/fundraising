@@ -1,12 +1,13 @@
 package types
 
 import (
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // NewAllowedBidder returns a new AllowedBidder.
-func NewAllowedBidder(bidderAddr sdk.AccAddress, maxBidAmount sdk.Int) AllowedBidder {
+func NewAllowedBidder(bidderAddr sdk.AccAddress, maxBidAmount math.Int) AllowedBidder {
 	return AllowedBidder{
 		Bidder:       bidderAddr.String(),
 		MaxBidAmount: maxBidAmount,

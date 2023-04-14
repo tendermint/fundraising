@@ -94,6 +94,6 @@ BeforeAllowedBidderUpdated(
     ctx sdk.Context,
     auctionId uint64,
     bidder sdk.AccAddress,
-    maxBidAmount sdk.Int,
+    maxBidAmount math.Int,
 )
 ```
