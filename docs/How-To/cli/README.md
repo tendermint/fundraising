@@ -6,7 +6,7 @@ Description: A high-level overview of how the command-line interface (CLI) works
 
 ## Synopsis
 
-This document provides a high-level overview of how the command line (CLI) interface works for the `fundraising` module. To set up a local testing environment, it requires the latest Ignite CLI. If you don't have Ignite CLI set up in your local machine, see [this guide](https://docs.ignite.com/#install-ignite-cli) to install it. Run this command under the project root directory `$ ignite chain serve -c config-test.yml` or simply `$ make localnet`.
+This document provides a high-level overview of how the command line (CLI) interface works for the `fundraising` module. To set up a local testing environment, it requires the latest Ignite CLI. If you don't have Ignite CLI set up in your local machine, see [this guide](https://docs.ignite.com/welcome/install) to install it. Run this command under the project root directory `$ ignite chain serve -c config-test.yml` or simply `$ make localnet`.
 
 Note that [jq](https://stedolan.github.io/jq/) is recommended to be installed as it is used to process JSON throughout the document.
 

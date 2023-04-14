@@ -1,10 +1,16 @@
 {
   "ignorePatterns": [
     {
+      "pattern": "^https://render.githubusercontent.com/render/"
+    },
+    {
       "pattern": "^http://localhost"
     },
     {
       "pattern": "^index.md"
+    },
+    {
+      "pattern": "^#"
     }
   ],
   "replacementPatterns": [
