@@ -552,6 +552,7 @@ func (s *TxCmdTestSuite) TestNewPlaceBidCmd() {
 		}.String()).Name(),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	// Add allowed bidder
 	_, err = MsgAddAllowedBidderExec(
@@ -676,6 +677,7 @@ func (s *TxCmdTestSuite) TestNewModifyBidCmd() {
 		}.String()).Name(),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	// Add allowed bidder
 	_, err = MsgAddAllowedBidderExec(
@@ -685,6 +687,7 @@ func (s *TxCmdTestSuite) TestNewModifyBidCmd() {
 		sdk.NewInt(100_000_000),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	// Place a bid
 	_, err = MsgPlaceBidExec(
@@ -910,6 +913,7 @@ func (s *TxCmdTestSuite) TestNewQueryAuctionsCmd() {
 		}.String()).Name(),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	// Create a batch auction
 	_, err = MsgCreateBatchAuctionExec(
@@ -1121,6 +1125,7 @@ func (s *TxCmdTestSuite) TestNewQueryAllowedBidderCmd() {
 		}.String()).Name(),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	// Add allowed bidder
 	maxBidAmt := sdk.NewInt(100_000_000)
@@ -1196,6 +1201,7 @@ func (s *TxCmdTestSuite) TestNewQueryBidsCmd() {
 		}.String()).Name(),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	// Add allowed bidder
 	_, err = MsgAddAllowedBidderExec(
@@ -1205,6 +1211,7 @@ func (s *TxCmdTestSuite) TestNewQueryBidsCmd() {
 		sdk.NewInt(100_000_000),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	// Place a bid #1
 	_, err = MsgPlaceBidExec(
@@ -1216,6 +1223,7 @@ func (s *TxCmdTestSuite) TestNewQueryBidsCmd() {
 		sdk.NewCoin(s.denom2, sdk.NewInt(20_000_000)),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	// Place a bid #2
 	_, err = MsgPlaceBidExec(

@@ -34,6 +34,7 @@ func MsgCreateFixedPriceAuctionExec(clientCtx client.Context,
 	}, commonArgs...)
 
 	args = append(args, commonArgs...)
+	args = append(args, extraArgs...)
 
 	return clitestutil.ExecTestCLICmd(clientCtx, cli.NewCreateFixedPriceAuctionCmd(), args)
 }
@@ -51,6 +52,7 @@ func MsgCreateBatchAuctionExec(clientCtx client.Context,
 	}, commonArgs...)
 
 	args = append(args, commonArgs...)
+	args = append(args, extraArgs...)
 
 	return clitestutil.ExecTestCLICmd(clientCtx, cli.NewCreateBatchAuctionCmd(), args)
 }
@@ -74,6 +76,7 @@ func MsgPlaceBidExec(clientCtx client.Context,
 	}, commonArgs...)
 
 	args = append(args, commonArgs...)
+	args = append(args, extraArgs...)
 
 	return clitestutil.ExecTestCLICmd(clientCtx, cli.NewPlaceBidCmd(), args)
 }
@@ -83,7 +86,7 @@ func MsgAddAllowedBidderExec(clientCtx client.Context,
 	from string,
 	auctionId uint64,
 	maxBidAmt math.Int,
-	extraAtgs ...string,
+	extraArgs ...string,
 ) (testutil.BufferWriter, error) {
 
 	args := append([]string{
@@ -94,6 +97,7 @@ func MsgAddAllowedBidderExec(clientCtx client.Context,
 	}, commonArgs...)
 
 	args = append(args, commonArgs...)
+	args = append(args, extraArgs...)
 
 	return clitestutil.ExecTestCLICmd(clientCtx, cli.NewAddAllowedBidderCmd(), args)
 }
