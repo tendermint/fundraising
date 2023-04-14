@@ -230,6 +230,8 @@ func (s *TxCmdTestSuite) TestNewCreateFixedAmountPlanCmd() {
 		tc := tc
 
 		s.Run(tc.name, func() {
+			s.Require().NoError(s.network.WaitForNextBlock())
+
 			cmd := cli.NewCreateFixedPriceAuctionCmd()
 			clientCtx := val.ClientCtx
 
@@ -238,10 +240,10 @@ func (s *TxCmdTestSuite) TestNewCreateFixedAmountPlanCmd() {
 				s.Require().Error(err)
 			} else {
 				s.Require().NoError(err, out.String())
-				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
 
-				txResp := tc.respType.(*sdk.TxResponse)
-				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+				var resp sdk.TxResponse
+				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp))
+				s.Require().NoError(utilcli.CheckTxCode(s.network, clientCtx, resp.TxHash, tc.expectedCode))
 			}
 		})
 	}
@@ -430,6 +432,8 @@ func (s *TxCmdTestSuite) TestNewCreateBatchAuctionCmd() {
 		tc := tc
 
 		s.Run(tc.name, func() {
+			s.Require().NoError(s.network.WaitForNextBlock())
+
 			cmd := cli.NewCreateBatchAuctionCmd()
 			clientCtx := val.ClientCtx
 
@@ -441,8 +445,9 @@ func (s *TxCmdTestSuite) TestNewCreateBatchAuctionCmd() {
 				s.Require().NoError(err, out.String())
 				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
 
-				txResp := tc.respType.(*sdk.TxResponse)
-				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+				var resp sdk.TxResponse
+				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp))
+				s.Require().NoError(utilcli.CheckTxCode(s.network, clientCtx, resp.TxHash, tc.expectedCode))
 			}
 		})
 	}
@@ -506,6 +511,8 @@ func (s *TxCmdTestSuite) TestNewCancelAuctionCmd() {
 		tc := tc
 
 		s.Run(tc.name, func() {
+			s.Require().NoError(s.network.WaitForNextBlock())
+
 			cmd := cli.NewCancelAuctionCmd()
 			clientCtx := val.ClientCtx
 
@@ -515,10 +522,10 @@ func (s *TxCmdTestSuite) TestNewCancelAuctionCmd() {
 				s.Require().Error(err)
 			} else {
 				s.Require().NoError(err, out.String())
-				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
 
-				txResp := tc.respType.(*sdk.TxResponse)
-				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+				var resp sdk.TxResponse
+				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp))
+				s.Require().NoError(utilcli.CheckTxCode(s.network, clientCtx, resp.TxHash, tc.expectedCode))
 			}
 		})
 	}
@@ -625,6 +632,8 @@ func (s *TxCmdTestSuite) TestNewPlaceBidCmd() {
 		tc := tc
 
 		s.Run(tc.name, func() {
+			s.Require().NoError(s.network.WaitForNextBlock())
+
 			cmd := cli.NewPlaceBidCmd()
 			clientCtx := val.ClientCtx
 
@@ -634,10 +643,10 @@ func (s *TxCmdTestSuite) TestNewPlaceBidCmd() {
 				s.Require().Error(err)
 			} else {
 				s.Require().NoError(err, out.String())
-				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
 
-				txResp := tc.respType.(*sdk.TxResponse)
-				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+				var resp sdk.TxResponse
+				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp))
+				s.Require().NoError(utilcli.CheckTxCode(s.network, clientCtx, resp.TxHash, tc.expectedCode))
 			}
 		})
 	}
@@ -786,6 +795,8 @@ func (s *TxCmdTestSuite) TestNewModifyBidCmd() {
 		tc := tc
 
 		s.Run(tc.name, func() {
+			s.Require().NoError(s.network.WaitForNextBlock())
+
 			cmd := cli.NewModifyBidCmd()
 			clientCtx := val.ClientCtx
 
@@ -795,10 +806,10 @@ func (s *TxCmdTestSuite) TestNewModifyBidCmd() {
 				s.Require().Error(err)
 			} else {
 				s.Require().NoError(err, out.String())
-				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
 
-				txResp := tc.respType.(*sdk.TxResponse)
-				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+				var resp sdk.TxResponse
+				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp))
+				s.Require().NoError(utilcli.CheckTxCode(s.network, clientCtx, resp.TxHash, tc.expectedCode))
 			}
 		})
 	}
