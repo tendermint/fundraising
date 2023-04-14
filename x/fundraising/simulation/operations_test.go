@@ -21,9 +21,9 @@ import (
 
 // TestWeightedOperations tests the weights of the operations.
 func TestWeightedOperations(t *testing.T) {
-	app, ctx := createTestApp(false)
+	app, chainID, ctx := createTestApp(false)
 
-	ctx.WithChainID("test-chain")
+	ctx.WithChainID(chainID)
 
 	cdc := types.ModuleCdc
 	appParams := make(simtypes.AppParams)
@@ -57,7 +57,7 @@ func TestWeightedOperations(t *testing.T) {
 }
 
 func TestSimulateCreateFixedPriceAuction(t *testing.T) {
-	app, ctx := createTestApp(false)
+	app, chainID, ctx := createTestApp(false)
 
 	// setup a single account
 	s := rand.NewSource(1)
@@ -65,7 +65,11 @@ func TestSimulateCreateFixedPriceAuction(t *testing.T) {
 
 	accounts := getTestingAccounts(t, r, app, ctx, 1)
 
-	app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: app.LastBlockHeight() + 1, AppHash: app.LastCommitID().Hash}})
+	app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{
+		Height:  app.LastBlockHeight() + 1,
+		AppHash: app.LastCommitID().Hash,
+		ChainID: chainID,
+	}})
 
 	op := simulation.SimulateMsgCreateFixedPriceAuction(app.AccountKeeper, app.BankKeeper, app.FundraisingKeeper)
 	opMsg, futureOps, err := op(r, app.BaseApp, ctx, accounts, "")
@@ -85,7 +89,7 @@ func TestSimulateCreateFixedPriceAuction(t *testing.T) {
 }
 
 func TestSimulateCreateBatchAuction(t *testing.T) {
-	app, ctx := createTestApp(false)
+	app, chainID, ctx := createTestApp(false)
 
 	// setup a single account
 	s := rand.NewSource(1)
@@ -93,7 +97,11 @@ func TestSimulateCreateBatchAuction(t *testing.T) {
 
 	accounts := getTestingAccounts(t, r, app, ctx, 1)
 
-	app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: app.LastBlockHeight() + 1, AppHash: app.LastCommitID().Hash}})
+	app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{
+		Height:  app.LastBlockHeight() + 1,
+		AppHash: app.LastCommitID().Hash,
+		ChainID: chainID,
+	}})
 
 	op := simulation.SimulateMsgCreateBatchAuction(app.AccountKeeper, app.BankKeeper, app.FundraisingKeeper)
 	opMsg, futureOps, err := op(r, app.BaseApp, ctx, accounts, "")
@@ -114,7 +122,7 @@ func TestSimulateCreateBatchAuction(t *testing.T) {
 }
 
 func TestSimulateCancelAuction(t *testing.T) {
-	app, ctx := createTestApp(false)
+	app, chainID, ctx := createTestApp(false)
 
 	// setup a single account
 	s := rand.NewSource(1)
@@ -122,7 +130,11 @@ func TestSimulateCancelAuction(t *testing.T) {
 
 	accounts := getTestingAccounts(t, r, app, ctx, 1)
 
-	app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: app.LastBlockHeight() + 1, AppHash: app.LastCommitID().Hash}})
+	app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{
+		Height:  app.LastBlockHeight() + 1,
+		AppHash: app.LastCommitID().Hash,
+		ChainID: chainID,
+	}})
 
 	// Create a fixed price auction
 	_, err := app.FundraisingKeeper.CreateFixedPriceAuction(ctx, &types.MsgCreateFixedPriceAuction{
@@ -152,7 +164,7 @@ func TestSimulateCancelAuction(t *testing.T) {
 }
 
 func TestSimulatePlaceBid(t *testing.T) {
-	app, ctx := createTestApp(false)
+	app, chainID, ctx := createTestApp(false)
 
 	// Setup a single account
 	s := rand.NewSource(1)
@@ -160,7 +172,11 @@ func TestSimulatePlaceBid(t *testing.T) {
 
 	accounts := getTestingAccounts(t, r, app, ctx, 1)
 
-	app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: app.LastBlockHeight() + 1, AppHash: app.LastCommitID().Hash}})
+	app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{
+		Height:  app.LastBlockHeight() + 1,
+		AppHash: app.LastCommitID().Hash,
+		ChainID: chainID,
+	}})
 
 	// Create a fixed price auction
 	_, err := app.FundraisingKeeper.CreateFixedPriceAuction(ctx, &types.MsgCreateFixedPriceAuction{
@@ -207,14 +223,17 @@ func TestSimulatePlaceBid(t *testing.T) {
 	require.Equal(t, sdk.NewInt64Coin("denomd", 336222540), msg.Coin)
 }
 
-func createTestApp(isCheckTx bool) (*chain.App, sdk.Context) {
-	chainID := "chain-" + tmrand.NewRand().Str(6)
-	app := simapp.New(chainID, chain.DefaultNodeHome)
-
-	ctx := app.BaseApp.NewContext(isCheckTx, tmproto.Header{})
+func createTestApp(isCheckTx bool) (*chain.App, string, sdk.Context) {
+	var (
+		chainID = "chain-" + tmrand.NewRand().Str(6)
+		app     = simapp.New(chainID, chain.DefaultNodeHome)
+		ctx     = app.BaseApp.NewContext(isCheckTx, tmproto.Header{
+			ChainID: chainID,
+		})
+	)
+	ctx.WithChainID(chainID)
 	_ = app.MintKeeper.SetParams(ctx, minttypes.DefaultParams())
-
-	return app, ctx
+	return app, chainID, ctx
 }
 
 func getTestingAccounts(t *testing.T, r *rand.Rand, app *chain.App, ctx sdk.Context, n int) []simtypes.Account {

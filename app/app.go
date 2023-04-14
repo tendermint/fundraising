@@ -136,9 +136,9 @@ var (
 		evidence.AppModuleBasic{},
 		authzmodule.AppModuleBasic{},
 		vesting.AppModuleBasic{},
-		fundraising.AppModuleBasic{},
 		consensus.AppModuleBasic{},
 		crisis.AppModuleBasic{},
+		fundraising.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -354,6 +354,7 @@ func New(
 		app.BaseApp,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+
 	app.AuthzKeeper = authzkeeper.NewKeeper(
 		keys[authz.ModuleName],
 		appCodec,
