@@ -395,6 +395,7 @@ func TestAppStateDeterminism(t *testing.T) {
 	config.ExportParamsPath = ""
 	config.OnOperation = true
 	config.AllInvariants = true
+	config.ChainID = app.DefaultChainID
 
 	var (
 		r                    = rand.New(rand.NewSource(time.Now().Unix()))
@@ -413,23 +414,27 @@ func TestAppStateDeterminism(t *testing.T) {
 				logger = log.NewNopLogger()
 			}
 
-			db := dbm.NewMemDB()
-			encoding := cmd.MakeEncodingConfig(app.ModuleBasics)
-			cosmoscmdApp := app.New(
-				logger,
-				db,
-				nil,
-				true,
-				map[int64]bool{},
-				app.DefaultNodeHome,
-				0,
-				encoding,
-				simtestutil.EmptyAppOptions{},
-				baseapp.SetChainID(app.DefaultChainID),
-				fauxMerkleModeOpt,
+			var (
+				chainID  = fmt.Sprintf("chain-id-%d-%d", i, j)
+				db       = dbm.NewMemDB()
+				encoding = cmd.MakeEncodingConfig(app.ModuleBasics)
+				cmdApp   = app.New(
+					logger,
+					db,
+					nil,
+					true,
+					map[int64]bool{},
+					app.DefaultNodeHome,
+					simcli.FlagPeriodValue,
+					encoding,
+					simtestutil.EmptyAppOptions{},
+					fauxMerkleModeOpt,
+					baseapp.SetChainID(chainID),
+				)
 			)
+			config.ChainID = chainID
 
-			bApp, ok := cosmoscmdApp.(*app.App)
+			bApp, ok := cmdApp.(*app.App)
 			require.True(t, ok)
 
 			fmt.Printf(
