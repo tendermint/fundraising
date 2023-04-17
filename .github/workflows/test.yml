@@ -97,7 +97,7 @@ jobs:
             echo "Excluding ${filename} from coverage report..."
             sed -i "/$(echo $filename | sed 's/\//\\\//g')/d" coverage.out
           done
-      - uses: codecov/codecov-action@v2.1.0
+      - uses: codecov/codecov-action@v3
         with:
           file: ./coverage.out
 
@@ -124,6 +124,6 @@ jobs:
             echo "Excluding ${filename} from coverage report..."
             sed -i "/$(echo $filename | sed 's/\//\\\//g')/d" coverage.out
           done
-      - uses: codecov/codecov-action@v2.1.0
+      - uses: codecov/codecov-action@v3
         with:
           file: ./coverage.out
