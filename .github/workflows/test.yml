@@ -53,7 +53,7 @@ jobs:
           go-version: 1.18
 
       - name: Run unit tests
-        run: go test -v -coverprofile=coverage.txt -coverpkg=./... -covermode=atomic ./...
+        run: go test -v -coverprofile=coverage.out -coverpkg=./... -covermode=atomic ./...
 
       - name: filter out DONTCOVER
         run: |
@@ -64,7 +64,7 @@ jobs:
           for filename in ${excludelist}; do
             filename=$(echo $filename | sed 's/^./github.com\/tendermint\/fundraising/g')
             echo "Excluding ${filename} from coverage report..."
-            sed -i "/$(echo $filename | sed 's/\//\\\//g')/d" coverage.txt
+            sed -i "/$(echo $filename | sed 's/\//\\\//g')/d" coverage.out
           done
           
       - name: Upload coverage to Codecov
@@ -94,11 +94,11 @@ jobs:
           for filename in ${excludelist}; do
             filename=$(echo $filename | sed 's/^./github.com\/tendermint\/fundraising/g')
             echo "Excluding ${filename} from coverage report..."
-            sed -i "/$(echo $filename | sed 's/\//\\\//g')/d" coverage.txt
+            sed -i "/$(echo $filename | sed 's/\//\\\//g')/d" coverage.out
           done
       - uses: codecov/codecov-action@v2.1.0
         with:
-          file: ./coverage.txt
+          file: ./coverage.out
 
   test-race:
     runs-on: ubuntu-latest
@@ -121,8 +121,8 @@ jobs:
           for filename in ${excludelist}; do
             filename=$(echo $filename | sed 's/^./github.com\/tendermint\/fundraising/g')
             echo "Excluding ${filename} from coverage report..."
-            sed -i "/$(echo $filename | sed 's/\//\\\//g')/d" coverage.txt
+            sed -i "/$(echo $filename | sed 's/\//\\\//g')/d" coverage.out
           done
       - uses: codecov/codecov-action@v2.1.0
         with:
-          file: ./coverage.txt
+          file: ./coverage.out
