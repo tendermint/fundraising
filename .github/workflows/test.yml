@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go-arch: ["amd64", "arm64"]
+        go-arch: [ "amd64", "arm64" ]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
@@ -66,12 +66,13 @@ jobs:
             echo "Excluding ${filename} from coverage report..."
             sed -i "/$(echo $filename | sed 's/\//\\\//g')/d" coverage.out
           done
-          
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
           fail_ci_if_error: true
           verbose: true
+          token: ${{secrets.CODECOV_TOKEN}}
 
   test-coverage:
     runs-on: ubuntu-latest
