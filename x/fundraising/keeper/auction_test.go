@@ -3,13 +3,13 @@ package keeper_test
 import (
 	"time"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	_ "github.com/stretchr/testify/suite"
 
 	"github.com/tendermint/fundraising/x/fundraising"
 	"github.com/tendermint/fundraising/x/fundraising/types"
-
-	_ "github.com/stretchr/testify/suite"
 )
 
 func (s *KeeperTestSuite) TestFixedPriceAuction_AuctionStatus() {
@@ -624,7 +624,7 @@ func (s *KeeperTestSuite) TestUpdateAllowedBidder() {
 	for _, tc := range []struct {
 		name         string
 		bidder       sdk.AccAddress
-		maxBidAmount sdk.Int
+		maxBidAmount math.Int
 		expectedErr  error
 	}{
 		{

@@ -3,7 +3,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 	"time"
 
@@ -24,7 +24,7 @@ type FixedPriceAuctionRequest struct {
 
 // ParseFixedPriceAuctionRequest reads the file and parses FixedPriceAuctionRequest.
 func ParseFixedPriceAuctionRequest(fileName string) (req FixedPriceAuctionRequest, err error) {
-	contents, err := ioutil.ReadFile(fileName)
+	contents, err := os.ReadFile(fileName)
 	if err != nil {
 		return req, err
 	}
@@ -60,7 +60,7 @@ type BatchAuctionRequest struct {
 
 // ParseBatchAuctionRequest reads the file and parses BatchAuctionRequest.
 func ParseBatchAuctionRequest(fileName string) (req BatchAuctionRequest, err error) {
-	contents, err := ioutil.ReadFile(fileName)
+	contents, err := os.ReadFile(fileName)
 	if err != nil {
 		return req, err
 	}

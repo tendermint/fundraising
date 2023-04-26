@@ -1,5 +1,5 @@
 syntax = "proto3";
-package tendermint.fundraising;
+package fundraising;
 
 import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
@@ -41,11 +41,11 @@ message MsgCreateFixedPriceAuction {
 
   // start_price specifies the starting price of the auction
   string start_price = 2
-      [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+  [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
 
   // selling_coin specifies the selling coin for the auction
   cosmos.base.v1beta1.Coin selling_coin = 3
-      [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"];
+  [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"];
 
   // paying_coin_denom specifies the paying coin denom that bidders use to bid
   // for
@@ -78,15 +78,15 @@ message MsgCreateBatchAuction {
 
   // start_price specifies the starting price of the auction
   string start_price = 2
-      [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+  [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
 
   // min_bid_price specifies the minibum bid price
   string min_bid_price = 3
-      [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+  [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
 
   // selling_coin specifies the selling coin for the auction
   cosmos.base.v1beta1.Coin selling_coin = 4
-      [(gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin", (gogoproto.nullable) = false];
+  [(gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin", (gogoproto.nullable) = false];
 
   // paying_coin_denom specifies the paying coin denom that bidders use to bid
   // for
@@ -102,7 +102,7 @@ message MsgCreateBatchAuction {
   // extended_round_rate specifies the rate that decides if the auction needs
   // another round
   string extended_round_rate = 8
-      [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+  [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
 
   // start_time specifies the start time of the plan
   google.protobuf.Timestamp start_time = 9 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
@@ -133,7 +133,7 @@ message MsgCancelAuction {
 message MsgCancelAuctionResponse {}
 
 // MsgPlaceBid defines a SDK message for placing a bid for the auction.
-message MsgPlaceBid { // id specifies index of the auction
+message MsgPlaceBid {// id specifies index of the auction
   option (gogoproto.goproto_getters) = false;
 
   // auction_id specifies the auction id
@@ -154,7 +154,7 @@ message MsgPlaceBid { // id specifies index of the auction
   // coin specifies the paying amount of coin or the selling amount that the
   // bidder bids
   cosmos.base.v1beta1.Coin coin = 5
-      [(gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin", (gogoproto.nullable) = false];
+  [(gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin", (gogoproto.nullable) = false];
 }
 
 // MsgPlaceBidResponse defines the Msg/MsgPlaceBidResponse response type.
@@ -162,7 +162,7 @@ message MsgPlaceBidResponse {}
 
 // MsgModifyBid defines a SDK message for modifying an existing bid for the
 // auction.
-message MsgModifyBid { // id specifies index of the auction
+message MsgModifyBid {// id specifies index of the auction
   option (gogoproto.goproto_getters) = false;
 
   // auction_id specifies the auction id
@@ -182,7 +182,7 @@ message MsgModifyBid { // id specifies index of the auction
   // coin specifies the paying amount of coin or the selling amount that the
   // bidder bids
   cosmos.base.v1beta1.Coin coin = 5
-      [(gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin", (gogoproto.nullable) = false];
+  [(gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin", (gogoproto.nullable) = false];
 }
 
 // MsgModifyBidResponse defines the Msg/MsgModifyBidResponse response type.

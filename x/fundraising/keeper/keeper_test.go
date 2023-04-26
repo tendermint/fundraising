@@ -7,10 +7,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/suite"
-
+	"cosmossdk.io/math"
+	tmrand "github.com/cometbft/cometbft/libs/rand"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/tendermint/fundraising/app"
 	"github.com/tendermint/fundraising/testutil/simapp"
@@ -33,7 +34,8 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *KeeperTestSuite) SetupTest() {
-	s.app = simapp.New(app.DefaultNodeHome)
+	chainID := "chain-" + tmrand.NewRand().Str(6)
+	s.app = simapp.New(chainID, app.DefaultNodeHome)
 	s.ctx = s.app.BaseApp.NewContext(false, tmproto.Header{})
 	s.ctx = s.ctx.WithBlockTime(time.Now()) // set to current time
 	s.keeper = s.app.FundraisingKeeper
@@ -109,7 +111,7 @@ func (s *KeeperTestSuite) createBatchAuction(
 	return auction.(*types.BatchAuction)
 }
 
-func (s *KeeperTestSuite) addAllowedBidder(auctionId uint64, bidder sdk.AccAddress, maxBidAmt sdk.Int) {
+func (s *KeeperTestSuite) addAllowedBidder(auctionId uint64, bidder sdk.AccAddress, maxBidAmt math.Int) {
 	allowedBidder, found := s.keeper.GetAllowedBidder(s.ctx, auctionId, bidder)
 	if found {
 		maxBidAmt = maxBidAmt.Add(allowedBidder.MaxBidAmount)
@@ -128,9 +130,9 @@ func (s *KeeperTestSuite) placeBidFixedPrice(
 	auction, found := s.keeper.GetAuction(s.ctx, auctionId)
 	s.Require().True(found)
 
-	var fundAmt sdk.Int
+	var fundAmt math.Int
 	var fundCoin sdk.Coin
-	var maxBidAmt sdk.Int
+	var maxBidAmt math.Int
 
 	if coin.Denom == auction.GetPayingCoinDenom() {
 		fundCoin = coin
@@ -164,7 +166,7 @@ func (s *KeeperTestSuite) placeBidBatchWorth(
 	bidder sdk.AccAddress,
 	price sdk.Dec,
 	coin sdk.Coin,
-	maxBidAmt sdk.Int,
+	maxBidAmt math.Int,
 	fund bool,
 ) types.Bid {
 	if fund {
@@ -190,7 +192,7 @@ func (s *KeeperTestSuite) placeBidBatchMany(
 	bidder sdk.AccAddress,
 	price sdk.Dec,
 	coin sdk.Coin,
-	maxBidAmt sdk.Int,
+	maxBidAmt math.Int,
 	fund bool,
 ) types.Bid {
 	auction, found := s.keeper.GetAuction(s.ctx, auctionId)
@@ -296,7 +298,7 @@ func (s *KeeperTestSuite) fullString(auctionId uint64, mInfo keeper.MatchingInfo
 }
 
 // bodSellingAmount exchanges to selling coin amount (PayingCoinAmount/Price).
-func bidSellingAmount(price sdk.Dec, coin sdk.Coin) sdk.Int {
+func bidSellingAmount(price sdk.Dec, coin sdk.Coin) math.Int {
 	return sdk.NewDecFromInt(coin.Amount).QuoTruncate(price).TruncateInt()
 }
 
@@ -320,12 +322,12 @@ func parseCoins(s string) sdk.Coins {
 	return coins
 }
 
-// parseInt parses string and returns sdk.Int.
-func parseInt(s string) sdk.Int {
+// parseInt parses string and returns math.Int.
+func parseInt(s string) math.Int {
 	s = strings.ReplaceAll(s, "_", "")
 	amt, ok := sdk.NewIntFromString(s)
 	if !ok {
-		panic("failed to convert string to sdk.Int")
+		panic("failed to convert string to math.Int")
 	}
 	return amt
 }

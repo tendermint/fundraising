@@ -5,6 +5,7 @@ package testutil
 import (
 	"fmt"
 
+	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/testutil"
@@ -16,7 +17,7 @@ import (
 
 var commonArgs = []string{
 	fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-	fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+	fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 	fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
 }
 
@@ -33,6 +34,7 @@ func MsgCreateFixedPriceAuctionExec(clientCtx client.Context,
 	}, commonArgs...)
 
 	args = append(args, commonArgs...)
+	args = append(args, extraArgs...)
 
 	return clitestutil.ExecTestCLICmd(clientCtx, cli.NewCreateFixedPriceAuctionCmd(), args)
 }
@@ -50,6 +52,7 @@ func MsgCreateBatchAuctionExec(clientCtx client.Context,
 	}, commonArgs...)
 
 	args = append(args, commonArgs...)
+	args = append(args, extraArgs...)
 
 	return clitestutil.ExecTestCLICmd(clientCtx, cli.NewCreateBatchAuctionCmd(), args)
 }
@@ -73,6 +76,7 @@ func MsgPlaceBidExec(clientCtx client.Context,
 	}, commonArgs...)
 
 	args = append(args, commonArgs...)
+	args = append(args, extraArgs...)
 
 	return clitestutil.ExecTestCLICmd(clientCtx, cli.NewPlaceBidCmd(), args)
 }
@@ -81,8 +85,8 @@ func MsgPlaceBidExec(clientCtx client.Context,
 func MsgAddAllowedBidderExec(clientCtx client.Context,
 	from string,
 	auctionId uint64,
-	maxBidAmt sdk.Int,
-	extraAtgs ...string,
+	maxBidAmt math.Int,
+	extraArgs ...string,
 ) (testutil.BufferWriter, error) {
 
 	args := append([]string{
@@ -93,6 +97,7 @@ func MsgAddAllowedBidderExec(clientCtx client.Context,
 	}, commonArgs...)
 
 	args = append(args, commonArgs...)
+	args = append(args, extraArgs...)
 
 	return clitestutil.ExecTestCLICmd(clientCtx, cli.NewAddAllowedBidderCmd(), args)
 }

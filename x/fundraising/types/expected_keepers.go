@@ -1,8 +1,9 @@
 package types
 
 import (
-	time "time"
+	"time"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -123,13 +124,13 @@ type FundraisingHooks interface {
 		ctx sdk.Context,
 		auctionId uint64,
 		bidder sdk.AccAddress,
-		maxBidAmount sdk.Int,
+		maxBidAmount math.Int,
 	)
 
 	BeforeSellingCoinsAllocated(
 		ctx sdk.Context,
 		auctionId uint64,
-		allocationMap map[string]sdk.Int,
-		refundMap map[string]sdk.Int,
+		allocationMap map[string]math.Int,
+		refundMap map[string]math.Int,
 	)
 }

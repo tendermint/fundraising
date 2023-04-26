@@ -3,8 +3,9 @@ package types
 // DONTCOVER
 
 import (
-	time "time"
+	"time"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -179,7 +180,7 @@ func (h MultiFundraisingHooks) BeforeAllowedBidderUpdated(
 	ctx sdk.Context,
 	auctionId uint64,
 	bidder sdk.AccAddress,
-	maxBidAmount sdk.Int,
+	maxBidAmount math.Int,
 ) {
 	for i := range h {
 		h[i].BeforeAllowedBidderUpdated(ctx, auctionId, bidder, maxBidAmount)
@@ -189,8 +190,8 @@ func (h MultiFundraisingHooks) BeforeAllowedBidderUpdated(
 func (h MultiFundraisingHooks) BeforeSellingCoinsAllocated(
 	ctx sdk.Context,
 	auctionId uint64,
-	allocationMap map[string]sdk.Int,
-	refundMap map[string]sdk.Int,
+	allocationMap map[string]math.Int,
+	refundMap map[string]math.Int,
 ) {
 	for i := range h {
 		h[i].BeforeSellingCoinsAllocated(ctx, auctionId, allocationMap, refundMap)

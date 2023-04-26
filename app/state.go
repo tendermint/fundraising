@@ -6,16 +6,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/rand"
+	"os"
 	"time"
 
-	tmjson "github.com/tendermint/tendermint/libs/json"
-	tmtypes "github.com/tendermint/tendermint/types"
-
+	tmjson "github.com/cometbft/cometbft/libs/json"
+	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
@@ -59,7 +58,7 @@ func AppStateFn(cdc codec.JSONCodec, simManager *module.SimulationManager) simty
 
 		case config.ParamsFile != "":
 			appParams := make(simtypes.AppParams)
-			bz, err := ioutil.ReadFile(config.ParamsFile)
+			bz, err := os.ReadFile(config.ParamsFile)
 			if err != nil {
 				panic(err)
 			}
@@ -153,11 +152,11 @@ func AppStateRandomizedFn(
 	// number of bonded accounts
 	var initialStake, numInitiallyBonded int64
 	appParams.GetOrGenerate(
-		cdc, simappparams.StakePerAccount, &initialStake, r,
+		cdc, simtestutil.StakePerAccount, &initialStake, r,
 		func(r *rand.Rand) { initialStake = r.Int63n(1e12) },
 	)
 	appParams.GetOrGenerate(
-		cdc, simappparams.InitiallyBondedValidators, &numInitiallyBonded, r,
+		cdc, simtestutil.InitiallyBondedValidators, &numInitiallyBonded, r,
 		func(r *rand.Rand) { numInitiallyBonded = int64(r.Intn(300)) },
 	)
 
@@ -198,7 +197,7 @@ func AppStateRandomizedFn(
 // AppStateFromGenesisFileFn util function to generate the genesis AppState
 // from a genesis.json file.
 func AppStateFromGenesisFileFn(r io.Reader, cdc codec.JSONCodec, genesisFile string) (tmtypes.GenesisDoc, []simtypes.Account) {
-	bytes, err := ioutil.ReadFile(genesisFile)
+	bytes, err := os.ReadFile(genesisFile)
 	if err != nil {
 		panic(err)
 	}

@@ -3,10 +3,10 @@ package types_test
 import (
 	"testing"
 
+	"cosmossdk.io/math"
+	"github.com/cometbft/cometbft/crypto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-
-	"github.com/tendermint/tendermint/crypto"
 
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
@@ -16,7 +16,7 @@ func TestConvertToSellingAmount(t *testing.T) {
 
 	testCases := []struct {
 		bid         types.Bid
-		expectedAmt sdk.Int
+		expectedAmt math.Int
 	}{
 		{
 			types.Bid{
@@ -66,7 +66,7 @@ func TestConvertToPayingAmount(t *testing.T) {
 
 	testCases := []struct {
 		bid         types.Bid
-		expectedAmt sdk.Int
+		expectedAmt math.Int
 	}{
 		{
 			types.Bid{

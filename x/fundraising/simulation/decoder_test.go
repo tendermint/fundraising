@@ -4,21 +4,21 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
-	"github.com/cosmos/cosmos-sdk/simapp"
+	simappparams "cosmossdk.io/simapp/params"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/kv"
+	"github.com/stretchr/testify/require"
 
 	"github.com/tendermint/fundraising/x/fundraising/simulation"
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
 
 func TestDecodeFarmingStore(t *testing.T) {
-	cdc := simapp.MakeTestEncodingConfig().Codec
+	cdc := simappparams.MakeTestEncodingConfig().Codec
 	dec := simulation.NewDecodeStore(cdc)
 
-	baseAuction := types.BaseAuction{}
-	bid := types.Bid{}
+	baseAuction := types.BaseAuction{StartPrice: sdk.NewDec(0)}
+	bid := types.Bid{Price: sdk.NewDec(0)}
 	vestingQueue := types.VestingQueue{}
 
 	kvPairs := kv.Pairs{
@@ -46,7 +46,8 @@ func TestDecodeFarmingStore(t *testing.T) {
 			case len(tests) - 1:
 				require.Panics(t, func() { dec(kvPairs.Pairs[i], kvPairs.Pairs[i]) }, tt.name)
 			default:
-				require.Equal(t, tt.expectedLog, dec(kvPairs.Pairs[i], kvPairs.Pairs[i]), tt.name)
+				got := dec(kvPairs.Pairs[i], kvPairs.Pairs[i])
+				require.EqualValues(t, tt.expectedLog, got, tt.name)
 			}
 		})
 	}

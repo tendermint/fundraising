@@ -1,28 +1,31 @@
 package types
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	"cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
 
 type MatchResult struct {
 	MatchPrice          sdk.Dec
-	MatchedAmount       sdk.Int
+	MatchedAmount       math.Int
 	MatchedBids         []Bid
 	MatchResultByBidder map[string]*BidderMatchResult
 }
 
 type BidderMatchResult struct {
-	PayingAmount  sdk.Int
-	MatchedAmount sdk.Int
+	PayingAmount  math.Int
+	MatchedAmount math.Int
 }
 
 // Match returns the match result for all bids that correspond with the auction.
-func Match(matchPrice sdk.Dec, prices []sdk.Dec, bidsByPrice map[string][]Bid, sellingAmt sdk.Int, allowedBidders []AllowedBidder) (res *MatchResult, matched bool) {
+func Match(matchPrice sdk.Dec, prices []sdk.Dec, bidsByPrice map[string][]Bid, sellingAmt math.Int, allowedBidders []AllowedBidder) (res *MatchResult, matched bool) {
 	res = &MatchResult{
 		MatchPrice:          matchPrice,
 		MatchedAmount:       sdk.ZeroInt(),
 		MatchResultByBidder: map[string]*BidderMatchResult{},
 	}
 
-	biddableAmtByBidder := map[string]sdk.Int{}
+	biddableAmtByBidder := map[string]math.Int{}
 	for _, allowedBidder := range allowedBidders {
 		biddableAmtByBidder[allowedBidder.Bidder] = allowedBidder.MaxBidAmount
 	}
@@ -33,7 +36,7 @@ func Match(matchPrice sdk.Dec, prices []sdk.Dec, bidsByPrice map[string][]Bid, s
 		}
 
 		for _, bid := range bidsByPrice[price.String()] {
-			var bidAmt sdk.Int
+			var bidAmt math.Int
 			switch bid.Type {
 			case BidTypeBatchWorth:
 				bidAmt = sdk.NewDecFromInt(bid.Coin.Amount).QuoTruncate(matchPrice).TruncateInt()

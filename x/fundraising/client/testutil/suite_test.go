@@ -5,24 +5,26 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/tendermint/fundraising/cmd"
-
-	"github.com/gogo/protobuf/proto"
-	"github.com/stretchr/testify/suite"
-
+	tmdb "github.com/cometbft/cometbft-db"
+	tmcli "github.com/cometbft/cometbft/libs/cli"
+	tmrand "github.com/cometbft/cometbft/libs/rand"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	pruningtypes "github.com/cosmos/cosmos-sdk/pruning/types"
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/simapp"
+	pruningtypes "github.com/cosmos/cosmos-sdk/store/pruning/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	utilcli "github.com/cosmos/cosmos-sdk/testutil/cli"
 	"github.com/cosmos/cosmos-sdk/testutil/network"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	tmcli "github.com/tendermint/tendermint/libs/cli"
-	dbm "github.com/tendermint/tm-db"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/gogo/protobuf/proto"
+	"github.com/stretchr/testify/suite"
 
 	chain "github.com/tendermint/fundraising/app"
+	"github.com/tendermint/fundraising/cmd"
 	"github.com/tendermint/fundraising/x/fundraising/client/cli"
 	"github.com/tendermint/fundraising/x/fundraising/keeper"
 	"github.com/tendermint/fundraising/x/fundraising/types"
@@ -38,18 +40,6 @@ type TxCmdTestSuite struct {
 	denom2 string
 }
 
-func NewAppConstructor(encodingCfg cmd.EncodingConfig) network.AppConstructor {
-	return func(val network.Validator) servertypes.Application {
-		return chain.New(
-			val.Ctx.Logger, dbm.NewMemDB(), nil, true, make(map[int64]bool), val.Ctx.Config.RootDir, 0,
-			encodingCfg,
-			simapp.EmptyAppOptions{},
-			baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.AppConfig.Pruning)),
-			baseapp.SetMinGasPrices(val.AppConfig.MinGasPrices),
-		)
-	}
-}
-
 // SetupTest creates a new network for _each_ integration test. We create a new
 // network for each test because there are some state modifications that are
 // needed to be made in order to make useful queries. However, we don't want
@@ -59,23 +49,14 @@ func (s *TxCmdTestSuite) SetupTest() {
 
 	keeper.EnableAddAllowedBidder = true
 
-	encodingCfg := cmd.MakeEncodingConfig(chain.ModuleBasics)
-
-	cfg := network.DefaultConfig()
-	cfg.NumValidators = 1
-	cfg.AppConstructor = NewAppConstructor(encodingCfg)
-	cfg.GenesisState = chain.ModuleBasics.DefaultGenesis(cfg.Codec)
-	cfg.AccountTokens = sdk.NewInt(100_000_000_000_000) // node0token denom
-	cfg.StakingTokens = sdk.NewInt(100_000_000_000_000) // stake denom
-
-	s.cfg = cfg
+	s.cfg = DefaultConfig()
 	var err error
-	s.network, err = network.New(s.T(), s.T().TempDir(), cfg)
+	s.network, err = network.New(s.T(), s.T().TempDir(), s.cfg)
 	s.Require().NoError(err)
 	s.denom1, s.denom2 = fmt.Sprintf("%stoken", s.network.Validators[0].Moniker), s.cfg.BondDenom
 
-	_, err = s.network.WaitForHeight(1)
-	s.Require().NoError(err)
+	h, err := s.network.WaitForHeight(1)
+	s.Require().NoError(err, "stalled at height %d", h)
 }
 
 // TearDownTest cleans up the current test network after each test in the suite.
@@ -89,6 +70,7 @@ func (s *TxCmdTestSuite) TestNewCreateFixedAmountPlanCmd() {
 
 	startTime := time.Now()
 	endTime := startTime.AddDate(0, 1, 0)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	testCases := []struct {
 		name         string
@@ -115,7 +97,7 @@ func (s *TxCmdTestSuite) TestNewCreateFixedAmountPlanCmd() {
 				}.String()).Name(),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
 			},
 			false, &sdk.TxResponse{}, 0,
@@ -138,7 +120,7 @@ func (s *TxCmdTestSuite) TestNewCreateFixedAmountPlanCmd() {
 				}.String()).Name(),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
 			},
 			true, &sdk.TxResponse{}, 1,
@@ -161,7 +143,7 @@ func (s *TxCmdTestSuite) TestNewCreateFixedAmountPlanCmd() {
 				}.String()).Name(),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
 			},
 			true, &sdk.TxResponse{}, 1,
@@ -184,7 +166,7 @@ func (s *TxCmdTestSuite) TestNewCreateFixedAmountPlanCmd() {
 				}.String()).Name(),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
 			},
 			true, &sdk.TxResponse{}, 1,
@@ -211,7 +193,7 @@ func (s *TxCmdTestSuite) TestNewCreateFixedAmountPlanCmd() {
 				}.String()).Name(),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
 			},
 			true, &sdk.TxResponse{}, 1,
@@ -238,7 +220,7 @@ func (s *TxCmdTestSuite) TestNewCreateFixedAmountPlanCmd() {
 				}.String()).Name(),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
 			},
 			true, &sdk.TxResponse{}, 1,
@@ -257,10 +239,10 @@ func (s *TxCmdTestSuite) TestNewCreateFixedAmountPlanCmd() {
 				s.Require().Error(err)
 			} else {
 				s.Require().NoError(err, out.String())
-				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
 
-				txResp := tc.respType.(*sdk.TxResponse)
-				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+				var resp sdk.TxResponse
+				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp))
+				s.Require().NoError(utilcli.CheckTxCode(s.network, clientCtx, resp.TxHash, tc.expectedCode))
 			}
 		})
 	}
@@ -271,6 +253,7 @@ func (s *TxCmdTestSuite) TestNewCreateBatchAuctionCmd() {
 
 	startTime := time.Now()
 	endTime := startTime.AddDate(0, 1, 0)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	testCases := []struct {
 		name         string
@@ -300,7 +283,7 @@ func (s *TxCmdTestSuite) TestNewCreateBatchAuctionCmd() {
 				}.String()).Name(),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
 			},
 			false, &sdk.TxResponse{}, 0,
@@ -326,7 +309,7 @@ func (s *TxCmdTestSuite) TestNewCreateBatchAuctionCmd() {
 				}.String()).Name(),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
 			},
 			true, &sdk.TxResponse{}, 1,
@@ -352,7 +335,7 @@ func (s *TxCmdTestSuite) TestNewCreateBatchAuctionCmd() {
 				}.String()).Name(),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
 			},
 			true, &sdk.TxResponse{}, 1,
@@ -378,7 +361,7 @@ func (s *TxCmdTestSuite) TestNewCreateBatchAuctionCmd() {
 				}.String()).Name(),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
 			},
 			true, &sdk.TxResponse{}, 1,
@@ -408,7 +391,7 @@ func (s *TxCmdTestSuite) TestNewCreateBatchAuctionCmd() {
 				}.String()).Name(),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
 			},
 			true, &sdk.TxResponse{}, 1,
@@ -438,7 +421,7 @@ func (s *TxCmdTestSuite) TestNewCreateBatchAuctionCmd() {
 				}.String()).Name(),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
 			},
 			true, &sdk.TxResponse{}, 1,
@@ -458,10 +441,10 @@ func (s *TxCmdTestSuite) TestNewCreateBatchAuctionCmd() {
 				s.Require().Error(err)
 			} else {
 				s.Require().NoError(err, out.String())
-				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
 
-				txResp := tc.respType.(*sdk.TxResponse)
-				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+				var resp sdk.TxResponse
+				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp))
+				s.Require().NoError(utilcli.CheckTxCode(s.network, clientCtx, resp.TxHash, tc.expectedCode))
 			}
 		})
 	}
@@ -489,6 +472,7 @@ func (s *TxCmdTestSuite) TestNewCancelAuctionCmd() {
 		}.String()).Name(),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	testCases := []struct {
 		name         string
@@ -503,7 +487,7 @@ func (s *TxCmdTestSuite) TestNewCancelAuctionCmd() {
 				fmt.Sprint(1),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 10)).String()),
 			},
 			false, &sdk.TxResponse{}, 0,
@@ -514,7 +498,7 @@ func (s *TxCmdTestSuite) TestNewCancelAuctionCmd() {
 				fmt.Sprint(5),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 10)).String()),
 			},
 			false, &sdk.TxResponse{}, 38,
@@ -534,10 +518,10 @@ func (s *TxCmdTestSuite) TestNewCancelAuctionCmd() {
 				s.Require().Error(err)
 			} else {
 				s.Require().NoError(err, out.String())
-				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
 
-				txResp := tc.respType.(*sdk.TxResponse)
-				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+				var resp sdk.TxResponse
+				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp))
+				s.Require().NoError(utilcli.CheckTxCode(s.network, clientCtx, resp.TxHash, tc.expectedCode))
 			}
 		})
 	}
@@ -565,6 +549,7 @@ func (s *TxCmdTestSuite) TestNewPlaceBidCmd() {
 		}.String()).Name(),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	// Add allowed bidder
 	_, err = MsgAddAllowedBidderExec(
@@ -574,6 +559,7 @@ func (s *TxCmdTestSuite) TestNewPlaceBidCmd() {
 		sdk.NewInt(100_000_000),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	testCases := []struct {
 		name         string
@@ -591,7 +577,7 @@ func (s *TxCmdTestSuite) TestNewPlaceBidCmd() {
 				sdk.NewCoin(s.denom2, sdk.NewInt(50_000_000)).String(),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 10)).String()),
 			},
 			false, &sdk.TxResponse{}, 0,
@@ -605,7 +591,7 @@ func (s *TxCmdTestSuite) TestNewPlaceBidCmd() {
 				sdk.NewCoin(s.denom2, sdk.NewInt(50_000_000)).String(),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 10)).String()),
 			},
 			false, &sdk.TxResponse{}, 7,
@@ -619,7 +605,7 @@ func (s *TxCmdTestSuite) TestNewPlaceBidCmd() {
 				sdk.NewCoin(s.denom2, sdk.NewInt(50_000_000)).String(),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 10)).String()),
 			},
 			false, &sdk.TxResponse{}, 7,
@@ -633,7 +619,7 @@ func (s *TxCmdTestSuite) TestNewPlaceBidCmd() {
 				sdk.NewCoin(s.denom2, sdk.NewInt(50_000_000)).String(),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 10)).String()),
 			},
 			false, &sdk.TxResponse{}, 3,
@@ -653,10 +639,10 @@ func (s *TxCmdTestSuite) TestNewPlaceBidCmd() {
 				s.Require().Error(err)
 			} else {
 				s.Require().NoError(err, out.String())
-				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
 
-				txResp := tc.respType.(*sdk.TxResponse)
-				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+				var resp sdk.TxResponse
+				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp))
+				s.Require().NoError(utilcli.CheckTxCode(s.network, clientCtx, resp.TxHash, tc.expectedCode))
 			}
 		})
 	}
@@ -687,6 +673,7 @@ func (s *TxCmdTestSuite) TestNewModifyBidCmd() {
 		}.String()).Name(),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	// Add allowed bidder
 	_, err = MsgAddAllowedBidderExec(
@@ -696,6 +683,7 @@ func (s *TxCmdTestSuite) TestNewModifyBidCmd() {
 		sdk.NewInt(100_000_000),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	// Place a bid
 	_, err = MsgPlaceBidExec(
@@ -707,6 +695,7 @@ func (s *TxCmdTestSuite) TestNewModifyBidCmd() {
 		sdk.NewCoin(s.denom2, sdk.NewInt(50_000_000)),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	testCases := []struct {
 		name         string
@@ -724,7 +713,7 @@ func (s *TxCmdTestSuite) TestNewModifyBidCmd() {
 				sdk.NewCoin(s.denom2, sdk.NewInt(50_000_000)).String(),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 10)).String()),
 			},
 			false, &sdk.TxResponse{}, 0,
@@ -738,7 +727,7 @@ func (s *TxCmdTestSuite) TestNewModifyBidCmd() {
 				sdk.NewCoin(s.denom2, sdk.NewInt(50_000_000)).String(),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 10)).String()),
 			},
 			false, &sdk.TxResponse{}, 18,
@@ -752,7 +741,7 @@ func (s *TxCmdTestSuite) TestNewModifyBidCmd() {
 				sdk.NewCoin(s.denom2, sdk.NewInt(50_000_000)).String(),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 10)).String()),
 			},
 			false, &sdk.TxResponse{}, 38,
@@ -766,7 +755,7 @@ func (s *TxCmdTestSuite) TestNewModifyBidCmd() {
 				sdk.NewCoin(s.denom2, sdk.NewInt(50_000_000)).String(),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 10)).String()),
 			},
 			false, &sdk.TxResponse{}, 13,
@@ -780,7 +769,7 @@ func (s *TxCmdTestSuite) TestNewModifyBidCmd() {
 				sdk.NewCoin(s.denom1, sdk.NewInt(50_000_000)).String(),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 10)).String()),
 			},
 			false, &sdk.TxResponse{}, 8,
@@ -794,7 +783,7 @@ func (s *TxCmdTestSuite) TestNewModifyBidCmd() {
 				sdk.NewCoin(s.denom2, sdk.NewInt(50_000_000)).String(),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 10)).String()),
 			},
 			false, &sdk.TxResponse{}, 18,
@@ -805,19 +794,20 @@ func (s *TxCmdTestSuite) TestNewModifyBidCmd() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			cmd := cli.NewModifyBidCmd()
-			clientCtx := val.ClientCtx
-
+			var (
+				clientCtx = val.ClientCtx
+				cmd       = cli.NewModifyBidCmd()
+			)
 			out, err := utilcli.ExecTestCLICmd(clientCtx, cmd, tc.args)
 
 			if tc.expectErr {
 				s.Require().Error(err)
 			} else {
 				s.Require().NoError(err, out.String())
-				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType), out.String())
 
-				txResp := tc.respType.(*sdk.TxResponse)
-				s.Require().Equal(tc.expectedCode, txResp.Code, out.String())
+				var resp sdk.TxResponse
+				s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp))
+				s.Require().NoError(utilcli.CheckTxCode(s.network, clientCtx, resp.TxHash, tc.expectedCode))
 			}
 		})
 	}
@@ -838,18 +828,10 @@ func (s *QueryCmdTestSuite) SetupTest() {
 
 	keeper.EnableAddAllowedBidder = true
 
-	encodingCfg := cmd.MakeEncodingConfig(chain.ModuleBasics)
-
-	cfg := network.DefaultConfig()
-	cfg.NumValidators = 2
-	cfg.AppConstructor = NewAppConstructor(encodingCfg)
-	cfg.GenesisState = chain.ModuleBasics.DefaultGenesis(cfg.Codec)
-	cfg.AccountTokens = sdk.NewInt(100_000_000_000_000) // node0token denom
-	cfg.StakingTokens = sdk.NewInt(100_000_000_000_000) // stake denom
-
-	s.cfg = cfg
+	s.cfg = DefaultConfig()
+	s.cfg.NumValidators = 2
 	var err error
-	s.network, err = network.New(s.T(), s.T().TempDir(), cfg)
+	s.network, err = network.New(s.T(), s.T().TempDir(), s.cfg)
 	s.Require().NoError(err)
 	s.denom1, s.denom2 = fmt.Sprintf("%stoken", s.network.Validators[0].Moniker), s.cfg.BondDenom
 
@@ -927,6 +909,7 @@ func (s *TxCmdTestSuite) TestNewQueryAuctionsCmd() {
 		}.String()).Name(),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	// Create a batch auction
 	_, err = MsgCreateBatchAuctionExec(
@@ -950,6 +933,7 @@ func (s *TxCmdTestSuite) TestNewQueryAuctionsCmd() {
 		}.String()).Name(),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	for _, tc := range []struct {
 		name        string
@@ -1007,6 +991,7 @@ func (s *TxCmdTestSuite) TestNewQueryAuctionCmd() {
 		}.String()).Name(),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	for _, tc := range []struct {
 		name        string
@@ -1030,7 +1015,6 @@ func (s *TxCmdTestSuite) TestNewQueryAuctionCmd() {
 	} {
 		s.Run(tc.name, func() {
 			cmd := cli.NewQueryAuctionCmd()
-
 			out, err := utilcli.ExecTestCLICmd(val.ClientCtx, cmd, tc.args)
 
 			if tc.expectedErr == "" {
@@ -1038,9 +1022,9 @@ func (s *TxCmdTestSuite) TestNewQueryAuctionCmd() {
 				var resp types.QueryAuctionResponse
 				s.Require().NoError(val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp), out.String())
 				tc.postRun(resp)
-			} else {
-				s.Require().EqualError(err, tc.expectedErr)
+				return
 			}
+			s.Require().EqualError(err, tc.expectedErr)
 		})
 	}
 }
@@ -1069,6 +1053,7 @@ func (s *TxCmdTestSuite) TestNewQueryAllowedBiddersCmd() {
 		}.String()).Name(),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	// Add allowed bidder
 	_, err = MsgAddAllowedBidderExec(
@@ -1078,6 +1063,7 @@ func (s *TxCmdTestSuite) TestNewQueryAllowedBiddersCmd() {
 		sdk.NewInt(100_000_000),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	for _, tc := range []struct {
 		name        string
@@ -1099,7 +1085,6 @@ func (s *TxCmdTestSuite) TestNewQueryAllowedBiddersCmd() {
 	} {
 		s.Run(tc.name, func() {
 			cmd := cli.NewQueryAllowedBiddersCmd()
-
 			out, err := utilcli.ExecTestCLICmd(val.ClientCtx, cmd, tc.args)
 
 			if tc.expectedErr == "" {
@@ -1107,9 +1092,9 @@ func (s *TxCmdTestSuite) TestNewQueryAllowedBiddersCmd() {
 				var resp types.QueryAllowedBiddersResponse
 				s.Require().NoError(val.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), &resp), out.String())
 				tc.postRun(resp)
-			} else {
-				s.Require().EqualError(err, tc.expectedErr)
+				return
 			}
+			s.Require().EqualError(err, tc.expectedErr)
 		})
 	}
 }
@@ -1138,6 +1123,7 @@ func (s *TxCmdTestSuite) TestNewQueryAllowedBidderCmd() {
 		}.String()).Name(),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	// Add allowed bidder
 	maxBidAmt := sdk.NewInt(100_000_000)
@@ -1148,6 +1134,7 @@ func (s *TxCmdTestSuite) TestNewQueryAllowedBidderCmd() {
 		maxBidAmt,
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	for _, tc := range []struct {
 		name        string
@@ -1171,7 +1158,6 @@ func (s *TxCmdTestSuite) TestNewQueryAllowedBidderCmd() {
 	} {
 		s.Run(tc.name, func() {
 			cmd := cli.NewQueryAllowedBidderCmd()
-
 			out, err := utilcli.ExecTestCLICmd(val.ClientCtx, cmd, tc.args)
 
 			if tc.expectedErr == "" {
@@ -1213,6 +1199,7 @@ func (s *TxCmdTestSuite) TestNewQueryBidsCmd() {
 		}.String()).Name(),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	// Add allowed bidder
 	_, err = MsgAddAllowedBidderExec(
@@ -1222,6 +1209,7 @@ func (s *TxCmdTestSuite) TestNewQueryBidsCmd() {
 		sdk.NewInt(100_000_000),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	// Place a bid #1
 	_, err = MsgPlaceBidExec(
@@ -1233,6 +1221,7 @@ func (s *TxCmdTestSuite) TestNewQueryBidsCmd() {
 		sdk.NewCoin(s.denom2, sdk.NewInt(20_000_000)),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	// Place a bid #2
 	_, err = MsgPlaceBidExec(
@@ -1244,6 +1233,7 @@ func (s *TxCmdTestSuite) TestNewQueryBidsCmd() {
 		sdk.NewCoin(s.denom1, sdk.NewInt(5_000_000)),
 	)
 	s.Require().NoError(err)
+	s.Require().NoError(s.network.WaitForNextBlock())
 
 	for _, tc := range []struct {
 		name        string
@@ -1277,5 +1267,50 @@ func (s *TxCmdTestSuite) TestNewQueryBidsCmd() {
 				s.Require().EqualError(err, tc.expectedErr)
 			}
 		})
+	}
+}
+
+// DefaultConfig will initialize config for the network with custom application,
+// genesis and single validator. All other parameters are inherited from cosmos-sdk/testutil/network.DefaultConfig
+func DefaultConfig() network.Config {
+	var (
+		encoding = cmd.MakeEncodingConfig(chain.ModuleBasics)
+		chainID  = "chain-" + tmrand.NewRand().Str(6)
+	)
+	return network.Config{
+		Codec:             encoding.Marshaler,
+		TxConfig:          encoding.TxConfig,
+		LegacyAmino:       encoding.Amino,
+		InterfaceRegistry: encoding.InterfaceRegistry,
+		AccountRetriever:  authtypes.AccountRetriever{},
+		AppConstructor: func(val network.ValidatorI) servertypes.Application {
+			return chain.New(
+				val.GetCtx().Logger,
+				tmdb.NewMemDB(),
+				nil,
+				true,
+				map[int64]bool{},
+				val.GetCtx().Config.RootDir,
+				0,
+				encoding,
+				simtestutil.EmptyAppOptions{},
+				baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.GetAppConfig().Pruning)),
+				baseapp.SetMinGasPrices(val.GetAppConfig().MinGasPrices),
+				baseapp.SetChainID(chainID),
+			)
+		},
+		GenesisState:    chain.ModuleBasics.DefaultGenesis(encoding.Marshaler),
+		TimeoutCommit:   2 * time.Second,
+		ChainID:         chainID,
+		NumValidators:   1,
+		BondDenom:       sdk.DefaultBondDenom,
+		MinGasPrices:    fmt.Sprintf("0.000006%s", sdk.DefaultBondDenom),
+		AccountTokens:   sdk.NewInt(100_000_000_000_000), // node0token denom,
+		StakingTokens:   sdk.NewInt(100_000_000_000_000), // stake denom
+		BondedTokens:    sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
+		PruningStrategy: pruningtypes.PruningOptionNothing,
+		CleanupDir:      true,
+		SigningAlgo:     string(hd.Secp256k1Type),
+		KeyringOptions:  []keyring.Option{},
 	}
 }

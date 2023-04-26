@@ -13,7 +13,9 @@ jobs:
   markdown-link-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
-      - uses: gaurav-nelson/github-action-markdown-link-check@1.0.13
+      - uses: actions/checkout@v3
+      - uses: gaurav-nelson/github-action-markdown-link-check@1.0.15
         with:
           folder-path: "."
+          use-verbose-mode: 'yes'
+          config-file: '.github/workflows/linkchecker-config.json'

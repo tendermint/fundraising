@@ -1,0 +1,22 @@
+{
+  "ignorePatterns": [
+    {
+      "pattern": "^https://render.githubusercontent.com/render/"
+    },
+    {
+      "pattern": "^http://localhost"
+    },
+    {
+      "pattern": "^index.md"
+    },
+    {
+      "pattern": "^#"
+    }
+  ],
+  "replacementPatterns": [
+  ],
+  "timeout": "20s",
+  "retryOn429": true,
+  "retryCount": 5,
+  "fallbackRetryDelay": "30s"
+}

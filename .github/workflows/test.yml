@@ -19,13 +19,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go-arch: ["amd64", "arm64"]
+        go-arch: [ "amd64", "arm64" ]
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2.1.3
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
         with:
           go-version: 1.18
-      - uses: technote-space/get-diff-action@v4
+      - uses: technote-space/get-diff-action@v6
         id: git_diff
         with:
           PATTERNS: |
@@ -39,8 +39,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/cache@v2
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
         with:
           path: |
             ~/.cache/go-build
@@ -48,12 +48,12 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-      - uses: actions/setup-go@v2
+      - uses: actions/setup-go@v4
         with:
           go-version: 1.18
 
       - name: Run unit tests
-        run: go test -v -coverprofile=coverage.txt -covermode=atomic ./...
+        run: go test -v -coverprofile=coverage.out -coverpkg=./... -covermode=atomic ./...
 
       - name: filter out DONTCOVER
         run: |
@@ -64,21 +64,22 @@ jobs:
           for filename in ${excludelist}; do
             filename=$(echo $filename | sed 's/^./github.com\/tendermint\/fundraising/g')
             echo "Excluding ${filename} from coverage report..."
-            sed -i "/$(echo $filename | sed 's/\//\\\//g')/d" coverage.txt
+            sed -i "/$(echo $filename | sed 's/\//\\\//g')/d" coverage.out
           done
-          
+
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           fail_ci_if_error: true
           verbose: true
+          token: ${{secrets.CODECOV_TOKEN}}
 
   test-coverage:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - uses: actions/setup-go@v4
         with:
           go-version: 1.18
       - name: display go version
@@ -94,18 +95,18 @@ jobs:
           for filename in ${excludelist}; do
             filename=$(echo $filename | sed 's/^./github.com\/tendermint\/fundraising/g')
             echo "Excluding ${filename} from coverage report..."
-            sed -i "/$(echo $filename | sed 's/\//\\\//g')/d" coverage.txt
+            sed -i "/$(echo $filename | sed 's/\//\\\//g')/d" coverage.out
           done
-      - uses: codecov/codecov-action@v2.1.0
+      - uses: codecov/codecov-action@v3
         with:
-          file: ./coverage.txt
+          file: ./coverage.out
 
   test-race:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - uses: actions/setup-go@v4
         with:
           go-version: 1.18
       - name: display go version
@@ -121,8 +122,8 @@ jobs:
           for filename in ${excludelist}; do
             filename=$(echo $filename | sed 's/^./github.com\/tendermint\/fundraising/g')
             echo "Excluding ${filename} from coverage report..."
-            sed -i "/$(echo $filename | sed 's/\//\\\//g')/d" coverage.txt
+            sed -i "/$(echo $filename | sed 's/\//\\\//g')/d" coverage.out
           done
-      - uses: codecov/codecov-action@v2.1.0
+      - uses: codecov/codecov-action@v3
         with:
-          file: ./coverage.txt
+          file: ./coverage.out

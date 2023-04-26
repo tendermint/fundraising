@@ -3,11 +3,11 @@ package keeper_test
 import (
 	"time"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	_ "github.com/stretchr/testify/suite"
 
 	"github.com/tendermint/fundraising/x/fundraising/types"
-
-	_ "github.com/stretchr/testify/suite"
 )
 
 var _ types.FundraisingHooks = &MockFundraisingHooksReceiver{}
@@ -129,7 +129,7 @@ func (h *MockFundraisingHooksReceiver) BeforeAllowedBidderUpdated(
 	ctx sdk.Context,
 	auctionId uint64,
 	bidder sdk.AccAddress,
-	maxBidAmount sdk.Int,
+	maxBidAmount math.Int,
 ) {
 	h.BeforeAllowedBidderUpdatedValid = true
 }
@@ -137,8 +137,8 @@ func (h *MockFundraisingHooksReceiver) BeforeAllowedBidderUpdated(
 func (h *MockFundraisingHooksReceiver) BeforeSellingCoinsAllocated(
 	ctx sdk.Context,
 	auctionId uint64,
-	allocationMap map[string]sdk.Int,
-	refundMap map[string]sdk.Int,
+	allocationMap map[string]math.Int,
+	refundMap map[string]math.Int,
 ) {
 	h.BeforeSellingCoinsAllocatedValid = true
 }

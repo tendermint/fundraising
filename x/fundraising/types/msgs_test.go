@@ -4,11 +4,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
+	"github.com/cometbft/cometbft/crypto"
 	"github.com/cosmos/cosmos-sdk/codec/legacy"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/tendermint/tendermint/crypto"
+	"github.com/stretchr/testify/require"
 
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
