@@ -12,6 +12,7 @@
 # Build
 vendor
 build
+gen/
 tools/bin/*
 examples/build/*
 docs/_build
