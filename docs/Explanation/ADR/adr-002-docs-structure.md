@@ -59,7 +59,7 @@ Given GitHub will form the content management system, we propose the following s
 
 ### Structure
 
-The documentation structure shall use as much as possible a content structure similar to the [Divio user cases](https://documentation.divio.com/introduction/).
+The documentation structure shall use as much as possible a content structure similar to the [Divio user cases](https://documentation.divio.com/introduction.html).
 
 |                 | Tutorials | How-to guides | Reference   | Explanation   |
 |-----------------|-----------|---------------|-------------|-------------- |
@@ -168,7 +168,7 @@ The `architecture` folder contains architecture diagrams such as component, acti
 
 #### docs/Explanation
 
-The `Explanation` folder contains content that provides context for readers and is discursive in nature. See the [Divio Explanation page](https://documentation.divio.com/explanation/#) for more detail.
+The `Explanation` folder contains content that provides context for readers and is discursive in nature. See the [Divio Explanation page](https://documentation.divio.com/explanation.html) for more detail.
 
 - **docs/explanation/README.md** - This file orients the reader and explains the content. 
 
@@ -196,7 +196,7 @@ To convert articles to PDF using Pandoc:
 
 #### docs/Tutorials
 
-As indicated in the overview, tutorials SHALL BE documents that target beginners and guide a user step-by-step through a process with the aim of achieving some goal. Please see the [Divio tutorial page](https://documentation.divio.com/tutorials/) for details.
+As indicated in the overview, tutorials SHALL BE documents that target beginners and guide a user step-by-step through a process with the aim of achieving some goal. Please see the [Divio tutorial page](https://documentation.divio.com/tutorials.html) for details.
 
 - There SHALL BE a folder for each tutorial. See the [Cosmos SDK tutorials](https://github.com/cosmos/sdk-tutorials) as an example.
 - The folder SHALL CONTAIN all of the content that is relevant for that tutorial. 
@@ -204,7 +204,7 @@ As indicated in the overview, tutorials SHALL BE documents that target beginners
 
 #### docs/How-To
 
-In contrast to tutorials, [how-to guides](https://documentation.divio.com/how-to-guides/) are a series of actionable steps to help an experienced reader solve a specific problem. These how-to guides SHALL USE templates similar to the tutorials - see above.
+In contrast to tutorials, [how-to guides](https://documentation.divio.com/how-to-guides.html) are a series of actionable steps to help an experienced reader solve a specific problem. These how-to guides SHALL USE templates similar to the tutorials - see above.
 
 ### Templates
 
