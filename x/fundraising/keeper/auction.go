@@ -139,7 +139,10 @@ func (k Keeper) AllocateSellingCoin(ctx context.Context, auction types.AuctionI,
 			continue
 		}
 		allocateCoins := sdk.NewCoins(sdk.NewCoin(sellingCoinDenom, mInfo.AllocationMap[bidder]))
-		bidderAddr, _ := sdk.AccAddressFromBech32(bidder)
+		bidderAddr, err := sdk.AccAddressFromBech32(bidder)
+		if err != nil {
+			return err
+		}
 
 		if _, ok := ioCoins[bidderAddr.String()]; !ok {
 			ioCoins[bidder] = inOutCoins{
