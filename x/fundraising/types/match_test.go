@@ -20,9 +20,9 @@ func testAddr(addrNum int) sdk.AccAddress {
 	return addr
 }
 
-// parseDec parses string and returns sdk.Dec.
-func parseDec(s string) sdk.Dec {
-	return sdk.MustNewDecFromStr(s)
+// parseDec parses string and returns math.LegacyDec.
+func parseDec(s string) math.LegacyDec {
+	return math.LegacyMustNewDecFromStr(s)
 }
 
 func TestMatch(t *testing.T) {
@@ -31,7 +31,7 @@ func TestMatch(t *testing.T) {
 		sellingCoinDenom = "selling"
 	)
 
-	newBid := func(id uint64, typ types.BidType, bidder string, price sdk.Dec, bidAmt math.Int) types.Bid {
+	newBid := func(id uint64, typ types.BidType, bidder string, price math.LegacyDec, bidAmt math.Int) types.Bid {
 		var coin sdk.Coin
 		switch typ {
 		case types.BidTypeBatchWorth:
@@ -60,7 +60,7 @@ func TestMatch(t *testing.T) {
 		allowedBidders      map[string]math.Int
 		sellingCoinAmt      math.Int
 		bids                []types.Bid
-		matchPrice          sdk.Dec
+		matchPrice          math.LegacyDec
 		matched             bool
 		matchedAmt          math.Int
 		matchedBidIds       []uint64 // should be sorted
@@ -69,54 +69,56 @@ func TestMatch(t *testing.T) {
 		{
 			"basic case",
 			map[string]math.Int{
-				bidders[0]: sdk.NewInt(100_000000),
+				bidders[0]: math.NewInt(100_000000),
 			},
-			sdk.NewInt(100_000000),
+			math.NewInt(100_000000),
 			[]types.Bid{
-				newBid(1, types.BidTypeBatchWorth, bidders[0], parseDec("1.0"), sdk.NewInt(100_000000)),
+				newBid(1, types.BidTypeBatchWorth, bidders[0], parseDec("1.0"), math.NewInt(100_000000)),
 			},
 			parseDec("1.0"),
 			true,
-			sdk.NewInt(100_000000),
+			math.NewInt(100_000000),
 			[]uint64{1},
 			map[string]*types.BidderMatchResult{
 				bidders[0]: {
-					PayingAmount:  sdk.NewInt(100_000000),
-					MatchedAmount: sdk.NewInt(100_000000),
+					PayingAmount:  math.NewInt(100_000000),
+					MatchedAmount: math.NewInt(100_000000),
 				},
 			},
 		},
 		{
 			"partial match",
 			map[string]math.Int{
-				bidders[0]: sdk.NewInt(50_000000),
+				bidders[0]: math.NewInt(50_000000),
 			},
-			sdk.NewInt(100_000000),
+			math.NewInt(100_000000),
 			[]types.Bid{
-				newBid(1, types.BidTypeBatchWorth, bidders[0], parseDec("1.0"), sdk.NewInt(100_000000)),
+				newBid(1, types.BidTypeBatchWorth, bidders[0], parseDec("1.0"), math.NewInt(100_000000)),
 			},
 			parseDec("1.0"),
 			true,
-			sdk.NewInt(50_000000),
+			math.NewInt(50_000000),
 			[]uint64{1},
 			map[string]*types.BidderMatchResult{
 				bidders[0]: {
-					PayingAmount:  sdk.NewInt(50_000000),
-					MatchedAmount: sdk.NewInt(50_000000),
+					PayingAmount:  math.NewInt(50_000000),
+					MatchedAmount: math.NewInt(50_000000),
 				},
 			},
 		},
 		{
 			"no match",
 			map[string]math.Int{
-				bidders[0]: sdk.NewInt(100_000000),
+				bidders[0]: math.NewInt(100_000000),
 			},
-			sdk.NewInt(100_000000),
+			math.NewInt(100_000000),
 			[]types.Bid{
-				newBid(1, types.BidTypeBatchWorth, bidders[0], parseDec("1.0"), sdk.NewInt(100_000000)),
+				newBid(1, types.BidTypeBatchWorth, bidders[0], parseDec("1.0"), math.NewInt(100_000000)),
 			},
 			parseDec("1.1"),
-			false, math.Int{}, nil, nil,
+			false,
+			math.Int{},
+			nil, nil,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

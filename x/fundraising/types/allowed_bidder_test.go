@@ -3,6 +3,7 @@ package types_test
 import (
 	"testing"
 
+	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/crypto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -18,19 +19,19 @@ func TestValidate_AllowedBidder(t *testing.T) {
 		expectedErr   bool
 	}{
 		{
-			types.NewAllowedBidder(testBidderAddr, sdk.NewInt(100_000_000)),
+			types.NewAllowedBidder(1, testBidderAddr, math.NewInt(100_000_000)),
 			false,
 		},
 		{
-			types.NewAllowedBidder(sdk.AccAddress{}, sdk.NewInt(100_000_000)),
+			types.NewAllowedBidder(1, sdk.AccAddress{}, math.NewInt(100_000_000)),
 			true,
 		},
 		{
-			types.NewAllowedBidder(testBidderAddr, sdk.NewInt(0)),
+			types.NewAllowedBidder(1, testBidderAddr, math.NewInt(0)),
 			true,
 		},
 		{
-			types.NewAllowedBidder(testBidderAddr, sdk.ZeroInt()),
+			types.NewAllowedBidder(1, testBidderAddr, math.ZeroInt()),
 			true,
 		},
 	}

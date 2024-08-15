@@ -1,0 +1,75 @@
+coverage:
+  precision: 2
+  round: down
+  range: 70...100
+  status:
+    patch: off
+    changes: false
+    project:
+      default:
+        target: auto
+        threshold: 10%
+        informational: true
+      modules:
+        if_ci_failed: error
+        target: 70%
+        flags:
+          - modules
+      client:
+        if_ci_failed: error
+        target: 70%
+        flags:
+          - client
+
+comment:
+  layout: "reach, diff, files"
+  behavior: default
+  require_changes: false
+
+codecov:
+  notify:
+    wait_for_ci: false
+
+flags:
+  modules:
+    carryforward: true
+    paths:
+      - "x/"
+      - "!x/**/client/**/*"
+  client:
+    carryforward: true
+    paths:
+      - "x/**/client/**/*"
+
+ignore:
+  - "x/**/client/cli/query.go"
+  - "x/**/client/cli/query_params.go"
+  - "x/**/client/cli/tx.go"
+  - "x/**/client/cli/tx_*.go"
+  - "x/**/keeper/keeper.go"
+  - "x/**/keeper/msg_server.go"
+  - "x/**/keeper/grpc_query_params.go"
+  - "x/**/keeper/invariants.go"
+  - "x/**/types/codec.go"
+  - "x/**/types/errors.go"
+  - "x/**/types/keys.go"
+  - "x/**/types/key_*.go"
+  - "x/**/types/types.go"
+  - "x/**/module.go"
+  - "x/**/handler.go"
+  - "x/**/module_simulation.go"
+  - "*.proto"
+  - "*.md"
+  - "*.yml"
+  - "*.yaml"
+  - "*.pb.go"
+  - "*.pb.gw.go"
+  - ".github/"
+  - "app/"
+  - "cmd/"
+  - "docs/"
+  - "proto/"
+  - "scripts/"
+  - "testutil/"
+  - "dart/"
+  - "vue/"

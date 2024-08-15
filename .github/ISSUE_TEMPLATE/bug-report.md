@@ -1,39 +1,21 @@
 ---
-name: Bug Report 
-about: Create a report to help us squash bugs!
+name: Ignite Fundraising bug report
+about: Create a report to help us improve
+title: ''
+labels: report
+assignees: ''
 
 ---
 
-<!-- < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < ☺ 
-v                            ✰  Thanks for opening an issue! ✰    
-v    Before smashing the submit button please review the template.
-v    Please also ensure that this is not a duplicate issue :)  
-☺ > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >  -->
+**Describe the bug**
+A clear and concise description of what the bug is.
 
-## Summary of Bug
+**To Reproduce**
+Steps to reproduce the behavior:
+1.
 
-<!-- Concisely describe the issue -->
-
-## Version
-
-<!-- git commit hash or release version -->
-
-## Steps to Reproduce
-
-<!-- What commands in order should someone run to reproduce your problem? -->
-
-## Tasks
-
-- 
-
-## References
-
--
-____
-
-## For Admin Use
-
-- [ ] Not duplicate issue
-- [ ] Appropriate labels applied
-- [ ] Appropriate contributors tagged
-- [ ] Contributor assigned/self-assigned
+**Please provide output of commands while in the repo base directory**
+- `git rev-parse --verify HEAD`
+- `ignite version`
+- `go version`
+- `uname -a`

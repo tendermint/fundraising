@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/crypto"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -21,18 +22,18 @@ func TestGenesisState_Validate(t *testing.T) {
 			Auctioneer:            validAddr.String(),
 			SellingReserveAddress: types.SellingReserveAddress(1).String(),
 			PayingReserveAddress:  types.PayingReserveAddress(1).String(),
-			StartPrice:            sdk.MustNewDecFromStr("0.5"),
+			StartPrice:            math.LegacyMustNewDecFromStr("0.5"),
 			SellingCoin:           sdk.NewInt64Coin("denom1", 1_000_000_000_000),
 			PayingCoinDenom:       "denom2",
 			VestingReserveAddress: types.VestingReserveAddress(1).String(),
 			VestingSchedules: []types.VestingSchedule{
 				{
 					ReleaseTime: types.MustParseRFC3339("2023-01-01T00:00:00Z"),
-					Weight:      sdk.MustNewDecFromStr("0.5"),
+					Weight:      math.LegacyMustNewDecFromStr("0.5"),
 				},
 				{
 					ReleaseTime: types.MustParseRFC3339("2023-12-01T00:00:00Z"),
-					Weight:      sdk.MustNewDecFromStr("0.5"),
+					Weight:      math.LegacyMustNewDecFromStr("0.5"),
 				},
 			},
 			StartTime: types.MustParseRFC3339("2022-01-01T00:00:00Z"),
@@ -43,15 +44,16 @@ func TestGenesisState_Validate(t *testing.T) {
 	)
 
 	validAllowedBidder := types.AllowedBidder{
+		AuctionId:    1,
 		Bidder:       validAddr.String(),
-		MaxBidAmount: sdk.NewInt(10_000_000),
+		MaxBidAmount: math.NewInt(10_000_000),
 	}
 
 	validBid := types.Bid{
 		AuctionId: 1,
 		Id:        1,
 		Bidder:    validAddr.String(),
-		Price:     sdk.MustNewDecFromStr("0.5"),
+		Price:     math.LegacyMustNewDecFromStr("0.5"),
 		Coin:      sdk.NewInt64Coin("denom2", 50_000_000),
 	}
 
@@ -63,7 +65,7 @@ func TestGenesisState_Validate(t *testing.T) {
 		Released:    false,
 	}
 
-	for _, tc := range []struct {
+	tests := []struct {
 		desc      string
 		configure func(*types.GenesisState)
 		valid     bool
@@ -83,15 +85,13 @@ func TestGenesisState_Validate(t *testing.T) {
 				auctionAny, _ := types.PackAuction(validAuction)
 
 				genState.Params = params
-				genState.Auctions = []*codectypes.Any{auctionAny}
-				genState.AllowedBidderRecords = []types.AllowedBidderRecord{
-					{
-						AuctionId:     1,
-						AllowedBidder: validAllowedBidder,
-					},
-				}
-				genState.Bids = []types.Bid{validBid}
-				genState.VestingQueues = []types.VestingQueue{validVestingQueue}
+				genState.AuctionList = []*codectypes.Any{auctionAny}
+				genState.AllowedBidderList = []types.AllowedBidder{validAllowedBidder}
+				genState.BidList = []types.Bid{validBid}
+				genState.VestingQueueList = []types.VestingQueue{validVestingQueue}
+
+				// TODO fix when add a new field
+				// this line is used by starport scaffolding # types/genesis/validField
 			},
 			valid: true,
 		},
@@ -105,18 +105,18 @@ func TestGenesisState_Validate(t *testing.T) {
 						Auctioneer:            validAddr.String(),
 						SellingReserveAddress: types.SellingReserveAddress(1).String(),
 						PayingReserveAddress:  types.PayingReserveAddress(1).String(),
-						StartPrice:            sdk.MustNewDecFromStr("0.5"),
+						StartPrice:            math.LegacyMustNewDecFromStr("0.5"),
 						SellingCoin:           sdk.NewInt64Coin("denom1", 1_000_000_000_000),
 						PayingCoinDenom:       "denom2",
 						VestingReserveAddress: types.VestingReserveAddress(1).String(),
 						VestingSchedules: []types.VestingSchedule{
 							{
 								ReleaseTime: types.MustParseRFC3339("2023-01-01T00:00:00Z"),
-								Weight:      sdk.MustNewDecFromStr("0.5"),
+								Weight:      math.LegacyMustNewDecFromStr("0.5"),
 							},
 							{
 								ReleaseTime: types.MustParseRFC3339("2023-06-01T00:00:00Z"),
-								Weight:      sdk.MustNewDecFromStr("0.5"),
+								Weight:      math.LegacyMustNewDecFromStr("0.5"),
 							},
 						},
 						StartTime: types.MustParseRFC3339("2021-12-10T00:00:00Z"),
@@ -126,7 +126,7 @@ func TestGenesisState_Validate(t *testing.T) {
 					sdk.NewInt64Coin("denom1", 1_000_000_000_000),
 				))
 
-				genState.Auctions = []*codectypes.Any{auctionAny}
+				genState.AuctionList = []*codectypes.Any{auctionAny}
 			},
 			valid: false,
 		},
@@ -140,18 +140,18 @@ func TestGenesisState_Validate(t *testing.T) {
 						Auctioneer:            validAddr.String(),
 						SellingReserveAddress: types.SellingReserveAddress(1).String(),
 						PayingReserveAddress:  types.PayingReserveAddress(1).String(),
-						StartPrice:            sdk.MustNewDecFromStr("0.5"),
+						StartPrice:            math.LegacyMustNewDecFromStr("0.5"),
 						SellingCoin:           sdk.NewInt64Coin("denom1", 1_000_000_000_000),
 						PayingCoinDenom:       "denom1",
 						VestingReserveAddress: types.VestingReserveAddress(1).String(),
 						VestingSchedules: []types.VestingSchedule{
 							{
 								ReleaseTime: types.MustParseRFC3339("2022-06-01T00:00:00Z"),
-								Weight:      sdk.MustNewDecFromStr("0.5"),
+								Weight:      math.LegacyMustNewDecFromStr("0.5"),
 							},
 							{
 								ReleaseTime: types.MustParseRFC3339("2022-12-01T00:00:00Z"),
-								Weight:      sdk.MustNewDecFromStr("0.5"),
+								Weight:      math.LegacyMustNewDecFromStr("0.5"),
 							},
 						},
 						StartTime: types.MustParseRFC3339("2021-12-10T00:00:00Z"),
@@ -161,7 +161,7 @@ func TestGenesisState_Validate(t *testing.T) {
 					sdk.NewInt64Coin("denom1", 1_000_000_000_000),
 				))
 
-				genState.Auctions = []*codectypes.Any{auctionAny}
+				genState.AuctionList = []*codectypes.Any{auctionAny}
 			},
 			valid: false,
 		},
@@ -175,18 +175,18 @@ func TestGenesisState_Validate(t *testing.T) {
 						Auctioneer:            validAddr.String(),
 						SellingReserveAddress: types.SellingReserveAddress(1).String(),
 						PayingReserveAddress:  types.PayingReserveAddress(1).String(),
-						StartPrice:            sdk.MustNewDecFromStr("0.5"),
+						StartPrice:            math.LegacyMustNewDecFromStr("0.5"),
 						SellingCoin:           sdk.NewInt64Coin("denom1", 1_000_000_000_000),
 						PayingCoinDenom:       "denom1",
 						VestingReserveAddress: types.VestingReserveAddress(1).String(),
 						VestingSchedules: []types.VestingSchedule{
 							{
 								ReleaseTime: types.MustParseRFC3339("2022-06-01T00:00:00Z"),
-								Weight:      sdk.MustNewDecFromStr("0.9"),
+								Weight:      math.LegacyMustNewDecFromStr("0.9"),
 							},
 							{
 								ReleaseTime: types.MustParseRFC3339("2022-12-01T00:00:00Z"),
-								Weight:      sdk.MustNewDecFromStr("0.5"),
+								Weight:      math.LegacyMustNewDecFromStr("0.5"),
 							},
 						},
 						StartTime: types.MustParseRFC3339("2021-12-10T00:00:00Z"),
@@ -196,7 +196,7 @@ func TestGenesisState_Validate(t *testing.T) {
 					sdk.NewInt64Coin("denom1", 1_000_000_000_000),
 				))
 
-				genState.Auctions = []*codectypes.Any{auctionAny}
+				genState.AuctionList = []*codectypes.Any{auctionAny}
 			},
 			valid: false,
 		},
@@ -210,18 +210,18 @@ func TestGenesisState_Validate(t *testing.T) {
 						Auctioneer:            "invalid",
 						SellingReserveAddress: types.SellingReserveAddress(1).String(),
 						PayingReserveAddress:  types.PayingReserveAddress(1).String(),
-						StartPrice:            sdk.MustNewDecFromStr("0.5"),
+						StartPrice:            math.LegacyMustNewDecFromStr("0.5"),
 						SellingCoin:           sdk.NewInt64Coin("denom1", 1_000_000_000_000),
 						PayingCoinDenom:       "denom1",
 						VestingReserveAddress: types.VestingReserveAddress(1).String(),
 						VestingSchedules: []types.VestingSchedule{
 							{
 								ReleaseTime: types.MustParseRFC3339("2022-06-01T00:00:00Z"),
-								Weight:      sdk.MustNewDecFromStr("0.9"),
+								Weight:      math.LegacyMustNewDecFromStr("0.9"),
 							},
 							{
 								ReleaseTime: types.MustParseRFC3339("2022-12-01T00:00:00Z"),
-								Weight:      sdk.MustNewDecFromStr("0.5"),
+								Weight:      math.LegacyMustNewDecFromStr("0.5"),
 							},
 						},
 						StartTime: types.MustParseRFC3339("2021-12-10T00:00:00Z"),
@@ -231,19 +231,19 @@ func TestGenesisState_Validate(t *testing.T) {
 					sdk.NewInt64Coin("denom1", 1_000_000_000_000),
 				))
 
-				genState.Auctions = []*codectypes.Any{auctionAny}
+				genState.AuctionList = []*codectypes.Any{auctionAny}
 			},
 			valid: false,
 		},
 		{
 			desc: "invalid bid - invalid bidder address",
 			configure: func(genState *types.GenesisState) {
-				genState.Bids = []types.Bid{
+				genState.BidList = []types.Bid{
 					{
 						AuctionId: 1,
 						Id:        1,
 						Bidder:    "invalid",
-						Price:     sdk.MustNewDecFromStr("0.5"),
+						Price:     math.LegacyMustNewDecFromStr("0.5"),
 						Coin:      sdk.NewInt64Coin("denom2", 50_000_000),
 					},
 				}
@@ -253,12 +253,12 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "invalid bid - invalid coin amount",
 			configure: func(genState *types.GenesisState) {
-				genState.Bids = []types.Bid{
+				genState.BidList = []types.Bid{
 					{
 						AuctionId: 1,
 						Id:        1,
 						Bidder:    validAddr.String(),
-						Price:     sdk.MustNewDecFromStr("0.5"),
+						Price:     math.LegacyMustNewDecFromStr("0.5"),
 						Coin:      sdk.NewInt64Coin("denom2", 0),
 					},
 				}
@@ -268,12 +268,12 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "invalid bid - invalid price",
 			configure: func(genState *types.GenesisState) {
-				genState.Bids = []types.Bid{
+				genState.BidList = []types.Bid{
 					{
 						AuctionId: 1,
 						Id:        1,
 						Bidder:    validAddr.String(),
-						Price:     sdk.MustNewDecFromStr("0"),
+						Price:     math.LegacyMustNewDecFromStr("0"),
 						Coin:      sdk.NewInt64Coin("denom2", 100_000),
 					},
 				}
@@ -283,28 +283,11 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "invalid allowed bidder - invalid max bid amount",
 			configure: func(genState *types.GenesisState) {
-				genState.AllowedBidderRecords = []types.AllowedBidderRecord{
+				genState.AllowedBidderList = []types.AllowedBidder{
 					{
-						AuctionId: 1,
-						AllowedBidder: types.AllowedBidder{
-							Bidder:       validAddr.String(),
-							MaxBidAmount: sdk.NewInt(0),
-						},
-					},
-				}
-			},
-			valid: false,
-		},
-		{
-			desc: "invalid allowed bidder - auction id cannot be 0",
-			configure: func(genState *types.GenesisState) {
-				genState.AllowedBidderRecords = []types.AllowedBidderRecord{
-					{
-						AuctionId: 0,
-						AllowedBidder: types.AllowedBidder{
-							Bidder:       validAddr.String(),
-							MaxBidAmount: sdk.NewInt(100_000),
-						},
+						AuctionId:    1,
+						Bidder:       validAddr.String(),
+						MaxBidAmount: math.NewInt(0),
 					},
 				}
 			},
@@ -315,9 +298,9 @@ func TestGenesisState_Validate(t *testing.T) {
 			configure: func(genState *types.GenesisState) {
 				params := types.DefaultParams()
 				genState.Params = params
-				genState.VestingQueues = []types.VestingQueue{
+				genState.VestingQueueList = []types.VestingQueue{
 					{
-						AuctionId:   1,
+						AuctionId:   2,
 						Auctioneer:  "",
 						PayingCoin:  sdk.NewInt64Coin("denom2", 100_000_000),
 						ReleaseTime: types.MustParseRFC3339("2022-12-20T00:00:00Z"),
@@ -327,11 +310,12 @@ func TestGenesisState_Validate(t *testing.T) {
 			},
 			valid: false,
 		},
-	} {
+		// this line is used by starport scaffolding # types/genesis/testcase
+	}
+	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			genState := types.DefaultGenesisState()
+			genState := types.DefaultGenesis()
 			tc.configure(genState)
-
 			err := genState.Validate()
 			if tc.valid {
 				require.NoError(t, err)

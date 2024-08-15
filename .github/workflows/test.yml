@@ -1,129 +1,55 @@
-name: Tests / Code Coverage
-#  Tests / Code Coverage workflow runs unit tests and uploads a code coverage report
-#  This workflow is run on pushes to main & every Pull Requests where a .go, .mod, .sum have been changed
+name: Unit Tests
+
 on:
   pull_request:
   push:
+    paths-ignore:
+      - '*.md'
     branches:
       - main
-jobs:
-  cleanup-runs:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: rokroskar/workflow-run-cleanup-action@master
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-    if: "!startsWith(github.ref, 'refs/tags/') && github.ref != 'refs/heads/main' && github.ref != 'refs/heads/develop'"
-  
-  build:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go-arch: [ "amd64", "arm64" ]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v4
-        with:
-          go-version: 1.19
-      - uses: technote-space/get-diff-action@v6
-        id: git_diff
-        with:
-          PATTERNS: |
-            **/**.go
-            go.mod
-            go.sum
-      - name: Build
-        run: GOARCH=${{ matrix.go-arch }} LEDGER_ENABLED=false make build
+      - release/*
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        if: env.GIT_DIFF
         with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-      - uses: actions/setup-go@v4
-        with:
-          go-version: 1.19
+          go-version: "stable"
+          cache: true
+          cache-dependency-path: go.sum
 
       - name: Run unit tests
-        run: go test -v -coverprofile=coverage.out -coverpkg=./... -covermode=atomic ./...
+        run: |
+          go test -v -coverprofile=coverage.txt -covermode=atomic -coverpkg=./... $(go list ./...)
 
-      - name: filter out DONTCOVER
+      - name: filter non-testable files
         run: |
           excludelist="$(find ./ -type f -name '*.go' | xargs grep -l 'DONTCOVER')"
           excludelist+=" $(find ./ -type f -name '*.pb.go')"
           excludelist+=" $(find ./ -type f -name '*.pb.gw.go')"
-          excludelist+=" $(find ./ -type f -path './tests/mocks/*.go')"
+          excludelist+=" $(find ./app -type d)"
+          excludelist+=" $(find ./cmd -type d)"
+          excludelist+=" $(find ./proto -type d)"
+          excludelist+=" $(find ./testutil -type d)"
+          excludelist+=" $(find ./tools -type d)"
           for filename in ${excludelist}; do
-            filename=$(echo $filename | sed 's/^./github.com\/tendermint\/fundraising/g')
+            filename=${filename#".//"}
             echo "Excluding ${filename} from coverage report..."
-            sed -i "/$(echo $filename | sed 's/\//\\\//g')/d" coverage.out
+            filename=$(echo "$filename" | sed 's/\//\\\//g')
+            sed -i.bak "/""$filename""/d" coverage.txt
           done
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
-          fail_ci_if_error: true
+          file: ./coverage.txt
+          fail_ci_if_error: false
           verbose: true
-          token: ${{secrets.CODECOV_TOKEN}}
-
-  test-coverage:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v4
-        with:
-          go-version: 1.19
-      - name: display go version
-        run: go version
-      - name: test & coverage report creation
-        run: make test-cover
-      - name: filter out DONTCOVER
-        run: |
-          excludelist="$(find ./ -type f -name '*.go' | xargs grep -l 'DONTCOVER')"
-          excludelist+=" $(find ./ -type f -name '*.pb.go')"
-          excludelist+=" $(find ./ -type f -name '*.pb.gw.go')"
-          excludelist+=" $(find ./ -type f -path './tests/mocks/*.go')"
-          for filename in ${excludelist}; do
-            filename=$(echo $filename | sed 's/^./github.com\/tendermint\/fundraising/g')
-            echo "Excluding ${filename} from coverage report..."
-            sed -i "/$(echo $filename | sed 's/\//\\\//g')/d" coverage.out
-          done
-      - uses: codecov/codecov-action@v3
-        with:
-          file: ./coverage.out
-
-  test-race:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v4
-        with:
-          go-version: 1.19
-      - name: display go version
-        run: go version
-      - name: test & coverage report creation
-        run: make test-race
-      - name: filter out DONTCOVER
-        run: |
-          excludelist="$(find ./ -type f -name '*.go' | xargs grep -l 'DONTCOVER')"
-          excludelist+=" $(find ./ -type f -name '*.pb.go')"
-          excludelist+=" $(find ./ -type f -name '*.pb.gw.go')"
-          excludelist+=" $(find ./ -type f -path './tests/mocks/*.go')"
-          for filename in ${excludelist}; do
-            filename=$(echo $filename | sed 's/^./github.com\/tendermint\/fundraising/g')
-            echo "Excluding ${filename} from coverage report..."
-            sed -i "/$(echo $filename | sed 's/\//\\\//g')/d" coverage.out
-          done
-      - uses: codecov/codecov-action@v3
-        with:
-          file: ./coverage.out

@@ -3,11 +3,14 @@ package types
 // DONTCOVER
 
 import (
+	"context"
 	"time"
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
+
+var _ FundraisingHooks = MultiFundraisingHooks{}
 
 // MultiFundraisingHooks combines multiple fundraising hooks.
 // All hook functions are run in array sequence
@@ -18,15 +21,15 @@ func NewMultiFundraisingHooks(hooks ...FundraisingHooks) MultiFundraisingHooks {
 }
 
 func (h MultiFundraisingHooks) BeforeFixedPriceAuctionCreated(
-	ctx sdk.Context,
+	ctx context.Context,
 	auctioneer string,
-	startPrice sdk.Dec,
+	startPrice math.LegacyDec,
 	sellingCoin sdk.Coin,
 	payingCoinDenom string,
 	vestingSchedules []VestingSchedule,
 	startTime,
 	endTime time.Time,
-) {
+) error {
 	for i := range h {
 		h[i].BeforeFixedPriceAuctionCreated(
 			ctx,
@@ -39,21 +42,22 @@ func (h MultiFundraisingHooks) BeforeFixedPriceAuctionCreated(
 			endTime,
 		)
 	}
+	return nil
 }
 
 func (h MultiFundraisingHooks) AfterFixedPriceAuctionCreated(
-	ctx sdk.Context,
+	ctx context.Context,
 	auctionId uint64,
 	auctioneer string,
-	startPrice sdk.Dec,
+	startPrice math.LegacyDec,
 	sellingCoin sdk.Coin,
 	payingCoinDenom string,
 	vestingSchedules []VestingSchedule,
 	startTime,
 	endTime time.Time,
-) {
+) error {
 	for i := range h {
-		h[i].AfterFixedPriceAuctionCreated(
+		if err := h[i].AfterFixedPriceAuctionCreated(
 			ctx,
 			auctionId,
 			auctioneer,
@@ -63,25 +67,28 @@ func (h MultiFundraisingHooks) AfterFixedPriceAuctionCreated(
 			vestingSchedules,
 			startTime,
 			endTime,
-		)
+		); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func (h MultiFundraisingHooks) BeforeBatchAuctionCreated(
-	ctx sdk.Context,
+	ctx context.Context,
 	auctioneer string,
-	startPrice sdk.Dec,
-	minBidPrice sdk.Dec,
+	startPrice math.LegacyDec,
+	minBidPrice math.LegacyDec,
 	sellingCoin sdk.Coin,
 	payingCoinDenom string,
 	vestingSchedules []VestingSchedule,
 	maxExtendedRound uint32,
-	extendedRoundRate sdk.Dec,
+	extendedRoundRate math.LegacyDec,
 	startTime time.Time,
 	endTime time.Time,
-) {
+) error {
 	for i := range h {
-		h[i].BeforeBatchAuctionCreated(
+		if err := h[i].BeforeBatchAuctionCreated(
 			ctx,
 			auctioneer,
 			startPrice,
@@ -93,26 +100,29 @@ func (h MultiFundraisingHooks) BeforeBatchAuctionCreated(
 			extendedRoundRate,
 			startTime,
 			endTime,
-		)
+		); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func (h MultiFundraisingHooks) AfterBatchAuctionCreated(
-	ctx sdk.Context,
+	ctx context.Context,
 	auctionId uint64,
 	auctioneer string,
-	startPrice sdk.Dec,
-	minBidPrice sdk.Dec,
+	startPrice math.LegacyDec,
+	minBidPrice math.LegacyDec,
 	sellingCoin sdk.Coin,
 	payingCoinDenom string,
 	vestingSchedules []VestingSchedule,
 	maxExtendedRound uint32,
-	extendedRoundRate sdk.Dec,
+	extendedRoundRate math.LegacyDec,
 	startTime time.Time,
 	endTime time.Time,
-) {
+) error {
 	for i := range h {
-		h[i].AfterBatchAuctionCreated(
+		if err := h[i].AfterBatchAuctionCreated(
 			ctx,
 			auctionId,
 			auctioneer,
@@ -125,75 +135,96 @@ func (h MultiFundraisingHooks) AfterBatchAuctionCreated(
 			extendedRoundRate,
 			startTime,
 			endTime,
-		)
+		); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func (h MultiFundraisingHooks) BeforeAuctionCanceled(
-	ctx sdk.Context,
+	ctx context.Context,
 	auctionId uint64,
 	auctioneer string,
-) {
+) error {
 	for i := range h {
-		h[i].BeforeAuctionCanceled(ctx, auctionId, auctioneer)
+		if err := h[i].BeforeAuctionCanceled(ctx, auctionId, auctioneer); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func (h MultiFundraisingHooks) BeforeBidPlaced(
-	ctx sdk.Context,
+	ctx context.Context,
 	auctionId uint64,
 	bidId uint64,
 	bidder string,
 	bidType BidType,
-	price sdk.Dec,
+	price math.LegacyDec,
 	coin sdk.Coin,
-) {
+) error {
 	for i := range h {
-		h[i].BeforeBidPlaced(ctx, auctionId, bidId, bidder, bidType, price, coin)
+		if err := h[i].BeforeBidPlaced(ctx, auctionId, bidId, bidder, bidType, price, coin); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func (h MultiFundraisingHooks) BeforeBidModified(
-	ctx sdk.Context,
+	ctx context.Context,
 	auctionId uint64,
 	bidId uint64,
 	bidder string,
 	bidType BidType,
-	price sdk.Dec,
+	price math.LegacyDec,
 	coin sdk.Coin,
-) {
+) error {
 	for i := range h {
-		h[i].BeforeBidModified(ctx, auctionId, bidId, bidder, bidType, price, coin)
+		if err := h[i].BeforeBidModified(ctx, auctionId, bidId, bidder, bidType, price, coin); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func (h MultiFundraisingHooks) BeforeAllowedBiddersAdded(
-	ctx sdk.Context,
+	ctx context.Context,
 	allowedBidders []AllowedBidder,
-) {
+) error {
 	for i := range h {
-		h[i].BeforeAllowedBiddersAdded(ctx, allowedBidders)
+		if err := h[i].BeforeAllowedBiddersAdded(ctx, allowedBidders); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func (h MultiFundraisingHooks) BeforeAllowedBidderUpdated(
-	ctx sdk.Context,
+	ctx context.Context,
 	auctionId uint64,
 	bidder sdk.AccAddress,
 	maxBidAmount math.Int,
-) {
+) error {
 	for i := range h {
-		h[i].BeforeAllowedBidderUpdated(ctx, auctionId, bidder, maxBidAmount)
+		if err := h[i].BeforeAllowedBidderUpdated(ctx, auctionId, bidder, maxBidAmount); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func (h MultiFundraisingHooks) BeforeSellingCoinsAllocated(
-	ctx sdk.Context,
+	ctx context.Context,
 	auctionId uint64,
 	allocationMap map[string]math.Int,
 	refundMap map[string]math.Int,
-) {
+) error {
 	for i := range h {
-		h[i].BeforeSellingCoinsAllocated(ctx, auctionId, allocationMap, refundMap)
+		if err := h[i].BeforeSellingCoinsAllocated(ctx, auctionId, allocationMap, refundMap); err != nil {
+			return err
+		}
 	}
+	return nil
 }

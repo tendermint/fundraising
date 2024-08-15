@@ -1,0 +1,78 @@
+syntax = "proto3";
+package fundraising.fundraising.v1;
+
+import "amino/amino.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/tendermint/fundraising/x/fundraising/types";
+
+// Bid defines a standard bid for an auction.
+message Bid {
+  option (gogoproto.goproto_getters) = false;
+
+  // auction_id specifies the id of the auction
+  uint64 auction_id = 1;
+
+  // bidder specifies the bech32-encoded address that bids for the auction
+  string bidder = 2;
+
+  // id specifies an index of a bid for the bidder
+  uint64 id = 3;
+
+  // type specifies the bid type; type 1 is fixed price, 2 is how-much-worth, 3
+  // is how-many-coins
+  BidType type = 4;
+
+  // price specifies the bid price in which price the bidder places the bid
+  string price = 5 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (cosmos_proto.scalar) = "cosmos.Dec"
+  ];
+
+  // coin specifies the amount of coin that the bidder bids
+  // for a fixed price auction, the denom is of the paying coin.
+  // for a batch auction of how-much-worth, the denom is of the paying coin.
+  // for a batch auction of how-many-coins, the denom is of the selling coin.
+  cosmos.base.v1beta1.Coin coin = 6 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    (amino.encoding) = "legacy_coins",
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
+
+  // is_matched specifies the bid that is a winning bid and enables the bidder
+  // to purchase the selling coin
+  bool is_matched = 7;
+}
+
+// BidType enumerates the valid types of a bid.
+enum BidType {
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  // BID_TYPE_UNSPECIFIED defines the default bid type
+  BID_TYPE_UNSPECIFIED = 0 [(gogoproto.enumvalue_customname) = "BidTypeNil"];
+
+  // BID_TYPE_FIXED_PRICE defines a bid type for a fixed price auction type
+  BID_TYPE_FIXED_PRICE = 1 [(gogoproto.enumvalue_customname) = "BidTypeFixedPrice"];
+
+  // BID_TYPE_BATCH_WORTH defines a bid type for How-Much-Worth-to-Buy of a
+  // batch auction
+  BID_TYPE_BATCH_WORTH = 2 [(gogoproto.enumvalue_customname) = "BidTypeBatchWorth"];
+
+  // BID_TYPE_BATCH_MANY defines a bid type for How-Many-Coins-to-Buy of a batch
+  // auction
+  BID_TYPE_BATCH_MANY = 3 [(gogoproto.enumvalue_customname) = "BidTypeBatchMany"];
+}
+
+// AddressType enumerates the available types of a address.
+enum AddressType {
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  // the 32 bytes length address type of ADR 028.
+  ADDRESS_TYPE_32_BYTES = 0 [(gogoproto.enumvalue_customname) = "AddressType32Bytes"];
+  // the default 20 bytes length address type.
+  ADDRESS_TYPE_20_BYTES = 1 [(gogoproto.enumvalue_customname) = "AddressType20Bytes"];
+}

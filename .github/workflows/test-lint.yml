@@ -1,0 +1,40 @@
+name: Lint
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - release/*
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: golangci-lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        if: env.GIT_DIFF
+        with:
+          go-version: "stable"
+          cache: true
+          cache-dependency-path: go.sum
+
+      - uses: technote-space/get-diff-action@v6
+        with:
+          PATTERNS: |
+            **/**.go
+            go.mod
+            go.sum
+
+      - uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.58.0
+          args: --issues-exit-code=0 -e SA1019 --timeout 10m
+          github-token: ${{ secrets.github_token }}
+        if: env.GIT_DIFF

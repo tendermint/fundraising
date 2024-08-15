@@ -1,27 +1,18 @@
 package types_test
 
 import (
-	"reflect"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
 
 func TestParams(t *testing.T) {
-	require.IsType(t, paramstypes.KeyTable{}, types.ParamKeyTable())
-
 	defaultParams := types.DefaultParams()
 
-	paramsStr := `auction_creation_fee:
-- denom: stake
-  amount: "100000000"
-place_bid_fee: []
-extended_period: 1
-`
+	paramsStr := `auction_creation_fee:<denom:"stake" amount:"100000000" > extended_period:1 `
 	require.Equal(t, paramsStr, defaultParams.String())
 }
 
@@ -55,20 +46,10 @@ func TestParamsValidate(t *testing.T) {
 			tc.configure(&params)
 			err := params.Validate()
 
-			var err2 error
-			for _, p := range params.ParamSetPairs() {
-				err := p.ValidatorFn(reflect.ValueOf(p.Value).Elem().Interface())
-				if err != nil {
-					err2 = err
-					break
-				}
-			}
 			if tc.expectedErr != "" {
 				require.EqualError(t, err, tc.expectedErr)
-				require.EqualError(t, err2, tc.expectedErr)
 			} else {
 				require.Nil(t, err)
-				require.Nil(t, err2)
 			}
 		})
 	}

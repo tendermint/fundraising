@@ -1,34 +1,39 @@
 package types
 
 import (
+	"context"
 	"time"
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
-// AccountKeeper defines the expected account keeper.
+// AccountKeeper defines the expected account keeper used for simulations (noalias)
 type AccountKeeper interface {
-	GetAccount(ctx sdk.Context, addr sdk.AccAddress) authtypes.AccountI
+	GetAccount(ctx context.Context, addr sdk.AccAddress) sdk.AccountI
 	GetModuleAddress(name string) sdk.AccAddress
 }
 
-// BankKeeper defines the expected bank send keeper.
+// BankKeeper defines the expected interface needed to retrieve account balances.
 type BankKeeper interface {
-	SendCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
-	SpendableCoins(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
-	SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
-	InputOutputCoins(ctx sdk.Context, inputs []banktypes.Input, outputs []banktypes.Output) error
-	// MintCoins and SendCoinsFromModuleToAccount are used only for simulation test codes
-	MintCoins(ctx sdk.Context, name string, amt sdk.Coins) error
-	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
+	SendCoins(ctx context.Context, from, to sdk.AccAddress, amt sdk.Coins) error
+	SpendableCoins(ctx context.Context, addr sdk.AccAddress) sdk.Coins
+	SendCoinsFromAccountToModule(ctx context.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
+	InputOutputCoins(ctx context.Context, input banktypes.Input, outputs []banktypes.Output) error
+	MintCoins(ctx context.Context, moduleName string, amt sdk.Coins) error
+	SendCoinsFromModuleToAccount(ctx context.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
 }
 
-// DistrKeeper is the keeper of the distribution store
+// DistrKeeper defines the contract needed to be fulfilled for distribution keeper.
 type DistrKeeper interface {
-	FundCommunityPool(ctx sdk.Context, amount sdk.Coins, sender sdk.AccAddress) error
+	FundCommunityPool(ctx context.Context, amount sdk.Coins, sender sdk.AccAddress) error
+}
+
+// ParamSubspace defines the expected Subspace interface for parameters.
+type ParamSubspace interface {
+	Get(context.Context, []byte, interface{})
+	Set(context.Context, []byte, interface{})
 }
 
 // Event Hooks
@@ -38,99 +43,104 @@ type DistrKeeper interface {
 // FundraisingHooks event hooks for fundraising auction and bid objects (noalias)
 type FundraisingHooks interface {
 	BeforeFixedPriceAuctionCreated(
-		ctx sdk.Context,
+		ctx context.Context,
 		auctioneer string,
-		startPrice sdk.Dec,
+		startPrice math.LegacyDec,
 		sellingCoin sdk.Coin,
 		payingCoinDenom string,
 		vestingSchedules []VestingSchedule,
 		startTime time.Time,
 		endTime time.Time,
-	)
+	) error
 
 	AfterFixedPriceAuctionCreated(
-		ctx sdk.Context,
+		ctx context.Context,
 		auctionId uint64,
 		auctioneer string,
-		startPrice sdk.Dec,
+		startPrice math.LegacyDec,
 		sellingCoin sdk.Coin,
 		payingCoinDenom string,
 		vestingSchedules []VestingSchedule,
 		startTime time.Time,
 		endTime time.Time,
-	)
+	) error
 
 	BeforeBatchAuctionCreated(
-		ctx sdk.Context,
+		ctx context.Context,
 		auctioneer string,
-		startPrice sdk.Dec,
-		minBidPrice sdk.Dec,
+		startPrice math.LegacyDec,
+		minBidPrice math.LegacyDec,
 		sellingCoin sdk.Coin,
 		payingCoinDenom string,
 		vestingSchedules []VestingSchedule,
 		maxExtendedRound uint32,
-		extendedRoundRate sdk.Dec,
+		extendedRoundRate math.LegacyDec,
 		startTime time.Time,
 		endTime time.Time,
-	)
+	) error
 
 	AfterBatchAuctionCreated(
-		ctx sdk.Context,
+		ctx context.Context,
 		auctionId uint64,
 		auctioneer string,
-		startPrice sdk.Dec,
-		minBidPrice sdk.Dec,
+		startPrice math.LegacyDec,
+		minBidPrice math.LegacyDec,
 		sellingCoin sdk.Coin,
 		payingCoinDenom string,
 		vestingSchedules []VestingSchedule,
 		maxExtendedRound uint32,
-		extendedRoundRate sdk.Dec,
+		extendedRoundRate math.LegacyDec,
 		startTime time.Time,
 		endTime time.Time,
-	)
+	) error
 
 	BeforeAuctionCanceled(
-		ctx sdk.Context,
+		ctx context.Context,
 		auctionId uint64,
 		auctioneer string,
-	)
+	) error
 
 	BeforeBidPlaced(
-		ctx sdk.Context,
+		ctx context.Context,
 		auctionId uint64,
 		bidId uint64,
 		bidder string,
 		bidType BidType,
-		price sdk.Dec,
+		price math.LegacyDec,
 		coin sdk.Coin,
-	)
+	) error
 
 	BeforeBidModified(
-		ctx sdk.Context,
+		ctx context.Context,
 		auctionId uint64,
 		bidId uint64,
 		bidder string,
 		bidType BidType,
-		price sdk.Dec,
+		price math.LegacyDec,
 		coin sdk.Coin,
-	)
+	) error
 
 	BeforeAllowedBiddersAdded(
-		ctx sdk.Context,
+		ctx context.Context,
 		allowedBidders []AllowedBidder,
-	)
+	) error
 
 	BeforeAllowedBidderUpdated(
-		ctx sdk.Context,
+		ctx context.Context,
 		auctionId uint64,
 		bidder sdk.AccAddress,
 		maxBidAmount math.Int,
-	)
+	) error
 
 	BeforeSellingCoinsAllocated(
-		ctx sdk.Context,
+		ctx context.Context,
 		auctionId uint64,
 		allocationMap map[string]math.Int,
 		refundMap map[string]math.Int,
-	)
+	) error
 }
+
+type FundraisingHooksWrapper struct{ FundraisingHooks }
+
+// IsOnePerModuleType implements the depinject.OnePerModuleType interface.
+func (FundraisingHooksWrapper) IsOnePerModuleType() {}

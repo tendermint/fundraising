@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package fundraising.fundraising.v1;
+
+import "amino/amino.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/tendermint/fundraising/x/fundraising/types";
+
+// Params defines the parameters for the module.
+message Params {
+  option (amino.name) = "fundraising/x/fundraising/Params";
+  option (gogoproto.equal) = true;
+
+  // auction_creation_fee specifies the fee for auction creation.
+  // this prevents from spamming attack and it is collected in the community
+  // pool
+  repeated cosmos.base.v1beta1.Coin auction_creation_fee = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    (amino.encoding) = "legacy_coins",
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+
+  // place_bid_fee specifies the fee for placing a bid for an auction.
+  // this prevents from spamming attack and it is collected in the community
+  // pool
+  repeated cosmos.base.v1beta1.Coin place_bid_fee = 2 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    (amino.encoding) = "legacy_coins",
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+
+  // extended_period specifies the extended period that determines how long
+  // the extended auction round lasts
+  uint32 extended_period = 3;
+}

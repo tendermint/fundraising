@@ -1,0 +1,25 @@
+syntax = "proto3";
+package fundraising.fundraising.v1;
+
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/tendermint/fundraising/x/fundraising/types";
+
+// AllowedBidder defines an allowed bidder for the auction.
+message AllowedBidder {
+  option (gogoproto.goproto_getters) = false;
+
+  // auction_id specifies the id of the auction
+  uint64 auction_id = 1;
+
+  // bidder specifies the bech32-encoded address that bids for the auction
+  string bidder = 2;
+
+  // max_bid_amount specifies the maximum bid amount that the bidder can bid
+  string max_bid_amount = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (cosmos_proto.scalar) = "cosmos.Int"
+  ];
+}

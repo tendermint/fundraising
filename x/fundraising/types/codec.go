@@ -1,27 +1,25 @@
 package types
 
 import (
-	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
+	// this line is used by starport scaffolding # 1
 )
 
-func RegisterCodec(cdc *codec.LegacyAmino) {
-}
+func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
+	// this line is used by starport scaffolding # 3
 
-func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
-	registry.RegisterImplementations(
-		(*sdk.Msg)(nil),
+	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgCreateFixedPriceAuction{},
 		&MsgCreateBatchAuction{},
 		&MsgCancelAuction{},
 		&MsgPlaceBid{},
 		&MsgAddAllowedBidder{},
+		&MsgUpdateParams{},
 	)
-
 	registry.RegisterInterface(
-		"cosmos.fundraising.v1beta1.AuctionI",
+		"tendermint.fundraising.fundraising.v1.AuctionI",
 		(*AuctionI)(nil),
 		&FixedPriceAuction{},
 		&BatchAuction{},
@@ -29,8 +27,3 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }
-
-var (
-	Amino     = codec.NewLegacyAmino()
-	ModuleCdc = codec.NewProtoCodec(codectypes.NewInterfaceRegistry())
-)
