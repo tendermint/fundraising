@@ -30,7 +30,6 @@ func SimulateMsgPlaceBid(
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "failed to get auctions"), nil, nil
 		}
-
 		if len(auctions) == 0 {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "no auction to place a bid"), nil, nil
 		}

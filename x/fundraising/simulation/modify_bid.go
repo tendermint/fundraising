@@ -28,6 +28,9 @@ func SimulateMsgModifyBid(
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "failed to get auctions"), nil, nil
 		}
+		if len(auctions) == 0 {
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "no auction to modify a bid"), nil, nil
+		}
 
 		// Select a random auction
 		auction := auctions[r.Intn(len(auctions))]
