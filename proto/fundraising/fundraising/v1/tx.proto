@@ -272,7 +272,7 @@ message MsgModifyBidResponse {}
 // MsgAddAllowedBidder defines a SDK message for adding an allowed bidder to the
 // auction.
 message MsgAddAllowedBidder {
-  option (cosmos.msg.v1.signer) = "allowed_bidder.bidder";
+  option (cosmos.msg.v1.signer) = "allowed_bidder";
 
   // auction_id specifies the auction id
   uint64 auction_id = 1;

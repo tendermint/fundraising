@@ -187,6 +187,14 @@ func NewMsgAddAllowedBidder(
 	}
 }
 
+func (msg *MsgAddAllowedBidder) GetSigners() []sdk.AccAddress {
+	creator, err := sdk.AccAddressFromBech32(msg.AllowedBidder.Bidder)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{creator}
+}
+
 func (msg MsgAddAllowedBidder) Type() string {
 	return sdk.MsgTypeURL(&MsgAddAllowedBidder{})
 }

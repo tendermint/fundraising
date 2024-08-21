@@ -41,7 +41,9 @@ func TestValidate_AllowedBidder(t *testing.T) {
 		if tc.expectedErr {
 			require.Error(t, err)
 		} else {
-			require.Equal(t, testBidderAddr, tc.allowedBidder.GetBidder())
+			bidder, err := tc.allowedBidder.GetBidder()
+			require.NoError(t, err)
+			require.Equal(t, testBidderAddr, bidder)
 			require.NoError(t, err)
 		}
 	}

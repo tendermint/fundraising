@@ -70,7 +70,12 @@ func (k Keeper) AddAllowedBidders(ctx context.Context, auctionId uint64, allowed
 		if ab.MaxBidAmount.GT(auction.GetSellingCoin().Amount) {
 			return types.ErrInsufficientRemainingAmount
 		}
-		if err := k.AllowedBidder.Set(ctx, collections.Join(auctionId, ab.GetBidder()), ab); err != nil {
+
+		bidder, err := ab.GetBidder()
+		if err != nil {
+			return err
+		}
+		if err := k.AllowedBidder.Set(ctx, collections.Join(auctionId, bidder), ab); err != nil {
 			return err
 		}
 	}
