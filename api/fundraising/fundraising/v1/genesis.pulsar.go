@@ -2,12 +2,8 @@
 package fundraisingv1
 
 import (
-	fmt "fmt"
-	io "io"
-	reflect "reflect"
-	sync "sync"
-
 	_ "cosmossdk.io/api/amino"
+	fmt "fmt"
 	_ "github.com/cosmos/cosmos-proto"
 	runtime "github.com/cosmos/cosmos-proto/runtime"
 	_ "github.com/cosmos/gogoproto/gogoproto"
@@ -15,6 +11,9 @@ import (
 	protoiface "google.golang.org/protobuf/runtime/protoiface"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	anypb "google.golang.org/protobuf/types/known/anypb"
+	io "io"
+	reflect "reflect"
+	sync "sync"
 )
 
 var _ protoreflect.List = (*_GenesisState_2_list)(nil)
@@ -68,10 +67,61 @@ func (x *_GenesisState_2_list) IsValid() bool {
 	return x.list != nil
 }
 
+var _ protoreflect.List = (*_GenesisState_3_list)(nil)
+
+type _GenesisState_3_list struct {
+	list *[]*AllowedBidder
+}
+
+func (x *_GenesisState_3_list) Len() int {
+	if x.list == nil {
+		return 0
+	}
+	return len(*x.list)
+}
+
+func (x *_GenesisState_3_list) Get(i int) protoreflect.Value {
+	return protoreflect.ValueOfMessage((*x.list)[i].ProtoReflect())
+}
+
+func (x *_GenesisState_3_list) Set(i int, value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*AllowedBidder)
+	(*x.list)[i] = concreteValue
+}
+
+func (x *_GenesisState_3_list) Append(value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*AllowedBidder)
+	*x.list = append(*x.list, concreteValue)
+}
+
+func (x *_GenesisState_3_list) AppendMutable() protoreflect.Value {
+	v := new(AllowedBidder)
+	*x.list = append(*x.list, v)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_GenesisState_3_list) Truncate(n int) {
+	for i := n; i < len(*x.list); i++ {
+		(*x.list)[i] = nil
+	}
+	*x.list = (*x.list)[:n]
+}
+
+func (x *_GenesisState_3_list) NewElement() protoreflect.Value {
+	v := new(AllowedBidder)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_GenesisState_3_list) IsValid() bool {
+	return x.list != nil
+}
+
 var _ protoreflect.List = (*_GenesisState_4_list)(nil)
 
 type _GenesisState_4_list struct {
-	list *[]*AllowedBidder
+	list *[]*Bid
 }
 
 func (x *_GenesisState_4_list) Len() int {
@@ -87,18 +137,18 @@ func (x *_GenesisState_4_list) Get(i int) protoreflect.Value {
 
 func (x *_GenesisState_4_list) Set(i int, value protoreflect.Value) {
 	valueUnwrapped := value.Message()
-	concreteValue := valueUnwrapped.Interface().(*AllowedBidder)
+	concreteValue := valueUnwrapped.Interface().(*Bid)
 	(*x.list)[i] = concreteValue
 }
 
 func (x *_GenesisState_4_list) Append(value protoreflect.Value) {
 	valueUnwrapped := value.Message()
-	concreteValue := valueUnwrapped.Interface().(*AllowedBidder)
+	concreteValue := valueUnwrapped.Interface().(*Bid)
 	*x.list = append(*x.list, concreteValue)
 }
 
 func (x *_GenesisState_4_list) AppendMutable() protoreflect.Value {
-	v := new(AllowedBidder)
+	v := new(Bid)
 	*x.list = append(*x.list, v)
 	return protoreflect.ValueOfMessage(v.ProtoReflect())
 }
@@ -111,7 +161,7 @@ func (x *_GenesisState_4_list) Truncate(n int) {
 }
 
 func (x *_GenesisState_4_list) NewElement() protoreflect.Value {
-	v := new(AllowedBidder)
+	v := new(Bid)
 	return protoreflect.ValueOfMessage(v.ProtoReflect())
 }
 
@@ -122,7 +172,7 @@ func (x *_GenesisState_4_list) IsValid() bool {
 var _ protoreflect.List = (*_GenesisState_5_list)(nil)
 
 type _GenesisState_5_list struct {
-	list *[]*Bid
+	list *[]*VestingQueue
 }
 
 func (x *_GenesisState_5_list) Len() int {
@@ -138,18 +188,18 @@ func (x *_GenesisState_5_list) Get(i int) protoreflect.Value {
 
 func (x *_GenesisState_5_list) Set(i int, value protoreflect.Value) {
 	valueUnwrapped := value.Message()
-	concreteValue := valueUnwrapped.Interface().(*Bid)
+	concreteValue := valueUnwrapped.Interface().(*VestingQueue)
 	(*x.list)[i] = concreteValue
 }
 
 func (x *_GenesisState_5_list) Append(value protoreflect.Value) {
 	valueUnwrapped := value.Message()
-	concreteValue := valueUnwrapped.Interface().(*Bid)
+	concreteValue := valueUnwrapped.Interface().(*VestingQueue)
 	*x.list = append(*x.list, concreteValue)
 }
 
 func (x *_GenesisState_5_list) AppendMutable() protoreflect.Value {
-	v := new(Bid)
+	v := new(VestingQueue)
 	*x.list = append(*x.list, v)
 	return protoreflect.ValueOfMessage(v.ProtoReflect())
 }
@@ -162,7 +212,7 @@ func (x *_GenesisState_5_list) Truncate(n int) {
 }
 
 func (x *_GenesisState_5_list) NewElement() protoreflect.Value {
-	v := new(Bid)
+	v := new(VestingQueue)
 	return protoreflect.ValueOfMessage(v.ProtoReflect())
 }
 
@@ -170,65 +220,12 @@ func (x *_GenesisState_5_list) IsValid() bool {
 	return x.list != nil
 }
 
-var _ protoreflect.List = (*_GenesisState_7_list)(nil)
-
-type _GenesisState_7_list struct {
-	list *[]*VestingQueue
-}
-
-func (x *_GenesisState_7_list) Len() int {
-	if x.list == nil {
-		return 0
-	}
-	return len(*x.list)
-}
-
-func (x *_GenesisState_7_list) Get(i int) protoreflect.Value {
-	return protoreflect.ValueOfMessage((*x.list)[i].ProtoReflect())
-}
-
-func (x *_GenesisState_7_list) Set(i int, value protoreflect.Value) {
-	valueUnwrapped := value.Message()
-	concreteValue := valueUnwrapped.Interface().(*VestingQueue)
-	(*x.list)[i] = concreteValue
-}
-
-func (x *_GenesisState_7_list) Append(value protoreflect.Value) {
-	valueUnwrapped := value.Message()
-	concreteValue := valueUnwrapped.Interface().(*VestingQueue)
-	*x.list = append(*x.list, concreteValue)
-}
-
-func (x *_GenesisState_7_list) AppendMutable() protoreflect.Value {
-	v := new(VestingQueue)
-	*x.list = append(*x.list, v)
-	return protoreflect.ValueOfMessage(v.ProtoReflect())
-}
-
-func (x *_GenesisState_7_list) Truncate(n int) {
-	for i := n; i < len(*x.list); i++ {
-		(*x.list)[i] = nil
-	}
-	*x.list = (*x.list)[:n]
-}
-
-func (x *_GenesisState_7_list) NewElement() protoreflect.Value {
-	v := new(VestingQueue)
-	return protoreflect.ValueOfMessage(v.ProtoReflect())
-}
-
-func (x *_GenesisState_7_list) IsValid() bool {
-	return x.list != nil
-}
-
 var (
 	md_GenesisState                   protoreflect.MessageDescriptor
 	fd_GenesisState_params            protoreflect.FieldDescriptor
 	fd_GenesisState_auctionList       protoreflect.FieldDescriptor
-	fd_GenesisState_auctionCount      protoreflect.FieldDescriptor
 	fd_GenesisState_allowedBidderList protoreflect.FieldDescriptor
 	fd_GenesisState_bidList           protoreflect.FieldDescriptor
-	fd_GenesisState_bidCount          protoreflect.FieldDescriptor
 	fd_GenesisState_vestingQueueList  protoreflect.FieldDescriptor
 )
 
@@ -237,10 +234,8 @@ func init() {
 	md_GenesisState = File_fundraising_fundraising_v1_genesis_proto.Messages().ByName("GenesisState")
 	fd_GenesisState_params = md_GenesisState.Fields().ByName("params")
 	fd_GenesisState_auctionList = md_GenesisState.Fields().ByName("auctionList")
-	fd_GenesisState_auctionCount = md_GenesisState.Fields().ByName("auctionCount")
 	fd_GenesisState_allowedBidderList = md_GenesisState.Fields().ByName("allowedBidderList")
 	fd_GenesisState_bidList = md_GenesisState.Fields().ByName("bidList")
-	fd_GenesisState_bidCount = md_GenesisState.Fields().ByName("bidCount")
 	fd_GenesisState_vestingQueueList = md_GenesisState.Fields().ByName("vestingQueueList")
 }
 
@@ -264,21 +259,17 @@ func (x *GenesisState) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var (
-	_fastReflection_GenesisState_messageType fastReflection_GenesisState_messageType
-	_                                        protoreflect.MessageType = fastReflection_GenesisState_messageType{}
-)
+var _fastReflection_GenesisState_messageType fastReflection_GenesisState_messageType
+var _ protoreflect.MessageType = fastReflection_GenesisState_messageType{}
 
 type fastReflection_GenesisState_messageType struct{}
 
 func (x fastReflection_GenesisState_messageType) Zero() protoreflect.Message {
 	return (*fastReflection_GenesisState)(nil)
 }
-
 func (x fastReflection_GenesisState_messageType) New() protoreflect.Message {
 	return new(fastReflection_GenesisState)
 }
-
 func (x fastReflection_GenesisState_messageType) Descriptor() protoreflect.MessageDescriptor {
 	return md_GenesisState
 }
@@ -325,32 +316,20 @@ func (x *fastReflection_GenesisState) Range(f func(protoreflect.FieldDescriptor,
 			return
 		}
 	}
-	if x.AuctionCount != uint64(0) {
-		value := protoreflect.ValueOfUint64(x.AuctionCount)
-		if !f(fd_GenesisState_auctionCount, value) {
-			return
-		}
-	}
 	if len(x.AllowedBidderList) != 0 {
-		value := protoreflect.ValueOfList(&_GenesisState_4_list{list: &x.AllowedBidderList})
+		value := protoreflect.ValueOfList(&_GenesisState_3_list{list: &x.AllowedBidderList})
 		if !f(fd_GenesisState_allowedBidderList, value) {
 			return
 		}
 	}
 	if len(x.BidList) != 0 {
-		value := protoreflect.ValueOfList(&_GenesisState_5_list{list: &x.BidList})
+		value := protoreflect.ValueOfList(&_GenesisState_4_list{list: &x.BidList})
 		if !f(fd_GenesisState_bidList, value) {
 			return
 		}
 	}
-	if x.BidCount != uint64(0) {
-		value := protoreflect.ValueOfUint64(x.BidCount)
-		if !f(fd_GenesisState_bidCount, value) {
-			return
-		}
-	}
 	if len(x.VestingQueueList) != 0 {
-		value := protoreflect.ValueOfList(&_GenesisState_7_list{list: &x.VestingQueueList})
+		value := protoreflect.ValueOfList(&_GenesisState_5_list{list: &x.VestingQueueList})
 		if !f(fd_GenesisState_vestingQueueList, value) {
 			return
 		}
@@ -374,14 +353,10 @@ func (x *fastReflection_GenesisState) Has(fd protoreflect.FieldDescriptor) bool 
 		return x.Params != nil
 	case "fundraising.fundraising.v1.GenesisState.auctionList":
 		return len(x.AuctionList) != 0
-	case "fundraising.fundraising.v1.GenesisState.auctionCount":
-		return x.AuctionCount != uint64(0)
 	case "fundraising.fundraising.v1.GenesisState.allowedBidderList":
 		return len(x.AllowedBidderList) != 0
 	case "fundraising.fundraising.v1.GenesisState.bidList":
 		return len(x.BidList) != 0
-	case "fundraising.fundraising.v1.GenesisState.bidCount":
-		return x.BidCount != uint64(0)
 	case "fundraising.fundraising.v1.GenesisState.vestingQueueList":
 		return len(x.VestingQueueList) != 0
 	default:
@@ -404,14 +379,10 @@ func (x *fastReflection_GenesisState) Clear(fd protoreflect.FieldDescriptor) {
 		x.Params = nil
 	case "fundraising.fundraising.v1.GenesisState.auctionList":
 		x.AuctionList = nil
-	case "fundraising.fundraising.v1.GenesisState.auctionCount":
-		x.AuctionCount = uint64(0)
 	case "fundraising.fundraising.v1.GenesisState.allowedBidderList":
 		x.AllowedBidderList = nil
 	case "fundraising.fundraising.v1.GenesisState.bidList":
 		x.BidList = nil
-	case "fundraising.fundraising.v1.GenesisState.bidCount":
-		x.BidCount = uint64(0)
 	case "fundraising.fundraising.v1.GenesisState.vestingQueueList":
 		x.VestingQueueList = nil
 	default:
@@ -439,29 +410,23 @@ func (x *fastReflection_GenesisState) Get(descriptor protoreflect.FieldDescripto
 		}
 		listValue := &_GenesisState_2_list{list: &x.AuctionList}
 		return protoreflect.ValueOfList(listValue)
-	case "fundraising.fundraising.v1.GenesisState.auctionCount":
-		value := x.AuctionCount
-		return protoreflect.ValueOfUint64(value)
 	case "fundraising.fundraising.v1.GenesisState.allowedBidderList":
 		if len(x.AllowedBidderList) == 0 {
-			return protoreflect.ValueOfList(&_GenesisState_4_list{})
+			return protoreflect.ValueOfList(&_GenesisState_3_list{})
 		}
-		listValue := &_GenesisState_4_list{list: &x.AllowedBidderList}
+		listValue := &_GenesisState_3_list{list: &x.AllowedBidderList}
 		return protoreflect.ValueOfList(listValue)
 	case "fundraising.fundraising.v1.GenesisState.bidList":
 		if len(x.BidList) == 0 {
-			return protoreflect.ValueOfList(&_GenesisState_5_list{})
+			return protoreflect.ValueOfList(&_GenesisState_4_list{})
 		}
-		listValue := &_GenesisState_5_list{list: &x.BidList}
+		listValue := &_GenesisState_4_list{list: &x.BidList}
 		return protoreflect.ValueOfList(listValue)
-	case "fundraising.fundraising.v1.GenesisState.bidCount":
-		value := x.BidCount
-		return protoreflect.ValueOfUint64(value)
 	case "fundraising.fundraising.v1.GenesisState.vestingQueueList":
 		if len(x.VestingQueueList) == 0 {
-			return protoreflect.ValueOfList(&_GenesisState_7_list{})
+			return protoreflect.ValueOfList(&_GenesisState_5_list{})
 		}
-		listValue := &_GenesisState_7_list{list: &x.VestingQueueList}
+		listValue := &_GenesisState_5_list{list: &x.VestingQueueList}
 		return protoreflect.ValueOfList(listValue)
 	default:
 		if descriptor.IsExtension() {
@@ -489,21 +454,17 @@ func (x *fastReflection_GenesisState) Set(fd protoreflect.FieldDescriptor, value
 		lv := value.List()
 		clv := lv.(*_GenesisState_2_list)
 		x.AuctionList = *clv.list
-	case "fundraising.fundraising.v1.GenesisState.auctionCount":
-		x.AuctionCount = value.Uint()
 	case "fundraising.fundraising.v1.GenesisState.allowedBidderList":
 		lv := value.List()
-		clv := lv.(*_GenesisState_4_list)
+		clv := lv.(*_GenesisState_3_list)
 		x.AllowedBidderList = *clv.list
 	case "fundraising.fundraising.v1.GenesisState.bidList":
 		lv := value.List()
-		clv := lv.(*_GenesisState_5_list)
+		clv := lv.(*_GenesisState_4_list)
 		x.BidList = *clv.list
-	case "fundraising.fundraising.v1.GenesisState.bidCount":
-		x.BidCount = value.Uint()
 	case "fundraising.fundraising.v1.GenesisState.vestingQueueList":
 		lv := value.List()
-		clv := lv.(*_GenesisState_7_list)
+		clv := lv.(*_GenesisState_5_list)
 		x.VestingQueueList = *clv.list
 	default:
 		if fd.IsExtension() {
@@ -540,24 +501,20 @@ func (x *fastReflection_GenesisState) Mutable(fd protoreflect.FieldDescriptor) p
 		if x.AllowedBidderList == nil {
 			x.AllowedBidderList = []*AllowedBidder{}
 		}
-		value := &_GenesisState_4_list{list: &x.AllowedBidderList}
+		value := &_GenesisState_3_list{list: &x.AllowedBidderList}
 		return protoreflect.ValueOfList(value)
 	case "fundraising.fundraising.v1.GenesisState.bidList":
 		if x.BidList == nil {
 			x.BidList = []*Bid{}
 		}
-		value := &_GenesisState_5_list{list: &x.BidList}
+		value := &_GenesisState_4_list{list: &x.BidList}
 		return protoreflect.ValueOfList(value)
 	case "fundraising.fundraising.v1.GenesisState.vestingQueueList":
 		if x.VestingQueueList == nil {
 			x.VestingQueueList = []*VestingQueue{}
 		}
-		value := &_GenesisState_7_list{list: &x.VestingQueueList}
+		value := &_GenesisState_5_list{list: &x.VestingQueueList}
 		return protoreflect.ValueOfList(value)
-	case "fundraising.fundraising.v1.GenesisState.auctionCount":
-		panic(fmt.Errorf("field auctionCount of message fundraising.fundraising.v1.GenesisState is not mutable"))
-	case "fundraising.fundraising.v1.GenesisState.bidCount":
-		panic(fmt.Errorf("field bidCount of message fundraising.fundraising.v1.GenesisState is not mutable"))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: fundraising.fundraising.v1.GenesisState"))
@@ -577,19 +534,15 @@ func (x *fastReflection_GenesisState) NewField(fd protoreflect.FieldDescriptor) 
 	case "fundraising.fundraising.v1.GenesisState.auctionList":
 		list := []*anypb.Any{}
 		return protoreflect.ValueOfList(&_GenesisState_2_list{list: &list})
-	case "fundraising.fundraising.v1.GenesisState.auctionCount":
-		return protoreflect.ValueOfUint64(uint64(0))
 	case "fundraising.fundraising.v1.GenesisState.allowedBidderList":
 		list := []*AllowedBidder{}
-		return protoreflect.ValueOfList(&_GenesisState_4_list{list: &list})
+		return protoreflect.ValueOfList(&_GenesisState_3_list{list: &list})
 	case "fundraising.fundraising.v1.GenesisState.bidList":
 		list := []*Bid{}
-		return protoreflect.ValueOfList(&_GenesisState_5_list{list: &list})
-	case "fundraising.fundraising.v1.GenesisState.bidCount":
-		return protoreflect.ValueOfUint64(uint64(0))
+		return protoreflect.ValueOfList(&_GenesisState_4_list{list: &list})
 	case "fundraising.fundraising.v1.GenesisState.vestingQueueList":
 		list := []*VestingQueue{}
-		return protoreflect.ValueOfList(&_GenesisState_7_list{list: &list})
+		return protoreflect.ValueOfList(&_GenesisState_5_list{list: &list})
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: fundraising.fundraising.v1.GenesisState"))
@@ -669,9 +622,6 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 				n += 1 + l + runtime.Sov(uint64(l))
 			}
 		}
-		if x.AuctionCount != 0 {
-			n += 1 + runtime.Sov(uint64(x.AuctionCount))
-		}
 		if len(x.AllowedBidderList) > 0 {
 			for _, e := range x.AllowedBidderList {
 				l = options.Size(e)
@@ -683,9 +633,6 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 				l = options.Size(e)
 				n += 1 + l + runtime.Sov(uint64(l))
 			}
-		}
-		if x.BidCount != 0 {
-			n += 1 + runtime.Sov(uint64(x.BidCount))
 		}
 		if len(x.VestingQueueList) > 0 {
 			for _, e := range x.VestingQueueList {
@@ -735,13 +682,8 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 				copy(dAtA[i:], encoded)
 				i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
 				i--
-				dAtA[i] = 0x3a
+				dAtA[i] = 0x2a
 			}
-		}
-		if x.BidCount != 0 {
-			i = runtime.EncodeVarint(dAtA, i, uint64(x.BidCount))
-			i--
-			dAtA[i] = 0x30
 		}
 		if len(x.BidList) > 0 {
 			for iNdEx := len(x.BidList) - 1; iNdEx >= 0; iNdEx-- {
@@ -756,7 +698,7 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 				copy(dAtA[i:], encoded)
 				i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
 				i--
-				dAtA[i] = 0x2a
+				dAtA[i] = 0x22
 			}
 		}
 		if len(x.AllowedBidderList) > 0 {
@@ -772,13 +714,8 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 				copy(dAtA[i:], encoded)
 				i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
 				i--
-				dAtA[i] = 0x22
+				dAtA[i] = 0x1a
 			}
-		}
-		if x.AuctionCount != 0 {
-			i = runtime.EncodeVarint(dAtA, i, uint64(x.AuctionCount))
-			i--
-			dAtA[i] = 0x18
 		}
 		if len(x.AuctionList) > 0 {
 			for iNdEx := len(x.AuctionList) - 1; iNdEx >= 0; iNdEx-- {
@@ -930,25 +867,6 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 				}
 				iNdEx = postIndex
 			case 3:
-				if wireType != 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field AuctionCount", wireType)
-				}
-				x.AuctionCount = 0
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-					}
-					if iNdEx >= l {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					x.AuctionCount |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-			case 4:
 				if wireType != 2 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field AllowedBidderList", wireType)
 				}
@@ -982,7 +900,7 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
 				}
 				iNdEx = postIndex
-			case 5:
+			case 4:
 				if wireType != 2 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field BidList", wireType)
 				}
@@ -1016,26 +934,7 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
 				}
 				iNdEx = postIndex
-			case 6:
-				if wireType != 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field BidCount", wireType)
-				}
-				x.BidCount = 0
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-					}
-					if iNdEx >= l {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					x.BidCount |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-			case 7:
+			case 5:
 				if wireType != 2 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field VestingQueueList", wireType)
 				}
@@ -1127,15 +1026,13 @@ type GenesisState struct {
 	Params *Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params,omitempty"`
 	// auctionList define the auction interface for genesis state; the module
 	// supports FixedPriceAuction or BatchAuction
-	AuctionList  []*anypb.Any `protobuf:"bytes,2,rep,name=auctionList,proto3" json:"auctionList,omitempty"`
-	AuctionCount uint64       `protobuf:"varint,3,opt,name=auctionCount,proto3" json:"auctionCount,omitempty"`
+	AuctionList []*anypb.Any `protobuf:"bytes,2,rep,name=auctionList,proto3" json:"auctionList,omitempty"`
 	// allowedBidderList define the allowed bidder records for the auction
-	AllowedBidderList []*AllowedBidder `protobuf:"bytes,4,rep,name=allowedBidderList,proto3" json:"allowedBidderList,omitempty"`
+	AllowedBidderList []*AllowedBidder `protobuf:"bytes,3,rep,name=allowedBidderList,proto3" json:"allowedBidderList,omitempty"`
 	// bidList define the bid records used for genesis state
-	BidList  []*Bid `protobuf:"bytes,5,rep,name=bidList,proto3" json:"bidList,omitempty"`
-	BidCount uint64 `protobuf:"varint,6,opt,name=bidCount,proto3" json:"bidCount,omitempty"`
+	BidList []*Bid `protobuf:"bytes,4,rep,name=bidList,proto3" json:"bidList,omitempty"`
 	// vestingQueueList define the vesting queue records used for genesis state
-	VestingQueueList []*VestingQueue `protobuf:"bytes,7,rep,name=vestingQueueList,proto3" json:"vestingQueueList,omitempty"`
+	VestingQueueList []*VestingQueue `protobuf:"bytes,5,rep,name=vestingQueueList,proto3" json:"vestingQueueList,omitempty"`
 }
 
 func (x *GenesisState) Reset() {
@@ -1172,13 +1069,6 @@ func (x *GenesisState) GetAuctionList() []*anypb.Any {
 	return nil
 }
 
-func (x *GenesisState) GetAuctionCount() uint64 {
-	if x != nil {
-		return x.AuctionCount
-	}
-	return 0
-}
-
 func (x *GenesisState) GetAllowedBidderList() []*AllowedBidder {
 	if x != nil {
 		return x.AllowedBidderList
@@ -1191,13 +1081,6 @@ func (x *GenesisState) GetBidList() []*Bid {
 		return x.BidList
 	}
 	return nil
-}
-
-func (x *GenesisState) GetBidCount() uint64 {
-	if x != nil {
-		return x.BidCount
-	}
-	return 0
 }
 
 func (x *GenesisState) GetVestingQueueList() []*VestingQueue {
@@ -1234,7 +1117,7 @@ var file_fundraising_fundraising_v1_genesis_proto_rawDesc = []byte{
 	0x67, 0x6f, 0x67, 0x6f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x67, 0x6f, 0x67, 0x6f, 0x2e, 0x70,
 	0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x19, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2f, 0x70, 0x72, 0x6f,
 	0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x61, 0x6e, 0x79, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22,
-	0xd7, 0x03, 0x0a, 0x0c, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x53, 0x74, 0x61, 0x74, 0x65,
+	0x97, 0x03, 0x0a, 0x0c, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x53, 0x74, 0x61, 0x74, 0x65,
 	0x12, 0x45, 0x0a, 0x06, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b,
 	0x32, 0x22, 0x2e, 0x66, 0x75, 0x6e, 0x64, 0x72, 0x61, 0x69, 0x73, 0x69, 0x6e, 0x67, 0x2e, 0x66,
 	0x75, 0x6e, 0x64, 0x72, 0x61, 0x69, 0x73, 0x69, 0x6e, 0x67, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x61,
@@ -1243,23 +1126,19 @@ var file_fundraising_fundraising_v1_genesis_proto_rawDesc = []byte{
 	0x6f, 0x6e, 0x4c, 0x69, 0x73, 0x74, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x14, 0x2e, 0x67,
 	0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x41,
 	0x6e, 0x79, 0x42, 0x0c, 0xca, 0xb4, 0x2d, 0x08, 0x41, 0x75, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x49,
-	0x52, 0x0b, 0x61, 0x75, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x4c, 0x69, 0x73, 0x74, 0x12, 0x22, 0x0a,
-	0x0c, 0x61, 0x75, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x03, 0x20,
-	0x01, 0x28, 0x04, 0x52, 0x0c, 0x61, 0x75, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x43, 0x6f, 0x75, 0x6e,
-	0x74, 0x12, 0x5d, 0x0a, 0x11, 0x61, 0x6c, 0x6c, 0x6f, 0x77, 0x65, 0x64, 0x42, 0x69, 0x64, 0x64,
-	0x65, 0x72, 0x4c, 0x69, 0x73, 0x74, 0x18, 0x04, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x29, 0x2e, 0x66,
-	0x75, 0x6e, 0x64, 0x72, 0x61, 0x69, 0x73, 0x69, 0x6e, 0x67, 0x2e, 0x66, 0x75, 0x6e, 0x64, 0x72,
-	0x61, 0x69, 0x73, 0x69, 0x6e, 0x67, 0x2e, 0x76, 0x31, 0x2e, 0x41, 0x6c, 0x6c, 0x6f, 0x77, 0x65,
-	0x64, 0x42, 0x69, 0x64, 0x64, 0x65, 0x72, 0x42, 0x04, 0xc8, 0xde, 0x1f, 0x00, 0x52, 0x11, 0x61,
-	0x6c, 0x6c, 0x6f, 0x77, 0x65, 0x64, 0x42, 0x69, 0x64, 0x64, 0x65, 0x72, 0x4c, 0x69, 0x73, 0x74,
-	0x12, 0x3f, 0x0a, 0x07, 0x62, 0x69, 0x64, 0x4c, 0x69, 0x73, 0x74, 0x18, 0x05, 0x20, 0x03, 0x28,
-	0x0b, 0x32, 0x1f, 0x2e, 0x66, 0x75, 0x6e, 0x64, 0x72, 0x61, 0x69, 0x73, 0x69, 0x6e, 0x67, 0x2e,
-	0x66, 0x75, 0x6e, 0x64, 0x72, 0x61, 0x69, 0x73, 0x69, 0x6e, 0x67, 0x2e, 0x76, 0x31, 0x2e, 0x42,
-	0x69, 0x64, 0x42, 0x04, 0xc8, 0xde, 0x1f, 0x00, 0x52, 0x07, 0x62, 0x69, 0x64, 0x4c, 0x69, 0x73,
-	0x74, 0x12, 0x1a, 0x0a, 0x08, 0x62, 0x69, 0x64, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x06, 0x20,
-	0x01, 0x28, 0x04, 0x52, 0x08, 0x62, 0x69, 0x64, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x5a, 0x0a,
+	0x52, 0x0b, 0x61, 0x75, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x4c, 0x69, 0x73, 0x74, 0x12, 0x5d, 0x0a,
+	0x11, 0x61, 0x6c, 0x6c, 0x6f, 0x77, 0x65, 0x64, 0x42, 0x69, 0x64, 0x64, 0x65, 0x72, 0x4c, 0x69,
+	0x73, 0x74, 0x18, 0x03, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x29, 0x2e, 0x66, 0x75, 0x6e, 0x64, 0x72,
+	0x61, 0x69, 0x73, 0x69, 0x6e, 0x67, 0x2e, 0x66, 0x75, 0x6e, 0x64, 0x72, 0x61, 0x69, 0x73, 0x69,
+	0x6e, 0x67, 0x2e, 0x76, 0x31, 0x2e, 0x41, 0x6c, 0x6c, 0x6f, 0x77, 0x65, 0x64, 0x42, 0x69, 0x64,
+	0x64, 0x65, 0x72, 0x42, 0x04, 0xc8, 0xde, 0x1f, 0x00, 0x52, 0x11, 0x61, 0x6c, 0x6c, 0x6f, 0x77,
+	0x65, 0x64, 0x42, 0x69, 0x64, 0x64, 0x65, 0x72, 0x4c, 0x69, 0x73, 0x74, 0x12, 0x3f, 0x0a, 0x07,
+	0x62, 0x69, 0x64, 0x4c, 0x69, 0x73, 0x74, 0x18, 0x04, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1f, 0x2e,
+	0x66, 0x75, 0x6e, 0x64, 0x72, 0x61, 0x69, 0x73, 0x69, 0x6e, 0x67, 0x2e, 0x66, 0x75, 0x6e, 0x64,
+	0x72, 0x61, 0x69, 0x73, 0x69, 0x6e, 0x67, 0x2e, 0x76, 0x31, 0x2e, 0x42, 0x69, 0x64, 0x42, 0x04,
+	0xc8, 0xde, 0x1f, 0x00, 0x52, 0x07, 0x62, 0x69, 0x64, 0x4c, 0x69, 0x73, 0x74, 0x12, 0x5a, 0x0a,
 	0x10, 0x76, 0x65, 0x73, 0x74, 0x69, 0x6e, 0x67, 0x51, 0x75, 0x65, 0x75, 0x65, 0x4c, 0x69, 0x73,
-	0x74, 0x18, 0x07, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x28, 0x2e, 0x66, 0x75, 0x6e, 0x64, 0x72, 0x61,
+	0x74, 0x18, 0x05, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x28, 0x2e, 0x66, 0x75, 0x6e, 0x64, 0x72, 0x61,
 	0x69, 0x73, 0x69, 0x6e, 0x67, 0x2e, 0x66, 0x75, 0x6e, 0x64, 0x72, 0x61, 0x69, 0x73, 0x69, 0x6e,
 	0x67, 0x2e, 0x76, 0x31, 0x2e, 0x56, 0x65, 0x73, 0x74, 0x69, 0x6e, 0x67, 0x51, 0x75, 0x65, 0x75,
 	0x65, 0x42, 0x04, 0xc8, 0xde, 0x1f, 0x00, 0x52, 0x10, 0x76, 0x65, 0x73, 0x74, 0x69, 0x6e, 0x67,
@@ -1295,18 +1174,15 @@ func file_fundraising_fundraising_v1_genesis_proto_rawDescGZIP() []byte {
 	return file_fundraising_fundraising_v1_genesis_proto_rawDescData
 }
 
-var (
-	file_fundraising_fundraising_v1_genesis_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
-	file_fundraising_fundraising_v1_genesis_proto_goTypes  = []interface{}{
-		(*GenesisState)(nil),  // 0: fundraising.fundraising.v1.GenesisState
-		(*Params)(nil),        // 1: fundraising.fundraising.v1.Params
-		(*anypb.Any)(nil),     // 2: google.protobuf.Any
-		(*AllowedBidder)(nil), // 3: fundraising.fundraising.v1.AllowedBidder
-		(*Bid)(nil),           // 4: fundraising.fundraising.v1.Bid
-		(*VestingQueue)(nil),  // 5: fundraising.fundraising.v1.VestingQueue
-	}
-)
-
+var file_fundraising_fundraising_v1_genesis_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_fundraising_fundraising_v1_genesis_proto_goTypes = []interface{}{
+	(*GenesisState)(nil),  // 0: fundraising.fundraising.v1.GenesisState
+	(*Params)(nil),        // 1: fundraising.fundraising.v1.Params
+	(*anypb.Any)(nil),     // 2: google.protobuf.Any
+	(*AllowedBidder)(nil), // 3: fundraising.fundraising.v1.AllowedBidder
+	(*Bid)(nil),           // 4: fundraising.fundraising.v1.Bid
+	(*VestingQueue)(nil),  // 5: fundraising.fundraising.v1.VestingQueue
+}
 var file_fundraising_fundraising_v1_genesis_proto_depIdxs = []int32{
 	1, // 0: fundraising.fundraising.v1.GenesisState.params:type_name -> fundraising.fundraising.v1.Params
 	2, // 1: fundraising.fundraising.v1.GenesisState.auctionList:type_name -> google.protobuf.Any

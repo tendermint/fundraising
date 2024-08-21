@@ -2,13 +2,9 @@
 package fundraisingv1
 
 import (
-	fmt "fmt"
-	io "io"
-	reflect "reflect"
-	sync "sync"
-
 	_ "cosmossdk.io/api/amino"
 	v1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
+	fmt "fmt"
 	_ "github.com/cosmos/cosmos-proto"
 	runtime "github.com/cosmos/cosmos-proto/runtime"
 	_ "github.com/cosmos/gogoproto/gogoproto"
@@ -16,6 +12,9 @@ import (
 	protoiface "google.golang.org/protobuf/runtime/protoiface"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	io "io"
+	reflect "reflect"
+	sync "sync"
 )
 
 var _ protoreflect.List = (*_BaseAuction_10_list)(nil)
@@ -175,21 +174,17 @@ func (x *BaseAuction) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var (
-	_fastReflection_BaseAuction_messageType fastReflection_BaseAuction_messageType
-	_                                       protoreflect.MessageType = fastReflection_BaseAuction_messageType{}
-)
+var _fastReflection_BaseAuction_messageType fastReflection_BaseAuction_messageType
+var _ protoreflect.MessageType = fastReflection_BaseAuction_messageType{}
 
 type fastReflection_BaseAuction_messageType struct{}
 
 func (x fastReflection_BaseAuction_messageType) Zero() protoreflect.Message {
 	return (*fastReflection_BaseAuction)(nil)
 }
-
 func (x fastReflection_BaseAuction_messageType) New() protoreflect.Message {
 	return new(fastReflection_BaseAuction)
 }
-
 func (x fastReflection_BaseAuction_messageType) Descriptor() protoreflect.MessageDescriptor {
 	return md_BaseAuction
 }
@@ -1373,21 +1368,17 @@ func (x *FixedPriceAuction) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var (
-	_fastReflection_FixedPriceAuction_messageType fastReflection_FixedPriceAuction_messageType
-	_                                             protoreflect.MessageType = fastReflection_FixedPriceAuction_messageType{}
-)
+var _fastReflection_FixedPriceAuction_messageType fastReflection_FixedPriceAuction_messageType
+var _ protoreflect.MessageType = fastReflection_FixedPriceAuction_messageType{}
 
 type fastReflection_FixedPriceAuction_messageType struct{}
 
 func (x fastReflection_FixedPriceAuction_messageType) Zero() protoreflect.Message {
 	return (*fastReflection_FixedPriceAuction)(nil)
 }
-
 func (x fastReflection_FixedPriceAuction_messageType) New() protoreflect.Message {
 	return new(fastReflection_FixedPriceAuction)
 }
-
 func (x fastReflection_FixedPriceAuction_messageType) Descriptor() protoreflect.MessageDescriptor {
 	return md_FixedPriceAuction
 }
@@ -1897,21 +1888,17 @@ func (x *BatchAuction) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var (
-	_fastReflection_BatchAuction_messageType fastReflection_BatchAuction_messageType
-	_                                        protoreflect.MessageType = fastReflection_BatchAuction_messageType{}
-)
+var _fastReflection_BatchAuction_messageType fastReflection_BatchAuction_messageType
+var _ protoreflect.MessageType = fastReflection_BatchAuction_messageType{}
 
 type fastReflection_BatchAuction_messageType struct{}
 
 func (x fastReflection_BatchAuction_messageType) Zero() protoreflect.Message {
 	return (*fastReflection_BatchAuction)(nil)
 }
-
 func (x fastReflection_BatchAuction_messageType) New() protoreflect.Message {
 	return new(fastReflection_BatchAuction)
 }
-
 func (x fastReflection_BatchAuction_messageType) Descriptor() protoreflect.MessageDescriptor {
 	return md_BatchAuction
 }
@@ -2570,21 +2557,17 @@ func (x *VestingSchedule) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var (
-	_fastReflection_VestingSchedule_messageType fastReflection_VestingSchedule_messageType
-	_                                           protoreflect.MessageType = fastReflection_VestingSchedule_messageType{}
-)
+var _fastReflection_VestingSchedule_messageType fastReflection_VestingSchedule_messageType
+var _ protoreflect.MessageType = fastReflection_VestingSchedule_messageType{}
 
 type fastReflection_VestingSchedule_messageType struct{}
 
 func (x fastReflection_VestingSchedule_messageType) Zero() protoreflect.Message {
 	return (*fastReflection_VestingSchedule)(nil)
 }
-
 func (x fastReflection_VestingSchedule_messageType) New() protoreflect.Message {
 	return new(fastReflection_VestingSchedule)
 }
-
 func (x fastReflection_VestingSchedule_messageType) Descriptor() protoreflect.MessageDescriptor {
 	return md_VestingSchedule
 }
@@ -3683,21 +3666,18 @@ func file_fundraising_fundraising_v1_auction_proto_rawDescGZIP() []byte {
 	return file_fundraising_fundraising_v1_auction_proto_rawDescData
 }
 
-var (
-	file_fundraising_fundraising_v1_auction_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-	file_fundraising_fundraising_v1_auction_proto_msgTypes  = make([]protoimpl.MessageInfo, 4)
-	file_fundraising_fundraising_v1_auction_proto_goTypes   = []interface{}{
-		(AuctionType)(0),              // 0: fundraising.fundraising.v1.AuctionType
-		(AuctionStatus)(0),            // 1: fundraising.fundraising.v1.AuctionStatus
-		(*BaseAuction)(nil),           // 2: fundraising.fundraising.v1.BaseAuction
-		(*FixedPriceAuction)(nil),     // 3: fundraising.fundraising.v1.FixedPriceAuction
-		(*BatchAuction)(nil),          // 4: fundraising.fundraising.v1.BatchAuction
-		(*VestingSchedule)(nil),       // 5: fundraising.fundraising.v1.VestingSchedule
-		(*v1beta1.Coin)(nil),          // 6: cosmos.base.v1beta1.Coin
-		(*timestamppb.Timestamp)(nil), // 7: google.protobuf.Timestamp
-	}
-)
-
+var file_fundraising_fundraising_v1_auction_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_fundraising_fundraising_v1_auction_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_fundraising_fundraising_v1_auction_proto_goTypes = []interface{}{
+	(AuctionType)(0),              // 0: fundraising.fundraising.v1.AuctionType
+	(AuctionStatus)(0),            // 1: fundraising.fundraising.v1.AuctionStatus
+	(*BaseAuction)(nil),           // 2: fundraising.fundraising.v1.BaseAuction
+	(*FixedPriceAuction)(nil),     // 3: fundraising.fundraising.v1.FixedPriceAuction
+	(*BatchAuction)(nil),          // 4: fundraising.fundraising.v1.BatchAuction
+	(*VestingSchedule)(nil),       // 5: fundraising.fundraising.v1.VestingSchedule
+	(*v1beta1.Coin)(nil),          // 6: cosmos.base.v1beta1.Coin
+	(*timestamppb.Timestamp)(nil), // 7: google.protobuf.Timestamp
+}
 var file_fundraising_fundraising_v1_auction_proto_depIdxs = []int32{
 	0,  // 0: fundraising.fundraising.v1.BaseAuction.type:type_name -> fundraising.fundraising.v1.AuctionType
 	6,  // 1: fundraising.fundraising.v1.BaseAuction.selling_coin:type_name -> cosmos.base.v1beta1.Coin

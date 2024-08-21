@@ -2,13 +2,9 @@
 package fundraisingv1
 
 import (
-	fmt "fmt"
-	io "io"
-	reflect "reflect"
-	sync "sync"
-
 	_ "cosmossdk.io/api/amino"
 	v1beta1 "cosmossdk.io/api/cosmos/base/query/v1beta1"
+	fmt "fmt"
 	_ "github.com/cosmos/cosmos-proto"
 	runtime "github.com/cosmos/cosmos-proto/runtime"
 	_ "github.com/cosmos/gogoproto/gogoproto"
@@ -17,9 +13,14 @@ import (
 	protoiface "google.golang.org/protobuf/runtime/protoiface"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	anypb "google.golang.org/protobuf/types/known/anypb"
+	io "io"
+	reflect "reflect"
+	sync "sync"
 )
 
-var md_QueryParamsRequest protoreflect.MessageDescriptor
+var (
+	md_QueryParamsRequest protoreflect.MessageDescriptor
+)
 
 func init() {
 	file_fundraising_fundraising_v1_query_proto_init()
@@ -46,21 +47,17 @@ func (x *QueryParamsRequest) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var (
-	_fastReflection_QueryParamsRequest_messageType fastReflection_QueryParamsRequest_messageType
-	_                                              protoreflect.MessageType = fastReflection_QueryParamsRequest_messageType{}
-)
+var _fastReflection_QueryParamsRequest_messageType fastReflection_QueryParamsRequest_messageType
+var _ protoreflect.MessageType = fastReflection_QueryParamsRequest_messageType{}
 
 type fastReflection_QueryParamsRequest_messageType struct{}
 
 func (x fastReflection_QueryParamsRequest_messageType) Zero() protoreflect.Message {
 	return (*fastReflection_QueryParamsRequest)(nil)
 }
-
 func (x fastReflection_QueryParamsRequest_messageType) New() protoreflect.Message {
 	return new(fastReflection_QueryParamsRequest)
 }
-
 func (x fastReflection_QueryParamsRequest_messageType) Descriptor() protoreflect.MessageDescriptor {
 	return md_QueryParamsRequest
 }
@@ -408,21 +405,17 @@ func (x *QueryParamsResponse) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var (
-	_fastReflection_QueryParamsResponse_messageType fastReflection_QueryParamsResponse_messageType
-	_                                               protoreflect.MessageType = fastReflection_QueryParamsResponse_messageType{}
-)
+var _fastReflection_QueryParamsResponse_messageType fastReflection_QueryParamsResponse_messageType
+var _ protoreflect.MessageType = fastReflection_QueryParamsResponse_messageType{}
 
 type fastReflection_QueryParamsResponse_messageType struct{}
 
 func (x fastReflection_QueryParamsResponse_messageType) Zero() protoreflect.Message {
 	return (*fastReflection_QueryParamsResponse)(nil)
 }
-
 func (x fastReflection_QueryParamsResponse_messageType) New() protoreflect.Message {
 	return new(fastReflection_QueryParamsResponse)
 }
-
 func (x fastReflection_QueryParamsResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
 	return md_QueryParamsResponse
 }
@@ -851,21 +844,17 @@ func (x *QueryAllAuctionRequest) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var (
-	_fastReflection_QueryAllAuctionRequest_messageType fastReflection_QueryAllAuctionRequest_messageType
-	_                                                  protoreflect.MessageType = fastReflection_QueryAllAuctionRequest_messageType{}
-)
+var _fastReflection_QueryAllAuctionRequest_messageType fastReflection_QueryAllAuctionRequest_messageType
+var _ protoreflect.MessageType = fastReflection_QueryAllAuctionRequest_messageType{}
 
 type fastReflection_QueryAllAuctionRequest_messageType struct{}
 
 func (x fastReflection_QueryAllAuctionRequest_messageType) Zero() protoreflect.Message {
 	return (*fastReflection_QueryAllAuctionRequest)(nil)
 }
-
 func (x fastReflection_QueryAllAuctionRequest_messageType) New() protoreflect.Message {
 	return new(fastReflection_QueryAllAuctionRequest)
 }
-
 func (x fastReflection_QueryAllAuctionRequest_messageType) Descriptor() protoreflect.MessageDescriptor {
 	return md_QueryAllAuctionRequest
 }
@@ -1467,21 +1456,17 @@ func (x *QueryAllAuctionResponse) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var (
-	_fastReflection_QueryAllAuctionResponse_messageType fastReflection_QueryAllAuctionResponse_messageType
-	_                                                   protoreflect.MessageType = fastReflection_QueryAllAuctionResponse_messageType{}
-)
+var _fastReflection_QueryAllAuctionResponse_messageType fastReflection_QueryAllAuctionResponse_messageType
+var _ protoreflect.MessageType = fastReflection_QueryAllAuctionResponse_messageType{}
 
 type fastReflection_QueryAllAuctionResponse_messageType struct{}
 
 func (x fastReflection_QueryAllAuctionResponse_messageType) Zero() protoreflect.Message {
 	return (*fastReflection_QueryAllAuctionResponse)(nil)
 }
-
 func (x fastReflection_QueryAllAuctionResponse_messageType) New() protoreflect.Message {
 	return new(fastReflection_QueryAllAuctionResponse)
 }
-
 func (x fastReflection_QueryAllAuctionResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
 	return md_QueryAllAuctionResponse
 }
@@ -1991,21 +1976,17 @@ func (x *QueryGetAuctionRequest) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var (
-	_fastReflection_QueryGetAuctionRequest_messageType fastReflection_QueryGetAuctionRequest_messageType
-	_                                                  protoreflect.MessageType = fastReflection_QueryGetAuctionRequest_messageType{}
-)
+var _fastReflection_QueryGetAuctionRequest_messageType fastReflection_QueryGetAuctionRequest_messageType
+var _ protoreflect.MessageType = fastReflection_QueryGetAuctionRequest_messageType{}
 
 type fastReflection_QueryGetAuctionRequest_messageType struct{}
 
 func (x fastReflection_QueryGetAuctionRequest_messageType) Zero() protoreflect.Message {
 	return (*fastReflection_QueryGetAuctionRequest)(nil)
 }
-
 func (x fastReflection_QueryGetAuctionRequest_messageType) New() protoreflect.Message {
 	return new(fastReflection_QueryGetAuctionRequest)
 }
-
 func (x fastReflection_QueryGetAuctionRequest_messageType) Descriptor() protoreflect.MessageDescriptor {
 	return md_QueryGetAuctionRequest
 }
@@ -2399,21 +2380,17 @@ func (x *QueryGetAuctionResponse) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var (
-	_fastReflection_QueryGetAuctionResponse_messageType fastReflection_QueryGetAuctionResponse_messageType
-	_                                                   protoreflect.MessageType = fastReflection_QueryGetAuctionResponse_messageType{}
-)
+var _fastReflection_QueryGetAuctionResponse_messageType fastReflection_QueryGetAuctionResponse_messageType
+var _ protoreflect.MessageType = fastReflection_QueryGetAuctionResponse_messageType{}
 
 type fastReflection_QueryGetAuctionResponse_messageType struct{}
 
 func (x fastReflection_QueryGetAuctionResponse_messageType) Zero() protoreflect.Message {
 	return (*fastReflection_QueryGetAuctionResponse)(nil)
 }
-
 func (x fastReflection_QueryGetAuctionResponse_messageType) New() protoreflect.Message {
 	return new(fastReflection_QueryGetAuctionResponse)
 }
-
 func (x fastReflection_QueryGetAuctionResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
 	return md_QueryGetAuctionResponse
 }
@@ -2840,21 +2817,17 @@ func (x *QueryAllAllowedBidderRequest) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var (
-	_fastReflection_QueryAllAllowedBidderRequest_messageType fastReflection_QueryAllAllowedBidderRequest_messageType
-	_                                                        protoreflect.MessageType = fastReflection_QueryAllAllowedBidderRequest_messageType{}
-)
+var _fastReflection_QueryAllAllowedBidderRequest_messageType fastReflection_QueryAllAllowedBidderRequest_messageType
+var _ protoreflect.MessageType = fastReflection_QueryAllAllowedBidderRequest_messageType{}
 
 type fastReflection_QueryAllAllowedBidderRequest_messageType struct{}
 
 func (x fastReflection_QueryAllAllowedBidderRequest_messageType) Zero() protoreflect.Message {
 	return (*fastReflection_QueryAllAllowedBidderRequest)(nil)
 }
-
 func (x fastReflection_QueryAllAllowedBidderRequest_messageType) New() protoreflect.Message {
 	return new(fastReflection_QueryAllAllowedBidderRequest)
 }
-
 func (x fastReflection_QueryAllAllowedBidderRequest_messageType) Descriptor() protoreflect.MessageDescriptor {
 	return md_QueryAllAllowedBidderRequest
 }
@@ -3378,21 +3351,17 @@ func (x *QueryAllAllowedBidderResponse) slowProtoReflect() protoreflect.Message 
 	return mi.MessageOf(x)
 }
 
-var (
-	_fastReflection_QueryAllAllowedBidderResponse_messageType fastReflection_QueryAllAllowedBidderResponse_messageType
-	_                                                         protoreflect.MessageType = fastReflection_QueryAllAllowedBidderResponse_messageType{}
-)
+var _fastReflection_QueryAllAllowedBidderResponse_messageType fastReflection_QueryAllAllowedBidderResponse_messageType
+var _ protoreflect.MessageType = fastReflection_QueryAllAllowedBidderResponse_messageType{}
 
 type fastReflection_QueryAllAllowedBidderResponse_messageType struct{}
 
 func (x fastReflection_QueryAllAllowedBidderResponse_messageType) Zero() protoreflect.Message {
 	return (*fastReflection_QueryAllAllowedBidderResponse)(nil)
 }
-
 func (x fastReflection_QueryAllAllowedBidderResponse_messageType) New() protoreflect.Message {
 	return new(fastReflection_QueryAllAllowedBidderResponse)
 }
-
 func (x fastReflection_QueryAllAllowedBidderResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
 	return md_QueryAllAllowedBidderResponse
 }
@@ -3904,21 +3873,17 @@ func (x *QueryGetAllowedBidderRequest) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var (
-	_fastReflection_QueryGetAllowedBidderRequest_messageType fastReflection_QueryGetAllowedBidderRequest_messageType
-	_                                                        protoreflect.MessageType = fastReflection_QueryGetAllowedBidderRequest_messageType{}
-)
+var _fastReflection_QueryGetAllowedBidderRequest_messageType fastReflection_QueryGetAllowedBidderRequest_messageType
+var _ protoreflect.MessageType = fastReflection_QueryGetAllowedBidderRequest_messageType{}
 
 type fastReflection_QueryGetAllowedBidderRequest_messageType struct{}
 
 func (x fastReflection_QueryGetAllowedBidderRequest_messageType) Zero() protoreflect.Message {
 	return (*fastReflection_QueryGetAllowedBidderRequest)(nil)
 }
-
 func (x fastReflection_QueryGetAllowedBidderRequest_messageType) New() protoreflect.Message {
 	return new(fastReflection_QueryGetAllowedBidderRequest)
 }
-
 func (x fastReflection_QueryGetAllowedBidderRequest_messageType) Descriptor() protoreflect.MessageDescriptor {
 	return md_QueryGetAllowedBidderRequest
 }
@@ -4374,21 +4339,17 @@ func (x *QueryGetAllowedBidderResponse) slowProtoReflect() protoreflect.Message 
 	return mi.MessageOf(x)
 }
 
-var (
-	_fastReflection_QueryGetAllowedBidderResponse_messageType fastReflection_QueryGetAllowedBidderResponse_messageType
-	_                                                         protoreflect.MessageType = fastReflection_QueryGetAllowedBidderResponse_messageType{}
-)
+var _fastReflection_QueryGetAllowedBidderResponse_messageType fastReflection_QueryGetAllowedBidderResponse_messageType
+var _ protoreflect.MessageType = fastReflection_QueryGetAllowedBidderResponse_messageType{}
 
 type fastReflection_QueryGetAllowedBidderResponse_messageType struct{}
 
 func (x fastReflection_QueryGetAllowedBidderResponse_messageType) Zero() protoreflect.Message {
 	return (*fastReflection_QueryGetAllowedBidderResponse)(nil)
 }
-
 func (x fastReflection_QueryGetAllowedBidderResponse_messageType) New() protoreflect.Message {
 	return new(fastReflection_QueryGetAllowedBidderResponse)
 }
-
 func (x fastReflection_QueryGetAllowedBidderResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
 	return md_QueryGetAllowedBidderResponse
 }
@@ -4815,21 +4776,17 @@ func (x *QueryGetBidRequest) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var (
-	_fastReflection_QueryGetBidRequest_messageType fastReflection_QueryGetBidRequest_messageType
-	_                                              protoreflect.MessageType = fastReflection_QueryGetBidRequest_messageType{}
-)
+var _fastReflection_QueryGetBidRequest_messageType fastReflection_QueryGetBidRequest_messageType
+var _ protoreflect.MessageType = fastReflection_QueryGetBidRequest_messageType{}
 
 type fastReflection_QueryGetBidRequest_messageType struct{}
 
 func (x fastReflection_QueryGetBidRequest_messageType) Zero() protoreflect.Message {
 	return (*fastReflection_QueryGetBidRequest)(nil)
 }
-
 func (x fastReflection_QueryGetBidRequest_messageType) New() protoreflect.Message {
 	return new(fastReflection_QueryGetBidRequest)
 }
-
 func (x fastReflection_QueryGetBidRequest_messageType) Descriptor() protoreflect.MessageDescriptor {
 	return md_QueryGetBidRequest
 }
@@ -5269,21 +5226,17 @@ func (x *QueryGetBidResponse) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var (
-	_fastReflection_QueryGetBidResponse_messageType fastReflection_QueryGetBidResponse_messageType
-	_                                               protoreflect.MessageType = fastReflection_QueryGetBidResponse_messageType{}
-)
+var _fastReflection_QueryGetBidResponse_messageType fastReflection_QueryGetBidResponse_messageType
+var _ protoreflect.MessageType = fastReflection_QueryGetBidResponse_messageType{}
 
 type fastReflection_QueryGetBidResponse_messageType struct{}
 
 func (x fastReflection_QueryGetBidResponse_messageType) Zero() protoreflect.Message {
 	return (*fastReflection_QueryGetBidResponse)(nil)
 }
-
 func (x fastReflection_QueryGetBidResponse_messageType) New() protoreflect.Message {
 	return new(fastReflection_QueryGetBidResponse)
 }
-
 func (x fastReflection_QueryGetBidResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
 	return md_QueryGetBidResponse
 }
@@ -5714,21 +5667,17 @@ func (x *QueryAllBidRequest) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var (
-	_fastReflection_QueryAllBidRequest_messageType fastReflection_QueryAllBidRequest_messageType
-	_                                              protoreflect.MessageType = fastReflection_QueryAllBidRequest_messageType{}
-)
+var _fastReflection_QueryAllBidRequest_messageType fastReflection_QueryAllBidRequest_messageType
+var _ protoreflect.MessageType = fastReflection_QueryAllBidRequest_messageType{}
 
 type fastReflection_QueryAllBidRequest_messageType struct{}
 
 func (x fastReflection_QueryAllBidRequest_messageType) Zero() protoreflect.Message {
 	return (*fastReflection_QueryAllBidRequest)(nil)
 }
-
 func (x fastReflection_QueryAllBidRequest_messageType) New() protoreflect.Message {
 	return new(fastReflection_QueryAllBidRequest)
 }
-
 func (x fastReflection_QueryAllBidRequest_messageType) Descriptor() protoreflect.MessageDescriptor {
 	return md_QueryAllBidRequest
 }
@@ -6376,21 +6325,17 @@ func (x *QueryAllBidResponse) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var (
-	_fastReflection_QueryAllBidResponse_messageType fastReflection_QueryAllBidResponse_messageType
-	_                                               protoreflect.MessageType = fastReflection_QueryAllBidResponse_messageType{}
-)
+var _fastReflection_QueryAllBidResponse_messageType fastReflection_QueryAllBidResponse_messageType
+var _ protoreflect.MessageType = fastReflection_QueryAllBidResponse_messageType{}
 
 type fastReflection_QueryAllBidResponse_messageType struct{}
 
 func (x fastReflection_QueryAllBidResponse_messageType) Zero() protoreflect.Message {
 	return (*fastReflection_QueryAllBidResponse)(nil)
 }
-
 func (x fastReflection_QueryAllBidResponse_messageType) New() protoreflect.Message {
 	return new(fastReflection_QueryAllBidResponse)
 }
-
 func (x fastReflection_QueryAllBidResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
 	return md_QueryAllBidResponse
 }
@@ -6902,21 +6847,17 @@ func (x *QueryAllVestingQueueRequest) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var (
-	_fastReflection_QueryAllVestingQueueRequest_messageType fastReflection_QueryAllVestingQueueRequest_messageType
-	_                                                       protoreflect.MessageType = fastReflection_QueryAllVestingQueueRequest_messageType{}
-)
+var _fastReflection_QueryAllVestingQueueRequest_messageType fastReflection_QueryAllVestingQueueRequest_messageType
+var _ protoreflect.MessageType = fastReflection_QueryAllVestingQueueRequest_messageType{}
 
 type fastReflection_QueryAllVestingQueueRequest_messageType struct{}
 
 func (x fastReflection_QueryAllVestingQueueRequest_messageType) Zero() protoreflect.Message {
 	return (*fastReflection_QueryAllVestingQueueRequest)(nil)
 }
-
 func (x fastReflection_QueryAllVestingQueueRequest_messageType) New() protoreflect.Message {
 	return new(fastReflection_QueryAllVestingQueueRequest)
 }
-
 func (x fastReflection_QueryAllVestingQueueRequest_messageType) Descriptor() protoreflect.MessageDescriptor {
 	return md_QueryAllVestingQueueRequest
 }
@@ -7440,21 +7381,17 @@ func (x *QueryAllVestingQueueResponse) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var (
-	_fastReflection_QueryAllVestingQueueResponse_messageType fastReflection_QueryAllVestingQueueResponse_messageType
-	_                                                        protoreflect.MessageType = fastReflection_QueryAllVestingQueueResponse_messageType{}
-)
+var _fastReflection_QueryAllVestingQueueResponse_messageType fastReflection_QueryAllVestingQueueResponse_messageType
+var _ protoreflect.MessageType = fastReflection_QueryAllVestingQueueResponse_messageType{}
 
 type fastReflection_QueryAllVestingQueueResponse_messageType struct{}
 
 func (x fastReflection_QueryAllVestingQueueResponse_messageType) Zero() protoreflect.Message {
 	return (*fastReflection_QueryAllVestingQueueResponse)(nil)
 }
-
 func (x fastReflection_QueryAllVestingQueueResponse_messageType) New() protoreflect.Message {
 	return new(fastReflection_QueryAllVestingQueueResponse)
 }
-
 func (x fastReflection_QueryAllVestingQueueResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
 	return md_QueryAllVestingQueueResponse
 }
@@ -8908,35 +8845,32 @@ func file_fundraising_fundraising_v1_query_proto_rawDescGZIP() []byte {
 	return file_fundraising_fundraising_v1_query_proto_rawDescData
 }
 
-var (
-	file_fundraising_fundraising_v1_query_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
-	file_fundraising_fundraising_v1_query_proto_goTypes  = []interface{}{
-		(*QueryParamsRequest)(nil),            // 0: fundraising.fundraising.v1.QueryParamsRequest
-		(*QueryParamsResponse)(nil),           // 1: fundraising.fundraising.v1.QueryParamsResponse
-		(*QueryAllAuctionRequest)(nil),        // 2: fundraising.fundraising.v1.QueryAllAuctionRequest
-		(*QueryAllAuctionResponse)(nil),       // 3: fundraising.fundraising.v1.QueryAllAuctionResponse
-		(*QueryGetAuctionRequest)(nil),        // 4: fundraising.fundraising.v1.QueryGetAuctionRequest
-		(*QueryGetAuctionResponse)(nil),       // 5: fundraising.fundraising.v1.QueryGetAuctionResponse
-		(*QueryAllAllowedBidderRequest)(nil),  // 6: fundraising.fundraising.v1.QueryAllAllowedBidderRequest
-		(*QueryAllAllowedBidderResponse)(nil), // 7: fundraising.fundraising.v1.QueryAllAllowedBidderResponse
-		(*QueryGetAllowedBidderRequest)(nil),  // 8: fundraising.fundraising.v1.QueryGetAllowedBidderRequest
-		(*QueryGetAllowedBidderResponse)(nil), // 9: fundraising.fundraising.v1.QueryGetAllowedBidderResponse
-		(*QueryGetBidRequest)(nil),            // 10: fundraising.fundraising.v1.QueryGetBidRequest
-		(*QueryGetBidResponse)(nil),           // 11: fundraising.fundraising.v1.QueryGetBidResponse
-		(*QueryAllBidRequest)(nil),            // 12: fundraising.fundraising.v1.QueryAllBidRequest
-		(*QueryAllBidResponse)(nil),           // 13: fundraising.fundraising.v1.QueryAllBidResponse
-		(*QueryAllVestingQueueRequest)(nil),   // 14: fundraising.fundraising.v1.QueryAllVestingQueueRequest
-		(*QueryAllVestingQueueResponse)(nil),  // 15: fundraising.fundraising.v1.QueryAllVestingQueueResponse
-		(*Params)(nil),                        // 16: fundraising.fundraising.v1.Params
-		(*v1beta1.PageRequest)(nil),           // 17: cosmos.base.query.v1beta1.PageRequest
-		(*anypb.Any)(nil),                     // 18: google.protobuf.Any
-		(*v1beta1.PageResponse)(nil),          // 19: cosmos.base.query.v1beta1.PageResponse
-		(*AllowedBidder)(nil),                 // 20: fundraising.fundraising.v1.AllowedBidder
-		(*Bid)(nil),                           // 21: fundraising.fundraising.v1.Bid
-		(*VestingQueue)(nil),                  // 22: fundraising.fundraising.v1.VestingQueue
-	}
-)
-
+var file_fundraising_fundraising_v1_query_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_fundraising_fundraising_v1_query_proto_goTypes = []interface{}{
+	(*QueryParamsRequest)(nil),            // 0: fundraising.fundraising.v1.QueryParamsRequest
+	(*QueryParamsResponse)(nil),           // 1: fundraising.fundraising.v1.QueryParamsResponse
+	(*QueryAllAuctionRequest)(nil),        // 2: fundraising.fundraising.v1.QueryAllAuctionRequest
+	(*QueryAllAuctionResponse)(nil),       // 3: fundraising.fundraising.v1.QueryAllAuctionResponse
+	(*QueryGetAuctionRequest)(nil),        // 4: fundraising.fundraising.v1.QueryGetAuctionRequest
+	(*QueryGetAuctionResponse)(nil),       // 5: fundraising.fundraising.v1.QueryGetAuctionResponse
+	(*QueryAllAllowedBidderRequest)(nil),  // 6: fundraising.fundraising.v1.QueryAllAllowedBidderRequest
+	(*QueryAllAllowedBidderResponse)(nil), // 7: fundraising.fundraising.v1.QueryAllAllowedBidderResponse
+	(*QueryGetAllowedBidderRequest)(nil),  // 8: fundraising.fundraising.v1.QueryGetAllowedBidderRequest
+	(*QueryGetAllowedBidderResponse)(nil), // 9: fundraising.fundraising.v1.QueryGetAllowedBidderResponse
+	(*QueryGetBidRequest)(nil),            // 10: fundraising.fundraising.v1.QueryGetBidRequest
+	(*QueryGetBidResponse)(nil),           // 11: fundraising.fundraising.v1.QueryGetBidResponse
+	(*QueryAllBidRequest)(nil),            // 12: fundraising.fundraising.v1.QueryAllBidRequest
+	(*QueryAllBidResponse)(nil),           // 13: fundraising.fundraising.v1.QueryAllBidResponse
+	(*QueryAllVestingQueueRequest)(nil),   // 14: fundraising.fundraising.v1.QueryAllVestingQueueRequest
+	(*QueryAllVestingQueueResponse)(nil),  // 15: fundraising.fundraising.v1.QueryAllVestingQueueResponse
+	(*Params)(nil),                        // 16: fundraising.fundraising.v1.Params
+	(*v1beta1.PageRequest)(nil),           // 17: cosmos.base.query.v1beta1.PageRequest
+	(*anypb.Any)(nil),                     // 18: google.protobuf.Any
+	(*v1beta1.PageResponse)(nil),          // 19: cosmos.base.query.v1beta1.PageResponse
+	(*AllowedBidder)(nil),                 // 20: fundraising.fundraising.v1.AllowedBidder
+	(*Bid)(nil),                           // 21: fundraising.fundraising.v1.Bid
+	(*VestingQueue)(nil),                  // 22: fundraising.fundraising.v1.VestingQueue
+}
 var file_fundraising_fundraising_v1_query_proto_depIdxs = []int32{
 	16, // 0: fundraising.fundraising.v1.QueryParamsResponse.params:type_name -> fundraising.fundraising.v1.Params
 	17, // 1: fundraising.fundraising.v1.QueryAllAuctionRequest.pagination:type_name -> cosmos.base.query.v1beta1.PageRequest

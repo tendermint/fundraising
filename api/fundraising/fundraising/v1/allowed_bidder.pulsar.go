@@ -3,16 +3,15 @@ package fundraisingv1
 
 import (
 	fmt "fmt"
-	io "io"
-	reflect "reflect"
-	sync "sync"
-
 	_ "github.com/cosmos/cosmos-proto"
 	runtime "github.com/cosmos/cosmos-proto/runtime"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoiface "google.golang.org/protobuf/runtime/protoiface"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	io "io"
+	reflect "reflect"
+	sync "sync"
 )
 
 var (
@@ -50,21 +49,17 @@ func (x *AllowedBidder) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var (
-	_fastReflection_AllowedBidder_messageType fastReflection_AllowedBidder_messageType
-	_                                         protoreflect.MessageType = fastReflection_AllowedBidder_messageType{}
-)
+var _fastReflection_AllowedBidder_messageType fastReflection_AllowedBidder_messageType
+var _ protoreflect.MessageType = fastReflection_AllowedBidder_messageType{}
 
 type fastReflection_AllowedBidder_messageType struct{}
 
 func (x fastReflection_AllowedBidder_messageType) Zero() protoreflect.Message {
 	return (*fastReflection_AllowedBidder)(nil)
 }
-
 func (x fastReflection_AllowedBidder_messageType) New() protoreflect.Message {
 	return new(fastReflection_AllowedBidder)
 }
-
 func (x fastReflection_AllowedBidder_messageType) Descriptor() protoreflect.MessageDescriptor {
 	return md_AllowedBidder
 }
@@ -672,13 +667,10 @@ func file_fundraising_fundraising_v1_allowed_bidder_proto_rawDescGZIP() []byte {
 	return file_fundraising_fundraising_v1_allowed_bidder_proto_rawDescData
 }
 
-var (
-	file_fundraising_fundraising_v1_allowed_bidder_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
-	file_fundraising_fundraising_v1_allowed_bidder_proto_goTypes  = []interface{}{
-		(*AllowedBidder)(nil), // 0: fundraising.fundraising.v1.AllowedBidder
-	}
-)
-
+var file_fundraising_fundraising_v1_allowed_bidder_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_fundraising_fundraising_v1_allowed_bidder_proto_goTypes = []interface{}{
+	(*AllowedBidder)(nil), // 0: fundraising.fundraising.v1.AllowedBidder
+}
 var file_fundraising_fundraising_v1_allowed_bidder_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
 	0, // [0:0] is the sub-list for method input_type

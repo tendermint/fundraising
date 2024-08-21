@@ -8,7 +8,6 @@ package fundraisingv1
 
 import (
 	context "context"
-
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -20,7 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Msg_UpdateParams_FullMethodName = "/fundraising.fundraising.v1.Msg/UpdateParams"
+	Msg_UpdateParams_FullMethodName            = "/fundraising.fundraising.v1.Msg/UpdateParams"
+	Msg_CreateFixedPriceAuction_FullMethodName = "/fundraising.fundraising.v1.Msg/CreateFixedPriceAuction"
+	Msg_CreateBatchAuction_FullMethodName      = "/fundraising.fundraising.v1.Msg/CreateBatchAuction"
+	Msg_CancelAuction_FullMethodName           = "/fundraising.fundraising.v1.Msg/CancelAuction"
+	Msg_PlaceBid_FullMethodName                = "/fundraising.fundraising.v1.Msg/PlaceBid"
+	Msg_ModifyBid_FullMethodName               = "/fundraising.fundraising.v1.Msg/ModifyBid"
+	Msg_AddAllowedBidder_FullMethodName        = "/fundraising.fundraising.v1.Msg/AddAllowedBidder"
 )
 
 // MsgClient is the client API for Msg service.
@@ -30,6 +35,19 @@ type MsgClient interface {
 	// UpdateParams defines a (governance) operation for updating the module
 	// parameters. The authority defaults to the x/gov module account.
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
+	// CreateFixedPriceAuction submits a create fixed price auction message.
+	CreateFixedPriceAuction(ctx context.Context, in *MsgCreateFixedPriceAuction, opts ...grpc.CallOption) (*MsgCreateFixedPriceAuctionResponse, error)
+	// CreateBatchAuction submits a create batch auction message.
+	CreateBatchAuction(ctx context.Context, in *MsgCreateBatchAuction, opts ...grpc.CallOption) (*MsgCreateBatchAuctionResponse, error)
+	// CancelAuction defines a method to cancel the auction message.
+	CancelAuction(ctx context.Context, in *MsgCancelAuction, opts ...grpc.CallOption) (*MsgCancelAuctionResponse, error)
+	// PlaceBid defines a method to place a bid message.
+	PlaceBid(ctx context.Context, in *MsgPlaceBid, opts ...grpc.CallOption) (*MsgPlaceBidResponse, error)
+	// ModifyBid defines a method to modify the bid message.
+	ModifyBid(ctx context.Context, in *MsgModifyBid, opts ...grpc.CallOption) (*MsgModifyBidResponse, error)
+	// AddAllowedBidder defines a method sto add a single allowed bidder message.
+	// This is for the testing purpose and it must not be used in mainnet.
+	AddAllowedBidder(ctx context.Context, in *MsgAddAllowedBidder, opts ...grpc.CallOption) (*MsgAddAllowedBidderResponse, error)
 }
 
 type msgClient struct {
@@ -49,6 +67,60 @@ func (c *msgClient) UpdateParams(ctx context.Context, in *MsgUpdateParams, opts 
 	return out, nil
 }
 
+func (c *msgClient) CreateFixedPriceAuction(ctx context.Context, in *MsgCreateFixedPriceAuction, opts ...grpc.CallOption) (*MsgCreateFixedPriceAuctionResponse, error) {
+	out := new(MsgCreateFixedPriceAuctionResponse)
+	err := c.cc.Invoke(ctx, Msg_CreateFixedPriceAuction_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) CreateBatchAuction(ctx context.Context, in *MsgCreateBatchAuction, opts ...grpc.CallOption) (*MsgCreateBatchAuctionResponse, error) {
+	out := new(MsgCreateBatchAuctionResponse)
+	err := c.cc.Invoke(ctx, Msg_CreateBatchAuction_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) CancelAuction(ctx context.Context, in *MsgCancelAuction, opts ...grpc.CallOption) (*MsgCancelAuctionResponse, error) {
+	out := new(MsgCancelAuctionResponse)
+	err := c.cc.Invoke(ctx, Msg_CancelAuction_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) PlaceBid(ctx context.Context, in *MsgPlaceBid, opts ...grpc.CallOption) (*MsgPlaceBidResponse, error) {
+	out := new(MsgPlaceBidResponse)
+	err := c.cc.Invoke(ctx, Msg_PlaceBid_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) ModifyBid(ctx context.Context, in *MsgModifyBid, opts ...grpc.CallOption) (*MsgModifyBidResponse, error) {
+	out := new(MsgModifyBidResponse)
+	err := c.cc.Invoke(ctx, Msg_ModifyBid_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) AddAllowedBidder(ctx context.Context, in *MsgAddAllowedBidder, opts ...grpc.CallOption) (*MsgAddAllowedBidderResponse, error) {
+	out := new(MsgAddAllowedBidderResponse)
+	err := c.cc.Invoke(ctx, Msg_AddAllowedBidder_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 // All implementations must embed UnimplementedMsgServer
 // for forward compatibility
@@ -56,6 +128,19 @@ type MsgServer interface {
 	// UpdateParams defines a (governance) operation for updating the module
 	// parameters. The authority defaults to the x/gov module account.
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
+	// CreateFixedPriceAuction submits a create fixed price auction message.
+	CreateFixedPriceAuction(context.Context, *MsgCreateFixedPriceAuction) (*MsgCreateFixedPriceAuctionResponse, error)
+	// CreateBatchAuction submits a create batch auction message.
+	CreateBatchAuction(context.Context, *MsgCreateBatchAuction) (*MsgCreateBatchAuctionResponse, error)
+	// CancelAuction defines a method to cancel the auction message.
+	CancelAuction(context.Context, *MsgCancelAuction) (*MsgCancelAuctionResponse, error)
+	// PlaceBid defines a method to place a bid message.
+	PlaceBid(context.Context, *MsgPlaceBid) (*MsgPlaceBidResponse, error)
+	// ModifyBid defines a method to modify the bid message.
+	ModifyBid(context.Context, *MsgModifyBid) (*MsgModifyBidResponse, error)
+	// AddAllowedBidder defines a method sto add a single allowed bidder message.
+	// This is for the testing purpose and it must not be used in mainnet.
+	AddAllowedBidder(context.Context, *MsgAddAllowedBidder) (*MsgAddAllowedBidderResponse, error)
 	mustEmbedUnimplementedMsgServer()
 }
 
@@ -65,6 +150,24 @@ type UnimplementedMsgServer struct {
 
 func (UnimplementedMsgServer) UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateParams not implemented")
+}
+func (UnimplementedMsgServer) CreateFixedPriceAuction(context.Context, *MsgCreateFixedPriceAuction) (*MsgCreateFixedPriceAuctionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateFixedPriceAuction not implemented")
+}
+func (UnimplementedMsgServer) CreateBatchAuction(context.Context, *MsgCreateBatchAuction) (*MsgCreateBatchAuctionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateBatchAuction not implemented")
+}
+func (UnimplementedMsgServer) CancelAuction(context.Context, *MsgCancelAuction) (*MsgCancelAuctionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CancelAuction not implemented")
+}
+func (UnimplementedMsgServer) PlaceBid(context.Context, *MsgPlaceBid) (*MsgPlaceBidResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PlaceBid not implemented")
+}
+func (UnimplementedMsgServer) ModifyBid(context.Context, *MsgModifyBid) (*MsgModifyBidResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ModifyBid not implemented")
+}
+func (UnimplementedMsgServer) AddAllowedBidder(context.Context, *MsgAddAllowedBidder) (*MsgAddAllowedBidderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddAllowedBidder not implemented")
 }
 func (UnimplementedMsgServer) mustEmbedUnimplementedMsgServer() {}
 
@@ -97,6 +200,114 @@ func _Msg_UpdateParams_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_CreateFixedPriceAuction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgCreateFixedPriceAuction)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).CreateFixedPriceAuction(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Msg_CreateFixedPriceAuction_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).CreateFixedPriceAuction(ctx, req.(*MsgCreateFixedPriceAuction))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_CreateBatchAuction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgCreateBatchAuction)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).CreateBatchAuction(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Msg_CreateBatchAuction_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).CreateBatchAuction(ctx, req.(*MsgCreateBatchAuction))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_CancelAuction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgCancelAuction)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).CancelAuction(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Msg_CancelAuction_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).CancelAuction(ctx, req.(*MsgCancelAuction))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_PlaceBid_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgPlaceBid)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).PlaceBid(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Msg_PlaceBid_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).PlaceBid(ctx, req.(*MsgPlaceBid))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_ModifyBid_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgModifyBid)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).ModifyBid(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Msg_ModifyBid_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).ModifyBid(ctx, req.(*MsgModifyBid))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_AddAllowedBidder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgAddAllowedBidder)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).AddAllowedBidder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Msg_AddAllowedBidder_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).AddAllowedBidder(ctx, req.(*MsgAddAllowedBidder))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Msg_ServiceDesc is the grpc.ServiceDesc for Msg service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -107,6 +318,30 @@ var Msg_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateParams",
 			Handler:    _Msg_UpdateParams_Handler,
+		},
+		{
+			MethodName: "CreateFixedPriceAuction",
+			Handler:    _Msg_CreateFixedPriceAuction_Handler,
+		},
+		{
+			MethodName: "CreateBatchAuction",
+			Handler:    _Msg_CreateBatchAuction_Handler,
+		},
+		{
+			MethodName: "CancelAuction",
+			Handler:    _Msg_CancelAuction_Handler,
+		},
+		{
+			MethodName: "PlaceBid",
+			Handler:    _Msg_PlaceBid_Handler,
+		},
+		{
+			MethodName: "ModifyBid",
+			Handler:    _Msg_ModifyBid_Handler,
+		},
+		{
+			MethodName: "AddAllowedBidder",
+			Handler:    _Msg_AddAllowedBidder_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
