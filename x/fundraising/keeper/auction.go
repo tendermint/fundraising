@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strconv"
 	"time"
 
 	"cosmossdk.io/collections"
@@ -393,7 +394,8 @@ func (k Keeper) CloseBatchAuction(ctx context.Context, auction types.AuctionI) e
 // CreateFixedPriceAuction handles types.MsgCreateFixedPriceAuction and create a fixed price auction.
 // Note that the module is designed to delegate authorization to an external module to add allowed bidders for the auction.
 func (k Keeper) CreateFixedPriceAuction(ctx context.Context, msg *types.MsgCreateFixedPriceAuction) (types.AuctionI, error) {
-	blockTime := sdk.UnwrapSDKContext(ctx).BlockTime()
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	blockTime := sdkCtx.BlockTime()
 	if blockTime.After(msg.EndTime) { // EndTime < CurrentTime
 		return nil, sdkerrors.Wrap(errors.ErrInvalidRequest, "end time must be set after the current time")
 	}
@@ -476,13 +478,32 @@ func (k Keeper) CreateFixedPriceAuction(ctx context.Context, msg *types.MsgCreat
 		return nil, err
 	}
 
+	sdkCtx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCreateFixedPriceAuction,
+			sdk.NewAttribute(types.AttributeKeyAuctionId, strconv.FormatUint(nextId, 10)),
+			sdk.NewAttribute(types.AttributeKeyAuctioneerAddress, auction.GetAuctioneer().String()),
+			sdk.NewAttribute(types.AttributeKeySellingReserveAddress, auction.GetSellingReserveAddress().String()),
+			sdk.NewAttribute(types.AttributeKeyPayingReserveAddress, auction.GetPayingReserveAddress().String()),
+			sdk.NewAttribute(types.AttributeKeyStartPrice, auction.GetStartPrice().String()),
+			sdk.NewAttribute(types.AttributeKeySellingCoin, auction.GetSellingCoin().String()),
+			sdk.NewAttribute(types.AttributeKeyPayingCoinDenom, auction.GetPayingCoinDenom()),
+			sdk.NewAttribute(types.AttributeKeyVestingReserveAddress, auction.GetVestingReserveAddress().String()),
+			sdk.NewAttribute(types.AttributeKeyRemainingSellingCoin, auction.RemainingSellingCoin.String()),
+			sdk.NewAttribute(types.AttributeKeyStartTime, auction.GetStartTime().String()),
+			sdk.NewAttribute(types.AttributeKeyEndTime, msg.EndTime.String()),
+			sdk.NewAttribute(types.AttributeKeyAuctionStatus, auction.GetStatus().String()),
+		),
+	})
+
 	return auction, nil
 }
 
 // CreateBatchAuction handles types.MsgCreateBatchAuction and create a batch auction.
 // Note that the module is designed to delegate authorization to an external module to add allowed bidders for the auction.
 func (k Keeper) CreateBatchAuction(ctx context.Context, msg *types.MsgCreateBatchAuction) (types.AuctionI, error) {
-	blockTime := sdk.UnwrapSDKContext(ctx).BlockTime()
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	blockTime := sdkCtx.BlockTime()
 	if blockTime.After(msg.EndTime) { // EndTime < CurrentTime
 		return nil, sdkerrors.Wrap(errors.ErrInvalidRequest, "end time must be set after the current time")
 	}
@@ -583,6 +604,26 @@ func (k Keeper) CreateBatchAuction(ctx context.Context, msg *types.MsgCreateBatc
 		return nil, err
 	}
 
+	sdkCtx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCreateBatchAuction,
+			sdk.NewAttribute(types.AttributeKeyAuctionId, strconv.FormatUint(nextId, 10)),
+			sdk.NewAttribute(types.AttributeKeyAuctioneerAddress, auction.GetAuctioneer().String()),
+			sdk.NewAttribute(types.AttributeKeySellingReserveAddress, auction.GetSellingReserveAddress().String()),
+			sdk.NewAttribute(types.AttributeKeyPayingReserveAddress, auction.GetPayingReserveAddress().String()),
+			sdk.NewAttribute(types.AttributeKeyStartPrice, auction.GetStartPrice().String()),
+			sdk.NewAttribute(types.AttributeKeySellingCoin, auction.GetSellingCoin().String()),
+			sdk.NewAttribute(types.AttributeKeyPayingCoinDenom, auction.GetPayingCoinDenom()),
+			sdk.NewAttribute(types.AttributeKeyVestingReserveAddress, auction.GetVestingReserveAddress().String()),
+			sdk.NewAttribute(types.AttributeKeyStartTime, auction.GetStartTime().String()),
+			sdk.NewAttribute(types.AttributeKeyEndTime, msg.EndTime.String()),
+			sdk.NewAttribute(types.AttributeKeyAuctionStatus, auction.GetStatus().String()),
+			sdk.NewAttribute(types.AttributeKeyMinBidPrice, auction.MinBidPrice.String()),
+			sdk.NewAttribute(types.AttributeKeyMaxExtendedRound, fmt.Sprint(auction.MaxExtendedRound)),
+			sdk.NewAttribute(types.AttributeKeyExtendedRoundRate, auction.ExtendedRoundRate.String()),
+		),
+	})
+
 	return auction, nil
 }
 
@@ -627,6 +668,14 @@ func (k Keeper) CancelAuction(ctx context.Context, msg *types.MsgCancelAuction) 
 	if err := k.Auction.Set(ctx, auction.GetId(), auction); err != nil {
 		return err
 	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	sdkCtx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCancelAuction,
+			sdk.NewAttribute(types.AttributeKeyAuctionId, strconv.FormatUint(auction.GetId(), 10)),
+		),
+	})
 
 	return nil
 }

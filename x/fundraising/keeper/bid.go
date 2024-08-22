@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"errors"
+	"strconv"
 
 	"cosmossdk.io/collections"
 	sdkerrors "cosmossdk.io/errors"
@@ -173,6 +174,17 @@ func (k Keeper) PlaceBid(ctx context.Context, msg *types.MsgPlaceBid) (types.Bid
 	if err := k.Bid.Set(ctx, collections.Join(bid.AuctionId, bid.Id), bid); err != nil {
 		return types.Bid{}, err
 	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	sdkCtx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypePlaceBid,
+			sdk.NewAttribute(types.AttributeKeyAuctionId, strconv.FormatUint(auction.GetId(), 10)),
+			sdk.NewAttribute(types.AttributeKeyBidderAddress, msg.GetBidder()),
+			sdk.NewAttribute(types.AttributeKeyBidPrice, msg.Price.String()),
+			sdk.NewAttribute(types.AttributeKeyBidCoin, msg.Coin.String()),
+		),
+	})
 
 	return bid, nil
 }
