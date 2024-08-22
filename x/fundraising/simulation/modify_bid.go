@@ -1,6 +1,7 @@
 package simulation
 
 import (
+	"fmt"
 	"math/rand"
 
 	"cosmossdk.io/math"
@@ -33,14 +34,11 @@ func SimulateMsgModifyBid(
 
 		// Select a random auction
 		auction := auctions[r.Intn(len(auctions))]
-		if auction.GetStatus() != types.AuctionStatusStarted {
-			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "auction must be started status"), nil, nil
-		}
 		if auction.GetType() != types.AuctionTypeBatch || auction.GetStatus() != types.AuctionStatusStarted {
-			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "incorrect auction type or status"), nil, nil
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), fmt.Sprintf("incorrect auction type or status %v", auction)), nil, nil
 		}
 
-		bids, err := k.Bids(ctx)
+		bids, err := k.GetBidsByAuctionId(ctx, auction.GetId())
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "failed to get bids"), nil, nil
 		}
@@ -56,7 +54,7 @@ func SimulateMsgModifyBid(
 		spendable := bk.SpendableCoins(ctx, account.GetAddress())
 
 		msg = types.NewMsgModifyBid(
-			auction.GetId(),
+			bid.AuctionId,
 			account.GetAddress().String(),
 			bid.Id,
 			bid.Price,

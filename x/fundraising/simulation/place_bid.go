@@ -89,7 +89,7 @@ func SimulateMsgPlaceBid(
 
 		newAllowedBidder := types.NewAllowedBidder(auction.GetId(), bidder, maxBidAmt)
 		if err := k.AddAllowedBidders(ctx, auction.GetId(), []types.AllowedBidder{newAllowedBidder}); err != nil {
-			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "failed to add allowed bidders"), nil, nil
+			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "failed to add allowed bidders"), nil, err
 		}
 
 		msg = types.NewMsgPlaceBid(
