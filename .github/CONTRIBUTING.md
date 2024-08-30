@@ -1,6 +1,6 @@
 # Contributing guidelines
 
-If you're willing to create a new PR on Ignite Modules, make sure that you read and comply with this document.
+If you're willing to create a new PR on this repository, make sure that you read and comply with this document.
 
 Start a new [Discussion](https://github.com/tendermint/fundraising/discussions/new) if you want to propose changes to this document.
 
