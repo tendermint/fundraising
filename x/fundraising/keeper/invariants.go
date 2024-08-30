@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/tendermint/fundraising/x/fundraising/types"
@@ -42,7 +43,11 @@ func SellingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 		msg := ""
 		count := 0
 
-		for _, auction := range k.GetAuctions(ctx) {
+		auctions, err := k.Auctions(ctx)
+		if err != nil {
+			return "", false
+		}
+		for _, auction := range auctions {
 			if auction.GetStatus() == types.AuctionStatusStarted {
 				sellingReserveAddr := auction.GetSellingReserveAddress()
 				sellingCoinDenom := auction.GetSellingCoin().Denom
@@ -72,11 +77,19 @@ func PayingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 		msg := ""
 		count := 0
 
-		for _, auction := range k.GetAuctions(ctx) {
-			totalBidCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), sdk.ZeroInt())
+		auctions, err := k.Auctions(ctx)
+		if err != nil {
+			return "", false
+		}
+		for _, auction := range auctions {
+			totalBidCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), math.ZeroInt())
 
+			bids, err := k.GetBidsByAuctionId(ctx, auction.GetId())
+			if err != nil {
+				return "", false
+			}
 			if auction.GetStatus() == types.AuctionStatusStarted {
-				for _, bid := range k.GetBidsByAuctionId(ctx, auction.GetId()) {
+				for _, bid := range bids {
 					bidAmt := bid.ConvertToPayingAmount(auction.GetPayingCoinDenom())
 					totalBidCoin = totalBidCoin.Add(sdk.NewCoin(auction.GetPayingCoinDenom(), bidAmt))
 				}
@@ -107,11 +120,19 @@ func VestingPoolReserveAmountInvariant(k Keeper) sdk.Invariant {
 		msg := ""
 		count := 0
 
-		for _, auction := range k.GetAuctions(ctx) {
-			totalPayingCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), sdk.ZeroInt())
+		auctions, err := k.Auctions(ctx)
+		if err != nil {
+			return "", false
+		}
+		for _, auction := range auctions {
+			totalPayingCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), math.ZeroInt())
 
+			vestingQueues, err := k.GetVestingQueuesByAuctionId(ctx, auction.GetId())
+			if err != nil {
+				return "", false
+			}
 			if auction.GetStatus() == types.AuctionStatusVesting {
-				for _, queue := range k.GetVestingQueuesByAuctionId(ctx, auction.GetId()) {
+				for _, queue := range vestingQueues {
 					if !queue.Released {
 						totalPayingCoin = totalPayingCoin.Add(queue.PayingCoin)
 					}

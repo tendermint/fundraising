@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gogo/protobuf/proto"
-
+	sdkerrors "cosmossdk.io/errors"
+	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/gogo/protobuf/proto"
 )
 
 const (
@@ -34,7 +35,7 @@ var (
 func NewBaseAuction(
 	id uint64, typ AuctionType, auctioneerAddr string,
 	sellingPoolAddr string, payingPoolAddr string,
-	startPrice sdk.Dec, sellingCoin sdk.Coin, payingCoinDenom string,
+	startPrice math.LegacyDec, sellingCoin sdk.Coin, payingCoinDenom string,
 	vestingPoolAddr string, vestingSchedules []VestingSchedule,
 	startTime time.Time, endTimes []time.Time, status AuctionStatus,
 ) *BaseAuction {
@@ -112,11 +113,11 @@ func (ba *BaseAuction) SetPayingReserveAddress(addr sdk.AccAddress) error {
 	return nil
 }
 
-func (ba BaseAuction) GetStartPrice() sdk.Dec {
+func (ba BaseAuction) GetStartPrice() math.LegacyDec {
 	return ba.StartPrice
 }
 
-func (ba *BaseAuction) SetStartPrice(price sdk.Dec) error {
+func (ba *BaseAuction) SetStartPrice(price math.LegacyDec) error {
 	ba.StartPrice = price
 	return nil
 }
@@ -194,28 +195,28 @@ func (ba BaseAuction) Validate() error {
 		return sdkerrors.Wrapf(ErrInvalidAuctionType, "unknown plan type: %s", ba.Type)
 	}
 	if _, err := sdk.AccAddressFromBech32(ba.Auctioneer); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid auctioneer address %q: %v", ba.Auctioneer, err)
+		return sdkerrors.Wrapf(errors.ErrInvalidAddress, "invalid auctioneer address %q: %v", ba.Auctioneer, err)
 	}
 	if _, err := sdk.AccAddressFromBech32(ba.SellingReserveAddress); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid selling pool address %q: %v", ba.SellingReserveAddress, err)
+		return sdkerrors.Wrapf(errors.ErrInvalidAddress, "invalid selling pool address %q: %v", ba.SellingReserveAddress, err)
 	}
 	if _, err := sdk.AccAddressFromBech32(ba.PayingReserveAddress); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid paying pool address %q: %v", ba.PayingReserveAddress, err)
+		return sdkerrors.Wrapf(errors.ErrInvalidAddress, "invalid paying pool address %q: %v", ba.PayingReserveAddress, err)
 	}
 	if _, err := sdk.AccAddressFromBech32(ba.VestingReserveAddress); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid vesting pool address %q: %v", ba.VestingReserveAddress, err)
+		return sdkerrors.Wrapf(errors.ErrInvalidAddress, "invalid vesting pool address %q: %v", ba.VestingReserveAddress, err)
 	}
 	if !ba.StartPrice.IsPositive() {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid start price: %f", ba.StartPrice)
+		return sdkerrors.Wrapf(errors.ErrInvalidRequest, "invalid start price: %f", ba.StartPrice)
 	}
 	if err := ba.SellingCoin.Validate(); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "invalid selling coin: %v", ba.SellingCoin)
+		return sdkerrors.Wrapf(errors.ErrInvalidCoins, "invalid selling coin: %v", ba.SellingCoin)
 	}
 	if ba.SellingCoin.Denom == ba.PayingCoinDenom {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "selling coin denom must not be the same as paying coin denom")
+		return sdkerrors.Wrapf(errors.ErrInvalidRequest, "selling coin denom must not be the same as paying coin denom")
 	}
 	if err := sdk.ValidateDenom(ba.PayingCoinDenom); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid paying coin denom: %v", err)
+		return sdkerrors.Wrapf(errors.ErrInvalidRequest, "invalid paying coin denom: %v", err)
 	}
 	if err := ValidateVestingSchedules(ba.VestingSchedules, ba.EndTimes[len(ba.EndTimes)-1]); err != nil {
 		return err
@@ -243,7 +244,7 @@ func NewFixedPriceAuction(baseAuction *BaseAuction, remainingSellingCoin sdk.Coi
 }
 
 // NewBatchAuction returns a new batch auction.
-func NewBatchAuction(baseAuction *BaseAuction, minBidPrice sdk.Dec, matchedPrice sdk.Dec, maxExtendedRound uint32, extendedRoundRate sdk.Dec) *BatchAuction {
+func NewBatchAuction(baseAuction *BaseAuction, minBidPrice math.LegacyDec, matchedPrice math.LegacyDec, maxExtendedRound uint32, extendedRoundRate math.LegacyDec) *BatchAuction {
 	return &BatchAuction{
 		BaseAuction:       baseAuction,
 		MinBidPrice:       minBidPrice,
@@ -273,8 +274,8 @@ type AuctionI interface {
 	GetPayingReserveAddress() sdk.AccAddress
 	SetPayingReserveAddress(sdk.AccAddress) error
 
-	GetStartPrice() sdk.Dec
-	SetStartPrice(sdk.Dec) error
+	GetStartPrice() math.LegacyDec
+	SetStartPrice(math.LegacyDec) error
 
 	GetSellingCoin() sdk.Coin
 	SetSellingCoin(sdk.Coin) error
@@ -315,11 +316,11 @@ func PackAuction(auction AuctionI) (*codectypes.Any, error) {
 // UnpackAuction converts Any to AuctionI.
 func UnpackAuction(any *codectypes.Any) (AuctionI, error) {
 	if any == nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "cannot unpack nil")
+		return nil, sdkerrors.Wrapf(errors.ErrInvalidType, "cannot unpack nil")
 	}
 
 	if any.TypeUrl == "" {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidType, "empty type url")
+		return nil, sdkerrors.Wrap(errors.ErrInvalidType, "empty type url")
 	}
 
 	var auction AuctionI
@@ -335,7 +336,7 @@ func UnpackAuction(any *codectypes.Any) (AuctionI, error) {
 
 	auction, ok := v.(AuctionI)
 	if !ok {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "cannot unpack auction from %T", v)
+		return nil, sdkerrors.Wrapf(errors.ErrInvalidType, "cannot unpack auction from %T", v)
 	}
 
 	return auction, nil

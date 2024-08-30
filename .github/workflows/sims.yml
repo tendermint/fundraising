@@ -6,16 +6,24 @@ on:
   push:
     branches:
       - main
+      - release/*
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, 'skip-sims')"
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        if: env.GIT_DIFF
         with:
-          go-version: 1.19
+          go-version: "stable"
+          cache: true
+          cache-dependency-path: go.sum
       - name: Display go version
         run: go version
       - run: make build
@@ -24,26 +32,32 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
+        if: env.GIT_DIFF
         with:
-          go-version: 1.19
+          go-version: "stable"
+          cache: true
+          cache-dependency-path: go.sum
       - name: Display go version
         run: go version
       - name: Install runsim
         run: export GO111MODULE="on" && go install github.com/cosmos/tools/cmd/runsim@v1.0.0
-      - uses: actions/cache@v3
+      - uses: actions/cache@v2
         with:
           path: ~/go/bin
           key: ${{ runner.os }}-go-runsim-binary
 
   test-sim-nondeterminism:
     runs-on: ubuntu-latest
-    needs: [build, install-runsim]
+    needs: [ build, install-runsim ]
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        if: env.GIT_DIFF
         with:
-          go-version: 1.19
+          go-version: "stable"
+          cache: true
+          cache-dependency-path: go.sum
       - name: Display go version
         run: go version
       - uses: technote-space/get-diff-action@v6
@@ -52,11 +66,6 @@ jobs:
             **/**.go
             go.mod
             go.sum
-      - uses: actions/cache@v3
-        with:
-          path: ~/go/bin
-          key: ${{ runner.os }}-go-runsim-binary
-        if: env.GIT_DIFF
       - name: test-sim-nondeterminism
         run: |
           make test-sim-nondeterminism
@@ -64,12 +73,15 @@ jobs:
 
   test-sim-import-export:
     runs-on: ubuntu-latest
-    needs: [build, install-runsim]
+    needs: [ build, install-runsim ]
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        if: env.GIT_DIFF
         with:
-          go-version: 1.19
+          go-version: "stable"
+          cache: true
+          cache-dependency-path: go.sum
       - name: Display go version
         run: go version
       - uses: technote-space/get-diff-action@v6
@@ -80,11 +92,6 @@ jobs:
             go.sum
           SET_ENV_NAME_INSERTIONS: 1
           SET_ENV_NAME_LINES: 1
-      - uses: actions/cache@v3
-        with:
-          path: ~/go/bin
-          key: ${{ runner.os }}-go-runsim-binary
-        if: env.GIT_DIFF
       - name: test-sim-import-export
         run: |
           make test-sim-import-export
@@ -92,12 +99,15 @@ jobs:
 
   test-sim-after-import:
     runs-on: ubuntu-latest
-    needs: [build, install-runsim]
+    needs: [ build, install-runsim ]
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        if: env.GIT_DIFF
         with:
-          go-version: 1.19
+          go-version: "stable"
+          cache: true
+          cache-dependency-path: go.sum
       - name: Display go version
         run: go version
       - uses: technote-space/get-diff-action@v6
@@ -108,11 +118,6 @@ jobs:
             go.sum
           SET_ENV_NAME_INSERTIONS: 1
           SET_ENV_NAME_LINES: 1
-      - uses: actions/cache@v3
-        with:
-          path: ~/go/bin
-          key: ${{ runner.os }}-go-runsim-binary
-        if: env.GIT_DIFF
       - name: test-sim-after-import
         run: |
           make test-sim-after-import

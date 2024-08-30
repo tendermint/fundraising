@@ -19,39 +19,39 @@ func TestConvertToSellingAmount(t *testing.T) {
 		expectedAmt math.Int
 	}{
 		{
-			types.Bid{
-				Price: sdk.MustNewDecFromStr("0.5"),
-				Coin:  sdk.NewCoin("denom1", sdk.NewInt(100_000)),
+			bid: types.Bid{
+				Price: math.LegacyMustNewDecFromStr("0.5"),
+				Coin:  sdk.NewCoin("denom1", math.NewInt(100_000)),
 			},
-			sdk.NewInt(100_000),
+			expectedAmt: math.NewInt(100_000),
 		},
 		{
-			types.Bid{
-				Price: sdk.MustNewDecFromStr("0.5"),
-				Coin:  sdk.NewCoin("denom2", sdk.NewInt(100_000)),
+			bid: types.Bid{
+				Price: math.LegacyMustNewDecFromStr("0.5"),
+				Coin:  sdk.NewCoin("denom2", math.NewInt(100_000)),
 			},
-			sdk.NewInt(200_000),
+			expectedAmt: math.NewInt(200_000),
 		},
 		{
-			types.Bid{
-				Price: sdk.MustNewDecFromStr("0.1"),
-				Coin:  sdk.NewCoin("denom1", sdk.NewInt(100_000)),
+			bid: types.Bid{
+				Price: math.LegacyMustNewDecFromStr("0.1"),
+				Coin:  sdk.NewCoin("denom1", math.NewInt(100_000)),
 			},
-			sdk.NewInt(100_000),
+			expectedAmt: math.NewInt(100_000),
 		},
 		{
-			types.Bid{
-				Price: sdk.MustNewDecFromStr("0.1"),
-				Coin:  sdk.NewCoin("denom2", sdk.NewInt(100_000)),
+			bid: types.Bid{
+				Price: math.LegacyMustNewDecFromStr("0.1"),
+				Coin:  sdk.NewCoin("denom2", math.NewInt(100_000)),
 			},
-			sdk.NewInt(1_000_000),
+			expectedAmt: math.NewInt(1_000_000),
 		},
 		{
-			types.Bid{
-				Price: sdk.MustNewDecFromStr("3"),
-				Coin:  sdk.NewCoin("denom2", sdk.NewInt(4)),
+			bid: types.Bid{
+				Price: math.LegacyMustNewDecFromStr("3"),
+				Coin:  sdk.NewCoin("denom2", math.NewInt(4)),
 			},
-			sdk.NewInt(1),
+			expectedAmt: math.NewInt(1),
 		},
 	}
 
@@ -69,39 +69,39 @@ func TestConvertToPayingAmount(t *testing.T) {
 		expectedAmt math.Int
 	}{
 		{
-			types.Bid{
-				Price: sdk.MustNewDecFromStr("0.5"),
-				Coin:  sdk.NewCoin("denom1", sdk.NewInt(100_000)),
+			bid: types.Bid{
+				Price: math.LegacyMustNewDecFromStr("0.5"),
+				Coin:  sdk.NewCoin("denom1", math.NewInt(100_000)),
 			},
-			sdk.NewInt(50_000),
+			expectedAmt: math.NewInt(50_000),
 		},
 		{
-			types.Bid{
-				Price: sdk.MustNewDecFromStr("0.5"),
-				Coin:  sdk.NewCoin("denom2", sdk.NewInt(100_000)),
+			bid: types.Bid{
+				Price: math.LegacyMustNewDecFromStr("0.5"),
+				Coin:  sdk.NewCoin("denom2", math.NewInt(100_000)),
 			},
-			sdk.NewInt(100_000),
+			expectedAmt: math.NewInt(100_000),
 		},
 		{
-			types.Bid{
-				Price: sdk.MustNewDecFromStr("0.1"),
-				Coin:  sdk.NewCoin("denom1", sdk.NewInt(100_000)),
+			bid: types.Bid{
+				Price: math.LegacyMustNewDecFromStr("0.1"),
+				Coin:  sdk.NewCoin("denom1", math.NewInt(100_000)),
 			},
-			sdk.NewInt(10_000),
+			expectedAmt: math.NewInt(10_000),
 		},
 		{
-			types.Bid{
-				Price: sdk.MustNewDecFromStr("0.1"),
-				Coin:  sdk.NewCoin("denom2", sdk.NewInt(100_000)),
+			bid: types.Bid{
+				Price: math.LegacyMustNewDecFromStr("0.1"),
+				Coin:  sdk.NewCoin("denom2", math.NewInt(100_000)),
 			},
-			sdk.NewInt(100_000),
+			expectedAmt: math.NewInt(100_000),
 		},
 		{
-			types.Bid{
-				Price: sdk.MustNewDecFromStr("0.33"),
-				Coin:  sdk.NewCoin("denom1", sdk.NewInt(100_000)),
+			bid: types.Bid{
+				Price: math.LegacyMustNewDecFromStr("0.33"),
+				Coin:  sdk.NewCoin("denom1", math.NewInt(100_000)),
 			},
-			sdk.NewInt(33000),
+			expectedAmt: math.NewInt(33000),
 		},
 	}
 
@@ -119,8 +119,8 @@ func TestSetMatched(t *testing.T) {
 		bidder,
 		1,
 		types.BidTypeFixedPrice,
-		sdk.MustNewDecFromStr("0.5"),
-		sdk.NewCoin("denom1", sdk.NewInt(100_000)),
+		math.LegacyMustNewDecFromStr("0.5"),
+		sdk.NewCoin("denom1", math.NewInt(100_000)),
 		false,
 	)
 	require.False(t, bid.IsMatched)

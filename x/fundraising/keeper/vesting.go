@@ -1,14 +1,49 @@
 package keeper
 
 import (
+	"context"
+	"time"
+
+	"cosmossdk.io/collections"
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
 
+// VestingQueues returns all VestingQueue.
+func (k Keeper) VestingQueues(ctx context.Context) ([]types.VestingQueue, error) {
+	vestingQueues := make([]types.VestingQueue, 0)
+	err := k.IterateVestingQueues(ctx, func(_ collections.Pair[uint64, time.Time], bid types.VestingQueue) (bool, error) {
+		vestingQueues = append(vestingQueues, bid)
+		return false, nil
+	})
+	return vestingQueues, err
+}
+
+// IterateVestingQueues iterates over all the VestingQueues and performs a callback function.
+func (k Keeper) IterateVestingQueues(ctx context.Context, cb func(collections.Pair[uint64, time.Time], types.VestingQueue) (bool, error)) error {
+	err := k.VestingQueue.Walk(ctx, nil, cb)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetVestingQueuesByAuctionId returns all vesting queues associated with the auction id that are registered in the store.
+func (k Keeper) GetVestingQueuesByAuctionId(ctx context.Context, auctionId uint64) ([]types.VestingQueue, error) {
+	vestingQueues := make([]types.VestingQueue, 0)
+	rng := collections.NewPrefixedPairRange[uint64, time.Time](auctionId)
+	err := k.VestingQueue.Walk(ctx, rng, func(key collections.Pair[uint64, time.Time], vestingQueue types.VestingQueue) (bool, error) {
+		vestingQueues = append(vestingQueues, vestingQueue)
+		return false, nil
+	})
+	return vestingQueues, err
+}
+
 // ApplyVestingSchedules stores vesting queues based on the vesting schedules of the auction and
 // sets status to vesting.
-func (k Keeper) ApplyVestingSchedules(ctx sdk.Context, auction types.AuctionI) error {
+func (k Keeper) ApplyVestingSchedules(ctx context.Context, auction types.AuctionI) error {
 	payingReserveAddr := auction.GetPayingReserveAddress()
 	vestingReserveAddr := auction.GetVestingReserveAddress()
 	payingCoinDenom := auction.GetPayingCoinDenom()
@@ -22,9 +57,12 @@ func (k Keeper) ApplyVestingSchedules(ctx sdk.Context, auction types.AuctionI) e
 			return err
 		}
 
-		_ = auction.SetStatus(types.AuctionStatusFinished)
-		k.SetAuction(ctx, auction)
-
+		if err := auction.SetStatus(types.AuctionStatusFinished); err != nil {
+			return err
+		}
+		if err := k.Auction.Set(ctx, auction.GetId(), auction); err != nil {
+			return err
+		}
 	} else {
 		// Move reserve coins from the paying reserve to the vesting reserve account
 		if err := k.bankKeeper.SendCoins(ctx, payingReserveAddr, vestingReserveAddr, sdk.NewCoins(reserveCoin)); err != nil {
@@ -33,26 +71,39 @@ func (k Keeper) ApplyVestingSchedules(ctx sdk.Context, auction types.AuctionI) e
 
 		remaining := reserveCoin
 		for i, schedule := range auction.GetVestingSchedules() {
-			payingAmt := sdk.NewDecFromInt(reserveCoin.Amount).MulTruncate(schedule.Weight).TruncateInt()
+			payingAmt := math.LegacyNewDecFromInt(reserveCoin.Amount).MulTruncate(schedule.Weight).TruncateInt()
 
 			// All the remaining paying coin goes to the last vesting queue
 			if i == vsLen-1 {
 				payingAmt = remaining.Amount
 			}
 
-			k.SetVestingQueue(ctx, types.VestingQueue{
-				AuctionId:   auction.GetId(),
-				Auctioneer:  auction.GetAuctioneer().String(),
-				PayingCoin:  sdk.NewCoin(payingCoinDenom, payingAmt),
-				ReleaseTime: schedule.ReleaseTime,
-				Released:    false,
-			})
+			if err := k.VestingQueue.Set(
+				ctx,
+				collections.Join(
+					auction.GetId(),
+					schedule.ReleaseTime,
+				),
+				types.VestingQueue{
+					AuctionId:   auction.GetId(),
+					Auctioneer:  auction.GetAuctioneer().String(),
+					PayingCoin:  sdk.NewCoin(payingCoinDenom, payingAmt),
+					ReleaseTime: schedule.ReleaseTime,
+					Released:    false,
+				},
+			); err != nil {
+				return err
+			}
 
 			remaining = remaining.SubAmount(payingAmt)
 		}
 
-		_ = auction.SetStatus(types.AuctionStatusVesting)
-		k.SetAuction(ctx, auction)
+		if err := auction.SetStatus(types.AuctionStatusVesting); err != nil {
+			return err
+		}
+		if err := k.Auction.Set(ctx, auction.GetId(), auction); err != nil {
+			return err
+		}
 	}
 
 	return nil

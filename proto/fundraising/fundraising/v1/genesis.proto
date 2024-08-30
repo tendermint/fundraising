@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package fundraising.fundraising.v1;
+
+import "amino/amino.proto";
+import "cosmos_proto/cosmos.proto";
+import "fundraising/fundraising/v1/allowed_bidder.proto";
+import "fundraising/fundraising/v1/auction.proto";
+import "fundraising/fundraising/v1/bid.proto";
+import "fundraising/fundraising/v1/params.proto";
+import "fundraising/fundraising/v1/vesting_queue.proto";
+import "gogoproto/gogo.proto";
+import "google/protobuf/any.proto";
+
+option go_package = "github.com/tendermint/fundraising/x/fundraising/types";
+
+// GenesisState defines the fundraising module's genesis state.
+message GenesisState {
+  // params defines all the parameters of the module.
+  Params params = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+
+  // auctionList define the auction interface for genesis state; the module
+  // supports FixedPriceAuction or BatchAuction
+  repeated google.protobuf.Any auctionList = 2 [(cosmos_proto.accepts_interface) = "AuctionI"];
+
+  // allowedBidderList define the allowed bidder records for the auction
+  repeated AllowedBidder allowedBidderList = 3 [(gogoproto.nullable) = false];
+
+  // bidList define the bid records used for genesis state
+  repeated Bid bidList = 4 [(gogoproto.nullable) = false];
+
+  // vestingQueueList define the vesting queue records used for genesis state
+  repeated VestingQueue vestingQueueList = 5 [(gogoproto.nullable) = false];
+}

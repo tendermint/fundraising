@@ -4,6 +4,7 @@ import (
 	"sort"
 	"time"
 
+	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/crypto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
@@ -43,7 +44,7 @@ func SortBids(bids []Bid) []Bid {
 	return bids
 }
 
-func BidsByPrice(bids []Bid) (prices []sdk.Dec, bidsByPrice map[string][]Bid) {
+func BidsByPrice(bids []Bid) (prices []math.LegacyDec, bidsByPrice map[string][]Bid) {
 	bids = SortBids(bids)
 
 	bidsByPrice = map[string][]Bid{} // price => []Bid
@@ -54,10 +55,10 @@ func BidsByPrice(bids []Bid) (prices []sdk.Dec, bidsByPrice map[string][]Bid) {
 	}
 
 	// Sort prices in descending order.
-	prices = make([]sdk.Dec, len(bidsByPrice))
+	prices = make([]math.LegacyDec, len(bidsByPrice))
 	i := 0
 	for priceStr := range bidsByPrice {
-		prices[i] = sdk.MustNewDecFromStr(priceStr)
+		prices[i] = math.LegacyMustNewDecFromStr(priceStr)
 		i++
 	}
 	sort.Slice(prices, func(i, j int) bool {

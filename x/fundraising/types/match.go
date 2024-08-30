@@ -2,11 +2,10 @@ package types
 
 import (
 	"cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type MatchResult struct {
-	MatchPrice          sdk.Dec
+	MatchPrice          math.LegacyDec
 	MatchedAmount       math.Int
 	MatchedBids         []Bid
 	MatchResultByBidder map[string]*BidderMatchResult
@@ -18,10 +17,10 @@ type BidderMatchResult struct {
 }
 
 // Match returns the match result for all bids that correspond with the auction.
-func Match(matchPrice sdk.Dec, prices []sdk.Dec, bidsByPrice map[string][]Bid, sellingAmt math.Int, allowedBidders []AllowedBidder) (res *MatchResult, matched bool) {
+func Match(matchPrice math.LegacyDec, prices []math.LegacyDec, bidsByPrice map[string][]Bid, sellingAmt math.Int, allowedBidders []AllowedBidder) (res *MatchResult, matched bool) {
 	res = &MatchResult{
 		MatchPrice:          matchPrice,
-		MatchedAmount:       sdk.ZeroInt(),
+		MatchedAmount:       math.ZeroInt(),
 		MatchResultByBidder: map[string]*BidderMatchResult{},
 	}
 
@@ -39,12 +38,12 @@ func Match(matchPrice sdk.Dec, prices []sdk.Dec, bidsByPrice map[string][]Bid, s
 			var bidAmt math.Int
 			switch bid.Type {
 			case BidTypeBatchWorth:
-				bidAmt = sdk.NewDecFromInt(bid.Coin.Amount).QuoTruncate(matchPrice).TruncateInt()
+				bidAmt = math.LegacyNewDecFromInt(bid.Coin.Amount).QuoTruncate(matchPrice).TruncateInt()
 			case BidTypeBatchMany:
 				bidAmt = bid.Coin.Amount
 			}
 			biddableAmt := biddableAmtByBidder[bid.Bidder]
-			matchAmt := sdk.MinInt(bidAmt, biddableAmtByBidder[bid.Bidder])
+			matchAmt := math.MinInt(bidAmt, biddableAmtByBidder[bid.Bidder])
 
 			if res.MatchedAmount.Add(matchAmt).GT(sellingAmt) {
 				// Including this bid will exceed the auction's selling amount.
@@ -56,8 +55,8 @@ func Match(matchPrice sdk.Dec, prices []sdk.Dec, bidsByPrice map[string][]Bid, s
 			bidderRes, ok := res.MatchResultByBidder[bid.Bidder]
 			if !ok {
 				bidderRes = &BidderMatchResult{
-					PayingAmount:  sdk.ZeroInt(),
-					MatchedAmount: sdk.ZeroInt(),
+					PayingAmount:  math.ZeroInt(),
+					MatchedAmount: math.ZeroInt(),
 				}
 				res.MatchResultByBidder[bid.Bidder] = bidderRes
 			}

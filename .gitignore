@@ -26,6 +26,9 @@ dist
 tools-stamp
 proto-tools-stamp
 buf-stamp
+release/
+*.dot
+*.ign
 
 # Data - ideally these don't exist
 app/data/*
@@ -44,6 +47,7 @@ sim_log_file
 vagrant
 
 # IDE
+.vscode/
 .idea/
 *.iml
 

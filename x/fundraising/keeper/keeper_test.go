@@ -1,23 +1,27 @@
 package keeper_test
 
 import (
-	"encoding/binary"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
 	"time"
 
+	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
 	tmrand "github.com/cometbft/cometbft/libs/rand"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/tendermint/fundraising/app"
-	"github.com/tendermint/fundraising/testutil/simapp"
+	testkeeper "github.com/tendermint/fundraising/testutil/keeper"
+	"github.com/tendermint/fundraising/testutil/sample"
+	"github.com/tendermint/fundraising/testutil/testutil/simapp"
 	"github.com/tendermint/fundraising/x/fundraising/keeper"
 	"github.com/tendermint/fundraising/x/fundraising/types"
 )
+
+const maxAddress = 100
 
 type KeeperTestSuite struct {
 	suite.Suite
@@ -25,8 +29,8 @@ type KeeperTestSuite struct {
 	app       *app.App
 	ctx       sdk.Context
 	keeper    keeper.Keeper
-	querier   keeper.Querier
 	msgServer types.MsgServer
+	addresses []sdk.AccAddress
 }
 
 func TestKeeperTestSuite(t *testing.T) {
@@ -34,12 +38,18 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *KeeperTestSuite) SetupTest() {
+	for i := 0; i < maxAddress; i++ {
+		s.addresses = append(s.addresses, sample.AccAddress())
+	}
 	chainID := "chain-" + tmrand.NewRand().Str(6)
-	s.app = simapp.New(chainID, app.DefaultNodeHome)
-	s.ctx = s.app.BaseApp.NewContext(false, tmproto.Header{})
+
+	var err error
+	s.app, err = simapp.New(chainID)
+	s.Require().NoError(err)
+
+	s.ctx = s.app.BaseApp.NewContext(false)
 	s.ctx = s.ctx.WithBlockTime(time.Now()) // set to current time
 	s.keeper = s.app.FundraisingKeeper
-	s.querier = keeper.Querier{Keeper: s.keeper}
 	s.msgServer = keeper.NewMsgServerImpl(s.keeper)
 }
 
@@ -49,7 +59,7 @@ func (s *KeeperTestSuite) SetupTest() {
 
 func (s *KeeperTestSuite) createFixedPriceAuction(
 	auctioneer sdk.AccAddress,
-	startPrice sdk.Dec,
+	startPrice math.LegacyDec,
 	sellingCoin sdk.Coin,
 	payingCoinDenom string,
 	vestingSchedules []types.VestingSchedule,
@@ -57,7 +67,9 @@ func (s *KeeperTestSuite) createFixedPriceAuction(
 	endTime time.Time,
 	fund bool,
 ) *types.FixedPriceAuction {
-	params := s.keeper.GetParams(s.ctx)
+	params, err := s.keeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+
 	if fund {
 		s.fundAddr(auctioneer, params.AuctionCreationFee.Add(sellingCoin))
 	}
@@ -78,18 +90,20 @@ func (s *KeeperTestSuite) createFixedPriceAuction(
 
 func (s *KeeperTestSuite) createBatchAuction(
 	auctioneer sdk.AccAddress,
-	startPrice sdk.Dec,
-	minBidPrice sdk.Dec,
+	startPrice math.LegacyDec,
+	minBidPrice math.LegacyDec,
 	sellingCoin sdk.Coin,
 	payingCoinDenom string,
 	vestingSchedules []types.VestingSchedule,
 	maxExtendedRound uint32,
-	extendedRoundRate sdk.Dec,
+	extendedRoundRate math.LegacyDec,
 	startTime time.Time,
 	endTime time.Time,
 	fund bool,
 ) *types.BatchAuction {
-	params := s.keeper.GetParams(s.ctx)
+	params, err := s.keeper.Params.Get(s.ctx)
+	s.Require().NoError(err)
+
 	if fund {
 		s.fundAddr(auctioneer, params.AuctionCreationFee.Add(sellingCoin))
 	}
@@ -111,24 +125,27 @@ func (s *KeeperTestSuite) createBatchAuction(
 	return auction.(*types.BatchAuction)
 }
 
-func (s *KeeperTestSuite) addAllowedBidder(auctionId uint64, bidder sdk.AccAddress, maxBidAmt math.Int) {
-	allowedBidder, found := s.keeper.GetAllowedBidder(s.ctx, auctionId, bidder)
-	if found {
+func (s *KeeperTestSuite) addAllowedBidder(auctionId uint64, bidder sdk.AccAddress, maxBidAmt math.Int) error {
+	allowedBidder, err := s.keeper.AllowedBidder.Get(s.ctx, collections.Join(auctionId, bidder))
+	if err == nil {
 		maxBidAmt = maxBidAmt.Add(allowedBidder.MaxBidAmount)
 	}
+	if err != nil && !errors.Is(err, collections.ErrNotFound) {
+		return err
+	}
 
-	s.keeper.SetAllowedBidder(s.ctx, auctionId, types.NewAllowedBidder(bidder, maxBidAmt))
+	return s.keeper.AllowedBidder.Set(s.ctx, collections.Join(auctionId, bidder), types.NewAllowedBidder(auctionId, bidder, maxBidAmt))
 }
 
 func (s *KeeperTestSuite) placeBidFixedPrice(
 	auctionId uint64,
 	bidder sdk.AccAddress,
-	price sdk.Dec,
+	price math.LegacyDec,
 	coin sdk.Coin,
 	fund bool,
 ) types.Bid {
-	auction, found := s.keeper.GetAuction(s.ctx, auctionId)
-	s.Require().True(found)
+	auction, err := s.keeper.Auction.Get(s.ctx, auctionId)
+	s.Require().NoError(err)
 
 	var fundAmt math.Int
 	var fundCoin sdk.Coin
@@ -136,9 +153,9 @@ func (s *KeeperTestSuite) placeBidFixedPrice(
 
 	if coin.Denom == auction.GetPayingCoinDenom() {
 		fundCoin = coin
-		maxBidAmt = sdk.NewDecFromInt(coin.Amount).QuoTruncate(price).TruncateInt()
+		maxBidAmt = math.LegacyNewDecFromInt(coin.Amount).QuoTruncate(price).TruncateInt()
 	} else {
-		fundAmt = sdk.NewDecFromInt(coin.Amount).Mul(price).Ceil().TruncateInt()
+		fundAmt = math.LegacyNewDecFromInt(coin.Amount).Mul(price).Ceil().TruncateInt()
 		fundCoin = sdk.NewCoin(auction.GetPayingCoinDenom(), fundAmt)
 		maxBidAmt = coin.Amount
 	}
@@ -147,7 +164,8 @@ func (s *KeeperTestSuite) placeBidFixedPrice(
 		s.fundAddr(bidder, sdk.NewCoins(fundCoin))
 	}
 
-	s.addAllowedBidder(auctionId, bidder, maxBidAmt)
+	err = s.addAllowedBidder(auctionId, bidder, maxBidAmt)
+	s.Require().NoError(err)
 
 	b, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
 		AuctionId: auctionId,
@@ -164,7 +182,7 @@ func (s *KeeperTestSuite) placeBidFixedPrice(
 func (s *KeeperTestSuite) placeBidBatchWorth(
 	auctionId uint64,
 	bidder sdk.AccAddress,
-	price sdk.Dec,
+	price math.LegacyDec,
 	coin sdk.Coin,
 	maxBidAmt math.Int,
 	fund bool,
@@ -173,7 +191,8 @@ func (s *KeeperTestSuite) placeBidBatchWorth(
 		s.fundAddr(bidder, sdk.NewCoins(coin))
 	}
 
-	s.addAllowedBidder(auctionId, bidder, maxBidAmt)
+	err := s.addAllowedBidder(auctionId, bidder, maxBidAmt)
+	s.Require().NoError(err)
 
 	b, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
 		AuctionId: auctionId,
@@ -190,22 +209,23 @@ func (s *KeeperTestSuite) placeBidBatchWorth(
 func (s *KeeperTestSuite) placeBidBatchMany(
 	auctionId uint64,
 	bidder sdk.AccAddress,
-	price sdk.Dec,
+	price math.LegacyDec,
 	coin sdk.Coin,
 	maxBidAmt math.Int,
 	fund bool,
 ) types.Bid {
-	auction, found := s.keeper.GetAuction(s.ctx, auctionId)
-	s.Require().True(found)
+	auction, err := s.keeper.Auction.Get(s.ctx, auctionId)
+	s.Require().NoError(err)
 
 	if fund {
-		fundAmt := sdk.NewDecFromInt(coin.Amount).Mul(price).Ceil().TruncateInt()
+		fundAmt := math.LegacyNewDecFromInt(coin.Amount).Mul(price).Ceil().TruncateInt()
 		fundCoin := sdk.NewCoin(auction.GetPayingCoinDenom(), fundAmt)
 
 		s.fundAddr(bidder, sdk.NewCoins(fundCoin))
 	}
 
-	s.addAllowedBidder(auctionId, bidder, maxBidAmt)
+	err = s.addAllowedBidder(auctionId, bidder, maxBidAmt)
+	s.Require().NoError(err)
 
 	b, err := s.keeper.PlaceBid(s.ctx, &types.MsgPlaceBid{
 		AuctionId: auctionId,
@@ -219,18 +239,16 @@ func (s *KeeperTestSuite) placeBidBatchMany(
 	return b
 }
 
-//
 // Below are useful helpers to write test code easily.
-//
-
-func (s *KeeperTestSuite) addr(addrNum int) sdk.AccAddress {
-	addr := make(sdk.AccAddress, 20)
-	binary.PutVarint(addr, int64(addrNum))
-	return addr
+func (s *KeeperTestSuite) addr(index int) sdk.AccAddress {
+	if index >= maxAddress {
+		panic(fmt.Sprintf("invalid address index %d", index))
+	}
+	return s.addresses[index]
 }
 
 func (s *KeeperTestSuite) fundAddr(addr sdk.AccAddress, coins sdk.Coins) {
-	err := simapp.FundAccount(s.app.BankKeeper, s.ctx, addr, coins)
+	err := testkeeper.FundAccount(s.app.BankKeeper, s.ctx, addr, coins)
 	s.Require().NoError(err)
 }
 
@@ -251,11 +269,13 @@ func (s *KeeperTestSuite) sendCoins(fromAddr, toAddr sdk.AccAddress, coins sdk.C
 // it includes all bids sorted in descending order, allocation, refund, and matching info.
 // it is useful for debugging.
 func (s *KeeperTestSuite) fullString(auctionId uint64, mInfo keeper.MatchingInfo) string {
-	auction, found := s.keeper.GetAuction(s.ctx, auctionId)
-	s.Require().True(found)
+	auction, err := s.keeper.Auction.Get(s.ctx, auctionId)
+	s.Require().NoError(err)
 
 	payingCoinDenom := auction.GetPayingCoinDenom()
-	bids := s.keeper.GetBidsByAuctionId(s.ctx, auctionId)
+	bids, err := s.keeper.GetBidsByAuctionId(s.ctx, auctionId)
+	s.Require().NoError(err)
+
 	bids = types.SortBids(bids)
 
 	var b strings.Builder
@@ -298,8 +318,8 @@ func (s *KeeperTestSuite) fullString(auctionId uint64, mInfo keeper.MatchingInfo
 }
 
 // bodSellingAmount exchanges to selling coin amount (PayingCoinAmount/Price).
-func bidSellingAmount(price sdk.Dec, coin sdk.Coin) math.Int {
-	return sdk.NewDecFromInt(coin.Amount).QuoTruncate(price).TruncateInt()
+func bidSellingAmount(price math.LegacyDec, coin sdk.Coin) math.Int {
+	return math.LegacyNewDecFromInt(coin.Amount).QuoTruncate(price).TruncateInt()
 }
 
 // parseCoin parses string and returns sdk.Coin.
@@ -325,19 +345,19 @@ func parseCoins(s string) sdk.Coins {
 // parseInt parses string and returns math.Int.
 func parseInt(s string) math.Int {
 	s = strings.ReplaceAll(s, "_", "")
-	amt, ok := sdk.NewIntFromString(s)
+	amt, ok := math.NewIntFromString(s)
 	if !ok {
 		panic("failed to convert string to math.Int")
 	}
 	return amt
 }
 
-// parseDec parses string and returns sdk.Dec.
-func parseDec(s string) sdk.Dec {
-	return sdk.MustNewDecFromStr(s)
+// parseDec parses string and returns math.LegacyDec.
+func parseDec(s string) math.LegacyDec {
+	return math.LegacyMustNewDecFromStr(s)
 }
 
 // coinEq is a convenient method to test expected and got values of sdk.Coin.
 func coinEq(exp, got sdk.Coin) (bool, string, string, string) {
-	return exp.IsEqual(got), "expected:\t%v\ngot:\t\t%v", exp.String(), got.String()
+	return exp.Equal(got), "expected:\t%v\ngot:\t\t%v", exp.String(), got.String()
 }

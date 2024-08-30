@@ -1,12 +1,8 @@
 package types
 
 import (
-	"fmt"
-
-	"gopkg.in/yaml.v2"
-
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 const (
@@ -20,95 +16,49 @@ const (
 	MaxExtendedRound = 30
 )
 
-// Parameter store keys.
 var (
-	KeyAuctionCreationFee = []byte("AuctionCreationFee")
-	KeyPlaceBidFee        = []byte("PlaceBidFee")
-	KeyExtendedPeriod     = []byte("ExtendedPeriod")
-
-	DefaultAuctionCreationFee = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100_000_000)))
+	DefaultAuctionCreationFee = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, math.NewInt(100_000_000)))
 	DefaultPlaceBidFee        = sdk.Coins{}
 	DefaultExtendedPeriod     = uint32(1)
 )
 
-var _ paramstypes.ParamSet = (*Params)(nil)
-
-// ParamKeyTable returns the parameter key table.
-func ParamKeyTable() paramstypes.KeyTable {
-	return paramstypes.NewKeyTable().RegisterParamSet(&Params{})
+// NewParams creates a new Params instance.
+func NewParams(
+	auctionCreationFee,
+	placeBidFee sdk.Coins,
+	extendedPeriod uint32,
+) Params {
+	return Params{AuctionCreationFee: auctionCreationFee, PlaceBidFee: placeBidFee, ExtendedPeriod: extendedPeriod}
 }
 
-// DefaultParams returns the default fundraising module parameters.
+// DefaultParams returns a default set of parameters.
 func DefaultParams() Params {
-	return Params{
-		AuctionCreationFee: DefaultAuctionCreationFee,
-		PlaceBidFee:        DefaultPlaceBidFee,
-		ExtendedPeriod:     DefaultExtendedPeriod,
-	}
+	return NewParams(DefaultAuctionCreationFee, DefaultPlaceBidFee, DefaultExtendedPeriod)
 }
 
-// ParamSetPairs implements paramstypes.ParamSet.
-func (p *Params) ParamSetPairs() paramstypes.ParamSetPairs {
-	return paramstypes.ParamSetPairs{
-		paramstypes.NewParamSetPair(KeyAuctionCreationFee, &p.AuctionCreationFee, validateAuctionCreationFee),
-		paramstypes.NewParamSetPair(KeyPlaceBidFee, &p.PlaceBidFee, validatePlaceBidFee),
-		paramstypes.NewParamSetPair(KeyExtendedPeriod, &p.ExtendedPeriod, validateExtendedPeriod),
-	}
-}
-
-// String returns a human readable string representation of the parameters.
-func (p Params) String() string {
-	out, _ := yaml.Marshal(p)
-	return string(out)
-}
-
-// Validate validates parameters.
+// Validate validates the set of params.
 func (p Params) Validate() error {
-	for _, v := range []struct {
-		value     interface{}
-		validator func(interface{}) error
-	}{
-		{p.AuctionCreationFee, validateAuctionCreationFee},
-		{p.ExtendedPeriod, validateExtendedPeriod},
-	} {
-		if err := v.validator(v.value); err != nil {
-			return err
-		}
+	if err := validateAuctionCreationFee(p.AuctionCreationFee); err != nil {
+		return err
 	}
-	return nil
-}
-
-func validateAuctionCreationFee(i interface{}) error {
-	v, ok := i.(sdk.Coins)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
+	if err := validatePlaceBidFee(p.PlaceBidFee); err != nil {
+		return err
 	}
-
-	if err := v.Validate(); err != nil {
+	if err := validateExtendedPeriod(p.ExtendedPeriod); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func validatePlaceBidFee(i interface{}) error {
-	v, ok := i.(sdk.Coins)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if err := v.Validate(); err != nil {
-		return err
-	}
-
-	return nil
+func validateAuctionCreationFee(v sdk.Coins) error {
+	return v.Validate()
 }
 
-func validateExtendedPeriod(i interface{}) error {
-	_, ok := i.(uint32)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
+func validatePlaceBidFee(v sdk.Coins) error {
+	return v.Validate()
+}
 
+func validateExtendedPeriod(uint32) error {
 	return nil
 }

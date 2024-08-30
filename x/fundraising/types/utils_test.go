@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/crypto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -127,28 +128,28 @@ func TestSortByBidPrice(t *testing.T) {
 			AuctionId: 1,
 			Bidder:    sdk.AccAddress(crypto.AddressHash([]byte("Bidder1"))).String(),
 			Id:        1,
-			Price:     sdk.MustNewDecFromStr("0.10"),
+			Price:     math.LegacyMustNewDecFromStr("0.10"),
 			Coin:      sdk.NewInt64Coin("denom1", 1),
 		},
 		{
 			AuctionId: 1,
 			Bidder:    sdk.AccAddress(crypto.AddressHash([]byte("Bidder2"))).String(),
 			Id:        2,
-			Price:     sdk.MustNewDecFromStr("1.10"),
+			Price:     math.LegacyMustNewDecFromStr("1.10"),
 			Coin:      sdk.NewInt64Coin("denom1", 1),
 		},
 		{
 			AuctionId: 1,
 			Bidder:    sdk.AccAddress(crypto.AddressHash([]byte("Bidder3"))).String(),
 			Id:        3,
-			Price:     sdk.MustNewDecFromStr("0.35"),
+			Price:     math.LegacyMustNewDecFromStr("0.35"),
 			Coin:      sdk.NewInt64Coin("denom1", 1),
 		},
 		{
 			AuctionId: 1,
 			Bidder:    sdk.AccAddress(crypto.AddressHash([]byte("Bidder4"))).String(),
 			Id:        4,
-			Price:     sdk.MustNewDecFromStr("0.77"),
+			Price:     math.LegacyMustNewDecFromStr("0.77"),
 			Coin:      sdk.NewInt64Coin("denom1", 1),
 		},
 	}

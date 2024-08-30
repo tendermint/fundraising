@@ -1,0 +1,42 @@
+run:
+  tests: false
+  #   # timeout for analysis, e.g. 30s, 5m, default is 1m
+  timeout: 5m
+
+linters:
+  disable-all: true
+  enable:
+    - bodyclose
+    - depguard
+    - dogsled
+    - errcheck
+    - goconst
+    - gocritic
+    - gofumpt
+    - revive
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    # - interfacer
+    # - maligned
+    - misspell
+    - nakedret
+    - prealloc
+    # - scopelint
+    - staticcheck
+    - stylecheck
+    - typecheck
+    - unconvert
+    - unused
+    - unparam
+    - misspell
+    # - wsl
+    - nolintlint
+
+issues:
+  exclude:
+    - G404
+    - G101
+  max-issues-per-linter: 10000
+  max-same-issues: 10000

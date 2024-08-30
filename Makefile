@@ -1,13 +1,16 @@
-#!/usr/bin/make -f
+#! /usr/bin/make -f
 
-VERSION := $(shell echo $(shell git describe --tags) | sed 's/^v//')
+PACKAGES=$(shell go list ./...)
+VERSION := $(shell echo $(shell git describe --tags 2> /dev/null || echo "dev-$(shell git describe --always)") | sed 's/^v//')
 COMMIT := $(shell git log -1 --format='%H')
 PACKAGES_NOSIMULATION=$(shell go list ./... | grep -v '/simulation')
+DOCKER := $(shell which docker)
+COVER_FILE := coverage.txt
+COVER_HTML_FILE := cover.html
 BINDIR ?= $(GOPATH)/bin
 DOCKER := $(shell which docker)
 DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf
 BUILDDIR ?= $(CURDIR)/build
-SIMAPP = ./app
 
 export GO111MODULE = on
 
@@ -67,8 +70,44 @@ BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
 
 all: tools install lint
 
-# The below include contains the tools and runsim targets.
-include contrib/devtools/Makefile
+###############################################################################
+###                               Development                               ###
+###############################################################################
+
+## govet: Run go vet.
+govet:
+	@echo Running go vet...
+	@go vet ./...
+
+## govulncheck: Run govulncheck
+govulncheck:
+	@echo Running govulncheck...
+	@go run golang.org/x/vuln/cmd/govulncheck ./...
+
+FIND_ARGS := -name '*.go' -type f -not -name '*.pb.go' -not -name '*.pb.gw.go'
+
+## format: Run gofumpt and goimports.
+format:
+	@echo Formatting...
+	@go install mvdan.cc/gofumpt
+	@go install golang.org/x/tools/cmd/goimports
+	@find . $(FIND_ARGS) | xargs gofumpt -w .
+	@find . $(FIND_ARGS) | xargs goimports -w -local github.com/tendermint/fundraising
+
+## lint: Run Golang CI Lint.
+lint:
+	@echo Running gocilint...
+	@go install github.com/golangci/golangci-lint/cmd/golangci-lint
+	@golangci-lint run --out-format=tab --issues-exit-code=0
+
+help: Makefile
+	@echo
+	@echo " Choose a command run in "$(PROJECT_NAME)", or just run 'make' for install"
+	@echo
+	@sed -n 's/^##//p' $< | column -t -s ':' |  sed -e 's/^/ /'
+	@echo
+
+.PHONY: lint format govet govulncheck help
 
 ###############################################################################
 ###                                  Build                                  ###
@@ -94,7 +133,6 @@ build-reproducible: go.sum
         --env APP=fundraisingd \
         --env VERSION=$(VERSION) \
         --env COMMIT=$(COMMIT) \
-        --env LEDGER_ENABLED=$(LEDGER_ENABLED) \
         --name latest-build cosmossdk/rbuilder:latest
 	$(DOCKER) cp -a latest-build:/home/builder/artifacts/ $(CURDIR)/
 
@@ -103,7 +141,7 @@ build-reproducible: go.sum
 ###############################################################################
 
 go-mod-cache: go.sum
-	@echo "--> Download go modules to local cache"
+	@echo "--> Download go fundraising to local cache"
 	@go mod download
 
 go.sum: go.mod
@@ -116,41 +154,77 @@ clean:
 
 .PHONY: go-mod-cache clean
 
-FIND_ARGS := -name '*.go' -type f -not -name '*.pb.go'
-
-## format: Run gofmt and goimports.
-format:
-	@echo Formatting...
-	@find . $(FIND_ARGS) | xargs gofmt -d -s
-	@find . $(FIND_ARGS) | xargs goimports -w -local github.com/tendermint/fundraising
-
-## lint: Run Golang CI Lint.
-lint:
-	@echo Running gocilint...
-	@golangci-lint run --out-format=tab --issues-exit-code=0
-
-
-.PHONY: lint format
 ###############################################################################
-###                           Tests & Simulation                            ###
+###                                  Test                                   ###
 ###############################################################################
 
-test: test-unit
-test-all: test-unit test-race test-cover
+## test-unit: Run the unit tests.
+test-unit:
+	@echo Running unit tests...
+	@VERSION=$(VERSION) go test -mod=readonly -v -timeout 30m $(PACKAGES)
 
-test-unit: 
-	@VERSION=$(VERSION) go test -mod=readonly -tags='norace' $(PACKAGES_NOSIMULATION)
-
+## test-race: Run the unit tests checking for race conditions
 test-race:
-	@go test -mod=readonly -timeout 30m -race -coverprofile=coverage.out -covermode=atomic -tags='ledger test_ledger_mock' ./...
+	@echo Running unit tests with race condition reporting...
+	@VERSION=$(VERSION) go test -mod=readonly -v -race -timeout 30m  $(PACKAGES)
 
+## test-cover: Run the unit tests and create a coverage html report
 test-cover:
-	@go test -mod=readonly -timeout 30m -coverpkg=./... -coverprofile=coverage.out -covermode=atomic -coverpkg=./... -tags='norace ledger test_ledger_mock' ./...
+	@echo Running unit tests and creating coverage report...
+	@VERSION=$(VERSION) go test -mod=readonly -v -timeout 30m -coverprofile=$(COVER_FILE) -covermode=atomic $(PACKAGES)
+	@go tool cover -html=$(COVER_FILE) -o $(COVER_HTML_FILE)
+	@rm $(COVER_FILE)
 
-.PHONY: test test-all test-unit test-race test-cover
+## bench: Run the unit tests with benchmarking enabled
+bench:
+	@echo Running unit tests with benchmarking...
+	@VERSION=$(VERSION) go test -mod=readonly -v -timeout 30m -bench=. $(PACKAGES)
 
-SIM_NUM_BLOCKS ?= 100
-SIM_BLOCK_SIZE ?= 50
+## test: Run unit and integration tests.
+test: govet govulncheck test-unit
+
+.PHONY: test test-unit test-race test-cover bench
+
+###############################################################################
+###                                Protobuf                                 ###
+###############################################################################
+
+proto-all: proto-format proto-lint proto-gen-gogo
+
+proto-gen-gogo:
+	@echo "Generating Protobuf Files"
+	@buf generate --template $(CURDIR)/proto/buf.gen.gogo.yaml --output $(CURDIR)/gen/go
+	@cp -r gen/go/github.com/tendermint/fundraising/x ./
+	@rm -R gen/go
+
+proto-gen-swagger:
+	@echo "Generating Protobuf Swagger"
+	@buf generate --template $(CURDIR)/proto/buf.gen.swagger.yaml --output $(CURDIR)/gen/swagger
+
+proto-gen-ts:
+	@echo "Generating Protobuf Typescript"
+	@buf generate --template $(CURDIR)/proto/buf.gen.ts.yaml --output $(CURDIR)/gen/ts
+
+proto-format:
+	@echo "Formatting Protobuf Files"
+	@buf format --write
+
+proto-lint:
+	@echo "Linting Protobuf Files"
+	@buf lint
+
+.PHONY: proto-all proto-gen-gogo proto-gen-swagger proto-gen-ts proto-format proto-lint
+
+###############################################################################
+###                               Simulation                                ###
+###############################################################################
+
+# The below include contains the tools and runsim targets.
+include contrib/devtools/Makefile
+
+SIMAPP = ./app
+SIM_NUM_BLOCKS ?= 500
+SIM_BLOCK_SIZE ?= 100
 SIM_CI_NUM_BLOCKS ?= 200
 SIM_CI_BLOCK_SIZE ?= 26
 SIM_PERIOD ?= 50
@@ -176,15 +250,18 @@ test-sim-after-import: runsim
 	@echo "Running application simulation-after-import. This may take several minutes..."
 	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 2 2 TestAppSimulationAfterImport
 
+# test-sim-nondeterminism-long: Run simulation test checking for app state nondeterminism with a big data
 test-sim-nondeterminism-long:
 	@echo "Running non-determinism test..."
 	@go test -mod=readonly $(SIMAPP) -run TestAppStateDeterminism -Enabled=true \
 		-NumBlocks=100 -BlockSize=100 -Commit=true -Period=0 -v -timeout 1h
 
+# test-sim-import-export-long: Test import/export simulation
 test-sim-import-export-long: runsim
 	@echo "Running application import/export simulation. This may take several minutes..."
 	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 5 5 TestAppImportExport
 
+# test-sim-import-export-long: Test import/export simulation with a big data
 test-sim-after-import-long: runsim
 	@echo "Running application simulation-after-import. This may take several minutes..."
 	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 5 5 TestAppSimulationAfterImport
@@ -221,41 +298,13 @@ test-sim-ci \
 test-sim-profile \
 test-sim-benchmark
 
-###############################################################################
-###                                Protobuf                                 ###
-###############################################################################
-
-proto-all: proto-format proto-lint proto-gen-gogo
-
-proto-gen-gogo:
-	@echo "Generating Protobuf Files"
-	@buf generate --template $(CURDIR)/proto/buf.gen.gogo.yaml --output $(CURDIR)/gen/go
-	@cp -r gen/go/github.com/tendermint/fundraising/x ./
-	@rm -R gen/go
-
-proto-gen-swagger:
-	@echo "Generating Protobuf Swagger"
-	@buf generate --template $(CURDIR)/proto/buf.gen.swagger.yaml --output $(CURDIR)/gen/swagger
-
-proto-gen-ts:
-	@echo "Generating Protobuf Typescript"
-	@buf generate --template $(CURDIR)/proto/buf.gen.ts.yaml --output $(CURDIR)/gen/ts
-
-proto-format:
-	@echo "Formatting Protobuf Files"
-	@buf format --write
-
-proto-lint:
-	@echo "Linting Protobuf Files"
-	@buf lint
-
-.PHONY: proto-all proto-gen-gogo proto-gen-swagger proto-gen-ts proto-format proto-lint
+.DEFAULT_GOAL := install
 
 ###############################################################################
 ###                               Localnet                                  ###
 ###############################################################################
 
-localnet: 
+localnet:
 	ignite chain serve -r -v -c ./config-test.yml
 
 .PHONY: localnet

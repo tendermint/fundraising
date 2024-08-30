@@ -43,8 +43,8 @@ func (s *KeeperTestSuite) TestApplyVestingSchedules_NoSchedule() {
 	s.Require().False(auctioneerBalance.IsZero())
 
 	// Status must be finished
-	a, found := s.keeper.GetAuction(s.ctx, auction.GetId())
-	s.Require().True(found)
+	a, err := s.keeper.Auction.Get(s.ctx, auction.GetId())
+	s.Require().NoError(err)
 	s.Require().Equal(types.AuctionStatusFinished, a.GetStatus())
 }
 
@@ -87,7 +87,10 @@ func (s *KeeperTestSuite) TestApplyVestingSchedules_RemainingCoin() {
 	vestingReserveAddr := auction.GetVestingReserveAddress()
 	vestingReserveCoin := s.getBalance(vestingReserveAddr, auction.PayingCoinDenom)
 
-	for _, vq := range s.keeper.GetVestingQueuesByAuctionId(s.ctx, auction.GetId()) {
+	vqs, err := s.keeper.GetVestingQueuesByAuctionId(s.ctx, auction.GetId())
+	s.Require().NoError(err)
+
+	for _, vq := range vqs {
 		vestingReserveCoin = vestingReserveCoin.Sub(vq.PayingCoin)
 	}
 	s.Require().True(vestingReserveCoin.IsZero())

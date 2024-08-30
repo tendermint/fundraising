@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/crypto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -72,7 +73,7 @@ func TestValidateVestingSchedules(t *testing.T) {
 		{
 			"happy case",
 			[]types.VestingSchedule{
-				{ReleaseTime: types.MustParseRFC3339("9999-01-01T00:00:00Z"), Weight: sdk.MustNewDecFromStr("1.0")},
+				{ReleaseTime: types.MustParseRFC3339("9999-01-01T00:00:00Z"), Weight: math.LegacyMustNewDecFromStr("1.0")},
 			},
 			types.MustParseRFC3339("2022-03-01T00:00:00Z"),
 			"",
@@ -80,7 +81,7 @@ func TestValidateVestingSchedules(t *testing.T) {
 		{
 			"invalid case #1",
 			[]types.VestingSchedule{
-				{ReleaseTime: types.MustParseRFC3339("9999-01-01T00:00:00Z"), Weight: sdk.MustNewDecFromStr("-1.0")},
+				{ReleaseTime: types.MustParseRFC3339("9999-01-01T00:00:00Z"), Weight: math.LegacyMustNewDecFromStr("-1.0")},
 			},
 			types.MustParseRFC3339("2022-03-01T00:00:00Z"),
 			"vesting weight must be positive: invalid vesting schedules",
@@ -88,7 +89,7 @@ func TestValidateVestingSchedules(t *testing.T) {
 		{
 			"invalid case #2",
 			[]types.VestingSchedule{
-				{ReleaseTime: types.MustParseRFC3339("2022-01-01T00:00:00Z"), Weight: sdk.MustNewDecFromStr("1.0")},
+				{ReleaseTime: types.MustParseRFC3339("2022-01-01T00:00:00Z"), Weight: math.LegacyMustNewDecFromStr("1.0")},
 			},
 			types.MustParseRFC3339("2022-03-01T00:00:00Z"),
 			"release time must be set after the end time: invalid vesting schedules",
@@ -96,7 +97,7 @@ func TestValidateVestingSchedules(t *testing.T) {
 		{
 			"invalid case #3",
 			[]types.VestingSchedule{
-				{ReleaseTime: types.MustParseRFC3339("9999-01-01T00:00:00Z"), Weight: sdk.MustNewDecFromStr("2.0")},
+				{ReleaseTime: types.MustParseRFC3339("9999-01-01T00:00:00Z"), Weight: math.LegacyMustNewDecFromStr("2.0")},
 			},
 			types.MustParseRFC3339("2022-03-01T00:00:00Z"),
 			"vesting weight must not be greater than 1: invalid vesting schedules",
@@ -104,10 +105,10 @@ func TestValidateVestingSchedules(t *testing.T) {
 		{
 			"invalid case #4",
 			[]types.VestingSchedule{
-				{ReleaseTime: types.MustParseRFC3339("2022-06-01T00:00:00Z"), Weight: sdk.MustNewDecFromStr("0.25")},
-				{ReleaseTime: types.MustParseRFC3339("2022-04-01T00:00:00Z"), Weight: sdk.MustNewDecFromStr("0.25")},
-				{ReleaseTime: types.MustParseRFC3339("2022-09-01T00:00:00Z"), Weight: sdk.MustNewDecFromStr("0.25")},
-				{ReleaseTime: types.MustParseRFC3339("2022-12-01T00:00:00Z"), Weight: sdk.MustNewDecFromStr("0.25")},
+				{ReleaseTime: types.MustParseRFC3339("2022-06-01T00:00:00Z"), Weight: math.LegacyMustNewDecFromStr("0.25")},
+				{ReleaseTime: types.MustParseRFC3339("2022-04-01T00:00:00Z"), Weight: math.LegacyMustNewDecFromStr("0.25")},
+				{ReleaseTime: types.MustParseRFC3339("2022-09-01T00:00:00Z"), Weight: math.LegacyMustNewDecFromStr("0.25")},
+				{ReleaseTime: types.MustParseRFC3339("2022-12-01T00:00:00Z"), Weight: math.LegacyMustNewDecFromStr("0.25")},
 			},
 			types.MustParseRFC3339("2022-03-01T00:00:00Z"),
 			"release time must be chronological: invalid vesting schedules",
@@ -115,10 +116,10 @@ func TestValidateVestingSchedules(t *testing.T) {
 		{
 			"invalid case #5",
 			[]types.VestingSchedule{
-				{ReleaseTime: types.MustParseRFC3339("2022-05-01T00:00:00Z"), Weight: sdk.MustNewDecFromStr("0.5")},
-				{ReleaseTime: types.MustParseRFC3339("2022-06-01T00:00:00Z"), Weight: sdk.MustNewDecFromStr("0.5")},
-				{ReleaseTime: types.MustParseRFC3339("2022-07-01T00:00:00Z"), Weight: sdk.MustNewDecFromStr("0.5")},
-				{ReleaseTime: types.MustParseRFC3339("2022-08-01T00:00:00Z"), Weight: sdk.MustNewDecFromStr("0.5")},
+				{ReleaseTime: types.MustParseRFC3339("2022-05-01T00:00:00Z"), Weight: math.LegacyMustNewDecFromStr("0.5")},
+				{ReleaseTime: types.MustParseRFC3339("2022-06-01T00:00:00Z"), Weight: math.LegacyMustNewDecFromStr("0.5")},
+				{ReleaseTime: types.MustParseRFC3339("2022-07-01T00:00:00Z"), Weight: math.LegacyMustNewDecFromStr("0.5")},
+				{ReleaseTime: types.MustParseRFC3339("2022-08-01T00:00:00Z"), Weight: math.LegacyMustNewDecFromStr("0.5")},
 			},
 			types.MustParseRFC3339("2022-03-01T00:00:00Z"),
 			"total vesting weight must be equal to 1: invalid vesting schedules",

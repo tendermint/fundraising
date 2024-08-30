@@ -6,7 +6,7 @@ import (
 )
 
 // NewBid returns a new Bid.
-func NewBid(auctionId uint64, bidder sdk.AccAddress, bidId uint64, bidType BidType, price sdk.Dec, coin sdk.Coin, isMatched bool) Bid {
+func NewBid(auctionId uint64, bidder sdk.AccAddress, bidId uint64, bidType BidType, price math.LegacyDec, coin sdk.Coin, isMatched bool) Bid {
 	return Bid{
 		AuctionId: auctionId,
 		Bidder:    bidder.String(),
@@ -34,7 +34,7 @@ func (b *Bid) SetMatched(status bool) {
 // Note that we take as little coins as possible to prevent from overflowing the remaining selling coin.
 func (b Bid) ConvertToSellingAmount(denom string) (amount math.Int) {
 	if b.Coin.Denom == denom {
-		return sdk.NewDecFromInt(b.Coin.Amount).QuoTruncate(b.Price).TruncateInt() // BidAmount / BidPrice
+		return math.LegacyNewDecFromInt(b.Coin.Amount).QuoTruncate(b.Price).TruncateInt() // BidAmount / BidPrice
 	}
 	return b.Coin.Amount
 }
@@ -45,5 +45,5 @@ func (b Bid) ConvertToPayingAmount(denom string) (amount math.Int) {
 	if b.Coin.Denom == denom {
 		return b.Coin.Amount
 	}
-	return sdk.NewDecFromInt(b.Coin.Amount).Mul(b.Price).Ceil().TruncateInt() // BidAmount * BidPrice
+	return math.LegacyNewDecFromInt(b.Coin.Amount).Mul(b.Price).Ceil().TruncateInt() // BidAmount * BidPrice
 }

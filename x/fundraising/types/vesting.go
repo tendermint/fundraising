@@ -3,8 +3,9 @@ package types
 import (
 	"time"
 
+	sdkerrors "cosmossdk.io/errors"
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // ValidateVestingSchedules validates the vesting schedules.
@@ -16,7 +17,7 @@ func ValidateVestingSchedules(schedules []VestingSchedule, endTime time.Time) er
 		return nil
 	}
 
-	totalWeight := sdk.ZeroDec()
+	totalWeight := math.LegacyZeroDec()
 	prevReleaseTime := MustParseRFC3339("0001-01-01T00:00:00Z")
 
 	for _, s := range schedules {
@@ -32,7 +33,7 @@ func ValidateVestingSchedules(schedules []VestingSchedule, endTime time.Time) er
 			return sdkerrors.Wrapf(ErrInvalidVestingSchedules, "release time must be chronological")
 		}
 
-		if s.Weight.GT(sdk.OneDec()) {
+		if s.Weight.GT(math.LegacyOneDec()) {
 			return sdkerrors.Wrapf(ErrInvalidVestingSchedules, "vesting weight must not be greater than 1")
 		}
 
@@ -40,7 +41,7 @@ func ValidateVestingSchedules(schedules []VestingSchedule, endTime time.Time) er
 		prevReleaseTime = s.ReleaseTime
 	}
 
-	if !totalWeight.Equal(sdk.OneDec()) {
+	if !totalWeight.Equal(math.LegacyOneDec()) {
 		return sdkerrors.Wrapf(ErrInvalidVestingSchedules, "total vesting weight must be equal to 1")
 	}
 

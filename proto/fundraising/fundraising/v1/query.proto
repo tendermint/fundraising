@@ -1,0 +1,164 @@
+syntax = "proto3";
+
+package fundraising.fundraising.v1;
+
+import "amino/amino.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "cosmos_proto/cosmos.proto";
+import "fundraising/fundraising/v1/allowed_bidder.proto";
+import "fundraising/fundraising/v1/auction.proto";
+import "fundraising/fundraising/v1/bid.proto";
+import "fundraising/fundraising/v1/params.proto";
+import "fundraising/fundraising/v1/vesting_queue.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/any.proto";
+
+option go_package = "github.com/tendermint/fundraising/x/fundraising/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // Parameters queries the parameters of the module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/tendermint/fundraising/fundraising/v1/params";
+  }
+
+  // Queries a list of Auction items.
+  rpc ListAuction(QueryAllAuctionRequest) returns (QueryAllAuctionResponse) {
+    option (google.api.http).get = "/tendermint/fundraising/fundraising/auction";
+  }
+  rpc GetAuction(QueryGetAuctionRequest) returns (QueryGetAuctionResponse) {
+    option (google.api.http).get = "/tendermint/fundraising/fundraising/auction/{auction_id}";
+  }
+
+  // Queries a list of AllowedBidder items.
+  rpc ListAllowedBidder(QueryAllAllowedBidderRequest) returns (QueryAllAllowedBidderResponse) {
+    option (google.api.http).get = "/tendermint/fundraising/fundraising/auction/{auction_id}/allowed_bidder";
+  }
+  rpc GetAllowedBidder(QueryGetAllowedBidderRequest) returns (QueryGetAllowedBidderResponse) {
+    option (google.api.http).get = "/tendermint/fundraising/fundraising/auction/{auction_id}/allowed_bidder/{bidder}";
+  }
+
+  // Queries a list of Bid items.
+  rpc ListBid(QueryAllBidRequest) returns (QueryAllBidResponse) {
+    option (google.api.http).get = "/tendermint/fundraising/fundraising/auction/{auction_id}/bid";
+  }
+  rpc GetBid(QueryGetBidRequest) returns (QueryGetBidResponse) {
+    option (google.api.http).get = "/tendermint/fundraising/fundraising/auction/{auction_id}/bid/{bid_id}";
+  }
+
+  // Queries a list of VestingQueue items.
+  rpc ListVestingQueue(QueryAllVestingQueueRequest) returns (QueryAllVestingQueueResponse) {
+    option (google.api.http).get = "/tendermint/fundraising/fundraising/auction/{auction_id}/vestings";
+  }
+}
+
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params holds all the parameters of this module.
+  Params params = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+}
+
+// QueryAllAuctionRequest is request type for the Query/Auctions RPC method.
+message QueryAllAuctionRequest {
+  string status = 1;
+  string type = 2;
+  cosmos.base.query.v1beta1.PageRequest pagination = 3;
+}
+
+// QueryAllAuctionResponse is response type for the Query/Auctions RPC method.
+message QueryAllAuctionResponse {
+  // auctions specifies the existing auctions
+  repeated google.protobuf.Any auction = 1 [(cosmos_proto.accepts_interface) = "AuctionI"];
+
+  // pagination defines the pagination in the response
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryGetAuctionRequest is the request type for the Query/Auction RPC method.
+message QueryGetAuctionRequest {
+  uint64 auction_id = 1;
+}
+
+// QueryGetAuctionResponse is the response type for the Query/Auction RPC method.
+message QueryGetAuctionResponse {
+  google.protobuf.Any auction = 1 [(cosmos_proto.accepts_interface) = "AuctionI"];
+}
+
+// QueryAllowedBidderRequest is the request type for the Query/AllowedBidder RPC method.
+message QueryAllAllowedBidderRequest {
+  uint64 auction_id = 1;
+
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryAllowedBidderResponse is the response type for the Query/AllowedBidder RPC method.
+message QueryAllAllowedBidderResponse {
+  repeated AllowedBidder allowed_bidder = 1 [(gogoproto.nullable) = false];
+
+  // pagination defines the pagination in the response
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryAllowedBidderRequest is the request type for the Query/AllowedBidder RPC
+// method.
+message QueryGetAllowedBidderRequest {
+  uint64 auction_id = 1;
+  string bidder = 2;
+}
+
+// QueryAllowedBidderResponse is the response type for the Query/AllowedBidder
+// RPC method.
+message QueryGetAllowedBidderResponse {
+  AllowedBidder allowed_bidder = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryGetBidRequest is the request type for the Query/Sequence RPC method.
+message QueryGetBidRequest {
+  uint64 auction_id = 1;
+  uint64 bid_id = 2;
+}
+
+// QueryGetBidResponse is response type for the Query/Sequence RPC method.
+message QueryGetBidResponse {
+  // bid specifies specific bid
+  Bid bid = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryBidsRequest is request type for the Query/Bids RPC method.
+message QueryAllBidRequest {
+  uint64 auction_id = 1;
+  string bidder = 2;
+  string is_matched = 3;
+  cosmos.base.query.v1beta1.PageRequest pagination = 4;
+}
+
+// QueryBidsResponse is response type for the Query/Bids RPC method.
+message QueryAllBidResponse {
+  // bids specifies the existing bids
+  repeated Bid bid = 1 [(gogoproto.nullable) = false];
+
+  // pagination defines the pagination in the response
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryAllVestingQueueRequest is request type for the Query/Vestings RPC method.
+message QueryAllVestingQueueRequest {
+  uint64 auction_id = 1;
+
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryAllVestingQueueResponse is response type for the Query/Vestings RPC method.
+message QueryAllVestingQueueResponse {
+  // vestings specifies the existing vestings
+  repeated VestingQueue vestingQueue = 1 [(gogoproto.nullable) = false];
+
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}

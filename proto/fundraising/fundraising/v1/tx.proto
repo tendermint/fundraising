@@ -1,0 +1,286 @@
+syntax = "proto3";
+
+package fundraising.fundraising.v1;
+
+import "amino/amino.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "fundraising/fundraising/v1/allowed_bidder.proto";
+import "fundraising/fundraising/v1/auction.proto";
+import "fundraising/fundraising/v1/bid.proto";
+import "fundraising/fundraising/v1/params.proto";
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/tendermint/fundraising/x/fundraising/types";
+
+// Msg defines the Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // UpdateParams defines a (governance) operation for updating the module
+  // parameters. The authority defaults to the x/gov module account.
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+
+  // CreateFixedPriceAuction submits a create fixed price auction message.
+  rpc CreateFixedPriceAuction(MsgCreateFixedPriceAuction) returns (MsgCreateFixedPriceAuctionResponse);
+
+  // CreateBatchAuction submits a create batch auction message.
+  rpc CreateBatchAuction(MsgCreateBatchAuction) returns (MsgCreateBatchAuctionResponse);
+
+  // CancelAuction defines a method to cancel the auction message.
+  rpc CancelAuction(MsgCancelAuction) returns (MsgCancelAuctionResponse);
+
+  // PlaceBid defines a method to place a bid message.
+  rpc PlaceBid(MsgPlaceBid) returns (MsgPlaceBidResponse);
+
+  // ModifyBid defines a method to modify the bid message.
+  rpc ModifyBid(MsgModifyBid) returns (MsgModifyBidResponse);
+
+  // AddAllowedBidder defines a method sto add a single allowed bidder message.
+  // This is for the testing purpose and it must not be used in mainnet.
+  rpc AddAllowedBidder(MsgAddAllowedBidder) returns (MsgAddAllowedBidderResponse);
+}
+
+// MsgUpdateParams is the Msg/UpdateParams request type.
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "fundraising/x/fundraising/MsgUpdateParams";
+
+  // authority is the address that controls the module (defaults to x/gov unless overwritten).
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // params defines the module parameters to update.
+
+  // NOTE: All parameters must be supplied.
+  Params params = 2 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+}
+
+// MsgUpdateParamsResponse defines the response structure for executing a
+// MsgUpdateParams message.
+message MsgUpdateParamsResponse {}
+
+// MsgCreateFixedPriceAuction defines a SDK message for creating a fixed price
+// auction.
+message MsgCreateFixedPriceAuction {
+  option (cosmos.msg.v1.signer) = "auctioneer";
+
+  // auctioneer specifies the bech32-encoded address that creates the auction
+  string auctioneer = 1;
+
+  // start_price specifies the starting price of the auction
+  string start_price = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (cosmos_proto.scalar) = "cosmos.Dec"
+  ];
+
+  // selling_coin specifies the selling coin for the auction
+  cosmos.base.v1beta1.Coin selling_coin = 3 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    (amino.encoding) = "legacy_coins",
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
+
+  // paying_coin_denom specifies the paying coin denom that bidders use to bid
+  // for
+  string paying_coin_denom = 4;
+
+  // vesting_schedules specifies the vesting schedules for the auction
+  repeated VestingSchedule vesting_schedules = 5 [(gogoproto.nullable) = false];
+
+  // start_time specifies the start time of the plan
+  google.protobuf.Timestamp start_time = 6 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false
+  ];
+
+  // end_time specifies the end time of the plan
+  google.protobuf.Timestamp end_time = 7 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+// MsgCreateFixedPriceAuctionResponse defines the
+// Msg/MsgCreateFixedPriceAuctionResponse response type.
+message MsgCreateFixedPriceAuctionResponse {}
+
+// MsgCreateBatchAuction defines a SDK message for creating an batch
+// auction.
+//
+// See:
+// https://github.com/tendermint/fundraising/tree/main/x/fundraising/spec/04_messages.md
+message MsgCreateBatchAuction {
+  option (cosmos.msg.v1.signer) = "auctioneer";
+
+  // auctioneer specifies the bech32-encoded address that creates the auction
+  string auctioneer = 1;
+
+  // start_price specifies the starting price of the auction
+  string start_price = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (cosmos_proto.scalar) = "cosmos.Dec"
+  ];
+
+  // min_bid_price specifies the minibum bid price
+  string min_bid_price = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (cosmos_proto.scalar) = "cosmos.Dec"
+  ];
+
+  // selling_coin specifies the selling coin for the auction
+  cosmos.base.v1beta1.Coin selling_coin = 4 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    (amino.encoding) = "legacy_coins",
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
+
+  // paying_coin_denom specifies the paying coin denom that bidders use to bid
+  // for
+  string paying_coin_denom = 5;
+
+  // vesting_schedules specifies the vesting schedules for the auction
+  repeated VestingSchedule vesting_schedules = 6 [(gogoproto.nullable) = false];
+
+  // maximum_extended_round specifies the maximum number of extended rounds for
+  // the auction
+  uint32 max_extended_round = 7;
+
+  // extended_round_rate specifies the rate that decides if the auction needs
+  // another round
+  string extended_round_rate = 8 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (cosmos_proto.scalar) = "cosmos.Dec"
+  ];
+
+  // start_time specifies the start time of the plan
+  google.protobuf.Timestamp start_time = 9 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false
+  ];
+
+  // end_time specifies the end time of the plan
+  google.protobuf.Timestamp end_time = 10 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+// MsgCreateBatchAuctionResponse defines the
+// Msg/MsgCreateBatchAuctionResponse response type.
+message MsgCreateBatchAuctionResponse {}
+
+// MsgCancelAuction defines a SDK message for cancelling the auction.
+// Cancelling is only allowed when the auction hasn't started yet.
+message MsgCancelAuction {
+  option (cosmos.msg.v1.signer) = "auctioneer";
+
+  // auctioneer specifies the bech32-encoded address that is in charge of the
+  // auction
+  string auctioneer = 1;
+
+  // auction_id specifies the auction id
+  uint64 auction_id = 2;
+}
+
+// MsgCancelAuctionResponse defines the Msg/MsgCancelAuctionResponse
+// response type.
+message MsgCancelAuctionResponse {}
+
+// MsgPlaceBid defines a SDK message for placing a bid for the auction.
+message MsgPlaceBid {
+  option (cosmos.msg.v1.signer) = "bidder";
+
+  // auction_id specifies the auction id
+  uint64 auction_id = 1;
+
+  // bidder specifies the bech32-encoded address that bids for the auction
+  string bidder = 2;
+
+  // type specifies the bid type; type 1 is fixed price, 2 is how-much-worth, 3
+  // is how-many-coins
+  BidType bid_type = 3;
+
+  // price specifies the bid price.
+  // The bid price must be the start price for fixed price auction whereas
+  // the bide price can be any value that the bidder places.
+  string price = 4 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (cosmos_proto.scalar) = "cosmos.Dec"
+  ];
+
+  // coin specifies the paying amount of coin or the selling amount that the
+  // bidder bids
+  cosmos.base.v1beta1.Coin coin = 5 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    (amino.encoding) = "legacy_coins",
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
+}
+
+// MsgPlaceBidResponse defines the Msg/MsgPlaceBidResponse response type.
+message MsgPlaceBidResponse {}
+
+// MsgModifyBid defines a SDK message for modifying an existing bid for the
+// auction.
+message MsgModifyBid {
+  option (cosmos.msg.v1.signer) = "bidder";
+
+  // auction_id specifies the auction id
+  uint64 auction_id = 1;
+
+  // bidder specifies the bech32-encoded address that bids for the auction
+  string bidder = 2;
+
+  // bid_id specifies the bid id
+  uint64 bid_id = 3;
+
+  // price specifies the bid price.
+  // the bide price must be above or equal to the original value that the bidder
+  // placed.
+  string price = 4 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (cosmos_proto.scalar) = "cosmos.Dec"
+  ];
+
+  // coin specifies the paying amount of coin or the selling amount that the
+  // bidder bids
+  cosmos.base.v1beta1.Coin coin = 5 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    (amino.encoding) = "legacy_coins",
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
+}
+
+// MsgModifyBidResponse defines the Msg/MsgModifyBidResponse response type.
+message MsgModifyBidResponse {}
+
+// MsgAddAllowedBidder defines a SDK message for adding an allowed bidder to the
+// auction.
+message MsgAddAllowedBidder {
+  option (cosmos.msg.v1.signer) = "allowed_bidder";
+
+  // auction_id specifies the auction id
+  uint64 auction_id = 1;
+
+  // allowed_bidder specifies the bidder who is allowed to bid and their maximum
+  // bid amount
+  AllowedBidder allowed_bidder = 2 [(gogoproto.nullable) = false];
+}
+
+// MsgAddAllowedBidderResponse defines the Msg/MsgAddAllowedBidderResponse response type.
+message MsgAddAllowedBidderResponse {}

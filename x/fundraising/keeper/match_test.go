@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
+	_ "github.com/stretchr/testify/suite"
 
 	"github.com/tendermint/fundraising/x/fundraising/types"
-
-	_ "github.com/stretchr/testify/suite"
 )
 
 func (s *KeeperTestSuite) TestExampleFullString() {
@@ -23,15 +22,16 @@ func (s *KeeperTestSuite) TestExampleFullString() {
 		true,
 	)
 
-	a, found := s.keeper.GetAuction(s.ctx, auction.GetId())
-	s.Require().True(found)
+	a, err := s.keeper.Auction.Get(s.ctx, auction.GetId())
+	s.Require().NoError(err)
 
 	s.placeBidFixedPrice(a.GetId(), s.addr(1), a.GetStartPrice(), parseCoin("15_000_000denom2"), true)
 	s.placeBidFixedPrice(a.GetId(), s.addr(2), a.GetStartPrice(), parseCoin("20_000_000denom2"), true)
 	s.placeBidFixedPrice(a.GetId(), s.addr(4), a.GetStartPrice(), parseCoin("10_000_000denom1"), true)
 	s.placeBidFixedPrice(a.GetId(), s.addr(6), a.GetStartPrice(), parseCoin("20_000_000denom1"), true)
 
-	mInfo := s.keeper.CalculateFixedPriceAllocation(s.ctx, a)
+	mInfo, err := s.keeper.CalculateFixedPriceAllocation(s.ctx, a)
+	s.Require().NoError(err)
 	fmt.Println(s.fullString(a.GetId(), mInfo))
 
 	// Output:
@@ -66,36 +66,37 @@ func (s *KeeperTestSuite) TestBatchAuction_Many() {
 		"denom2",
 		[]types.VestingSchedule{},
 		1,
-		sdk.MustNewDecFromStr("0.2"),
+		math.LegacyMustNewDecFromStr("0.2"),
 		time.Now().AddDate(0, 0, -1),
 		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("1"), parseCoin("500_000_000denom1"), sdk.NewInt(1_000_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("0.9"), parseCoin("500_000_000denom1"), sdk.NewInt(1_000_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("500_000_000denom1"), sdk.NewInt(1_000_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("1"), parseCoin("500_000_000denom1"), math.NewInt(1_000_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("0.9"), parseCoin("500_000_000denom1"), math.NewInt(1_000_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("500_000_000denom1"), math.NewInt(1_000_000_000), true)
 
-	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
-	s.Require().True(found)
+	a, err := s.keeper.Auction.Get(s.ctx, auction.Id)
+	s.Require().NoError(err)
 
-	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
+	mInfo, err := s.keeper.CalculateBatchAllocation(s.ctx, a)
+	s.Require().NoError(err)
 
 	s.Require().Equal(mInfo.MatchedLen, int64(2))
 	s.Require().Equal(mInfo.MatchedPrice, parseDec("0.9"))
-	s.Require().Equal(mInfo.TotalMatchedAmount, sdk.NewInt(1_000_000_000))
-	s.Require().Equal(mInfo.AllocationMap[s.addr(1).String()], sdk.NewInt(500_000_000))
-	s.Require().Equal(mInfo.AllocationMap[s.addr(2).String()], sdk.NewInt(500_000_000))
-	s.Require().Equal(mInfo.AllocationMap[s.addr(3).String()], sdk.NewInt(0))
-	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(1).String()], sdk.NewInt(450_000_000))
-	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], sdk.NewInt(450_000_000))
-	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(3).String()], sdk.NewInt(0))
-	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()], sdk.NewInt(50_000_000))
-	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()], sdk.NewInt(400_000_000))
-	s.Require().True(mInfo.RefundMap[s.addr(2).String()].Equal(sdk.NewInt(0)))
+	s.Require().Equal(mInfo.TotalMatchedAmount, math.NewInt(1_000_000_000))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(1).String()], math.NewInt(500_000_000))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(2).String()], math.NewInt(500_000_000))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(3).String()], math.NewInt(0))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(1).String()], math.NewInt(450_000_000))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], math.NewInt(450_000_000))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(3).String()], math.NewInt(0))
+	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()], math.NewInt(50_000_000))
+	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()], math.NewInt(400_000_000))
+	s.Require().True(mInfo.RefundMap[s.addr(2).String()].Equal(math.NewInt(0)))
 
-	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
+	err = s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
 	sellingReserveAmt := s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).Amount
@@ -107,12 +108,12 @@ func (s *KeeperTestSuite) TestBatchAuction_Many() {
 	s.Require().True(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).IsZero())
 
 	// The auctioneer must have sellingCoin.Amount - TotalMatchedAmount
-	s.Require().Equal(s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(0))
+	s.Require().Equal(s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount, math.NewInt(0))
 
 	// The bidders must have the matched selling coin
-	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(500_000_000))
-	s.Require().Equal(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(500_000_000))
-	s.Require().Equal(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(0))
+	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount, math.NewInt(500_000_000))
+	s.Require().Equal(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).Amount, math.NewInt(500_000_000))
+	s.Require().Equal(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).Amount, math.NewInt(0))
 
 	// s.Require().True(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).IsZero())
 
@@ -130,41 +131,42 @@ func (s *KeeperTestSuite) TestBatchAuction_Worth() {
 		"denom2",
 		[]types.VestingSchedule{},
 		1,
-		sdk.MustNewDecFromStr("0.2"),
+		math.LegacyMustNewDecFromStr("0.2"),
 		time.Now().AddDate(0, 0, -1),
 		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	s.placeBidBatchWorth(auction.Id, s.addr(1), parseDec("1"), parseCoin("500_000_000denom2"), sdk.NewInt(1500_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("0.9"), parseCoin("500_000_000denom2"), sdk.NewInt(1500_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("500_000_000denom2"), sdk.NewInt(1500_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(1), parseDec("1"), parseCoin("500_000_000denom2"), math.NewInt(1500_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("0.9"), parseCoin("500_000_000denom2"), math.NewInt(1500_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("500_000_000denom2"), math.NewInt(1500_000_000), true)
 
-	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
-	s.Require().True(found)
+	a, err := s.keeper.Auction.Get(s.ctx, auction.Id)
+	s.Require().NoError(err)
 
-	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
+	mInfo, err := s.keeper.CalculateBatchAllocation(s.ctx, a)
+	s.Require().NoError(err)
 
 	// Checking
 	s.Require().Equal(int64(2), mInfo.MatchedLen)
 	s.Require().Equal(parseDec("0.9"), mInfo.MatchedPrice)
 	matchingPrice := parseDec("0.9")
-	matchedAmt := sdk.NewDec(500_000_000).QuoTruncate(matchingPrice).TruncateInt()
+	matchedAmt := math.LegacyNewDec(500_000_000).QuoTruncate(matchingPrice).TruncateInt()
 
 	s.Require().Equal(mInfo.TotalMatchedAmount, matchedAmt.Add(matchedAmt))
 	s.Require().Equal(mInfo.AllocationMap[s.addr(1).String()], matchedAmt)
 	s.Require().Equal(mInfo.AllocationMap[s.addr(2).String()], matchedAmt)
-	s.Require().Equal(mInfo.AllocationMap[s.addr(3).String()], sdk.NewInt(0))
-	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(1).String()], sdk.NewInt(500_000_000))
-	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], sdk.NewInt(500_000_000))
-	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(3).String()], sdk.NewInt(0))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(3).String()], math.NewInt(0))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(1).String()], math.NewInt(500_000_000))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], math.NewInt(500_000_000))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(3).String()], math.NewInt(0))
 	s.Require().True(mInfo.RefundMap[s.addr(1).String()].IsZero())
 	s.Require().True(mInfo.RefundMap[s.addr(2).String()].IsZero())
-	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()], sdk.NewInt(500_000_000))
+	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()], math.NewInt(500_000_000))
 
 	// Distribute selling coin
-	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
+	err = s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
 	err = s.keeper.RefundRemainingSellingCoin(s.ctx, auction)
@@ -198,42 +200,43 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed() {
 		"denom2",
 		[]types.VestingSchedule{},
 		1,
-		sdk.MustNewDecFromStr("0.2"),
+		math.LegacyMustNewDecFromStr("0.2"),
 		time.Now().AddDate(0, 0, -1),
 		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("1"), parseCoin("500_000_000denom1"), sdk.NewInt(1500_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("0.9"), parseCoin("500_000_000denom2"), sdk.NewInt(1500_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("500_000_000denom2"), sdk.NewInt(1500_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("1"), parseCoin("500_000_000denom1"), math.NewInt(1500_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("0.9"), parseCoin("500_000_000denom2"), math.NewInt(1500_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("500_000_000denom2"), math.NewInt(1500_000_000), true)
 
-	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
-	s.Require().True(found)
+	a, err := s.keeper.Auction.Get(s.ctx, auction.Id)
+	s.Require().NoError(err)
 
-	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
+	mInfo, err := s.keeper.CalculateBatchAllocation(s.ctx, a)
+	s.Require().NoError(err)
 
 	// Checking
 	s.Require().Equal(mInfo.MatchedLen, int64(2))
 	s.Require().Equal(mInfo.MatchedPrice, parseDec("0.9"))
 	matchingPrice := parseDec("0.9")
-	matchedAmt1 := sdk.NewInt(500_000_000)
-	matchedAmt2 := sdk.NewDec(500_000_000).QuoTruncate(matchingPrice).TruncateInt()
+	matchedAmt1 := math.NewInt(500_000_000)
+	matchedAmt2 := math.LegacyNewDec(500_000_000).QuoTruncate(matchingPrice).TruncateInt()
 
-	s.Require().Equal(mInfo.TotalMatchedAmount, sdk.NewInt(500_000_000).Add(matchedAmt2))
+	s.Require().Equal(mInfo.TotalMatchedAmount, math.NewInt(500_000_000).Add(matchedAmt2))
 	s.Require().Equal(mInfo.AllocationMap[s.addr(1).String()], matchedAmt1)
 	s.Require().Equal(mInfo.AllocationMap[s.addr(2).String()], matchedAmt2)
-	s.Require().Equal(mInfo.AllocationMap[s.addr(3).String()], sdk.NewInt(0))
-	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(1).String()], sdk.NewInt(450_000_000))
-	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], sdk.NewInt(500_000_000))
-	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(3).String()], sdk.NewInt(0))
-	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()], sdk.NewInt(50_000_000))
-	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()], sdk.NewInt(500_000_000))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(3).String()], math.NewInt(0))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(1).String()], math.NewInt(450_000_000))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], math.NewInt(500_000_000))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(3).String()], math.NewInt(0))
+	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()], math.NewInt(50_000_000))
+	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()], math.NewInt(500_000_000))
 	s.Require().True(mInfo.RefundMap[s.addr(2).String()].IsZero())
 
 	// Distribute selling coin
-	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
+	err = s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
 	err = s.keeper.RefundRemainingSellingCoin(s.ctx, auction)
@@ -267,38 +270,39 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Many_Limited() {
 		"denom2",
 		[]types.VestingSchedule{},
 		1,
-		sdk.MustNewDecFromStr("0.2"),
+		math.LegacyMustNewDecFromStr("0.2"),
 		time.Now().AddDate(0, 0, -1),
 		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("1"), parseCoin("400_000_000denom1"), sdk.NewInt(400_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("0.9"), parseCoin("400_000_000denom1"), sdk.NewInt(400_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("400_000_000denom1"), sdk.NewInt(400_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("1"), parseCoin("400_000_000denom1"), math.NewInt(400_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("0.9"), parseCoin("400_000_000denom1"), math.NewInt(400_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("400_000_000denom1"), math.NewInt(400_000_000), true)
 
-	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
-	s.Require().True(found)
+	a, err := s.keeper.Auction.Get(s.ctx, auction.Id)
+	s.Require().NoError(err)
 
-	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
+	mInfo, err := s.keeper.CalculateBatchAllocation(s.ctx, a)
+	s.Require().NoError(err)
 
 	// Checking
 	s.Require().Equal(mInfo.MatchedLen, int64(2))
 	s.Require().Equal(mInfo.MatchedPrice, parseDec("0.9"))
-	s.Require().Equal(mInfo.TotalMatchedAmount, sdk.NewInt(800_000_000))
-	s.Require().Equal(mInfo.AllocationMap[s.addr(1).String()], sdk.NewInt(400_000_000))
-	s.Require().Equal(mInfo.AllocationMap[s.addr(2).String()], sdk.NewInt(400_000_000))
-	s.Require().Equal(mInfo.AllocationMap[s.addr(3).String()], sdk.NewInt(0))
-	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(1).String()], sdk.NewInt(360_000_000))
-	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], sdk.NewInt(360_000_000))
-	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(3).String()], sdk.NewInt(0))
-	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()], sdk.NewInt(40_000_000))
+	s.Require().Equal(mInfo.TotalMatchedAmount, math.NewInt(800_000_000))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(1).String()], math.NewInt(400_000_000))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(2).String()], math.NewInt(400_000_000))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(3).String()], math.NewInt(0))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(1).String()], math.NewInt(360_000_000))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], math.NewInt(360_000_000))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(3).String()], math.NewInt(0))
+	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()], math.NewInt(40_000_000))
 	s.Require().True(mInfo.RefundMap[s.addr(2).String()].IsZero())
-	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()], sdk.NewInt(320_000_000))
+	s.Require().Equal(mInfo.RefundMap[s.addr(3).String()], math.NewInt(320_000_000))
 
 	// Distribute selling coin
-	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
+	err = s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
 	err = s.keeper.RefundRemainingSellingCoin(s.ctx, auction)
@@ -308,11 +312,11 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Many_Limited() {
 	s.Require().True(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).IsZero())
 
 	// The auctioneer must have sellingCoin.Amount - TotalMatchedAmount
-	s.Require().Equal(s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(200_000_000))
+	s.Require().Equal(s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount, math.NewInt(200_000_000))
 
 	// The bidders must have the matched selling coin
-	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(400_000_000))
-	s.Require().Equal(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(400_000_000))
+	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount, math.NewInt(400_000_000))
+	s.Require().Equal(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).Amount, math.NewInt(400_000_000))
 	s.Require().True(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).IsZero())
 
 	// Refund payingCoin
@@ -329,38 +333,39 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Worth_Limited() {
 		"denom2",
 		[]types.VestingSchedule{},
 		1,
-		sdk.MustNewDecFromStr("0.2"),
+		math.LegacyMustNewDecFromStr("0.2"),
 		time.Now().AddDate(0, 0, -1),
 		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	s.placeBidBatchWorth(auction.Id, s.addr(1), parseDec("1"), parseCoin("400_000_000denom2"), sdk.NewInt(400_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("0.9"), parseCoin("360_000_000denom2"), sdk.NewInt(400_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("320_000_000denom2"), sdk.NewInt(400_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(1), parseDec("1"), parseCoin("400_000_000denom2"), math.NewInt(400_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("0.9"), parseCoin("360_000_000denom2"), math.NewInt(400_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("320_000_000denom2"), math.NewInt(400_000_000), true)
 
-	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
-	s.Require().True(found)
+	a, err := s.keeper.Auction.Get(s.ctx, auction.Id)
+	s.Require().NoError(err)
 
-	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
+	mInfo, err := s.keeper.CalculateBatchAllocation(s.ctx, a)
+	s.Require().NoError(err)
 
 	// Checking
 	s.Require().Equal(mInfo.MatchedLen, int64(3))
 	s.Require().Equal(mInfo.MatchedPrice, parseDec("0.8"))
-	s.Require().Equal(mInfo.TotalMatchedAmount, sdk.NewInt(1200_000_000))
-	s.Require().Equal(mInfo.AllocationMap[s.addr(1).String()], sdk.NewInt(400_000_000))
-	s.Require().Equal(mInfo.AllocationMap[s.addr(2).String()], sdk.NewInt(400_000_000))
-	s.Require().Equal(mInfo.AllocationMap[s.addr(3).String()], sdk.NewInt(400_000_000))
-	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(1).String()], sdk.NewInt(320_000_000))
-	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], sdk.NewInt(320_000_000))
-	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(3).String()], sdk.NewInt(320_000_000))
-	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()], sdk.NewInt(80_000_000))
-	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()], sdk.NewInt(40_000_000))
+	s.Require().Equal(mInfo.TotalMatchedAmount, math.NewInt(1200_000_000))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(1).String()], math.NewInt(400_000_000))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(2).String()], math.NewInt(400_000_000))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(3).String()], math.NewInt(400_000_000))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(1).String()], math.NewInt(320_000_000))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], math.NewInt(320_000_000))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(3).String()], math.NewInt(320_000_000))
+	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()], math.NewInt(80_000_000))
+	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()], math.NewInt(40_000_000))
 	s.Require().True(mInfo.RefundMap[s.addr(3).String()].IsZero())
 
 	// Distribute selling coin
-	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
+	err = s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
 	err = s.keeper.RefundRemainingSellingCoin(s.ctx, auction)
@@ -370,12 +375,12 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Worth_Limited() {
 	s.Require().True(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).IsZero())
 
 	// The auctioneer must have sellingCoin.Amount - TotalMatchedAmount
-	s.Require().Equal(s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(300_000_000))
+	s.Require().Equal(s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount, math.NewInt(300_000_000))
 
 	// The bidders must have the matched selling coin
-	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(400_000_000))
-	s.Require().Equal(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(400_000_000))
-	s.Require().Equal(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(400_000_000))
+	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount, math.NewInt(400_000_000))
+	s.Require().Equal(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).Amount, math.NewInt(400_000_000))
+	s.Require().Equal(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).Amount, math.NewInt(400_000_000))
 
 	// Refund payingCoin
 	err = s.keeper.RefundPayingCoin(s.ctx, auction, mInfo)
@@ -391,38 +396,39 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed_Limited() {
 		"denom2",
 		[]types.VestingSchedule{},
 		1,
-		sdk.MustNewDecFromStr("0.2"),
+		math.LegacyMustNewDecFromStr("0.2"),
 		time.Now().AddDate(0, 0, -1),
 		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("1"), parseCoin("500_000_000denom1"), sdk.NewInt(600_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("0.9"), parseCoin("500_000_000denom2"), sdk.NewInt(600_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("450_000_000denom2"), sdk.NewInt(600_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("1"), parseCoin("500_000_000denom1"), math.NewInt(600_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("0.9"), parseCoin("500_000_000denom2"), math.NewInt(600_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("450_000_000denom2"), math.NewInt(600_000_000), true)
 
-	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
-	s.Require().True(found)
+	a, err := s.keeper.Auction.Get(s.ctx, auction.Id)
+	s.Require().NoError(err)
 
-	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
+	mInfo, err := s.keeper.CalculateBatchAllocation(s.ctx, a)
+	s.Require().NoError(err)
 
 	// Checking
 	s.Require().Equal(mInfo.MatchedLen, int64(3))
 	s.Require().Equal(mInfo.MatchedPrice, parseDec("0.8"))
-	s.Require().Equal(mInfo.TotalMatchedAmount, sdk.NewInt(1662_500_000))
-	s.Require().Equal(mInfo.AllocationMap[s.addr(1).String()], sdk.NewInt(500_000_000))
-	s.Require().Equal(mInfo.AllocationMap[s.addr(2).String()], sdk.NewInt(600_000_000))
-	s.Require().Equal(mInfo.AllocationMap[s.addr(3).String()], sdk.NewInt(562_500_000))
-	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(1).String()], sdk.NewInt(400_000_000))
-	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], sdk.NewInt(480_000_000))
-	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(3).String()], sdk.NewInt(450_000_000))
-	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()], sdk.NewInt(100_000_000))
-	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()], sdk.NewInt(20_000_000))
+	s.Require().Equal(mInfo.TotalMatchedAmount, math.NewInt(1662_500_000))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(1).String()], math.NewInt(500_000_000))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(2).String()], math.NewInt(600_000_000))
+	s.Require().Equal(mInfo.AllocationMap[s.addr(3).String()], math.NewInt(562_500_000))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(1).String()], math.NewInt(400_000_000))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], math.NewInt(480_000_000))
+	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(3).String()], math.NewInt(450_000_000))
+	s.Require().Equal(mInfo.RefundMap[s.addr(1).String()], math.NewInt(100_000_000))
+	s.Require().Equal(mInfo.RefundMap[s.addr(2).String()], math.NewInt(20_000_000))
 	s.Require().True(mInfo.RefundMap[s.addr(3).String()].IsZero())
 
 	// Distribute selling coin
-	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
+	err = s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
 	err = s.keeper.RefundRemainingSellingCoin(s.ctx, auction)
@@ -434,13 +440,13 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed_Limited() {
 	// The auctioneer must have sellingCoin.Amount - TotalMatchedAmount
 	s.Require().True(
 		s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount.
-			Equal(sdk.NewInt(37_500_000)),
+			Equal(math.NewInt(37_500_000)),
 	)
 
 	// The bidders must have the matched selling coin
-	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(500_000_000))
-	s.Require().Equal(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(600_000_000))
-	s.Require().Equal(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(562_500_000))
+	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount, math.NewInt(500_000_000))
+	s.Require().Equal(s.getBalance(s.addr(2), auction.GetSellingCoin().Denom).Amount, math.NewInt(600_000_000))
+	s.Require().Equal(s.getBalance(s.addr(3), auction.GetSellingCoin().Denom).Amount, math.NewInt(562_500_000))
 
 	// Refund payingCoin
 	err = s.keeper.RefundPayingCoin(s.ctx, auction, mInfo)
@@ -456,47 +462,48 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2() {
 		"denom2",
 		[]types.VestingSchedule{},
 		1,
-		sdk.MustNewDecFromStr("0.2"),
+		math.LegacyMustNewDecFromStr("0.2"),
 		time.Now().AddDate(0, 0, -1),
 		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("1"), parseCoin("200_000_000denom1"), sdk.NewInt(5000_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("0.8"), parseCoin("500_000_000denom2"), sdk.NewInt(5000_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(3), parseDec("0.9"), parseCoin("500_000_000denom1"), sdk.NewInt(5000_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(1), parseDec("1.1"), parseCoin("300_000_000denom2"), sdk.NewInt(0), true)
-	s.placeBidBatchMany(auction.Id, s.addr(5), parseDec("1.2"), parseCoin("300_000_000denom1"), sdk.NewInt(5000_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(4), parseDec("0.8"), parseCoin("100_000_000denom1"), sdk.NewInt(5000_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("0.7"), parseCoin("100_000_000denom1"), sdk.NewInt(0), true)
-	s.placeBidBatchMany(auction.Id, s.addr(6), parseDec("0.5"), parseCoin("100_000_000denom1"), sdk.NewInt(5000_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("300_000_000denom2"), sdk.NewInt(0), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(7), parseDec("0.6"), parseCoin("500_000_000denom2"), sdk.NewInt(5000_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(8), parseDec("0.8"), parseCoin("500_000_000denom1"), sdk.NewInt(5000_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(9), parseDec("0.6"), parseCoin("600_000_000denom1"), sdk.NewInt(5000_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(6), parseDec("0.5"), parseCoin("500_000_000denom2"), sdk.NewInt(0), true)
-	s.placeBidBatchMany(auction.Id, s.addr(10), parseDec("0.6"), parseCoin("100_000_000denom1"), sdk.NewInt(5000_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.7"), parseCoin("800_000_000denom2"), sdk.NewInt(0), true)
+	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("1"), parseCoin("200_000_000denom1"), math.NewInt(5000_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("0.8"), parseCoin("500_000_000denom2"), math.NewInt(5000_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(3), parseDec("0.9"), parseCoin("500_000_000denom1"), math.NewInt(5000_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(1), parseDec("1.1"), parseCoin("300_000_000denom2"), math.NewInt(0), true)
+	s.placeBidBatchMany(auction.Id, s.addr(5), parseDec("1.2"), parseCoin("300_000_000denom1"), math.NewInt(5000_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(4), parseDec("0.8"), parseCoin("100_000_000denom1"), math.NewInt(5000_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("0.7"), parseCoin("100_000_000denom1"), math.NewInt(0), true)
+	s.placeBidBatchMany(auction.Id, s.addr(6), parseDec("0.5"), parseCoin("100_000_000denom1"), math.NewInt(5000_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("300_000_000denom2"), math.NewInt(0), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(7), parseDec("0.6"), parseCoin("500_000_000denom2"), math.NewInt(5000_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(8), parseDec("0.8"), parseCoin("500_000_000denom1"), math.NewInt(5000_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(9), parseDec("0.6"), parseCoin("600_000_000denom1"), math.NewInt(5000_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(6), parseDec("0.5"), parseCoin("500_000_000denom2"), math.NewInt(0), true)
+	s.placeBidBatchMany(auction.Id, s.addr(10), parseDec("0.6"), parseCoin("100_000_000denom1"), math.NewInt(5000_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.7"), parseCoin("800_000_000denom2"), math.NewInt(0), true)
 
-	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
-	s.Require().True(found)
+	a, err := s.keeper.Auction.Get(s.ctx, auction.Id)
+	s.Require().NoError(err)
 
-	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
+	mInfo, err := s.keeper.CalculateBatchAllocation(s.ctx, a)
+	s.Require().NoError(err)
 
 	// Checking
 	s.Require().Equal(mInfo.MatchedLen, int64(10))
 	matchingPrice := parseDec("0.7")
 	s.Require().Equal(mInfo.MatchedPrice, matchingPrice)
 
-	matchedAmt1 := sdk.NewDec(300_000_000).QuoTruncate(matchingPrice).TruncateInt().Add(sdk.NewInt(200_000_000))
-	matchedAmt2 := sdk.NewDec(500_000_000).QuoTruncate(matchingPrice).TruncateInt().Add(sdk.NewInt(100_000_000))
-	tMatchedAmt3 := sdk.NewDec(300_000_000).QuoTruncate(matchingPrice).TruncateInt().Add(sdk.NewInt(500_000_000))
-	matchedAmt3 := tMatchedAmt3.Add(sdk.NewDec(800_000_000).QuoTruncate(matchingPrice).TruncateInt())
-	matchedAmt4 := sdk.NewInt(100_000_000)
-	matchedAmt5 := sdk.NewInt(300_000_000)
-	matchedAmt8 := sdk.NewInt(500_000_000)
-	matchedAmt_Zero := sdk.NewInt(0)
+	matchedAmt1 := math.LegacyNewDec(300_000_000).QuoTruncate(matchingPrice).TruncateInt().Add(math.NewInt(200_000_000))
+	matchedAmt2 := math.LegacyNewDec(500_000_000).QuoTruncate(matchingPrice).TruncateInt().Add(math.NewInt(100_000_000))
+	tMatchedAmt3 := math.LegacyNewDec(300_000_000).QuoTruncate(matchingPrice).TruncateInt().Add(math.NewInt(500_000_000))
+	matchedAmt3 := tMatchedAmt3.Add(math.LegacyNewDec(800_000_000).QuoTruncate(matchingPrice).TruncateInt())
+	matchedAmt4 := math.NewInt(100_000_000)
+	matchedAmt5 := math.NewInt(300_000_000)
+	matchedAmt8 := math.NewInt(500_000_000)
+	matchedAmt_Zero := math.NewInt(0)
 	totalMatchedAmt := matchedAmt1.Add(matchedAmt2).Add(matchedAmt3).Add(matchedAmt4).Add(matchedAmt5).Add(matchedAmt8)
 
 	s.Require().Equal(mInfo.TotalMatchedAmount, totalMatchedAmt)
@@ -511,13 +518,13 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2() {
 	s.Require().Equal(mInfo.AllocationMap[s.addr(9).String()], matchedAmt_Zero)
 	s.Require().Equal(mInfo.AllocationMap[s.addr(10).String()], matchedAmt_Zero)
 
-	reservedmatchedAmt1 := sdk.NewDec(200_000_000).Mul(matchingPrice).Ceil().TruncateInt().Add(sdk.NewInt(300_000_000))
-	reservedMatchedAmt2 := sdk.NewDec(100_000_000).Mul(matchingPrice).Ceil().TruncateInt().Add(sdk.NewInt(500_000_000))
-	reservedMatchedAmt3 := sdk.NewDec(500_000_000).Mul(matchingPrice).Ceil().TruncateInt().Add(sdk.NewInt(1100_000_000))
-	reservedMatchedAmt4 := sdk.NewDec(100_000_000).Mul(matchingPrice).Ceil().TruncateInt()
-	reservedMatchedAmt5 := sdk.NewDec(300_000_000).Mul(matchingPrice).Ceil().TruncateInt()
-	reservedMatchedAmt8 := sdk.NewDec(500_000_000).Mul(matchingPrice).Ceil().TruncateInt()
-	reservedMatchedAmt_Zero := sdk.NewInt(0)
+	reservedmatchedAmt1 := math.LegacyNewDec(200_000_000).Mul(matchingPrice).Ceil().TruncateInt().Add(math.NewInt(300_000_000))
+	reservedMatchedAmt2 := math.LegacyNewDec(100_000_000).Mul(matchingPrice).Ceil().TruncateInt().Add(math.NewInt(500_000_000))
+	reservedMatchedAmt3 := math.LegacyNewDec(500_000_000).Mul(matchingPrice).Ceil().TruncateInt().Add(math.NewInt(1100_000_000))
+	reservedMatchedAmt4 := math.LegacyNewDec(100_000_000).Mul(matchingPrice).Ceil().TruncateInt()
+	reservedMatchedAmt5 := math.LegacyNewDec(300_000_000).Mul(matchingPrice).Ceil().TruncateInt()
+	reservedMatchedAmt8 := math.LegacyNewDec(500_000_000).Mul(matchingPrice).Ceil().TruncateInt()
+	reservedMatchedAmt_Zero := math.NewInt(0)
 
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(1).String()], reservedmatchedAmt1)
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], reservedMatchedAmt2)
@@ -530,16 +537,16 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2() {
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(9).String()], reservedMatchedAmt_Zero)
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(10).String()], reservedMatchedAmt_Zero)
 
-	refundAmt1 := sdk.NewInt(60_000_000)
-	refundAmt2 := sdk.NewInt(0)
-	refundAmt3 := sdk.NewInt(100_000_000)
-	refundAmt4 := sdk.NewInt(10_000_000)
-	refundAmt5 := sdk.NewInt(150_000_000)
-	refundAmt6 := sdk.NewInt(550_000_000)
-	refundAmt7 := sdk.NewInt(500_000_000)
-	refundAmt8 := sdk.NewInt(50_000_000)
-	refundAmt9 := sdk.NewInt(360_000_000)
-	refundAmt10 := sdk.NewInt(60_000_000)
+	refundAmt1 := math.NewInt(60_000_000)
+	refundAmt2 := math.NewInt(0)
+	refundAmt3 := math.NewInt(100_000_000)
+	refundAmt4 := math.NewInt(10_000_000)
+	refundAmt5 := math.NewInt(150_000_000)
+	refundAmt6 := math.NewInt(550_000_000)
+	refundAmt7 := math.NewInt(500_000_000)
+	refundAmt8 := math.NewInt(50_000_000)
+	refundAmt9 := math.NewInt(360_000_000)
+	refundAmt10 := math.NewInt(60_000_000)
 
 	s.Require().True(mInfo.RefundMap[s.addr(1).String()].Equal(refundAmt1))
 	s.Require().True(mInfo.RefundMap[s.addr(2).String()].Equal(refundAmt2))
@@ -553,7 +560,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2() {
 	s.Require().True(mInfo.RefundMap[s.addr(10).String()].Equal(refundAmt10))
 
 	// Distribute selling coin
-	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
+	err = s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
 	err = s.keeper.RefundRemainingSellingCoin(s.ctx, auction)
@@ -591,51 +598,52 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2_LimitedSame() {
 		"denom2",
 		[]types.VestingSchedule{},
 		1,
-		sdk.MustNewDecFromStr("0.2"),
+		math.LegacyMustNewDecFromStr("0.2"),
 		time.Now().AddDate(0, 0, -1),
 		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("1"), parseCoin("200_000_000denom1"), sdk.NewInt(700_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("0.8"), parseCoin("500_000_000denom2"), sdk.NewInt(700_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(3), parseDec("0.9"), parseCoin("500_000_000denom1"), sdk.NewInt(700_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(1), parseDec("1.1"), parseCoin("300_000_000denom2"), sdk.NewInt(0), true)
-	s.placeBidBatchMany(auction.Id, s.addr(5), parseDec("1.2"), parseCoin("300_000_000denom1"), sdk.NewInt(700_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(4), parseDec("0.8"), parseCoin("100_000_000denom1"), sdk.NewInt(700_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("0.7"), parseCoin("100_000_000denom1"), sdk.NewInt(0), true)
-	s.placeBidBatchMany(auction.Id, s.addr(6), parseDec("0.5"), parseCoin("100_000_000denom1"), sdk.NewInt(700_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("300_000_000denom2"), sdk.NewInt(0), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(7), parseDec("0.6"), parseCoin("400_000_000denom2"), sdk.NewInt(700_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(8), parseDec("0.8"), parseCoin("500_000_000denom1"), sdk.NewInt(700_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(9), parseDec("0.6"), parseCoin("600_000_000denom1"), sdk.NewInt(700_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(6), parseDec("0.5"), parseCoin("350_000_000denom2"), sdk.NewInt(0), true)
-	s.placeBidBatchMany(auction.Id, s.addr(10), parseDec("0.6"), parseCoin("100_000_000denom1"), sdk.NewInt(700_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.7"), parseCoin("490_000_000denom2"), sdk.NewInt(0), true)
+	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("1"), parseCoin("200_000_000denom1"), math.NewInt(700_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("0.8"), parseCoin("500_000_000denom2"), math.NewInt(700_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(3), parseDec("0.9"), parseCoin("500_000_000denom1"), math.NewInt(700_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(1), parseDec("1.1"), parseCoin("300_000_000denom2"), math.NewInt(0), true)
+	s.placeBidBatchMany(auction.Id, s.addr(5), parseDec("1.2"), parseCoin("300_000_000denom1"), math.NewInt(700_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(4), parseDec("0.8"), parseCoin("100_000_000denom1"), math.NewInt(700_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("0.7"), parseCoin("100_000_000denom1"), math.NewInt(0), true)
+	s.placeBidBatchMany(auction.Id, s.addr(6), parseDec("0.5"), parseCoin("100_000_000denom1"), math.NewInt(700_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("300_000_000denom2"), math.NewInt(0), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(7), parseDec("0.6"), parseCoin("400_000_000denom2"), math.NewInt(700_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(8), parseDec("0.8"), parseCoin("500_000_000denom1"), math.NewInt(700_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(9), parseDec("0.6"), parseCoin("600_000_000denom1"), math.NewInt(700_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(6), parseDec("0.5"), parseCoin("350_000_000denom2"), math.NewInt(0), true)
+	s.placeBidBatchMany(auction.Id, s.addr(10), parseDec("0.6"), parseCoin("100_000_000denom1"), math.NewInt(700_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.7"), parseCoin("490_000_000denom2"), math.NewInt(0), true)
 
-	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
-	s.Require().True(found)
+	a, err := s.keeper.Auction.Get(s.ctx, auction.Id)
+	s.Require().NoError(err)
 
-	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
+	mInfo, err := s.keeper.CalculateBatchAllocation(s.ctx, a)
+	s.Require().NoError(err)
 
 	// Checking
 	s.Require().Equal(int64(11), mInfo.MatchedLen)
 	matchingPrice := parseDec("0.6")
 	s.Require().Equal(mInfo.MatchedPrice, matchingPrice)
 
-	matchedAmt1 := sdk.NewInt(700_000_000)
-	matchedAmt2 := sdk.NewInt(700_000_000)
-	matchedAmt3 := sdk.NewInt(700_000_000)
-	matchedAmt4 := sdk.NewInt(100_000_000)
-	matchedAmt5 := sdk.NewInt(300_000_000)
-	matchedAmt6 := sdk.NewInt(0)
-	matchedAmt7 := sdk.NewDec(400_000_000).QuoTruncate(matchingPrice).TruncateInt()
-	matchedAmt8 := sdk.NewInt(500_000_000)
-	matchedAmt9 := sdk.NewInt(600_000_000)
-	matchedAmt10 := sdk.NewInt(100_000_000)
+	matchedAmt1 := math.NewInt(700_000_000)
+	matchedAmt2 := math.NewInt(700_000_000)
+	matchedAmt3 := math.NewInt(700_000_000)
+	matchedAmt4 := math.NewInt(100_000_000)
+	matchedAmt5 := math.NewInt(300_000_000)
+	matchedAmt6 := math.NewInt(0)
+	matchedAmt7 := math.LegacyNewDec(400_000_000).QuoTruncate(matchingPrice).TruncateInt()
+	matchedAmt8 := math.NewInt(500_000_000)
+	matchedAmt9 := math.NewInt(600_000_000)
+	matchedAmt10 := math.NewInt(100_000_000)
 
-	totalMatchedAmt := sdk.NewInt(3700_000_000).Add(matchedAmt7)
+	totalMatchedAmt := math.NewInt(3700_000_000).Add(matchedAmt7)
 
 	s.Require().Equal(mInfo.TotalMatchedAmount, totalMatchedAmt)
 	s.Require().Equal(mInfo.AllocationMap[s.addr(1).String()], matchedAmt1)
@@ -649,16 +657,16 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2_LimitedSame() {
 	s.Require().Equal(mInfo.AllocationMap[s.addr(9).String()], matchedAmt9)
 	s.Require().Equal(mInfo.AllocationMap[s.addr(10).String()], matchedAmt10)
 
-	reservedMatchedAmt1 := sdk.NewInt(420_000_000)
-	reservedMatchedAmt2 := sdk.NewInt(420_000_000)
-	reservedMatchedAmt3 := sdk.NewInt(420_000_000)
-	reservedMatchedAmt4 := sdk.NewInt(60_000_000)
-	reservedMatchedAmt5 := sdk.NewInt(180_000_000)
-	reservedMatchedAmt6 := sdk.NewInt(0)
-	reservedMatchedAmt7 := sdk.NewInt(400_000_000)
-	reservedMatchedAmt8 := sdk.NewInt(300_000_000)
-	reservedMatchedAmt9 := sdk.NewInt(360_000_000)
-	reservedMatchedAmt10 := sdk.NewInt(60_000_000)
+	reservedMatchedAmt1 := math.NewInt(420_000_000)
+	reservedMatchedAmt2 := math.NewInt(420_000_000)
+	reservedMatchedAmt3 := math.NewInt(420_000_000)
+	reservedMatchedAmt4 := math.NewInt(60_000_000)
+	reservedMatchedAmt5 := math.NewInt(180_000_000)
+	reservedMatchedAmt6 := math.NewInt(0)
+	reservedMatchedAmt7 := math.NewInt(400_000_000)
+	reservedMatchedAmt8 := math.NewInt(300_000_000)
+	reservedMatchedAmt9 := math.NewInt(360_000_000)
+	reservedMatchedAmt10 := math.NewInt(60_000_000)
 
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(1).String()], reservedMatchedAmt1)
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], reservedMatchedAmt2)
@@ -671,16 +679,16 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2_LimitedSame() {
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(9).String()], reservedMatchedAmt9)
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(10).String()], reservedMatchedAmt10)
 
-	refundAmt1 := sdk.NewInt(80_000_000)
-	refundAmt2 := sdk.NewInt(150_000_000)
-	refundAmt3 := sdk.NewInt(820_000_000)
-	refundAmt4 := sdk.NewInt(20_000_000)
-	refundAmt5 := sdk.NewInt(180_000_000)
-	refundAmt6 := sdk.NewInt(400_000_000)
-	refundAmt7 := sdk.NewInt(0)
-	refundAmt8 := sdk.NewInt(100_000_000)
-	refundAmt9 := sdk.NewInt(0)
-	refundAmt10 := sdk.NewInt(0)
+	refundAmt1 := math.NewInt(80_000_000)
+	refundAmt2 := math.NewInt(150_000_000)
+	refundAmt3 := math.NewInt(820_000_000)
+	refundAmt4 := math.NewInt(20_000_000)
+	refundAmt5 := math.NewInt(180_000_000)
+	refundAmt6 := math.NewInt(400_000_000)
+	refundAmt7 := math.NewInt(0)
+	refundAmt8 := math.NewInt(100_000_000)
+	refundAmt9 := math.NewInt(0)
+	refundAmt10 := math.NewInt(0)
 
 	s.Require().True(mInfo.RefundMap[s.addr(1).String()].Equal(refundAmt1))
 	s.Require().True(mInfo.RefundMap[s.addr(2).String()].Equal(refundAmt2))
@@ -694,7 +702,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2_LimitedSame() {
 	s.Require().True(mInfo.RefundMap[s.addr(10).String()].Equal(refundAmt10))
 
 	// Distribute selling coin
-	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
+	err = s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
 	err = s.keeper.RefundRemainingSellingCoin(s.ctx, auction)
@@ -732,51 +740,52 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2_LimitedDifferent() {
 		"denom2",
 		[]types.VestingSchedule{},
 		1,
-		sdk.MustNewDecFromStr("0.2"),
+		math.LegacyMustNewDecFromStr("0.2"),
 		time.Now().AddDate(0, 0, -1),
 		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("1"), parseCoin("200_000_000denom1"), sdk.NewInt(1000_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("0.8"), parseCoin("500_000_000denom2"), sdk.NewInt(1000_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(3), parseDec("0.9"), parseCoin("500_000_000denom1"), sdk.NewInt(800_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(1), parseDec("1.1"), parseCoin("300_000_000denom2"), sdk.NewInt(0), true)
-	s.placeBidBatchMany(auction.Id, s.addr(5), parseDec("1.2"), parseCoin("300_000_000denom1"), sdk.NewInt(600_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(4), parseDec("0.8"), parseCoin("100_000_000denom1"), sdk.NewInt(800_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("0.7"), parseCoin("100_000_000denom1"), sdk.NewInt(0), true)
-	s.placeBidBatchMany(auction.Id, s.addr(6), parseDec("0.5"), parseCoin("100_000_000denom1"), sdk.NewInt(600_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("300_000_000denom2"), sdk.NewInt(0), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(7), parseDec("0.6"), parseCoin("200_000_000denom2"), sdk.NewInt(400_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(8), parseDec("0.8"), parseCoin("400_000_000denom1"), sdk.NewInt(400_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(9), parseDec("0.6"), parseCoin("200_000_000denom1"), sdk.NewInt(200_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(6), parseDec("0.5"), parseCoin("300_000_000denom2"), sdk.NewInt(0), true)
-	s.placeBidBatchMany(auction.Id, s.addr(10), parseDec("0.6"), parseCoin("100_000_000denom1"), sdk.NewInt(200_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.7"), parseCoin("560_000_000denom2"), sdk.NewInt(0), true)
+	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("1"), parseCoin("200_000_000denom1"), math.NewInt(1000_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("0.8"), parseCoin("500_000_000denom2"), math.NewInt(1000_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(3), parseDec("0.9"), parseCoin("500_000_000denom1"), math.NewInt(800_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(1), parseDec("1.1"), parseCoin("300_000_000denom2"), math.NewInt(0), true)
+	s.placeBidBatchMany(auction.Id, s.addr(5), parseDec("1.2"), parseCoin("300_000_000denom1"), math.NewInt(600_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(4), parseDec("0.8"), parseCoin("100_000_000denom1"), math.NewInt(800_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(2), parseDec("0.7"), parseCoin("100_000_000denom1"), math.NewInt(0), true)
+	s.placeBidBatchMany(auction.Id, s.addr(6), parseDec("0.5"), parseCoin("100_000_000denom1"), math.NewInt(600_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.8"), parseCoin("300_000_000denom2"), math.NewInt(0), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(7), parseDec("0.6"), parseCoin("200_000_000denom2"), math.NewInt(400_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(8), parseDec("0.8"), parseCoin("400_000_000denom1"), math.NewInt(400_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(9), parseDec("0.6"), parseCoin("200_000_000denom1"), math.NewInt(200_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(6), parseDec("0.5"), parseCoin("300_000_000denom2"), math.NewInt(0), true)
+	s.placeBidBatchMany(auction.Id, s.addr(10), parseDec("0.6"), parseCoin("100_000_000denom1"), math.NewInt(200_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(3), parseDec("0.7"), parseCoin("560_000_000denom2"), math.NewInt(0), true)
 
-	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
-	s.Require().True(found)
+	a, err := s.keeper.Auction.Get(s.ctx, auction.Id)
+	s.Require().NoError(err)
 
-	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
+	mInfo, err := s.keeper.CalculateBatchAllocation(s.ctx, a)
+	s.Require().NoError(err)
 
 	// Checking
 	s.Require().Equal(int64(13), mInfo.MatchedLen)
 	matchingPrice := parseDec("0.5")
 	s.Require().Equal(mInfo.MatchedPrice, matchingPrice)
 
-	matchedAmt1 := sdk.NewInt(800_000_000)
-	matchedAmt2 := sdk.NewInt(1000_000_000)
-	matchedAmt3 := sdk.NewInt(800_000_000)
-	matchedAmt4 := sdk.NewInt(100_000_000)
-	matchedAmt5 := sdk.NewInt(300_000_000)
-	matchedAmt6 := sdk.NewInt(600_000_000)
-	matchedAmt7 := sdk.NewInt(400_000_000)
-	matchedAmt8 := sdk.NewInt(400_000_000)
-	matchedAmt9 := sdk.NewInt(200_000_000)
-	matchedAmt10 := sdk.NewInt(100_000_000)
+	matchedAmt1 := math.NewInt(800_000_000)
+	matchedAmt2 := math.NewInt(1000_000_000)
+	matchedAmt3 := math.NewInt(800_000_000)
+	matchedAmt4 := math.NewInt(100_000_000)
+	matchedAmt5 := math.NewInt(300_000_000)
+	matchedAmt6 := math.NewInt(600_000_000)
+	matchedAmt7 := math.NewInt(400_000_000)
+	matchedAmt8 := math.NewInt(400_000_000)
+	matchedAmt9 := math.NewInt(200_000_000)
+	matchedAmt10 := math.NewInt(100_000_000)
 
-	totalMatchedAmt := sdk.NewInt(4700_000_000)
+	totalMatchedAmt := math.NewInt(4700_000_000)
 
 	s.Require().Equal(mInfo.TotalMatchedAmount, totalMatchedAmt)
 	s.Require().Equal(mInfo.AllocationMap[s.addr(1).String()], matchedAmt1)
@@ -790,16 +799,16 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2_LimitedDifferent() {
 	s.Require().Equal(mInfo.AllocationMap[s.addr(9).String()], matchedAmt9)
 	s.Require().Equal(mInfo.AllocationMap[s.addr(10).String()], matchedAmt10)
 
-	reservedMatchedAmt1 := sdk.NewInt(400_000_000)
-	reservedMatchedAmt2 := sdk.NewInt(500_000_000)
-	reservedMatchedAmt3 := sdk.NewInt(400_000_000)
-	reservedMatchedAmt4 := sdk.NewInt(50_000_000)
-	reservedMatchedAmt5 := sdk.NewInt(150_000_000)
-	reservedMatchedAmt6 := sdk.NewInt(300_000_000)
-	reservedMatchedAmt7 := sdk.NewInt(200_000_000)
-	reservedMatchedAmt8 := sdk.NewInt(200_000_000)
-	reservedMatchedAmt9 := sdk.NewInt(100_000_000)
-	reservedMatchedAmt10 := sdk.NewInt(50_000_000)
+	reservedMatchedAmt1 := math.NewInt(400_000_000)
+	reservedMatchedAmt2 := math.NewInt(500_000_000)
+	reservedMatchedAmt3 := math.NewInt(400_000_000)
+	reservedMatchedAmt4 := math.NewInt(50_000_000)
+	reservedMatchedAmt5 := math.NewInt(150_000_000)
+	reservedMatchedAmt6 := math.NewInt(300_000_000)
+	reservedMatchedAmt7 := math.NewInt(200_000_000)
+	reservedMatchedAmt8 := math.NewInt(200_000_000)
+	reservedMatchedAmt9 := math.NewInt(100_000_000)
+	reservedMatchedAmt10 := math.NewInt(50_000_000)
 
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(1).String()], reservedMatchedAmt1)
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], reservedMatchedAmt2)
@@ -812,16 +821,16 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2_LimitedDifferent() {
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(9).String()], reservedMatchedAmt9)
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(10).String()], reservedMatchedAmt10)
 
-	refundAmt1 := sdk.NewInt(100_000_000)
-	refundAmt2 := sdk.NewInt(70_000_000)
-	refundAmt3 := sdk.NewInt(910_000_000)
-	refundAmt4 := sdk.NewInt(30_000_000)
-	refundAmt5 := sdk.NewInt(210_000_000)
-	refundAmt6 := sdk.NewInt(50_000_000)
-	refundAmt7 := sdk.NewInt(0)
-	refundAmt8 := sdk.NewInt(120_000_000)
-	refundAmt9 := sdk.NewInt(20_000_000)
-	refundAmt10 := sdk.NewInt(10_000_000)
+	refundAmt1 := math.NewInt(100_000_000)
+	refundAmt2 := math.NewInt(70_000_000)
+	refundAmt3 := math.NewInt(910_000_000)
+	refundAmt4 := math.NewInt(30_000_000)
+	refundAmt5 := math.NewInt(210_000_000)
+	refundAmt6 := math.NewInt(50_000_000)
+	refundAmt7 := math.NewInt(0)
+	refundAmt8 := math.NewInt(120_000_000)
+	refundAmt9 := math.NewInt(20_000_000)
+	refundAmt10 := math.NewInt(10_000_000)
 
 	s.Require().True(mInfo.RefundMap[s.addr(1).String()].Equal(refundAmt1))
 	s.Require().True(mInfo.RefundMap[s.addr(2).String()].Equal(refundAmt2))
@@ -835,7 +844,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2_LimitedDifferent() {
 	s.Require().True(mInfo.RefundMap[s.addr(10).String()].Equal(refundAmt10))
 
 	// Distribute selling coin
-	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
+	err = s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
 	err = s.keeper.RefundRemainingSellingCoin(s.ctx, auction)
@@ -845,7 +854,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed2_LimitedDifferent() {
 	s.Require().True(s.getBalance(auction.GetSellingReserveAddress(), auction.SellingCoin.Denom).IsZero())
 
 	// The auctioneer must have sellingCoin.Amount - TotalMatchedAmount
-	s.Require().Equal(s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount, sdk.NewInt(300_000_000))
+	s.Require().Equal(s.getBalance(s.addr(0), auction.GetSellingCoin().Denom).Amount, math.NewInt(300_000_000))
 
 	// The bidders must have the matched selling coin
 	s.Require().Equal(s.getBalance(s.addr(1), auction.GetSellingCoin().Denom).Amount, matchedAmt1)
@@ -873,61 +882,62 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed3() {
 		"denom2",
 		[]types.VestingSchedule{},
 		1,
-		sdk.MustNewDecFromStr("0.2"),
+		math.LegacyMustNewDecFromStr("0.2"),
 		time.Now().AddDate(0, 0, -1),
 		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("10"), parseCoin("200_000_000denom1"), sdk.NewInt(2500_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("11"), parseCoin("2000_000_000denom2"), sdk.NewInt(2500_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(3), parseDec("10.5"), parseCoin("500_000_000denom1"), sdk.NewInt(2500_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(4), parseDec("10.2"), parseCoin("1500_000_000denom2"), sdk.NewInt(2500_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(5), parseDec("10.8"), parseCoin("300_000_000denom1"), sdk.NewInt(2500_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(6), parseDec("11.4"), parseCoin("2500_000_000denom2"), sdk.NewInt(2500_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(7), parseDec("11.3"), parseCoin("100_000_000denom1"), sdk.NewInt(2500_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(8), parseDec("9.9"), parseCoin("2500_000_000denom2"), sdk.NewInt(2500_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(9), parseDec("10.1"), parseCoin("300_000_000denom1"), sdk.NewInt(2500_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(10), parseDec("10.45"), parseCoin("2000_000_000denom2"), sdk.NewInt(2500_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(11), parseDec("10.75"), parseCoin("150_000_000denom1"), sdk.NewInt(2500_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(12), parseDec("10.99"), parseCoin("1500_000_000denom2"), sdk.NewInt(2500_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(13), parseDec("10.2"), parseCoin("200_000_000denom1"), sdk.NewInt(2500_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(14), parseDec("9.87"), parseCoin("2000_000_000denom2"), sdk.NewInt(2500_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(15), parseDec("10.25"), parseCoin("200_000_000denom1"), sdk.NewInt(2500_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(16), parseDec("10.48"), parseCoin("2500_000_000denom2"), sdk.NewInt(2500_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(17), parseDec("10.52"), parseCoin("180_000_000denom1"), sdk.NewInt(2500_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(4), parseDec("10.8"), parseCoin("220_000_000denom1"), sdk.NewInt(0), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(5), parseDec("10.5"), parseCoin("1500_000_000denom2"), sdk.NewInt(0), true)
-	s.placeBidBatchMany(auction.Id, s.addr(6), parseDec("9.7"), parseCoin("250_000_000denom1"), sdk.NewInt(0), true)
+	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("10"), parseCoin("200_000_000denom1"), math.NewInt(2500_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("11"), parseCoin("2000_000_000denom2"), math.NewInt(2500_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(3), parseDec("10.5"), parseCoin("500_000_000denom1"), math.NewInt(2500_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(4), parseDec("10.2"), parseCoin("1500_000_000denom2"), math.NewInt(2500_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(5), parseDec("10.8"), parseCoin("300_000_000denom1"), math.NewInt(2500_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(6), parseDec("11.4"), parseCoin("2500_000_000denom2"), math.NewInt(2500_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(7), parseDec("11.3"), parseCoin("100_000_000denom1"), math.NewInt(2500_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(8), parseDec("9.9"), parseCoin("2500_000_000denom2"), math.NewInt(2500_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(9), parseDec("10.1"), parseCoin("300_000_000denom1"), math.NewInt(2500_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(10), parseDec("10.45"), parseCoin("2000_000_000denom2"), math.NewInt(2500_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(11), parseDec("10.75"), parseCoin("150_000_000denom1"), math.NewInt(2500_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(12), parseDec("10.99"), parseCoin("1500_000_000denom2"), math.NewInt(2500_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(13), parseDec("10.2"), parseCoin("200_000_000denom1"), math.NewInt(2500_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(14), parseDec("9.87"), parseCoin("2000_000_000denom2"), math.NewInt(2500_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(15), parseDec("10.25"), parseCoin("200_000_000denom1"), math.NewInt(2500_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(16), parseDec("10.48"), parseCoin("2500_000_000denom2"), math.NewInt(2500_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(17), parseDec("10.52"), parseCoin("180_000_000denom1"), math.NewInt(2500_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(4), parseDec("10.8"), parseCoin("220_000_000denom1"), math.NewInt(0), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(5), parseDec("10.5"), parseCoin("1500_000_000denom2"), math.NewInt(0), true)
+	s.placeBidBatchMany(auction.Id, s.addr(6), parseDec("9.7"), parseCoin("250_000_000denom1"), math.NewInt(0), true)
 
-	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
-	s.Require().True(found)
+	a, err := s.keeper.Auction.Get(s.ctx, auction.Id)
+	s.Require().NoError(err)
 
-	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
+	mInfo, err := s.keeper.CalculateBatchAllocation(s.ctx, a)
+	s.Require().NoError(err)
 
 	// Checking
 	s.Require().Equal(mInfo.MatchedLen, int64(11))
 	matchingPrice := parseDec("10.48")
 	s.Require().Equal(mInfo.MatchedPrice, matchingPrice)
 
-	matchedAmt1 := sdk.NewInt(0)
-	matchedAmt2 := sdk.NewDec(2000_000_000).QuoTruncate(matchingPrice).TruncateInt()
-	matchedAmt3 := sdk.NewInt(500_000_000)
-	matchedAmt4 := sdk.NewInt(220_000_000)
-	matchedAmt5 := sdk.NewDec(1500_000_000).QuoTruncate(matchingPrice).TruncateInt().Add(sdk.NewInt(300_000_000))
-	matchedAmt6 := sdk.NewDec(2500_000_000).QuoTruncate(matchingPrice).TruncateInt()
-	matchedAmt7 := sdk.NewInt(100_000_000)
-	matchedAmt8 := sdk.NewInt(0)
-	matchedAmt9 := sdk.NewInt(0)
-	matchedAmt10 := sdk.NewInt(0)
-	matchedAmt11 := sdk.NewInt(150_000_000)
-	matchedAmt12 := sdk.NewDec(1500_000_000).QuoTruncate(matchingPrice).TruncateInt()
-	matchedAmt13 := sdk.NewInt(0)
-	matchedAmt14 := sdk.NewInt(0)
-	matchedAmt15 := sdk.NewInt(0)
-	matchedAmt16 := sdk.NewDec(2500_000_000).QuoTruncate(matchingPrice).TruncateInt()
-	matchedAmt17 := sdk.NewInt(180_000_000)
+	matchedAmt1 := math.NewInt(0)
+	matchedAmt2 := math.LegacyNewDec(2000_000_000).QuoTruncate(matchingPrice).TruncateInt()
+	matchedAmt3 := math.NewInt(500_000_000)
+	matchedAmt4 := math.NewInt(220_000_000)
+	matchedAmt5 := math.LegacyNewDec(1500_000_000).QuoTruncate(matchingPrice).TruncateInt().Add(math.NewInt(300_000_000))
+	matchedAmt6 := math.LegacyNewDec(2500_000_000).QuoTruncate(matchingPrice).TruncateInt()
+	matchedAmt7 := math.NewInt(100_000_000)
+	matchedAmt8 := math.NewInt(0)
+	matchedAmt9 := math.NewInt(0)
+	matchedAmt10 := math.NewInt(0)
+	matchedAmt11 := math.NewInt(150_000_000)
+	matchedAmt12 := math.LegacyNewDec(1500_000_000).QuoTruncate(matchingPrice).TruncateInt()
+	matchedAmt13 := math.NewInt(0)
+	matchedAmt14 := math.NewInt(0)
+	matchedAmt15 := math.NewInt(0)
+	matchedAmt16 := math.LegacyNewDec(2500_000_000).QuoTruncate(matchingPrice).TruncateInt()
+	matchedAmt17 := math.NewInt(180_000_000)
 
 	totalMatchedAmt := matchedAmt2.Add(matchedAmt3).
 		Add(matchedAmt4).
@@ -958,23 +968,23 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed3() {
 	s.Require().Equal(mInfo.AllocationMap[s.addr(16).String()], matchedAmt16)
 	s.Require().Equal(mInfo.AllocationMap[s.addr(17).String()], matchedAmt17)
 
-	reservedMatchedAmt1 := sdk.NewInt(0)
-	reservedMatchedAmt2 := sdk.NewInt(1999_999_994)
-	reservedMatchedAmt3 := sdk.NewDecFromInt(matchedAmt3).Mul(matchingPrice).Ceil().TruncateInt()
-	reservedMatchedAmt4 := sdk.NewDecFromInt(matchedAmt4).Mul(matchingPrice).Ceil().TruncateInt()
-	reservedMatchedAmt5 := sdk.NewDecFromInt(matchedAmt5).Mul(matchingPrice).Ceil().TruncateInt()
-	reservedMatchedAmt6 := sdk.NewInt(2499_999_997)
-	reservedMatchedAmt7 := sdk.NewDecFromInt(matchedAmt7).Mul(matchingPrice).Ceil().TruncateInt()
-	reservedMatchedAmt8 := sdk.NewInt(0)
-	reservedMatchedAmt9 := sdk.NewInt(0)
-	reservedMatchedAmt10 := sdk.NewInt(0)
-	reservedMatchedAmt11 := sdk.NewDecFromInt(matchedAmt11).Mul(matchingPrice).Ceil().TruncateInt()
-	reservedMatchedAmt12 := sdk.NewInt(1499_999_990)
-	reservedMatchedAmt13 := sdk.NewInt(0)
-	reservedMatchedAmt14 := sdk.NewInt(0)
-	reservedMatchedAmt15 := sdk.NewInt(0)
-	reservedMatchedAmt16 := sdk.NewInt(2499_999_997)
-	reservedMatchedAmt17 := sdk.NewDecFromInt(matchedAmt17).Mul(matchingPrice).Ceil().TruncateInt()
+	reservedMatchedAmt1 := math.NewInt(0)
+	reservedMatchedAmt2 := math.NewInt(1999_999_994)
+	reservedMatchedAmt3 := math.LegacyNewDecFromInt(matchedAmt3).Mul(matchingPrice).Ceil().TruncateInt()
+	reservedMatchedAmt4 := math.LegacyNewDecFromInt(matchedAmt4).Mul(matchingPrice).Ceil().TruncateInt()
+	reservedMatchedAmt5 := math.LegacyNewDecFromInt(matchedAmt5).Mul(matchingPrice).Ceil().TruncateInt()
+	reservedMatchedAmt6 := math.NewInt(2499_999_997)
+	reservedMatchedAmt7 := math.LegacyNewDecFromInt(matchedAmt7).Mul(matchingPrice).Ceil().TruncateInt()
+	reservedMatchedAmt8 := math.NewInt(0)
+	reservedMatchedAmt9 := math.NewInt(0)
+	reservedMatchedAmt10 := math.NewInt(0)
+	reservedMatchedAmt11 := math.LegacyNewDecFromInt(matchedAmt11).Mul(matchingPrice).Ceil().TruncateInt()
+	reservedMatchedAmt12 := math.NewInt(1499_999_990)
+	reservedMatchedAmt13 := math.NewInt(0)
+	reservedMatchedAmt14 := math.NewInt(0)
+	reservedMatchedAmt15 := math.NewInt(0)
+	reservedMatchedAmt16 := math.NewInt(2499_999_997)
+	reservedMatchedAmt17 := math.LegacyNewDecFromInt(matchedAmt17).Mul(matchingPrice).Ceil().TruncateInt()
 
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(1).String()], reservedMatchedAmt1)
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], reservedMatchedAmt2)
@@ -994,23 +1004,23 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed3() {
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(16).String()], reservedMatchedAmt16)
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(17).String()], reservedMatchedAmt17)
 
-	refundAmt1 := sdk.NewDec(200_000_000).Mul(parseDec("10")).Ceil().TruncateInt()
-	refundAmt2 := sdk.NewInt(2000_000_000).Sub(reservedMatchedAmt2)
-	refundAmt3 := sdk.NewDec(500_000_000).Mul(parseDec("10.5")).Ceil().TruncateInt().Sub(reservedMatchedAmt3)
-	refundAmt4 := sdk.NewDec(220_000_000).Mul(parseDec("10.8")).Ceil().TruncateInt().Add(sdk.NewInt(1500_000_000)).Sub(reservedMatchedAmt4)
-	refundAmt5 := sdk.NewDec(300_000_000).Mul(parseDec("10.8")).Ceil().TruncateInt().Add(sdk.NewInt(1500_000_000)).Sub(reservedMatchedAmt5)
-	refundAmt6 := sdk.NewDec(250_000_000).Mul(parseDec("9.7")).Ceil().TruncateInt().Add(sdk.NewInt(2500_000_000)).Sub(reservedMatchedAmt6)
-	refundAmt7 := sdk.NewDec(100_000_000).Mul(parseDec("11.3")).Ceil().TruncateInt().Sub(reservedMatchedAmt7)
-	refundAmt8 := sdk.NewInt(2500_000_000)
-	refundAmt9 := sdk.NewDec(300_000_000).Mul(parseDec("10.1")).Ceil().TruncateInt()
-	refundAmt10 := sdk.NewInt(2000_000_000)
-	refundAmt11 := sdk.NewDec(150_000_000).Mul(parseDec("10.75")).Ceil().TruncateInt().Sub(reservedMatchedAmt11)
-	refundAmt12 := sdk.NewInt(1500_000_000).Sub(reservedMatchedAmt12)
-	refundAmt13 := sdk.NewDec(200_000_000).Mul(parseDec("10.2")).Ceil().TruncateInt()
-	refundAmt14 := sdk.NewInt(2000_000_000)
-	refundAmt15 := sdk.NewDec(200_000_000).Mul(parseDec("10.25")).Ceil().TruncateInt()
-	refundAmt16 := sdk.NewInt(2500_000_000).Sub(reservedMatchedAmt16)
-	refundAmt17 := sdk.NewDec(180_000_000).Mul(parseDec("10.52")).Ceil().TruncateInt().Sub(reservedMatchedAmt17)
+	refundAmt1 := math.LegacyNewDec(200_000_000).Mul(parseDec("10")).Ceil().TruncateInt()
+	refundAmt2 := math.NewInt(2000_000_000).Sub(reservedMatchedAmt2)
+	refundAmt3 := math.LegacyNewDec(500_000_000).Mul(parseDec("10.5")).Ceil().TruncateInt().Sub(reservedMatchedAmt3)
+	refundAmt4 := math.LegacyNewDec(220_000_000).Mul(parseDec("10.8")).Ceil().TruncateInt().Add(math.NewInt(1500_000_000)).Sub(reservedMatchedAmt4)
+	refundAmt5 := math.LegacyNewDec(300_000_000).Mul(parseDec("10.8")).Ceil().TruncateInt().Add(math.NewInt(1500_000_000)).Sub(reservedMatchedAmt5)
+	refundAmt6 := math.LegacyNewDec(250_000_000).Mul(parseDec("9.7")).Ceil().TruncateInt().Add(math.NewInt(2500_000_000)).Sub(reservedMatchedAmt6)
+	refundAmt7 := math.LegacyNewDec(100_000_000).Mul(parseDec("11.3")).Ceil().TruncateInt().Sub(reservedMatchedAmt7)
+	refundAmt8 := math.NewInt(2500_000_000)
+	refundAmt9 := math.LegacyNewDec(300_000_000).Mul(parseDec("10.1")).Ceil().TruncateInt()
+	refundAmt10 := math.NewInt(2000_000_000)
+	refundAmt11 := math.LegacyNewDec(150_000_000).Mul(parseDec("10.75")).Ceil().TruncateInt().Sub(reservedMatchedAmt11)
+	refundAmt12 := math.NewInt(1500_000_000).Sub(reservedMatchedAmt12)
+	refundAmt13 := math.LegacyNewDec(200_000_000).Mul(parseDec("10.2")).Ceil().TruncateInt()
+	refundAmt14 := math.NewInt(2000_000_000)
+	refundAmt15 := math.LegacyNewDec(200_000_000).Mul(parseDec("10.25")).Ceil().TruncateInt()
+	refundAmt16 := math.NewInt(2500_000_000).Sub(reservedMatchedAmt16)
+	refundAmt17 := math.LegacyNewDec(180_000_000).Mul(parseDec("10.52")).Ceil().TruncateInt().Sub(reservedMatchedAmt17)
 
 	s.Require().True(mInfo.RefundMap[s.addr(1).String()].Equal(refundAmt1))
 	s.Require().True(mInfo.RefundMap[s.addr(2).String()].Equal(refundAmt2))
@@ -1031,7 +1041,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed3() {
 	s.Require().True(mInfo.RefundMap[s.addr(17).String()].Equal(refundAmt17))
 
 	// Distribute selling coin
-	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
+	err = s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
 	err = s.keeper.RefundRemainingSellingCoin(s.ctx, auction)
@@ -1076,61 +1086,62 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed3_LimitedDifferent() {
 		"denom2",
 		[]types.VestingSchedule{},
 		1,
-		sdk.MustNewDecFromStr("0.2"),
+		math.LegacyMustNewDecFromStr("0.2"),
 		time.Now().AddDate(0, 0, -1),
 		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
 		true,
 	)
 	s.Require().Equal(types.AuctionStatusStarted, auction.GetStatus())
 
-	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("10"), parseCoin("200_000_000denom1"), sdk.NewInt(500_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("11"), parseCoin("2000_000_000denom2"), sdk.NewInt(500_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(3), parseDec("10.5"), parseCoin("500_000_000denom1"), sdk.NewInt(500_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(4), parseDec("10.2"), parseCoin("1500_000_000denom2"), sdk.NewInt(200_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(5), parseDec("10.8"), parseCoin("200_000_000denom1"), sdk.NewInt(200_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(6), parseDec("11.4"), parseCoin("2200_000_000denom2"), sdk.NewInt(200_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(7), parseDec("11.3"), parseCoin("100_000_000denom1"), sdk.NewInt(200_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(8), parseDec("9.9"), parseCoin("1900_000_000denom2"), sdk.NewInt(200_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(9), parseDec("10.1"), parseCoin("200_000_000denom1"), sdk.NewInt(200_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(10), parseDec("10.45"), parseCoin("2000_000_000denom2"), sdk.NewInt(200_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(11), parseDec("10.75"), parseCoin("100_000_000denom1"), sdk.NewInt(100_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(12), parseDec("10.99"), parseCoin("1050_000_000denom2"), sdk.NewInt(100_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(13), parseDec("10.2"), parseCoin("100_000_000denom1"), sdk.NewInt(100_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(14), parseDec("9.87"), parseCoin("980_000_000denom2"), sdk.NewInt(100_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(15), parseDec("10.25"), parseCoin("100_000_000denom1"), sdk.NewInt(100_000_000), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(16), parseDec("10.48"), parseCoin("1000_000_000denom2"), sdk.NewInt(100_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(17), parseDec("10.52"), parseCoin("100_000_000denom1"), sdk.NewInt(100_000_000), true)
-	s.placeBidBatchMany(auction.Id, s.addr(4), parseDec("10.8"), parseCoin("200_000_000denom1"), sdk.NewInt(0), true)
-	s.placeBidBatchWorth(auction.Id, s.addr(5), parseDec("10.5"), parseCoin("1500_000_000denom2"), sdk.NewInt(0), true)
-	s.placeBidBatchMany(auction.Id, s.addr(6), parseDec("9.7"), parseCoin("200_000_000denom1"), sdk.NewInt(0), true)
+	s.placeBidBatchMany(auction.Id, s.addr(1), parseDec("10"), parseCoin("200_000_000denom1"), math.NewInt(500_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(2), parseDec("11"), parseCoin("2000_000_000denom2"), math.NewInt(500_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(3), parseDec("10.5"), parseCoin("500_000_000denom1"), math.NewInt(500_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(4), parseDec("10.2"), parseCoin("1500_000_000denom2"), math.NewInt(200_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(5), parseDec("10.8"), parseCoin("200_000_000denom1"), math.NewInt(200_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(6), parseDec("11.4"), parseCoin("2200_000_000denom2"), math.NewInt(200_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(7), parseDec("11.3"), parseCoin("100_000_000denom1"), math.NewInt(200_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(8), parseDec("9.9"), parseCoin("1900_000_000denom2"), math.NewInt(200_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(9), parseDec("10.1"), parseCoin("200_000_000denom1"), math.NewInt(200_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(10), parseDec("10.45"), parseCoin("2000_000_000denom2"), math.NewInt(200_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(11), parseDec("10.75"), parseCoin("100_000_000denom1"), math.NewInt(100_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(12), parseDec("10.99"), parseCoin("1050_000_000denom2"), math.NewInt(100_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(13), parseDec("10.2"), parseCoin("100_000_000denom1"), math.NewInt(100_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(14), parseDec("9.87"), parseCoin("980_000_000denom2"), math.NewInt(100_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(15), parseDec("10.25"), parseCoin("100_000_000denom1"), math.NewInt(100_000_000), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(16), parseDec("10.48"), parseCoin("1000_000_000denom2"), math.NewInt(100_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(17), parseDec("10.52"), parseCoin("100_000_000denom1"), math.NewInt(100_000_000), true)
+	s.placeBidBatchMany(auction.Id, s.addr(4), parseDec("10.8"), parseCoin("200_000_000denom1"), math.NewInt(0), true)
+	s.placeBidBatchWorth(auction.Id, s.addr(5), parseDec("10.5"), parseCoin("1500_000_000denom2"), math.NewInt(0), true)
+	s.placeBidBatchMany(auction.Id, s.addr(6), parseDec("9.7"), parseCoin("200_000_000denom1"), math.NewInt(0), true)
 
-	a, found := s.keeper.GetAuction(s.ctx, auction.Id)
-	s.Require().True(found)
+	a, err := s.keeper.Auction.Get(s.ctx, auction.Id)
+	s.Require().NoError(err)
 
-	mInfo := s.keeper.CalculateBatchAllocation(s.ctx, a)
+	mInfo, err := s.keeper.CalculateBatchAllocation(s.ctx, a)
+	s.Require().NoError(err)
 
 	// Checking
 	s.Require().Equal(int64(14), mInfo.MatchedLen)
 	matchingPrice := parseDec("10.1")
 	s.Require().Equal(mInfo.MatchedPrice, matchingPrice)
 
-	matchedAmt1 := sdk.NewInt(0)
-	matchedAmt2 := sdk.NewDec(2000_000_000).QuoTruncate(matchingPrice).TruncateInt()
-	matchedAmt3 := sdk.NewInt(500_000_000)
-	matchedAmt4 := sdk.NewInt(200_000_000)
-	matchedAmt5 := sdk.NewInt(200_000_000)
-	matchedAmt6 := sdk.NewInt(200_000_000)
-	matchedAmt7 := sdk.NewInt(100_000_000)
-	matchedAmt8 := sdk.NewInt(0)
-	matchedAmt9 := sdk.NewInt(200_000_000)
-	matchedAmt10 := sdk.NewDec(2000_000_000).QuoTruncate(matchingPrice).TruncateInt()
-	matchedAmt11 := sdk.NewInt(100_000_000)
-	matchedAmt12 := sdk.NewInt(100_000_000)
-	matchedAmt13 := sdk.NewInt(100_000_000)
-	matchedAmt14 := sdk.NewInt(0)
-	matchedAmt15 := sdk.NewInt(100_000_000)
-	matchedAmt16 := sdk.NewDec(1000_000_000).QuoTruncate(matchingPrice).TruncateInt()
-	matchedAmt17 := sdk.NewInt(100_000_000)
+	matchedAmt1 := math.NewInt(0)
+	matchedAmt2 := math.LegacyNewDec(2000_000_000).QuoTruncate(matchingPrice).TruncateInt()
+	matchedAmt3 := math.NewInt(500_000_000)
+	matchedAmt4 := math.NewInt(200_000_000)
+	matchedAmt5 := math.NewInt(200_000_000)
+	matchedAmt6 := math.NewInt(200_000_000)
+	matchedAmt7 := math.NewInt(100_000_000)
+	matchedAmt8 := math.NewInt(0)
+	matchedAmt9 := math.NewInt(200_000_000)
+	matchedAmt10 := math.LegacyNewDec(2000_000_000).QuoTruncate(matchingPrice).TruncateInt()
+	matchedAmt11 := math.NewInt(100_000_000)
+	matchedAmt12 := math.NewInt(100_000_000)
+	matchedAmt13 := math.NewInt(100_000_000)
+	matchedAmt14 := math.NewInt(0)
+	matchedAmt15 := math.NewInt(100_000_000)
+	matchedAmt16 := math.LegacyNewDec(1000_000_000).QuoTruncate(matchingPrice).TruncateInt()
+	matchedAmt17 := math.NewInt(100_000_000)
 
 	totalMatchedAmt := matchedAmt2.Add(matchedAmt3).
 		Add(matchedAmt4).
@@ -1165,23 +1176,23 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed3_LimitedDifferent() {
 	s.Require().Equal(mInfo.AllocationMap[s.addr(16).String()], matchedAmt16)
 	s.Require().Equal(mInfo.AllocationMap[s.addr(17).String()], matchedAmt17)
 
-	reservedMatchedAmt1 := sdk.NewInt(0)
-	reservedMatchedAmt2 := sdk.NewInt(1999_999_991)
-	reservedMatchedAmt3 := sdk.NewInt(5050_000_000)
-	reservedMatchedAmt4 := sdk.NewInt(2020_000_000)
-	reservedMatchedAmt5 := sdk.NewInt(2020_000_000)
-	reservedMatchedAmt6 := sdk.NewInt(2020_000_000)
-	reservedMatchedAmt7 := sdk.NewInt(1010_000_000)
-	reservedMatchedAmt8 := sdk.NewInt(0)
-	reservedMatchedAmt9 := sdk.NewInt(2020_000_000)
-	reservedMatchedAmt10 := sdk.NewInt(1999_999_991)
-	reservedMatchedAmt11 := sdk.NewInt(1010_000_000)
-	reservedMatchedAmt12 := sdk.NewInt(1010_000_000)
-	reservedMatchedAmt13 := sdk.NewInt(1010_000_000)
-	reservedMatchedAmt14 := sdk.NewInt(0)
-	reservedMatchedAmt15 := sdk.NewInt(1010_000_000)
-	reservedMatchedAmt16 := sdk.NewInt(999_999_990)
-	reservedMatchedAmt17 := sdk.NewInt(1010_000_000)
+	reservedMatchedAmt1 := math.NewInt(0)
+	reservedMatchedAmt2 := math.NewInt(1999_999_991)
+	reservedMatchedAmt3 := math.NewInt(5050_000_000)
+	reservedMatchedAmt4 := math.NewInt(2020_000_000)
+	reservedMatchedAmt5 := math.NewInt(2020_000_000)
+	reservedMatchedAmt6 := math.NewInt(2020_000_000)
+	reservedMatchedAmt7 := math.NewInt(1010_000_000)
+	reservedMatchedAmt8 := math.NewInt(0)
+	reservedMatchedAmt9 := math.NewInt(2020_000_000)
+	reservedMatchedAmt10 := math.NewInt(1999_999_991)
+	reservedMatchedAmt11 := math.NewInt(1010_000_000)
+	reservedMatchedAmt12 := math.NewInt(1010_000_000)
+	reservedMatchedAmt13 := math.NewInt(1010_000_000)
+	reservedMatchedAmt14 := math.NewInt(0)
+	reservedMatchedAmt15 := math.NewInt(1010_000_000)
+	reservedMatchedAmt16 := math.NewInt(999_999_990)
+	reservedMatchedAmt17 := math.NewInt(1010_000_000)
 
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(1).String()], reservedMatchedAmt1)
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(2).String()], reservedMatchedAmt2)
@@ -1201,23 +1212,23 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed3_LimitedDifferent() {
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(16).String()], reservedMatchedAmt16)
 	s.Require().Equal(mInfo.ReservedMatchedMap[s.addr(17).String()], reservedMatchedAmt17)
 
-	refundAmt1 := sdk.NewInt(2000_000_000)
-	refundAmt2 := sdk.NewInt(9)
-	refundAmt3 := sdk.NewInt(200_000_000)
-	refundAmt4 := sdk.NewInt(1640_000_000)
-	refundAmt5 := sdk.NewInt(1640_000_000)
-	refundAmt6 := sdk.NewInt(2120_000_000)
-	refundAmt7 := sdk.NewInt(120_000_000)
-	refundAmt8 := sdk.NewInt(1900_000_000)
-	refundAmt9 := sdk.NewInt(0)
-	refundAmt10 := sdk.NewInt(9)
-	refundAmt11 := sdk.NewInt(65_000_000)
-	refundAmt12 := sdk.NewInt(40_000_000)
-	refundAmt13 := sdk.NewInt(10_000_000)
-	refundAmt14 := sdk.NewInt(980_000_000)
-	refundAmt15 := sdk.NewInt(15_000_000)
-	refundAmt16 := sdk.NewInt(10)
-	refundAmt17 := sdk.NewInt(42_000_000)
+	refundAmt1 := math.NewInt(2000_000_000)
+	refundAmt2 := math.NewInt(9)
+	refundAmt3 := math.NewInt(200_000_000)
+	refundAmt4 := math.NewInt(1640_000_000)
+	refundAmt5 := math.NewInt(1640_000_000)
+	refundAmt6 := math.NewInt(2120_000_000)
+	refundAmt7 := math.NewInt(120_000_000)
+	refundAmt8 := math.NewInt(1900_000_000)
+	refundAmt9 := math.NewInt(0)
+	refundAmt10 := math.NewInt(9)
+	refundAmt11 := math.NewInt(65_000_000)
+	refundAmt12 := math.NewInt(40_000_000)
+	refundAmt13 := math.NewInt(10_000_000)
+	refundAmt14 := math.NewInt(980_000_000)
+	refundAmt15 := math.NewInt(15_000_000)
+	refundAmt16 := math.NewInt(10)
+	refundAmt17 := math.NewInt(42_000_000)
 
 	s.Require().True(mInfo.RefundMap[s.addr(1).String()].Equal(refundAmt1))
 	s.Require().True(mInfo.RefundMap[s.addr(2).String()].Equal(refundAmt2))
@@ -1238,7 +1249,7 @@ func (s *KeeperTestSuite) TestCalculateAllocation_Mixed3_LimitedDifferent() {
 	s.Require().True(mInfo.RefundMap[s.addr(17).String()].Equal(refundAmt17))
 
 	// Distribute selling coin
-	err := s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
+	err = s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)
 	s.Require().NoError(err)
 
 	err = s.keeper.RefundRemainingSellingCoin(s.ctx, auction)

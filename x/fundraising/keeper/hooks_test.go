@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"context"
 	"time"
 
 	"cosmossdk.io/math"
@@ -27,120 +28,130 @@ type MockFundraisingHooksReceiver struct {
 }
 
 func (h *MockFundraisingHooksReceiver) BeforeFixedPriceAuctionCreated(
-	ctx sdk.Context,
+	ctx context.Context,
 	auctioneer string,
-	startPrice sdk.Dec,
+	startPrice math.LegacyDec,
 	sellingCoin sdk.Coin,
 	payingCoinDenom string,
 	vestingSchedules []types.VestingSchedule,
 	startTime time.Time,
 	endTime time.Time,
-) {
+) error {
 	h.BeforeFixedPriceAuctionCreatedValid = true
+	return nil
 }
 
 func (h *MockFundraisingHooksReceiver) AfterFixedPriceAuctionCreated(
-	ctx sdk.Context,
+	ctx context.Context,
 	auctionId uint64,
 	auctioneer string,
-	startPrice sdk.Dec,
+	startPrice math.LegacyDec,
 	sellingCoin sdk.Coin,
 	payingCoinDenom string,
 	vestingSchedules []types.VestingSchedule,
 	startTime time.Time,
 	endTime time.Time,
-) {
+) error {
 	h.AfterFixedPriceAuctionCreatedValid = true
+	return nil
 }
 
 func (h *MockFundraisingHooksReceiver) BeforeBatchAuctionCreated(
-	ctx sdk.Context,
+	ctx context.Context,
 	auctioneer string,
-	startPrice sdk.Dec,
-	minBidPrice sdk.Dec,
+	startPrice math.LegacyDec,
+	minBidPrice math.LegacyDec,
 	sellingCoin sdk.Coin,
 	payingCoinDenom string,
 	vestingSchedules []types.VestingSchedule,
 	maxExtendedRound uint32,
-	extendedRoundRate sdk.Dec,
+	extendedRoundRate math.LegacyDec,
 	startTime time.Time,
 	endTime time.Time,
-) {
+) error {
 	h.BeforeBatchAuctionCreatedValid = true
+	return nil
 }
 
 func (h *MockFundraisingHooksReceiver) AfterBatchAuctionCreated(
-	ctx sdk.Context,
+	ctx context.Context,
 	auctionId uint64,
 	auctioneer string,
-	startPrice sdk.Dec,
-	minBidPrice sdk.Dec,
+	startPrice math.LegacyDec,
+	minBidPrice math.LegacyDec,
 	sellingCoin sdk.Coin,
 	payingCoinDenom string,
 	vestingSchedules []types.VestingSchedule,
 	maxExtendedRound uint32,
-	extendedRoundRate sdk.Dec,
+	extendedRoundRate math.LegacyDec,
 	startTime time.Time,
 	endTime time.Time,
-) {
+) error {
 	h.AfterBatchAuctionCreatedValid = true
+	return nil
 }
 
 func (h *MockFundraisingHooksReceiver) BeforeAuctionCanceled(
-	ctx sdk.Context,
+	ctx context.Context,
 	auctionId uint64,
 	auctioneer string,
-) {
+) error {
 	h.BeforeAuctionCanceledValid = true
+	return nil
 }
 
 func (h *MockFundraisingHooksReceiver) BeforeBidPlaced(
-	ctx sdk.Context,
+	ctx context.Context,
 	auctionId uint64,
 	bidId uint64,
 	bidder string,
 	bidType types.BidType,
-	price sdk.Dec,
+	price math.LegacyDec,
 	coin sdk.Coin,
-) {
+) error {
 	h.BeforeBidPlacedValid = true
+	return nil
 }
 
 func (h *MockFundraisingHooksReceiver) BeforeBidModified(
-	ctx sdk.Context,
+	ctx context.Context,
 	auctionId uint64,
 	bidId uint64,
 	bidder string,
 	bidType types.BidType,
-	price sdk.Dec,
+	price math.LegacyDec,
 	coin sdk.Coin,
-) {
+) error {
 	h.BeforeBidModifiedValid = true
+	return nil
 }
 
 func (h *MockFundraisingHooksReceiver) BeforeAllowedBiddersAdded(
-	ctx sdk.Context,
+	ctx context.Context,
 	allowedBidders []types.AllowedBidder,
-) {
+) error {
 	h.BeforeAllowedBiddersAddedValid = true
+	return nil
 }
 
 func (h *MockFundraisingHooksReceiver) BeforeAllowedBidderUpdated(
-	ctx sdk.Context,
+	ctx context.Context,
 	auctionId uint64,
 	bidder sdk.AccAddress,
 	maxBidAmount math.Int,
-) {
+) error {
 	h.BeforeAllowedBidderUpdatedValid = true
+	return nil
 }
 
 func (h *MockFundraisingHooksReceiver) BeforeSellingCoinsAllocated(
-	ctx sdk.Context,
+	ctx context.Context,
 	auctionId uint64,
 	allocationMap map[string]math.Int,
 	refundMap map[string]math.Int,
-) {
+) error {
 	h.BeforeSellingCoinsAllocatedValid = true
+	return nil
 }
 
 func (s *KeeperTestSuite) TestHooks() {
@@ -183,7 +194,7 @@ func (s *KeeperTestSuite) TestHooks() {
 		"denom4",
 		[]types.VestingSchedule{},
 		1,
-		sdk.MustNewDecFromStr("0.2"),
+		math.LegacyMustNewDecFromStr("0.2"),
 		time.Now().AddDate(0, 0, -1),
 		time.Now().AddDate(0, 0, -1).AddDate(0, 2, 0),
 		true,
@@ -212,11 +223,11 @@ func (s *KeeperTestSuite) TestHooks() {
 	s.Require().True(fundraisingHooksReceiver.BeforeAuctionCanceledValid)
 
 	// Get already started batch auction
-	auction, found := s.keeper.GetAuction(s.ctx, batchAuction.Id)
-	s.Require().True(found)
+	auction, err := s.keeper.Auction.Get(s.ctx, batchAuction.Id)
+	s.Require().NoError(err)
 
 	// Add allowed bidder
-	allowedBidders := []types.AllowedBidder{types.NewAllowedBidder(s.addr(3), parseInt("100_000_000_000"))}
+	allowedBidders := []types.AllowedBidder{types.NewAllowedBidder(auction.GetId(), s.addr(3), parseInt("100_000_000_000"))}
 	s.Require().NoError(s.keeper.AddAllowedBidders(s.ctx, auction.GetId(), allowedBidders))
 	s.Require().True(fundraisingHooksReceiver.BeforeAllowedBiddersAddedValid)
 
@@ -226,7 +237,7 @@ func (s *KeeperTestSuite) TestHooks() {
 	s.Require().True(fundraisingHooksReceiver.BeforeAllowedBidderUpdatedValid)
 
 	// Place a bid
-	bid := s.placeBidBatchWorth(auction.GetId(), s.addr(3), parseDec("0.55"), parseCoin("5_000_000denom4"), sdk.NewInt(10_000_000), true)
+	bid := s.placeBidBatchWorth(auction.GetId(), s.addr(3), parseDec("0.55"), parseCoin("5_000_000denom4"), math.NewInt(10_000_000), true)
 	s.Require().True(fundraisingHooksReceiver.BeforeBidPlacedValid)
 
 	// Modify the bid
@@ -242,7 +253,8 @@ func (s *KeeperTestSuite) TestHooks() {
 	s.Require().True(fundraisingHooksReceiver.BeforeBidModifiedValid)
 
 	// Calculate fixed price allocation
-	mInfo := s.keeper.CalculateFixedPriceAllocation(s.ctx, auction)
+	mInfo, err := s.keeper.CalculateFixedPriceAllocation(s.ctx, auction)
+	s.Require().NoError(err)
 
 	// Allocate the selling coin
 	err = s.keeper.AllocateSellingCoin(s.ctx, auction, mInfo)

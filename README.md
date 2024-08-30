@@ -16,8 +16,8 @@ If you haven't already, install Golang by following the official Go [install doc
 
 Requirement | Notes
 ----------- | -----------------
-Go          | version 1.18 or higher
-Cosmos SDK  | v0.46.0
+Go          | version 1.21 or higher
+Cosmos SDK  | v0.50.8
 
 ## Installation
 

@@ -1,0 +1,36 @@
+syntax = "proto3";
+package fundraising.fundraising.v1;
+
+import "amino/amino.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/tendermint/fundraising/x/fundraising/types";
+
+// VestingQueue defines the vesting queue.
+message VestingQueue {
+  // auction_id specifies the id of the auction
+  uint64 auction_id = 1;
+
+  // auctioneer specifies the bech32-encoded address that creates the auction
+  string auctioneer = 2;
+
+  // paying_coin specifies the paying amount of coin
+  cosmos.base.v1beta1.Coin paying_coin = 3 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    (amino.encoding) = "legacy_coins",
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
+
+  // release_time specifies the timestamp of the vesting schedule
+  google.protobuf.Timestamp release_time = 4 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false
+  ];
+
+  // released specifies the status of distribution
+  bool released = 5;
+}
