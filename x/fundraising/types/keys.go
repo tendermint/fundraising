@@ -13,13 +13,14 @@ const (
 	MemStoreKey = "mem_fundraising"
 )
 
-var ParamsKey = collections.NewPrefix("p_fundraising")
-
 func KeyPrefix(p string) []byte {
 	return []byte(p)
 }
 
 var (
+	// ParamsKey is the prefix to retrieve all Params
+	ParamsKey = collections.NewPrefix("p_fundraising")
+
 	// BidKey is the prefix to retrieve all Bid
 	BidKey = collections.NewPrefix("bid/value/")
 	// BidCountKey is the prefix to retrieve all Bid cound
@@ -36,5 +37,6 @@ var (
 	// VestingQueueKey is the prefix to retrieve all VestingQueue
 	VestingQueueKey = collections.NewPrefix("VestingQueue/value/")
 
+	// MatchedBidsLenKey is the prefix to retrieve all MatchedBidsLen
 	MatchedBidsLenKey = collections.NewPrefix("MatchedBidsLen/value/")
 )
